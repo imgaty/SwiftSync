@@ -1,0 +1,99 @@
+{
+    "config": {
+        "locale": "pt-PT"
+    },
+
+    "chart_description": "Um gráfico de área interativo",
+    "loading": "Carregando dados...",
+
+    "errors": {
+        "file_not_found": {
+            "title": "Ficheiro não encontrado",
+            "message": "O ficheiro solicitado não pôde ser localizado."
+        },
+        "empty_data": {
+            "title": "Sem dados",
+            "message": "Não há dados para exibir."
+        },
+        "unknown": {
+            "title": "Erro",
+            "message": "Ocorreu um erro inesperado."
+        }
+    },
+    
+    "time_range": {
+        "today": "Hoje",
+        "month": "Este mês",
+        "year": "Este ano",
+        "all": "Sempre"
+    },
+    
+    "data_type_labels": {
+        "total": "Total",
+        "predicted": "Previsto",
+        "billed": "Faturado",
+        "taxes": "Impostos",
+        "others": "Outros",
+        "received": "Recebido"
+    },
+    
+    "navigation": {
+        "previous": "Anterior",
+        "next": "Próximo"
+    },
+    
+    "list_view_headers": {
+        "date": "Data",
+        "value": "Valor"
+    },
+
+    "descriptions": {
+        "no_data": {
+            "label": "Sem dados a exibir."
+        },
+        "total_billed": {
+            "label": "Total faturado."
+        },
+        
+        "today_current": {
+            "label": "%category hoje"
+        },
+        "today_offset": {
+            "label": "%category a %date",
+            "format": { "day": "numeric", "month": "long", "year": "numeric" }
+        }, 
+        
+        "month_current": {
+            "label": "%category este mês"
+        },
+        "month_offset": {
+            "label": "%category em %date",
+            "format": { "month": "long", "year": "numeric" }
+        },
+        
+        "year_current": {
+            "label": "%category em %date",
+            "format": { "year": "numeric" }
+        },
+        "year_offset": {
+            "label": "%category em %date",
+            "format": { "year": "numeric" }
+        },
+        
+        "all_single": {
+            "label": "%category em %date",
+            "format": { "year": "numeric" }
+        },
+        "all_range": {
+            "label": "%category de %date a %date",
+            "format": { "year": "numeric" }
+        }
+    },
+
+    "chart_names": {
+        "area": "Gráfico de linha",
+        "bar": "Gráfico de barras",
+        "pie": "Gráfico circular",
+        "list": "Lista"
+    }
+}
