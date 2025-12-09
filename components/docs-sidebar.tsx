@@ -13,7 +13,6 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarRail,
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
@@ -138,7 +137,6 @@ export function DocsSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
-            <SidebarRail />
         </Sidebar>
     )
 }
