@@ -35,7 +35,7 @@ export function NavPages({
         icon: LucideIcon
     }[]
 }) {
-    const { isMobile } = useSidebar()
+    const { isMobile, side } = useSidebar()
 
     return (
         <SidebarGroup className="">
@@ -58,7 +58,7 @@ export function NavPages({
                                 </SidebarMenuAction>
                             </DropdownMenuTrigger>
 
-                            <DropdownMenuContent className="w-48 rounded-lg" side={isMobile ? "bottom" : "right"} align={isMobile ? "end" : "start"}>
+                            <DropdownMenuContent className="w-48 rounded-lg" side={isMobile ? "bottom" : side === "left" ? "right" : "left"} align={isMobile ? "end" : "start"}>
                                 <DropdownMenuItem>
                                     <Folder className="text-muted-foreground" />
                                     <span>View Page</span>
