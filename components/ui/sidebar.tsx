@@ -26,12 +26,17 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 60 seconds * 60 minutes * 24 hours * 7 days = 1 week
-const SIDEBAR_WIDTH = "15rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
-const SIDEBAR_KEYBOARD_SHORTCUT = "b" // Toggle sidebar shortcut (Ctrl + B or ⌘ + B)
+const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 28        // 60 seconds * 60 minutes * 24 hours * 28 days = 4 weeks
+
+const SIDEBAR_WIDTH_DEFAULT = 240                       // Values in pixels
+const SIDEBAR_WIDTH_MIN = 200
+const SIDEBAR_WIDTH_MAX = 400
+const SIDEBAR_WIDTH_MOBILE = 288
+const SIDEBAR_WIDTH_ICON = 48
+const SIDEBAR_KEYBOARD_SHORTCUT = "b"                   // Toggle sidebar shortcut (Ctrl + B or ⌘ + B)
+const SIDEBAR_COLLAPSE_THRESHOLD = 120                  // Width at which sidebar auto-collapses
 
 
 
@@ -39,18 +44,27 @@ const SIDEBAR_KEYBOARD_SHORTCUT = "b" // Toggle sidebar shortcut (Ctrl + B or �
 // 1. STATE & CONTEXT
 // ==============================================================================
 
-// TypeScript type defining the shape of the sidebar context
-// This is what every component using useSidebar() will have access to
+// What component using useSidebar() has access to
 type SidebarContextProps = {
     state: "expanded" | "collapsed"
     open: boolean
-    setOpen: (open: boolean) => void            // Function to change open state
+    setOpen: (open: boolean) => void                // Function to change open state
 
-    openMobile: boolean                         // Whether mobile sheet is open
-    setOpenMobile: (open: boolean) => void      // Function to change mobile state
+    openMobile: boolean
+    setOpenMobile: (open: boolean) => void          // Function to change mobile state
 
     isMobile: boolean
-    toggleSidebar: () => void                   // Toggle open/closed (works on both mobile/desktop)
+    toggleSidebar: () => void                       // Toggle open/closed (works on both mobile/desktop)
+    
+    // Modular sidebar features
+    side: "left" | "right"
+    setSide: (side: "left" | "right") => void       // Function to change position
+    
+    width: number                                   // Current sidebar width (px)
+    setWidth: (width: number) => void               // Function to change width (px)
+    
+    isResizing: boolean                             // Whether user is currently dragging to resize
+    setIsResizing: (resizing: boolean) => void      // Function to set resizing state
 }
 
 // Create a React Context to share sidebar state across all child components. Initialized as null - will be populated by SidebarProvider
@@ -60,7 +74,6 @@ const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 function useSidebar() {
     const context = React.useContext(SidebarContext)
 
-    // Throws an error if used outside of SidebarProvider (safety check)
     if (!context) {
         throw new Error("useSidebar must be used within a SidebarProvider.")
     }
@@ -77,22 +90,31 @@ function useSidebar() {
 // SidebarProvider - The wrapper component that manages all sidebar state
 // forwardRef allows parent components to get a ref to the underlying div
 const SidebarProvider = React.forwardRef<
-    HTMLDivElement,                             // The ref will point to an HTMLDivElement
-    React.ComponentProps<"div"> & {             // Accept all div props plus custom ones:
-        defaultOpen?: boolean                   // Initial open state (uncontrolled mode)
-        open?: boolean                          // Controlled open state
-        onOpenChange?: (open: boolean) => void  // Callback when open changes
+    HTMLDivElement,                                     // The ref will point to an HTMLDivElement
+    React.ComponentProps<"div"> & {                     // Accept all div props plus custom ones:
+        defaultOpen?: boolean
+        open?: boolean                                  // Controlled open state
+        onOpenChange?: (open: boolean) => void          // Callback when open changes
+
+        defaultSide?: "left" | "right"
+        defaultWidth?: number
+        showRail?: boolean                              // Whether to show the resize rail
     }
 >(
     // Render function parameters
     (
         {
-            defaultOpen = true,                 // Default: sidebar starts open
+            defaultOpen = true,
             open: openProp,
-            onOpenChange: setOpenProp,          // Controlled callback (optional)
+            onOpenChange: setOpenProp,                  // Controlled callback (optional)
+
+            defaultSide = "left",
+            defaultWidth = SIDEBAR_WIDTH_DEFAULT,
+            showRail = false,
+            
             className,
-            style, 
-            children,                           // Child components
+            style,
+            children,
             ...props
         },
 
@@ -101,344 +123,368 @@ const SidebarProvider = React.forwardRef<
     ) => {
         const isMobile = useIsMobile()
         const [openMobile, setOpenMobile] = React.useState(false)
-
         const [_open, _setOpen] = React.useState(defaultOpen)
         const open = openProp ?? _open
-
-        // Ref to track current open value (needed for callback in setOpen)
-        const openRef = React.useRef(open)
+        const openRef = React.useRef(open)              // Ref to track current open value (needed for callback in setOpen)
         
+        // Modular sidebar state (defaults come from server-side cookie reading in layout.tsx)
+        const [side, setSide] = React.useState<"left" | "right">(defaultSide)
+        const [width, setWidth] = React.useState(defaultWidth)
+        const [isResizing, setIsResizing] = React.useState(false)
+        const widthSaveTimeout = React.useRef<NodeJS.Timeout | null>(null)
+        
+        const setCookie = (name: string, value: string | number) => {
+            document.cookie = `${name}=${value}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        }
 
-        // Keep the ref in sync with the open value
-        React.useEffect(() => {
-            openRef.current = open
-        }, [open])
+        React.useEffect(() => { openRef.current = open }, [open]) // Keep the ref in sync with the open value
+        
+        // Persist side preference to cookie
+        const handleSetSide = React.useCallback((newSide: "left" | "right") => {
+            setSide(newSide)
+            setCookie("sidebar_side", newSide)
+        }, [])
+        
+        // Persist width to cookie
+        const handleSetWidth = React.useCallback((newWidth: number) => {
+            const clampedWidth = Math.max(SIDEBAR_WIDTH_MIN, Math.min(SIDEBAR_WIDTH_MAX, newWidth))
+            setWidth(clampedWidth)
 
+            if (widthSaveTimeout.current) clearTimeout(widthSaveTimeout.current)
+            widthSaveTimeout.current = setTimeout(() => setCookie("sidebar_width", clampedWidth), 100)
+        }, [])
 
-        // Memoized function to update open state
+        // Set open state with cookie persistence
         const setOpen = React.useCallback(
             (value: boolean | ((value: boolean) => boolean)) => {
-                // If value is a function, call it with current state (like setState callback)
                 const openState = typeof value === "function" ? value(openRef.current) : value
+                setOpenProp ? setOpenProp(openState) : _setOpen(openState)
                 
-                if (setOpenProp) {
-                    setOpenProp(openState)
-
-                } else {
-                    _setOpen(openState)
-                }
-                
-                // Persist state to cookie so it survives page refreshes
-                document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+                // Persist state to cookie to survive page refresh
+                setCookie(SIDEBAR_COOKIE_NAME, String(openState))
             },
-
-            [setOpenProp]  // Only recreate if setOpenProp changes
+            [setOpenProp]
         )
 
-
-        // Memoized toggle function - toggles mobile or desktop based on viewport
         const toggleSidebar = React.useCallback(() => {
-            // On mobile: toggle the sheet drawer
-            // On desktop: toggle the sidebar open/collapsed state
             return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
         }, [isMobile, setOpen, setOpenMobile])
 
-
-        // Effect to register keyboard shortcut (Ctrl + B or ⌘ + B)
+        // Check if the shortcut keys are pressed (Ctrl + B or ⌘ + B)
         React.useEffect(() => {
             const handleKeyDown = (event: KeyboardEvent) => {
-                // Check if the shortcut key is pressed
-                if (
-                    event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-                    (event.ctrlKey || event.metaKey) // Checks for Ctrl or ⌘
-                ) {
-                    event.preventDefault()  	// Prevent browser default (e.g., bookmarks)
-                    toggleSidebar()         	// Toggle the sidebar
+                if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.ctrlKey || event.metaKey)) {
+                    event.preventDefault()              // Prevent default browser shortcut
+                    toggleSidebar()                     // Toggle the sidebar
                 }
             }
-            
-            // Add listener when component mounts
+
             window.addEventListener("keydown", handleKeyDown)
-            
-            // Remove listener when component unmounts (cleanup)
-            return () => window.removeEventListener("keydown", handleKeyDown)
+            return () => window.removeEventListener("keydown", handleKeyDown) // Cleanup on unmount
         }, [toggleSidebar])
 
+        const state = open ? "expanded" : "collapsed"   // Boolean (used in data attributes for CSS)
 
-        // Derive state string from boolean (used in data attributes for CSS)
-        const state = open ? "expanded" : "collapsed"
-        
-        // Memoize the context value to prevent unnecessary re-renders
+        // Create a cached object containing all the sidebar state
         const contextValue = React.useMemo<SidebarContextProps>(
-            () => ({ state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar }),
-            [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+            () => ({ state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar,
+                     side, setSide: handleSetSide, width, setWidth: handleSetWidth, isResizing, setIsResizing }),
+            [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, 
+             side, handleSetSide, width, handleSetWidth, isResizing]
         )
+        
+        const railPosition = open ? width : SIDEBAR_WIDTH_ICON
 
-        // Render the provider and wrapper div
         return (
-            // Provide context to all children
-            <SidebarContext.Provider value={contextValue}>
-                {/* TooltipProvider enables tooltips on collapsed sidebar buttons */}
-                <TooltipProvider delayDuration={0}>
+            <SidebarContext.Provider value = {contextValue}> {/* Provides context to all children */}
+                <TooltipProvider delayDuration = {0}> {/* TooltipProvider for collapsed sidebar buttons */}
                     <div
-                        // Set CSS custom properties for sidebar widths
-                        style={
-                            {
-                                "--sidebar-width": SIDEBAR_WIDTH,          // Normal width
-                                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON, // Collapsed width
-                                ...style,  // Merge with any custom styles
-                            } as React.CSSProperties
-                        }
-                        // Apply wrapper classes
-                        className={cn(
-                            // group for child targeting, min viewport height, full width
-                            "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
-                            className
-                        )}
-                        ref={ref}     // Forward the ref
-                        {...props}    // Spread remaining props
+                        ref = {ref}
+                        data-side = {side}
+                        className = {cn( "group/sidebar-wrapper | relative flex | w-full min-h-screen | has-data-[variant=inset]:bg-sidebar", className )}
+                        style = {{ "--sidebar-width": `${width}px`, "--sidebar-width-icon": `${SIDEBAR_WIDTH_ICON}px`, ...style } as React.CSSProperties}
+                        {...props}
                     >
                         {children}
+
+                        {showRail && !isMobile && (
+                            <SidebarRailInternal railPosition = {railPosition} />
+                        )}
                     </div>
                 </TooltipProvider>
             </SidebarContext.Provider>
         )
     }
 )
-// Set display name for React DevTools
+
+// React DevTools display name
 SidebarProvider.displayName = "SidebarProvider"
+
+
 
 // ==============================================================================
 // 3. MAIN COMPONENTS
 // ==============================================================================
 
-// Main Sidebar component - renders differently based on viewport and settings
 const Sidebar = React.forwardRef<
     HTMLDivElement,
     React.ComponentProps<"div"> & {
-        side?: "left" | "right"                    // Which side of screen
-        variant?: "sidebar" | "floating" | "inset" // Visual style
-        collapsible?: "offcanvas" | "icon" | "none" // How it collapses
+        variant?: "sidebar" | "floating" | "inset"          // Visual style
+        collapsible?: "offcanvas" | "icon" | "none"         // How it collapses
     }
 >(
     (
         {
-            side = "left",              // Default: left side
-            variant = "sidebar",        // Default: standard sidebar
-            collapsible = "offcanvas",  // Default: slides off screen when collapsed
+            variant = "sidebar",                            // Default: standard sidebar
+            collapsible = "icon",                           // Default: collapses to icon mode
             className,
             children,
             ...props
         },
-        ref
-    ) => {
-        // Get sidebar state from context
-        const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
-        // MODE 1: Non-collapsible sidebar (always visible, fixed width)
+        ref
+
+    ) => {
+        const { isMobile, state, openMobile, setOpenMobile, side, isResizing } = useSidebar()
+
+        // DISPLAY MODE 1: Non-collapsible sidebar (always visible, fixed width)
         if (collapsible === "none") {
             return (
-                <div
-                    className={cn(
-                        // Fixed width, full height, column layout
-                        "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
-                        className
-                    )}
-                    ref={ref}
-                    {...props}
-                >
+                <div ref = {ref} className = {cn( "flex flex-col | w-(--sidebar-width) h-full | bg-sidebar | text-sidebar-foreground", className )} {...props}>
                     {children}
                 </div>
             )
         }
 
-        // MODE 2: Mobile sidebar (renders as a Sheet/drawer)
+        // DISPLAY MODE 2: Mobile sidebar (renders as a drawer)
         if (isMobile) {
             return (
-                // Sheet is a slide-in drawer component
-                <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+                <Sheet open = {openMobile} onOpenChange = {setOpenMobile} {...props}>
                     <SheetContent
-                        data-sidebar="sidebar"    // Data attribute for CSS targeting
-                        data-mobile="true"        // Mark as mobile version
-                        className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
-                        style={
-                            {
-                                "--sidebar-width": SIDEBAR_WIDTH_MOBILE,  // Wider on mobile
-                            } as React.CSSProperties
-                        }
-                        side={side}  // Which side to slide from
+                        data-sidebar = "sidebar" data-mobile = "true"
+                        className = "p-0 | w-(--sidebar-width) | bg-sidebar | text-sidebar-foreground | [&>button]:hidden"
+                        style = {{ "--sidebar-width": `${SIDEBAR_WIDTH_MOBILE}px` } as React.CSSProperties}
+                        side = {side}
                     >
-                        {/* Screen reader accessible header (visually hidden) */}
-                        <SheetHeader className="sr-only">
+                        {/* Accessibility description for screen readers */}
+                        <SheetHeader className = "sr-only">
                             <SheetTitle>Sidebar</SheetTitle>
                             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
                         </SheetHeader>
-                        {/* Container for sidebar content */}
-                        <div className="flex h-full w-full flex-col">{children}</div>
+
+                        <div className = "flex flex-col | w-full h-full">{children}</div>
                     </SheetContent>
                 </Sheet>
             )
         }
 
-        // MODE 3: Desktop sidebar (fixed position with animations)
+        // DISPLAY MODE 3: Desktop sidebar
         return (
             <div
-                ref={ref}
-                // group and peer enable parent-based styling in children
-                className="group peer text-sidebar-foreground hidden md:block"
-                data-state={state}  // "expanded" or "collapsed" for CSS
-                data-collapsible={state === "collapsed" ? collapsible : ""}  // Type of collapse
-                data-variant={variant}  // Visual variant
-                data-side={side}        // Left or right
+                ref = {ref}
+                data-state = {state}
+                data-collapsible = {state === "collapsed" ? collapsible : ""}
+                data-variant = {variant}
+                data-side = {side}
+                className = {cn(
+                    "sticky hidden md:flex flex-col self-start top-0 | group peer",
+                    "shrink-0 | w-(--sidebar-width) h-svh | bg-sidebar | text-sidebar-foreground",
+
+                    side === "left" ? "order-first" : "order-last",
+
+                    !isResizing && "transition-[width] duration-200 ease-linear", // Animate unless resizing
+                    state === "collapsed" && collapsible === "offcanvas" && "w-0 overflow-hidden",
+                    state === "collapsed" && collapsible === "icon" && "w-(--sidebar-width-icon)",
+                    
+                    variant === "floating" && "m-2 | border rounded-lg shadow-sm",
+                    variant === "inset" && "rounded-lg",
+                    className
+                )}
+                {...props}
             >
-                {/* Gap placeholder - reserves space in the layout flow */}
-                {/* This div pushes main content over when sidebar is visible */}
-                <div
-                    className={cn(
-                        // Same width as sidebar, animates width changes
-                        "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
-                        // When offcanvas collapsed: shrink to 0 width
-                        "group-data-[collapsible=offcanvas]:w-0",
-                        // Flip for right-side sidebar
-                        "group-data-[side=right]:rotate-180",
-                        // When icon collapsed: shrink to icon width (with padding for floating/inset)
-                        variant === "floating" || variant === "inset"
-                            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-                            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
-                    )}
-                />
-                
-                {/* Actual sidebar - fixed to viewport edge */}
-                <div
-                    className={cn(
-                        // Fixed positioning, full viewport height, animates position/width
-                        "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
-                        // Position based on side prop, slides off-screen when offcanvas collapsed
-                        side === "left"
-                            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-                            : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-                        // Floating/inset variants have padding; standard has border
-                        variant === "floating" || variant === "inset"
-                            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-                            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
-                        className
-                    )}
-                    {...props}
-                >
-                    {/* Inner container with background and optional border/shadow */}
-                    <div
-                        data-sidebar="sidebar"
-                        className="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
-                    >
-                        {children}
-                    </div>
-                </div>
+                {children}
             </div>
         )
     }
 )
-// Set display name for React DevTools
+
+// React DevTools display name
 Sidebar.displayName = "Sidebar"
 
-// SidebarTrigger - Button that toggles the sidebar open/closed
+
+
 const SidebarTrigger = React.forwardRef<
-    React.ElementRef<typeof Button>,  // Ref type matches Button component
-    React.ComponentProps<typeof Button>  // Accept all Button props
+    React.ElementRef<typeof Button>,
+    React.ComponentProps<typeof Button>
+
 >(({ className, onClick, ...props }, ref) => {
-    // Get toggle function from context
     const { toggleSidebar } = useSidebar()
     
     return (
         <Button
-            ref={ref}
-            data-sidebar="trigger"  // Data attribute for CSS targeting
-            variant="ghost"          // Transparent background
-            size="icon"              // Square button sized for icons
-            className={cn("size-7", className)}  // 7 units square (28px)
-            onClick={(event) => {
-                onClick?.(event)     // Call any passed onClick handler first
-                toggleSidebar()      // Then toggle the sidebar
+            ref = {ref}
+            data-sidebar = "trigger"
+            variant = "ghost"                           // Transparent background
+            size = "icon"
+            className = {cn("size-7", className)}       // Padding around the sidebar button (28px)
+            onClick = {(event) => {
+                onClick?.(event)                        // Call any passed onClick handler first
+                toggleSidebar()                         // Then toggle the sidebar
             }}
             {...props}
         >
-            <PanelLeftIcon />  {/* Hamburger-style icon */}
-            <span className="sr-only">Toggle Sidebar</span>  {/* Screen reader text */}
+            <PanelLeftIcon />
+
+            <span className = "sr-only">Toggle Sidebar</span>
         </Button>
     )
 })
-// Set display name for React DevTools
+
+// React DevTools display name
 SidebarTrigger.displayName = "SidebarTrigger"
 
-// SidebarRail - Invisible edge that can be clicked to toggle sidebar
-// Appears as a thin line on hover
-const SidebarRail = React.forwardRef<
-    HTMLButtonElement,
-    React.ComponentProps<"button">
->(({ className, ...props }, ref) => {
-    // Get toggle function from context
-    const { toggleSidebar } = useSidebar()
-    // Get OS-aware modifier key
+
+
+// SidebarRailInternal - Internal component rendered at provider level
+// Positioned absolutely within the provider wrapper for proper z-index stacking
+function SidebarRailInternal({ railPosition }: { railPosition: number }) {
+    const { side, width, setWidth, open, setOpen, isResizing, setIsResizing } = useSidebar()
     const { modKey } = useOS()
     
-    // Custom tooltip state
-    const [showTooltip, setShowTooltip] = React.useState(false)
-    const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 })
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+    const [tooltip, setTooltip] = React.useState({ show: false, x: 0, y: 0 })
+    const [tooltipPos, setTooltipPos] = React.useState({ x: 0, y: 0 })
+    const tooltipRef = React.useRef<HTMLDivElement>(null)
+    const tooltipTimeout = React.useRef<NodeJS.Timeout | null>(null)
+    
+    // Drag tracking refs
+    const dragState = React.useRef({ startX: 0, startWidth: 0, isDragging: false, wasCollapsed: false })
+    const refs = React.useRef({ side, open, width })
+    React.useEffect(() => { refs.current = { side, open, width } }, [side, open, width])
 
-    const handleMouseEnter = (e: React.MouseEvent) => {
-        // Capture mouse position when entering
-        setMousePos({ x: e.clientX, y: e.clientY })
-        // Delay before showing tooltip (500ms like native)
-        timeoutRef.current = setTimeout(() => {
-            setShowTooltip(true)
-        }, 500)
-    }
-
-    const handleMouseLeave = () => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current)
+    // Cleanup tooltip timeout on unmount
+    React.useEffect(() => () => { if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current) }, [])
+    
+    // Calculate optimal tooltip position when it becomes visible
+    React.useEffect(() => {
+        if (!tooltip.show || !tooltipRef.current) return
+        
+        const rect = tooltipRef.current.getBoundingClientRect()
+        const padding = 8           // Distance from cursor
+        const margin = 16           // Minimum distance from viewport edge
+        
+        let x = tooltip.x + padding
+        let y = tooltip.y + padding
+        
+        // Check right edge - shift to left of cursor if needed
+        if (x + rect.width > window.innerWidth - margin) {
+            x = tooltip.x - rect.width - padding
         }
-        setShowTooltip(false)
-    }
+        
+        // Check bottom edge - shift above cursor if needed
+        if (y + rect.height > window.innerHeight - margin) {
+            y = tooltip.y - rect.height - padding
+        }
+        
+        // Ensure not off left edge
+        if (x < margin) x = margin
+        
+        // Ensure not off top edge
+        if (y < margin) y = margin
+        
+        setTooltipPos({ x, y })
+    }, [tooltip.show, tooltip.x, tooltip.y])
+
+    const handleMouseEnter = React.useCallback((e: React.MouseEvent) => {
+        if (isResizing) return
+        tooltipTimeout.current = setTimeout(() => setTooltip({ show: true, x: e.clientX, y: e.clientY }), 500)
+    }, [isResizing])
+
+    const handleMouseLeave = React.useCallback(() => {
+        if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current)
+        setTooltip(t => t.show ? { ...t, show: false } : t)
+    }, [])
+    
+    const handleMouseMove = React.useCallback((e: MouseEvent) => {
+        dragState.current.isDragging = true
+        const delta = refs.current.side === "left" 
+            ? e.clientX - dragState.current.startX 
+            : dragState.current.startX - e.clientX
+        const newWidth = dragState.current.startWidth + delta
+        
+        if (newWidth < SIDEBAR_COLLAPSE_THRESHOLD) { setOpen(false); return }
+        setOpen(true)
+        setWidth(Math.max(SIDEBAR_WIDTH_MIN, Math.min(SIDEBAR_WIDTH_MAX, newWidth)))
+    }, [setWidth, setOpen])
+    
+    const handleMouseUp = React.useCallback(() => {
+        setIsResizing(false)
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
+        document.body.style.userSelect = ""
+        document.body.style.cursor = ""
+        
+        if (!dragState.current.isDragging) {
+            if (dragState.current.wasCollapsed) { setWidth(SIDEBAR_WIDTH_MIN); setOpen(true) }
+            else { setOpen(false) }
+        }
+        dragState.current.isDragging = false
+    }, [handleMouseMove, setOpen, setWidth, setIsResizing])
+    
+    const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+        e.preventDefault()
+        dragState.current = {
+            startX: e.clientX,
+            startWidth: refs.current.open ? refs.current.width : SIDEBAR_WIDTH_ICON,
+            isDragging: false,
+            wasCollapsed: !refs.current.open,
+        }
+        setIsResizing(true)
+        setTooltip(t => t.show ? { ...t, show: false } : t)
+        document.addEventListener("mousemove", handleMouseMove)
+        document.addEventListener("mouseup", handleMouseUp)
+        document.body.style.userSelect = "none"
+        document.body.style.cursor = "grabbing"
+    }, [handleMouseMove, handleMouseUp, setIsResizing])
+
+    // Position styles based on sidebar side
+    // Rail is centered on main content's border: sidebar_width + margin(8px) - half_rail_width(8px)
+    const positionStyle = side === "left" 
+        ? { left: `${railPosition}px` }   // Centers on main's left border
+        : { right: `${railPosition}px` }  // Centers on main's right border
 
     return (
         <>
             <button
-                ref={ref}
                 data-sidebar="rail"
                 aria-label="Toggle Sidebar"
                 tabIndex={-1}
-                onClick={toggleSidebar}
+                onMouseDown={handleMouseDown}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 className={cn(
-                    "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 sm:flex",
-                    "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
-                    "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
-                    "hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full",
-                    "[[data-side=left][data-collapsible=offcanvas]_&]:-right-2",
-                    "[[data-side=right][data-collapsible=offcanvas]_&]:-left-2",
-                    className
+                    "absolute top-0 bottom-0 z-50 hidden w-4 sm:flex cursor-grab",
+                    isResizing && "pointer-events-none",
+                    !isResizing && "transition-[left,right] duration-200 ease-linear",
+                    "after:absolute after:top-8 after:bottom-8 after:left-px after:w-0.5 after:-translate-x-1/2 after:rounded-full",
+                    "after:bg-transparent hover:after:bg-gray-400",
+                    isResizing && "after:bg-primary"
                 )}
-                {...props}
+                style={positionStyle}
             />
-            {/* Custom tooltip that appears at initial mouse position */}
-            {showTooltip && (
+            {tooltip.show && !isResizing && (
                 <div
-                    className="fixed z-1000 bg-foreground text-white px-3 py-1.5 text-xs rounded-md pointer-events-none"
-                    style={{
-                        left: mousePos.x + 12,
-                        top: mousePos.y + 12,
-                    }}
+                    ref={tooltipRef}
+                    className="fixed z-1000 bg-foreground text-white px-3 py-1.5 text-xs rounded-md pointer-events-none whitespace-nowrap"
+                    style={{ left: tooltipPos.x, top: tooltipPos.y }}
                 >
-                    Toggle Sidebar ({modKey} + B)
+                    Drag to resize • Click to toggle ({modKey} + B)
                 </div>
             )}
         </>
     )
-})
-// Set display name for React DevTools
-SidebarRail.displayName = "SidebarRail"
+}
+
+
 
 // ==============================================================================
 // 4. COMPONENT FACTORY
@@ -483,7 +529,9 @@ function componentFactory<T extends React.ElementType>(
 // ==============================================================================
 
 // Main content area next to sidebar - adjusts margin when sidebar is inset
-const SidebarInset = componentFactory("main", "bg-background relative flex w-full flex-1 flex-col md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2", "inset")
+// Uses order-1 as middle value so sidebar can be order-first (0) or order-last (2)
+// Full margin on all sides ensures shadow renders without clipping
+const SidebarInset = componentFactory("main", "bg-background relative flex w-full flex-1 flex-col order-1 h-svh overflow-y-auto md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:h-[calc(100svh-16px)] md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow md:peer-data-[variant=inset]:border md:peer-data-[side=right]:peer-data-[variant=inset]:ml-2 md:peer-data-[side=right]:peer-data-[variant=inset]:mr-0", "inset")
 
 // Search/filter input styled for sidebar
 const SidebarInput = componentFactory(Input, "bg-background h-8 w-full shadow-none", "input")
@@ -541,9 +589,8 @@ const sidebarMenuButtonVariants = cva(
         variants: {
             // Visual style variants
             variant: {
-                default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                outline:
-                    "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+                default: "",  // Uses base hover styles
+                outline: "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
             },
             // Size variants
             size: {
@@ -688,37 +735,23 @@ const SidebarMenuSkeleton = React.forwardRef<
     React.ComponentProps<"div"> & {
         showIcon?: boolean  // Whether to show icon skeleton
     }
->(({ className, showIcon = false, ...props }, ref) => {
-    // Width of the text skeleton (70% of container)
-    const width = "70%"
-
-    return (
-        <div
-            ref={ref}
-            data-sidebar="menu-skeleton"  // For CSS targeting
-            className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
-            {...props}
-        >
-            {/* Optional icon skeleton (square) */}
-            {showIcon && (
-                <Skeleton
-                    className="size-4 rounded-md"
-                    data-sidebar="menu-skeleton-icon"
-                />
-            )}
-            {/* Text skeleton (rectangle) */}
-            <Skeleton
-                className="h-4 max-w-(--skeleton-width) flex-1"
-                data-sidebar="menu-skeleton-text"
-                style={
-                    {
-                        "--skeleton-width": width,  // Custom property for max-width
-                    } as React.CSSProperties
-                }
-            />
-        </div>
-    )
-})
+>(({ className, showIcon = false, ...props }, ref) => (
+    <div
+        ref={ref}
+        data-sidebar="menu-skeleton"  // For CSS targeting
+        className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
+        {...props}
+    >
+        {/* Optional icon skeleton (square) */}
+        {showIcon && <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
+        {/* Text skeleton (rectangle) */}
+        <Skeleton
+            className="h-4 max-w-(--skeleton-width) flex-1"
+            data-sidebar="menu-skeleton-text"
+            style={{ "--skeleton-width": "70%" } as React.CSSProperties}  // Custom property for max-width
+        />
+    </div>
+))
 // Set display name for React DevTools
 SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton"
 
@@ -797,7 +830,6 @@ export {
     SidebarMenuSubButton, // Submenu button
     SidebarMenuSubItem,   // Submenu item wrapper
     SidebarProvider,      // Context provider (wrap your app)
-    SidebarRail,          // Edge toggle rail
     SidebarSeparator,     // Divider line
     SidebarTrigger,       // Toggle button
     useSidebar,           // Hook to access sidebar state

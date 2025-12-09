@@ -26,13 +26,19 @@ export default async function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode; }>) {
     const cookieStore = await cookies()
+    
+    // Read all sidebar preferences from cookies (server-side to prevent hydration flash)
     const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+    const defaultSide = (cookieStore.get("sidebar_side")?.value as "left" | "right") || "left"
+    // Width is stored in px
+    const savedWidth = parseInt(cookieStore.get("sidebar_width")?.value || "240", 10)
+    const defaultWidth = !isNaN(savedWidth) && savedWidth >= 200 && savedWidth <= 400 ? savedWidth : 240  // px
 
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <LanguageProvider>
-                    <SidebarProvider defaultOpen={defaultOpen}>
+                    <SidebarProvider defaultOpen={defaultOpen} defaultSide={defaultSide} defaultWidth={defaultWidth} showRail>
                         <AppSidebar />
                         <SidebarInset>
                             {children}

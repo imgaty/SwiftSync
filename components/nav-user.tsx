@@ -9,6 +9,8 @@ import {
   Sparkles,
   Globe,
   Check,
+  PanelLeft,
+  PanelRight,
 } from "lucide-react"
 
 import {
@@ -42,7 +44,7 @@ export function NavUser({
     avatar: string
   }
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, side, setSide } = useSidebar()
   const { language, setLanguage } = useLanguage()
 
   return (
@@ -66,8 +68,8 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
+            className="min-w-56 rounded-lg"
+            side={isMobile ? "bottom" : side === "left" ? "right" : "left"}
             align="end"
             sideOffset={4}
           >
@@ -119,6 +121,22 @@ export function NavUser({
                 <Globe className="mr-2 h-4 w-4" />
                 Português
                 {language === "pt" && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                Sidebar Position
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setSide("left")}>
+                <PanelLeft className="mr-2 h-4 w-4" />
+                Left
+                {side === "left" && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSide("right")}>
+                <PanelRight className="mr-2 h-4 w-4" />
+                Right
+                {side === "right" && <Check className="ml-auto h-4 w-4" />}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
