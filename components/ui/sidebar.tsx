@@ -356,7 +356,6 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
     const tooltipRef = React.useRef<HTMLDivElement>(null)
     const tooltipTimeout = React.useRef<NodeJS.Timeout | null>(null)
     
-    // Drag tracking refs
     const dragState = React.useRef({ startX: 0, startWidth: 0, isDragging: false, wasCollapsed: false })
     const refs = React.useRef({ side, open, width })
     React.useEffect(() => { refs.current = { side, open, width } }, [side, open, width])
@@ -375,35 +374,36 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
         let x = tooltip.x + padding
         let y = tooltip.y + padding
         
-        // Check right edge - shift to left of cursor if needed
-        if (x + rect.width > window.innerWidth - margin) {
+
+        if (x + rect.width > window.innerWidth - margin) { // Check right edge - shift to left of cursor if needed
             x = tooltip.x - rect.width - padding
         }
         
-        // Check bottom edge - shift above cursor if needed
-        if (y + rect.height > window.innerHeight - margin) {
+
+        if (y + rect.height > window.innerHeight - margin) { // Check bottom edge - shift above cursor if needed
             y = tooltip.y - rect.height - padding
         }
         
-        // Ensure not off left edge
-        if (x < margin) x = margin
+        if (x < margin) x = margin // Ensure not off left edge
         
-        // Ensure not off top edge
-        if (y < margin) y = margin
+        if (y < margin) y = margin // Ensure not off top edge
         
         setTooltipPos({ x, y })
     }, [tooltip.show, tooltip.x, tooltip.y])
+
 
     const handleMouseEnter = React.useCallback((e: React.MouseEvent) => {
         if (isResizing) return
         tooltipTimeout.current = setTimeout(() => setTooltip({ show: true, x: e.clientX, y: e.clientY }), 500)
     }, [isResizing])
 
+
     const handleMouseLeave = React.useCallback(() => {
         if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current)
         setTooltip(t => t.show ? { ...t, show: false } : t)
     }, [])
     
+
     const handleMouseMove = React.useCallback((e: MouseEvent) => {
         dragState.current.isDragging = true
         const delta = refs.current.side === "left" 
@@ -412,10 +412,12 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
         const newWidth = dragState.current.startWidth + delta
         
         if (newWidth < SIDEBAR_COLLAPSE_THRESHOLD) { setOpen(false); return }
+
         setOpen(true)
         setWidth(Math.max(SIDEBAR_WIDTH_MIN, Math.min(SIDEBAR_WIDTH_MAX, newWidth)))
     }, [setWidth, setOpen])
     
+
     const handleMouseUp = React.useCallback(() => {
         setIsResizing(false)
         document.removeEventListener("mousemove", handleMouseMove)
@@ -427,9 +429,11 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
             if (dragState.current.wasCollapsed) { setWidth(SIDEBAR_WIDTH_MIN); setOpen(true) }
             else { setOpen(false) }
         }
+
         dragState.current.isDragging = false
     }, [handleMouseMove, setOpen, setWidth, setIsResizing])
     
+
     const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
         e.preventDefault()
         dragState.current = {
@@ -438,6 +442,7 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
             isDragging: false,
             wasCollapsed: !refs.current.open,
         }
+        
         setIsResizing(true)
         setTooltip(t => t.show ? { ...t, show: false } : t)
         document.addEventListener("mousemove", handleMouseMove)
@@ -446,11 +451,13 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
         document.body.style.cursor = "grabbing"
     }, [handleMouseMove, handleMouseUp, setIsResizing])
 
+
     // Position styles based on sidebar side
     // Rail is centered on main content's border: sidebar_width + margin(8px) - half_rail_width(8px)
     const positionStyle = side === "left" 
         ? { left: `${railPosition}px` }   // Centers on main's left border
         : { right: `${railPosition}px` }  // Centers on main's right border
+
 
     return (
         <>
@@ -465,9 +472,9 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
                     "absolute top-0 bottom-0 z-50 hidden w-4 sm:flex cursor-grab",
                     isResizing && "pointer-events-none",
                     !isResizing && "transition-[left,right] duration-200 ease-linear",
-                    "after:absolute after:top-8 after:bottom-8 after:left-px after:w-0.5 after:-translate-x-1/2 after:rounded-full",
-                    "after:bg-transparent hover:after:bg-gray-400",
-                    isResizing && "after:bg-primary"
+                    "after:absolute after:top-7 after:bottom-7 after:left-px after:w-0.5 after:-translate-x-1/2 after:rounded-full",
+                    "after:bg-transparent hover:after:bg-[rgba(0,0,0,0.125)]",
+                    isResizing && "after:bg-[rgba(0,0,0,0.25)]"
                 )}
                 style={positionStyle}
             />

@@ -1,6 +1,6 @@
 {
     "workbench.colorTheme": "Default Light Modern",
-    "window.commandCenter": false,
+    "window.commandCenter": true,
     "workbench.editor.centeredLayoutFixedWidth": false,
     "chat.commandCenter.enabled": false
 }
