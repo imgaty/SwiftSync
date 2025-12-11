@@ -346,10 +346,8 @@ SidebarTrigger.displayName = "SidebarTrigger"
 
 
 // SidebarRailInternal - Internal component rendered at provider level
-// Positioned absolutely within the provider wrapper for proper z-index stacking
 function SidebarRailInternal({ railPosition }: { railPosition: number }) {
     const { side, width, setWidth, open, setOpen, isResizing, setIsResizing } = useSidebar()
-    const { modKey } = useOS()
     
     const [tooltip, setTooltip] = React.useState({ show: false, x: 0, y: 0 })
     const [tooltipPos, setTooltipPos] = React.useState({ x: 0, y: 0 })
@@ -360,43 +358,45 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
     const refs = React.useRef({ side, open, width })
     React.useEffect(() => { refs.current = { side, open, width } }, [side, open, width])
 
-    // Cleanup tooltip timeout on unmount
-    React.useEffect(() => () => { if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current) }, [])
+
+
+    // Tooltip content
+    const { modKey } = useOS()
+
+    React.useEffect(() => () => { if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current) }, []) // Cleanup tooltip timeout on unmount
     
     // Calculate optimal tooltip position when it becomes visible
     React.useEffect(() => {
         if (!tooltip.show || !tooltipRef.current) return
         
         const rect = tooltipRef.current.getBoundingClientRect()
-        const padding = 8           // Distance from cursor
-        const margin = 16           // Minimum distance from viewport edge
+        const padding = 8                                       // Distance from cursor
+        const margin = 16                                       // Minimum distance from viewport edge
         
         let x = tooltip.x + padding
         let y = tooltip.y + padding
         
 
-        if (x + rect.width > window.innerWidth - margin) { // Check right edge - shift to left of cursor if needed
+        if (x + rect.width > window.innerWidth - margin) {      // Check right edge - shift to left of cursor if needed
             x = tooltip.x - rect.width - padding
         }
         
 
-        if (y + rect.height > window.innerHeight - margin) { // Check bottom edge - shift above cursor if needed
+        if (y + rect.height > window.innerHeight - margin) {    // Check bottom edge - shift above cursor if needed
             y = tooltip.y - rect.height - padding
         }
         
-        if (x < margin) x = margin // Ensure not off left edge
+        if (x < margin) x = margin                              // Ensure not off left edge
         
-        if (y < margin) y = margin // Ensure not off top edge
+        if (y < margin) y = margin                              // Ensure not off top edge
         
         setTooltipPos({ x, y })
     }, [tooltip.show, tooltip.x, tooltip.y])
-
 
     const handleMouseEnter = React.useCallback((e: React.MouseEvent) => {
         if (isResizing) return
         tooltipTimeout.current = setTimeout(() => setTooltip({ show: true, x: e.clientX, y: e.clientY }), 500)
     }, [isResizing])
-
 
     const handleMouseLeave = React.useCallback(() => {
         if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current)
@@ -404,7 +404,9 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
     }, [])
     
 
-    const handleMouseMove = React.useCallback((e: MouseEvent) => {
+    
+    // Handle the sidebar drag resizing logic
+    const handleSidebarDrag = React.useCallback((e: MouseEvent) => {
         dragState.current.isDragging = true
         const delta = refs.current.side === "left" 
             ? e.clientX - dragState.current.startX 
@@ -420,7 +422,7 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
 
     const handleMouseUp = React.useCallback(() => {
         setIsResizing(false)
-        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mousemove", handleSidebarDrag)
         document.removeEventListener("mouseup", handleMouseUp)
         document.body.style.userSelect = ""
         document.body.style.cursor = ""
@@ -431,7 +433,7 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
         }
 
         dragState.current.isDragging = false
-    }, [handleMouseMove, setOpen, setWidth, setIsResizing])
+    }, [handleSidebarDrag, setOpen, setWidth, setIsResizing])
     
 
     const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
@@ -445,18 +447,19 @@ function SidebarRailInternal({ railPosition }: { railPosition: number }) {
         
         setIsResizing(true)
         setTooltip(t => t.show ? { ...t, show: false } : t)
-        document.addEventListener("mousemove", handleMouseMove)
+        document.addEventListener("mousemove", handleSidebarDrag)
         document.addEventListener("mouseup", handleMouseUp)
         document.body.style.userSelect = "none"
         document.body.style.cursor = "grabbing"
-    }, [handleMouseMove, handleMouseUp, setIsResizing])
+    }, [handleSidebarDrag, handleMouseUp, setIsResizing])
 
 
     // Position styles based on sidebar side
-    // Rail is centered on main content's border: sidebar_width + margin(8px) - half_rail_width(8px)
-    const positionStyle = side === "left" 
-        ? { left: `${railPosition}px` }   // Centers on main's left border
-        : { right: `${railPosition}px` }  // Centers on main's right border
+    // Position the rail at the sidebar edge and center the rail visually by translating half its width.
+    // This avoids hardcoded pixel offsets that differ between left/right layouts.
+    const positionStyle = side === "left"
+        ? { left: `${railPosition}px`, transform: "translateX(-50%)" }   // Center on main's left border
+        : { right: `${railPosition}px`, transform: "translateX(50%)" }   // Center on main's right border
 
 
     return (
