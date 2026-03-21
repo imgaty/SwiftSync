@@ -2,8 +2,196 @@
     "config": {
         "locale": "en-US"
     },
+    
     "chart_description": "An interactive area chart",
     "loading": "Loading data...",
+
+    "sidebar_dashboard": "Dashboard",
+    "sidebar_calendar": "Calendar",
+    "sidebar_goals": "Goals",
+
+    "finance": {
+        "transactions": "Transactions",
+        "budgets": "Budgets",
+        "bills": "Bills",
+        "accounts": "Accounts",
+        "pages": {
+            "accounts_title": "Accounts",
+            "accounts_description": "Manage your bank accounts and cards",
+            "transactions_title": "Transactions",
+            "transactions_description": "View and manage all your transactions",
+            "budgets_title": "Budgets",
+            "budgets_description": "Set and track spending limits by category",
+            "bills_title": "Bills",
+            "bills_description": "Track your recurring bills and payments"
+        }
+    },
+
+    "command_palette": {
+        "placeholder": "Type a command or search...",
+        "no_results": "No results found.",
+        "navigation": "Navigation",
+        "go_to_dashboard": "Go to Dashboard",
+        "go_to_transactions": "Go to Transactions",
+        "go_to_budgets": "Go to Budgets",
+        "go_to_bills": "Go to Bills",
+        "go_to_accounts": "Go to Accounts",
+        "go_to_calendar": "Go to Calendar",
+        "go_to_goals": "Go to Goals",
+        "theme": "Theme",
+        "light_mode": "Light Mode",
+        "dark_mode": "Dark Mode",
+        "system_theme": "System Theme",
+        "language": "Language",
+        "switch_to_english": "Switch to English",
+        "switch_to_portuguese": "Switch to Portuguese"
+    },
+
+    "settings": {
+        "title": "Settings",
+        "description": "Manage your preferences",
+        "account": "Account",
+        "general": "General",
+        "appearance": "Appearance",
+        "language": "Language",
+        "notifications": "Notifications",
+        "shortcuts": "Keyboard Shortcuts",
+        "profile_info": "Profile Information",
+        "profile_info_desc": "Update your personal details",
+        "name": "Name",
+        "email": "Email",
+        "date_of_birth": "Date of Birth",
+        "recovery_email": "Recovery Email",
+        "recovery_email_desc": "Used for account recovery",
+        "change_password": "Change Password",
+        "change_password_desc": "Leave blank to keep your current password",
+        "current_password": "Current Password",
+        "new_password": "New Password",
+        "confirm_password": "Confirm Password",
+        "fill_all_password_fields": "Please fill all password fields",
+        "passwords_dont_match": "Passwords don't match",
+        "password_too_short": "Password must be at least 8 characters",
+        "profile_updated": "Changes saved successfully!",
+        "unsaved_changes": "You have unsaved changes",
+        "no_changes": "No changes to save",
+        "save_changes": "Save Changes",
+        "general_desc": "Configure general application settings",
+        "sidebar_position": "Sidebar Position",
+        "sidebar_position_desc": "Choose which side the sidebar appears on",
+        "left": "Left",
+        "right": "Right",
+        "appearance_desc": "Customize how the application looks",
+        "theme": "Theme",
+        "theme_desc": "Select your preferred color theme",
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System",
+        "colorblind_mode": "Color Vision",
+        "colorblind_mode_desc": "Adjust colors for better visibility",
+        "colorblind_none": "Default",
+        "colorblind_none_desc": "Standard color palette",
+        "colorblind_deuteranopia": "Deuteranopia",
+        "colorblind_deuteranopia_desc": "Red-green (most common)",
+        "colorblind_protanopia": "Protanopia",
+        "colorblind_protanopia_desc": "Red-blind",
+        "colorblind_tritanopia": "Tritanopia",
+        "colorblind_tritanopia_desc": "Blue-yellow",
+        "language_desc": "Choose your preferred language",
+        "notifications_desc": "Configure how you receive notifications",
+        "email_notifications": "Email Notifications",
+        "email_notifications_desc": "Receive notifications via email",
+        "push_notifications": "Push Notifications",
+        "push_notifications_desc": "Receive push notifications in browser",
+        "bill_reminders": "Bill Reminders",
+        "bill_reminders_desc": "Get reminded about upcoming bills",
+        "budget_alerts": "Budget Alerts",
+        "budget_alerts_desc": "Get alerted when nearing budget limits",
+        "shortcuts_desc": "Quick actions to navigate faster",
+        "two_factor": "Two-Factor Authentication",
+        "two_factor_desc": "Add an extra layer of security to your account",
+        "two_factor_enabled": "2FA is enabled",
+        "two_factor_disabled": "2FA is not enabled",
+        "enable_2fa": "Enable 2FA",
+        "disable_2fa": "Disable 2FA",
+        "scan_qr_code": "Scan this QR code with your authenticator app",
+        "enter_code": "Enter the 6-digit code from your app",
+        "backup_codes": "Backup Codes",
+        "backup_codes_desc": "Save these codes in a safe place. Each can be used once.",
+        "verify": "Verify",
+        "saving": "Saving..."
+    },
+
+    "auth_page": {
+        "footer": "© %{CURRENT_YEAR} SwiftSync. All rights reserved."
+    },
+
+    "oauth_buttons": {
+        "divider_label": "or",
+        "login_google": "Continue with Google",
+        "register_google": "Sign up with Google",
+        "login_apple": "Continue with Apple",
+        "register_apple": "Sign up with Apple",
+        "login_github": "Continue with GitHub",
+        "register_github": "Sign up with GitHub",
+        "login_microsoft": "Continue with Microsoft",
+        "register_microsoft": "Sign up with Microsoft"
+    },
+
+    "login_page": {
+        "title": "Welcome Back",
+        "subtitle": "Let's get your finances in sync!",
+        "email_label": "Email address",
+        "password_label": "Password",
+        "forgot_password": "Forgot password?",
+        "sign_in": "Sign in",
+        "signing_in": "Signing in...",
+        "verify": "Verify",
+        "verifying": "Verifying...",
+        "use_different_account": "Use a different account",
+        "no_account": "Don't have an account?",
+        "create_one": "Create one",
+        "two_factor_title": "Two-factor authentication",
+        "two_factor_subtitle": "A code was sent to your inbox",
+        "two_factor_hint": "Check your inbox",
+        "trust_device": "Trust this device for 30 days",
+        "resend_code": "Resend code",
+        "resending_code": "Resending...",
+        "error_fields_required": "Email and password are required",
+        "error_login_failed": "Login failed. Please try again.",
+        "error_generic": "An unexpected error occurred. Please try again.",
+        "error_network": "Connection lost. Check your internet and try again.",
+        "error_2fa_required": "Please enter your verification code",
+        "error_2fa_invalid": "Invalid verification code. Please try again.",
+        "show_password": "Show password",
+        "hide_password": "Hide password"
+    },
+
+    "register_page": {
+        "title": "Create your account",
+        "subtitle_email": "Start managing your finances in minutes",
+        "subtitle_details": "Tell us a bit about yourself",
+        "subtitle_password": "Secure your account",
+        "subtitle_security": "Optional extra protection"
+    },
+
+    "forgot_password_page": {
+        "title": "Forgot password?",
+        "subtitle": "Enter your email to reset your password",
+        "email_label": "Email address",
+        "error_email_required": "Email is required",
+        "error_generic": "Something went wrong",
+        "error_network": "An error occurred. Please try again.",
+        "success_title": "Check your email",
+        "success_message": "A reset link has been sent to ",
+        "back_to_login": "Back to login",
+        "sending": "Sending...",
+        "send_reset_link": "Send link"
+    },
+
+    "reset_password_page": {
+        "title": "Set new password",
+        "subtitle": "Choose a strong password for your account"
+    },
 
     "errors": {
         "file_not_found": {
@@ -29,11 +217,54 @@
     
     "data_type_labels": {
         "total": "Total",
+        "income": "Income",
+        "expenses": "Expenses",
         "predicted": "Predicted",
         "billed": "Billed",
         "taxes": "Taxes",
         "others": "Others",
-        "received": "Received"
+        "received": "Received",
+        "categories": "categories",
+        "move_left": "Move left",
+        "move_right": "Move right",
+        "move_up": "Move up",
+        "move_down": "Move down",
+        "customize": "Customize",
+        "close": "Close",
+        "remove": "Remove",
+        "all_time": "All time",
+        "filter": "Filter",
+        "filter_categories": "Filter categories",
+        "select_all": "All",
+        "clear": "Clear",
+        "previous": "Previous",
+        "next": "Next",
+        "add_chart": "Add chart",
+        "remove_chart": "Remove chart",
+        "custom_date_range": "Custom date range",
+        "custom_range": "Custom",
+        "start_date": "Start date",
+        "end_date": "End date",
+        "clear_range": "Clear",
+        "apply": "Apply",
+        "day": "day",
+        "days": "days",
+        "day_view": "Day",
+        "month_view": "Month",
+        "year_view": "Year",
+        "jump_to_year": "Jump to",
+        "customize_chart": "Customize Chart",
+        "customize_chart_desc": "Configure the display options for this chart.",
+        "metric_type": "Data Type",
+        "chart_type": "Chart Style",
+        "area": "Area",
+        "bar": "Bar",
+        "pie": "Pie",
+        "area_chart": "Line Chart",
+        "bar_chart": "Bar Chart",
+        "pie_chart": "Pie Chart",
+        "list_chart": "List",
+        "chart_style": "Chart style"
     },
     
     "navigation": {
@@ -94,5 +325,32 @@
         "bar": "Bar Chart",
         "pie": "Pie Chart",
         "list": "List"
-    }
+    },
+
+    "sidebar": {
+        "resize_tooltip_collapse": "Collapse sidebar (%shortcut)",
+        "resize_tooltip_expand": "Expand sidebar (%shortcut)"
+    },
+
+    "expanded_view": {
+        "press_esc_to_close": "Press ESC or click × to close"
+    },
+
+    "loading_hints": [
+        "Tip: Press ⌘K to open the command palette",
+        "You can connect multiple bank accounts from different banks",
+        "Set up budgets to track your spending by category",
+        "Transactions are automatically categorized for you",
+        "Use financial goals to track your savings progress",
+        "The calendar view shows all your transactions and bills at a glance",
+        "You can export your data in CSV or JSON at any time",
+        "Enable two-factor authentication for extra security",
+        "Cash flow projections help you plan ahead for the next 6 months",
+        "Customize your dashboard with different chart types",
+        "Recurring bills are tracked and you'll be notified before they're due",
+        "SwiftSync supports both Portuguese and English",
+        "Your data is encrypted and never shared with third parties",
+        "Use tags to organize your transactions your way",
+        "You can manage all your bank connections from the Accounts page"
+    ]
 }

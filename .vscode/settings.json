@@ -1,6 +1,7 @@
 {
-    "workbench.colorTheme": "Default Light Modern",
+    "workbench.colorTheme": "Vercel",
     "window.commandCenter": true,
     "workbench.editor.centeredLayoutFixedWidth": false,
-    "chat.commandCenter.enabled": false
+    "chat.commandCenter.enabled": false,
+    "css.lint.unknownAtRules": "ignore"
 }

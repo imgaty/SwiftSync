@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LanguageProvider } from "@/components/language-provider";
-import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { ThemeProvider } from "@/components/theme-provider";
+import { SmartTooltipProvider } from "@/components/ui/tooltip"
+import { ColorBlindProvider } from "@/components/colorblind-provider";
+import { AutoScrollProvider } from "@/components/ui/overflow-scroll";
+import { AuthProvider } from "@/components/auth-provider";
+import { QueryProvider } from "@/components/query-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,25 +30,53 @@ export default async function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode; }>) {
     const cookieStore = await cookies()
-    
-    // Read all sidebar preferences from cookies (server-side to prevent hydration flash)
-    const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
-    const defaultSide = (cookieStore.get("sidebar_side")?.value as "left" | "right") || "left"
-    // Width is stored in px
-    const savedWidth = parseInt(cookieStore.get("sidebar_width")?.value || "240", 10)
-    const defaultWidth = !isNaN(savedWidth) && savedWidth >= 200 && savedWidth <= 400 ? savedWidth : 240  // px
+
+    // Read language preference from cookie
+    const defaultLanguage = (cookieStore.get("language")?.value as "en" | "pt") || "en"
+
+    // Read colorblind mode from cookie
+    const defaultColorBlindMode = (cookieStore.get("colorblind_mode")?.value as "none" | "deuteranopia" | "protanopia" | "tritanopia") || "none"
 
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang={defaultLanguage} suppressHydrationWarning className={defaultColorBlindMode !== "none" ? `cb-${defaultColorBlindMode}` : undefined}>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            (function() {
+                                try {
+                                    var theme = localStorage.getItem('theme');
+                                    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                                        document.documentElement.classList.add('dark');
+                                    }
+                                } catch (e) {}
+                            })();
+                        `,
+                    }}
+                />
+            </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <LanguageProvider>
-                    <SidebarProvider defaultOpen={defaultOpen} defaultSide={defaultSide} defaultWidth={defaultWidth} showRail>
-                        <AppSidebar />
-                        <SidebarInset>
-                            {children}
-                        </SidebarInset>
-                    </SidebarProvider>
-                </LanguageProvider>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    storageKey="theme"
+                    disableTransitionOnChange
+                >
+                    <AutoScrollProvider>
+                    <ColorBlindProvider defaultMode={defaultColorBlindMode}>
+                    <SmartTooltipProvider>
+                        <LanguageProvider defaultLanguage={defaultLanguage}>
+                            <AuthProvider>
+                                <QueryProvider>
+                                    {children}
+                                </QueryProvider>
+                            </AuthProvider>
+                        </LanguageProvider>
+                    </SmartTooltipProvider>
+                    </ColorBlindProvider>
+                    </AutoScrollProvider>
+                </ThemeProvider>
             </body>
         </html>
     );
