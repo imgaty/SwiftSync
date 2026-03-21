@@ -1,0 +1,19 @@
+# Commit message template
+# Use this template to write commit messages in the project's preferred style.
+# Example: "Fix: Upgrade to latest Next.js"
+
+# Format:
+# <Type>: <Short Title Case Description>
+#
+# Optional body (more details, motivation, what changed).
+#
+# Footer: (e.g. issue refs, breaking changes)
+#
+# Allowed Types: Fix, Feat, Chore, Docs, Style, Refactor, Test, Perf, Ci
+
+<type>: <Short Title Case Description>
+
+
+Optional longer description (wrap at ~72 chars).
+
+Footer: Closes/Refs: #<issue-number> (optional)

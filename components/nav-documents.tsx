@@ -1,26 +1,27 @@
 "use client"
 
 import {
-  IconDots,
-  IconFolder,
-  IconShare3,
-  IconTrash,
-  type Icon,
-} from "@tabler/icons-react"
+  Folder,
+  Forward,
+  MoreHorizontal,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react"
+import Link from "next/link"
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  Dropdown,
+  DropdownShell,
+  DropdownItem,
+  DropdownSeparator,
+  DropdownTrigger,
+} from "@/components/ui/app-dropdown"
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
+  SidebarActionDropdown,
+  CollapsedTooltip,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -31,10 +32,10 @@ export function NavDocuments({
   items: {
     name: string
     url: string
-    icon: Icon
+    icon: LucideIcon
   }[]
 }) {
-  const { isMobile, side } = useSidebar()
+  const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -42,49 +43,46 @@ export function NavDocuments({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
+            <CollapsedTooltip asChild>
+              <Link href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
-              </a>
-            </SidebarMenuButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction
-                  showOnHover
-                  className="data-[state=open]:bg-accent rounded-sm"
-                >
-                  <IconDots />
+              </Link>
+            </CollapsedTooltip>
+            <Dropdown>
+              <DropdownTrigger asChild>
+                <SidebarActionDropdown showOnHover>
+                  <MoreHorizontal />
                   <span className="sr-only">More</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-24 rounded-lg"
-                side={isMobile ? "bottom" : side === "left" ? "right" : "left"}
+                </SidebarActionDropdown>
+              </DropdownTrigger>
+              <DropdownShell
+                className="w-48 rounded-lg"
+                side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem>
-                  <IconFolder />
-                  <span>Open</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <IconShare3 />
-                  <span>Share</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  <IconTrash />
-                  <span>Delete</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <DropdownItem>
+                  <Folder className="text-neutral-500 dark:text-neutral-400" />
+                  <span>View Document</span>
+                </DropdownItem>
+                <DropdownItem>
+                  <Forward className="text-neutral-500 dark:text-neutral-400" />
+                  <span>Share Document</span>
+                </DropdownItem>
+                <DropdownSeparator />
+                <DropdownItem>
+                  <Trash2 className="text-neutral-500 dark:text-neutral-400" />
+                  <span>Delete Document</span>
+                </DropdownItem>
+              </DropdownShell>
+            </Dropdown>
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <IconDots className="text-sidebar-foreground/70" />
+          <CollapsedTooltip className="text-sidebar-foreground/70">
+            <MoreHorizontal className="text-sidebar-foreground/70" />
             <span>More</span>
-          </SidebarMenuButton>
+          </CollapsedTooltip>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>

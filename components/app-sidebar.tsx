@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useEffect, useState } from "react"
 
 import {
     AudioWaveform,
@@ -12,7 +13,12 @@ import {
     Map,
     SlidersHorizontal,
     Command,
-    Option
+    Option,
+    ArrowLeftRight,
+    PiggyBank,
+    Receipt,
+    Wallet,
+    Target,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -26,53 +32,37 @@ import {
     SidebarHeader,
 } from "@/components/ui/sidebar"
 
+import { useLanguage } from "@/components/language-provider"
 
+interface UserProfile {
+    id: string;
+    name: string;
+    email: string;
+    dateOfBirth: string;
+    initials: string;
+    createdAt: string;
+}
 
-// This is sample data.
-const data = {
-    user: {
-        name: "Hilário Ferreira",
-        email: "email@example.com",
-        avatar: "",
+// Company data (static)
+const companyData = [
+    {
+        name: "Acme Inc.",
+        logo: Option,
+        plan: "Enterprise",
     },
+    {
+        name: "Feel Good Inc.",
+        logo: AudioWaveform,
+        plan: "Startup",
+    },
+    {
+        name: "Evil Corp.",
+        logo: Command,
+        plan: "Free",
+    },
+]
 
-    teams: [
-        {
-            name: "Acme Inc",
-            logo: Option,
-            plan: "Enterprise",
-        },
-        {
-            name: "Acme Corp.",
-            logo: AudioWaveform,
-            plan: "Startup",
-        },
-        {
-            name: "Evil Corp.",
-            logo: Command,
-            plan: "Free",
-        },
-    ],
-
-    pages: [
-        {
-            name: "Dashboard",
-            url: "/",
-            icon: LayoutDashboard,
-        },
-        {
-            name: "Calendar",
-            url: "/Calendar",
-            icon: Calendar,
-        },
-        {
-            name: "Travel",
-            url: "#",
-            icon: Map,
-        },
-    ],
-
-    navMain: [
+const navMain = [
         {
             title: "Playground",
             url: "#",
@@ -158,25 +148,105 @@ const data = {
                 },
             ],
         },
-    ],
-}
+    ]
 
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const { t, language } = useLanguage()
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+    const [isLoadingUser, setIsLoadingUser] = useState(true)
+
+    // Function to fetch user profile
+    const fetchProfile = React.useCallback(async () => {
+        try {
+            const response = await fetch('/api/auth/profile')
+            if (response.ok) {
+                const data = await response.json()
+                setUserProfile(data)
+            }
+        } catch (error) {
+            console.error('Failed to fetch user profile:', error)
+        } finally {
+            setIsLoadingUser(false)
+        }
+    }, [])
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        fetchProfile()
+    }, [fetchProfile])
+
+    // Listen for profile updates from settings dialog
+    useEffect(() => {
+        const handleProfileUpdate = () => {
+            fetchProfile()
+        }
+        window.addEventListener('profile-updated', handleProfileUpdate)
+        return () => {
+            window.removeEventListener('profile-updated', handleProfileUpdate)
+        }
+    }, [fetchProfile])
+
+    // User data for NavUser
+    const userData = {
+        name: userProfile?.name || 'User',
+        email: userProfile?.email || '',
+        avatar: '', // Could add avatar URL later
+    }
+
+    // Pages use translations - must be inside component to access `t`
+    const pages = [
+        {
+            name: t.sidebar_dashboard,
+            url: "/",
+            icon: LayoutDashboard,
+        },
+        {
+            name: t.finance?.transactions || "Transactions",
+            url: "/Transactions",
+            icon: ArrowLeftRight,
+        },
+        {
+            name: t.finance?.budgets || "Budgets",
+            url: "/Budgets",
+            icon: PiggyBank,
+        },
+        {
+            name: t.finance?.bills || "Bills",
+            url: "/Bills",
+            icon: Receipt,
+        },
+        {
+            name: t.finance?.accounts || "Accounts",
+            url: "/Accounts",
+            icon: Wallet,
+        },
+        {
+            name: t.sidebar_calendar,
+            url: "/Calendar",
+            icon: Calendar,
+        },
+        {
+            name: t.sidebar_goals || (language === "pt" ? "Metas" : "Goals"),
+            url: "/Goals",
+            icon: Target,
+        },
+    ]
+
     return (
         <Sidebar variant="inset" collapsible="icon" {...props}>
             <SidebarHeader>
-                <TeamSwitcher teams={data.teams} />
+                <TeamSwitcher teams={companyData} />
             </SidebarHeader>
 
             <SidebarContent>
-                <NavPages pages={data.pages} />
-                <NavMain items={data.navMain} />
+                <NavPages pages={pages} />
+                {/*<NavMain items={data.navMain} />*/}
             </SidebarContent>
 
             <SidebarFooter>
-                <NavUser user={data.user} />
+                <NavUser user={userData} isLoading={isLoadingUser} />
             </SidebarFooter>
 
         </Sidebar>

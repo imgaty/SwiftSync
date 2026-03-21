@@ -1,0 +1,326 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client"
+    output   = "../lib/generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// USER & AUTHENTICATION
+// =============================================================================
+
+model User {
+    id                  String          @id @default(cuid())
+
+    email               String          @unique
+    name                String
+    password            String
+    dateOfBirth         String
+    recoveryEmail       String?
+
+    // Admin & account status fields
+    role                String          @default("user")        // "user", "admin", "superadmin"
+    status              String          @default("active")      // "active", "suspended", "banned", "deleted"
+    suspendedAt         DateTime?                               // When the account was suspended
+    suspendedReason     String?                                 // Reason for suspension
+    lastLoginAt         DateTime?                               // Last successful login timestamp
+    lastLoginIp         String?                                 // Last login IP address
+
+    // Password reset fields
+    resetToken          String?
+    resetTokenExpiry    DateTime?       // Adds an expiration date 1 hour after the reset token creation
+
+    // 2FA fields (TOTP — authenticator app)
+    twoFactorEnabled    Boolean         @default(false)
+    twoFactorSecret     String?                                 // TOTP secret (base32, for authenticator apps)
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    bankAccounts        BankAccount[]
+    transactions        Transaction[]
+    bills               Bill[]
+    budgets             Budget[]
+    financialGoals      FinancialGoal[]
+    notifications       Notification[]
+    categorizationRules CategorizationRule[]
+    oauthAccounts       OAuthAccount[]
+    trustedDevices      TrustedDevice[]
+    saltEdgeConnections SaltEdgeConnection[]
+    auditLogs           AuditLog[]      // Admin actions performed ON this user
+    auditLogsPerformed  AuditLog[]      @relation("AuditPerformer") // Admin actions performed BY this user
+}
+
+// =============================================================================
+// TRUSTED DEVICES (skip 2FA on recognised browsers)
+// =============================================================================
+
+model TrustedDevice {
+    id                  String          @id @default(cuid())
+    userId              String
+    token               String          @unique                 // Random token stored in cookie
+    label               String          @default("Unknown")     // Browser / OS hint
+    expiresAt           DateTime                                // 30-day validity
+
+    createdAt           DateTime        @default(now())
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OAuthAccount {
+    id                  String          @id @default(cuid())
+    userId              String
+    provider            String                                  // google, apple, github, microsoft
+    providerAccountId   String                                  // ID from the OAuth provider
+    accessToken         String?
+    refreshToken        String?
+    expiresAt           DateTime?
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+// =============================================================================
+// SALT EDGE CONNECTIONS (link users to their Open Banking connections)
+// =============================================================================
+
+model SaltEdgeConnection {
+    id                  String          @id @default(cuid())
+    userId              String
+    customerId          String                                  // Salt Edge customer ID
+    connectionId        String          @unique                 // Salt Edge connection ID
+    providerCode        String                                  // e.g. "fake_client_xf"
+    providerName        String                                  // e.g. "Fake Bank"
+    countryCode         String          @default("PT")
+    status              String          @default("active")      // active, inactive, disabled
+    lastSyncAt          DateTime?                               // Last successful data sync
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accounts            BankAccount[]
+}
+
+// =============================================================================
+// BANKING (cached from Salt Edge)
+// =============================================================================
+
+model BankAccount {
+    id                  String          @id @default(cuid())
+    userId              String
+
+    connectionId        String?                                 // FK to SaltEdgeConnection
+    saltEdgeAccountId   String?         @unique                 // Salt Edge account ID (for dedup)
+
+    bankId              String
+    accountType         String          @default("checking")    // checking, savings, credit_card, digital_wallet, loan
+    cardName            String                                  // Display name for the account/card
+    iban                String?                                 // IBAN if available
+    currency            String          @default("EUR")
+
+    balance             Decimal         @db.Decimal(20, 2)      @default(0)
+    color               String          @default("#3B82F6")
+    isActive            Boolean         @default(true)
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    bank                Bank            @relation(fields: [bankId], references: [id])
+    connection          SaltEdgeConnection? @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+}
+
+model Bank {
+    id                  String          @id @default(cuid())
+    name                String          @unique
+
+    accounts            BankAccount[]
+}
+
+// =============================================================================
+// TRANSACTIONS (cached from Salt Edge)
+// =============================================================================
+
+model Transaction {
+    id                  String          @id @default(cuid())
+    userId              String
+
+    saltEdgeId          String?         @unique                 // Salt Edge transaction ID (for dedup)
+
+    date                DateTime        @db.Date
+    type                String                                  // "in" or "out"
+    amount              Decimal         @db.Decimal(20, 2)
+    description         String
+    tags                String[]                                // Array of tag strings
+    accountId           String                                  // Reference to BankAccount
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// BILLS & SUBSCRIPTIONS
+// =============================================================================
+
+model Bill {
+    id                  String          @id @default(cuid())
+    userId              String
+
+    name                String
+    amount              Decimal         @db.Decimal(20, 2)
+    tags                String[]
+    dueDay              Int                                     // Day of month (1-31)
+    frequency           String                                  // "weekly", "monthly", "yearly"
+    accountId           String
+    category            String
+    autopay             Boolean         @default(false)
+    status              String          @default("pending")     // "paid", "pending", "overdue", "upcoming"
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// BUDGETS
+// =============================================================================
+
+model Budget {
+    id                  String          @id @default(cuid())
+    userId              String
+
+    tag                 String                                  // Budget category tag
+    category            String                                  // Display name
+    limit               Decimal         @db.Decimal(20, 2)      // Budget limit amount
+    color               String          @default("#6366f1")     // Display color
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// FINANCIAL GOALS
+// =============================================================================
+
+model FinancialGoal {
+    id                  String          @id @default(cuid())
+    userId              String
+
+    name                String                                  // e.g. "Férias 2027"
+    targetAmount        Decimal         @db.Decimal(20, 2)      // Goal amount
+    currentAmount       Decimal         @db.Decimal(20, 2) @default(0)
+    deadline            DateTime?       @db.Date                // Target date
+    category            String          @default("savings")     // savings, emergency, investment, purchase, travel, other
+    color               String          @default("#6366f1")
+    status              String          @default("active")      // active, completed, cancelled
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+    id                  String          @id @default(cuid())
+    userId              String
+
+    title               String
+    message             String
+    type                String                                  // "bill_due", "budget_exceeded", "goal_reached", "general"
+    read                Boolean         @default(false)
+    actionUrl           String?                                 // Optional link to relevant page
+
+    createdAt           DateTime        @default(now())
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// AUTO-CATEGORIZATION RULES
+// =============================================================================
+
+model CategorizationRule {
+    id                  String          @id @default(cuid())
+    userId              String
+
+    pattern             String                                  // Keyword or regex pattern to match
+    matchField          String          @default("description") // "description" or "name"
+    tag                 String                                  // Tag to assign when matched
+    priority            Int             @default(0)             // Higher = checked first
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// ADMIN — AUDIT LOG
+// =============================================================================
+
+model AuditLog {
+    id                  String          @id @default(cuid())
+
+    performerId         String                                  // Admin who performed the action
+    targetUserId        String?                                 // User the action was performed on (if applicable)
+
+    action              String                                  // e.g. "user.suspend", "user.delete", "user.reset_2fa", "user.impersonate"
+    entity              String                                  // e.g. "user", "transaction", "bill", "system"
+    entityId            String?                                 // ID of the affected entity
+    details             String?                                 // JSON string with extra context
+    ipAddress           String?                                 // IP of the admin performing the action
+
+    createdAt           DateTime        @default(now())
+
+    performer           User            @relation("AuditPerformer", fields: [performerId], references: [id], onDelete: Cascade)
+    targetUser          User?           @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
+
+    @@index([performerId])
+    @@index([targetUserId])
+    @@index([action])
+    @@index([createdAt])
+}
+
+// =============================================================================
+// ADMIN — SYSTEM ANNOUNCEMENTS
+// =============================================================================
+
+model SystemAnnouncement {
+    id                  String          @id @default(cuid())
+
+    title               String
+    message             String
+    type                String          @default("info")        // "info", "warning", "critical", "maintenance"
+    isActive            Boolean         @default(true)
+    startsAt            DateTime        @default(now())         // When to start showing
+    expiresAt           DateTime?                               // When to stop showing (null = never)
+    createdBy           String                                  // Admin user ID who created it
+
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    @@index([isActive, startsAt, expiresAt])
+}

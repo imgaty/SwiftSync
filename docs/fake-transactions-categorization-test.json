@@ -1,0 +1,302 @@
+[
+  {
+    "id": "tx-001",
+    "date": "2026-03-01",
+    "type": "out",
+    "amount": 54.92,
+    "currency": "EUR",
+    "description": "CONTINENTE LOJA 237 LISBOA",
+    "expectedCurrentEngineTags": ["groceries"],
+    "expectedEnhancedSystem": {
+      "category": "groceries",
+      "confidence": 0.98,
+      "needsUserConfirmation": false,
+      "reason": "Strong merchant keyword match"
+    }
+  },
+  {
+    "id": "tx-002",
+    "date": "2026-03-01",
+    "type": "out",
+    "amount": 3.2,
+    "currency": "EUR",
+    "description": "CAFE RUA AUGUSTA TPA 9981",
+    "expectedCurrentEngineTags": ["coffee_snacks"],
+    "expectedEnhancedSystem": {
+      "category": "coffee_snacks",
+      "confidence": 0.79,
+      "needsUserConfirmation": true,
+      "reason": "Small local POS with partial match"
+    }
+  },
+  {
+    "id": "tx-003",
+    "date": "2026-03-02",
+    "type": "out",
+    "amount": 12.49,
+    "currency": "EUR",
+    "description": "UBER EATS *LISBON PT",
+    "expectedCurrentEngineTags": ["food_delivery", "transport"],
+    "expectedEnhancedSystem": {
+      "category": "food_delivery",
+      "confidence": 0.94,
+      "needsUserConfirmation": false,
+      "reason": "Delivery signal should outrank transport with priority"
+    }
+  },
+  {
+    "id": "tx-004",
+    "date": "2026-03-02",
+    "type": "out",
+    "amount": 8.7,
+    "currency": "EUR",
+    "description": "MBWAY JOAO SILVA",
+    "expectedCurrentEngineTags": ["transfer_personal"],
+    "expectedEnhancedSystem": {
+      "category": "transfer_personal",
+      "confidence": 0.66,
+      "needsUserConfirmation": true,
+      "reason": "P2P transfer is inherently ambiguous"
+    }
+  },
+  {
+    "id": "tx-005",
+    "date": "2026-03-03",
+    "type": "out",
+    "amount": 32.5,
+    "currency": "EUR",
+    "description": "MBWAY MERCEARIA BAIRRO",
+    "expectedCurrentEngineTags": [],
+    "expectedEnhancedSystem": {
+      "category": "groceries",
+      "confidence": 0.58,
+      "needsUserConfirmation": true,
+      "reason": "Merchant-like MB WAY descriptor but weak certainty"
+    }
+  },
+  {
+    "id": "tx-006",
+    "date": "2026-03-03",
+    "type": "out",
+    "amount": 9.99,
+    "currency": "EUR",
+    "description": "SPOTIFY PREMIUM",
+    "expectedCurrentEngineTags": ["subscriptions"],
+    "expectedEnhancedSystem": {
+      "category": "subscriptions",
+      "confidence": 0.99,
+      "needsUserConfirmation": false,
+      "reason": "Exact merchant match"
+    }
+  },
+  {
+    "id": "tx-007",
+    "date": "2026-03-04",
+    "type": "out",
+    "amount": 47,
+    "currency": "EUR",
+    "description": "TRF INTL ABC LTD",
+    "expectedCurrentEngineTags": ["international_transfer"],
+    "expectedEnhancedSystem": {
+      "category": "international_transfer",
+      "confidence": 0.63,
+      "needsUserConfirmation": true,
+      "reason": "Generic offshore descriptor"
+    }
+  },
+  {
+    "id": "tx-008",
+    "date": "2026-03-05",
+    "type": "out",
+    "amount": 87,
+    "currency": "EUR",
+    "description": "EDP COMERCIAL FATURA",
+    "expectedCurrentEngineTags": ["utilities"],
+    "expectedEnhancedSystem": {
+      "category": "utilities",
+      "confidence": 0.97,
+      "needsUserConfirmation": false,
+      "reason": "Known utility provider"
+    }
+  },
+  {
+    "id": "tx-009",
+    "date": "2026-03-05",
+    "type": "out",
+    "amount": 14.2,
+    "currency": "EUR",
+    "description": "PASTELARIA CENTRAL LIS",
+    "expectedCurrentEngineTags": ["coffee_snacks"],
+    "expectedEnhancedSystem": {
+      "category": "coffee_snacks",
+      "confidence": 0.82,
+      "needsUserConfirmation": true,
+      "reason": "Local merchant normalized as cafe/snack"
+    }
+  },
+  {
+    "id": "tx-010",
+    "date": "2026-03-06",
+    "type": "out",
+    "amount": 16,
+    "currency": "EUR",
+    "description": "UBER BV",
+    "expectedCurrentEngineTags": ["transport"],
+    "expectedEnhancedSystem": {
+      "category": "transport",
+      "confidence": 0.91,
+      "needsUserConfirmation": false,
+      "reason": "Strong mobility keyword"
+    }
+  },
+  {
+    "id": "tx-011",
+    "date": "2026-03-06",
+    "type": "out",
+    "amount": 29.9,
+    "currency": "EUR",
+    "description": "AMAZON EU SARL",
+    "expectedCurrentEngineTags": ["shopping"],
+    "expectedEnhancedSystem": {
+      "category": "shopping",
+      "confidence": 0.89,
+      "needsUserConfirmation": false,
+      "reason": "Known marketplace merchant"
+    }
+  },
+  {
+    "id": "tx-012",
+    "date": "2026-03-07",
+    "type": "out",
+    "amount": 5,
+    "currency": "EUR",
+    "description": "MBWAY ANA COSTA",
+    "expectedCurrentEngineTags": ["transfer_personal"],
+    "expectedEnhancedSystem": {
+      "category": "transfer_personal",
+      "confidence": 0.64,
+      "needsUserConfirmation": true,
+      "reason": "Person transfer with uncertain intent"
+    }
+  },
+  {
+    "id": "tx-013",
+    "date": "2026-03-08",
+    "type": "out",
+    "amount": 42,
+    "currency": "EUR",
+    "description": "RESTAURANTE O FAROL",
+    "expectedCurrentEngineTags": ["restaurants"],
+    "expectedEnhancedSystem": {
+      "category": "restaurants",
+      "confidence": 0.88,
+      "needsUserConfirmation": false,
+      "reason": "Direct restaurant keyword"
+    }
+  },
+  {
+    "id": "tx-014",
+    "date": "2026-03-08",
+    "type": "out",
+    "amount": 6.8,
+    "currency": "EUR",
+    "description": "TPA 8871 LX",
+    "expectedCurrentEngineTags": [],
+    "expectedEnhancedSystem": {
+      "category": "uncategorized",
+      "confidence": 0.2,
+      "needsUserConfirmation": true,
+      "reason": "No reliable merchant signal"
+    }
+  },
+  {
+    "id": "tx-015",
+    "date": "2026-03-09",
+    "type": "out",
+    "amount": 43.5,
+    "currency": "EUR",
+    "description": "LIDL PORTO 0044",
+    "expectedCurrentEngineTags": ["groceries"],
+    "expectedEnhancedSystem": {
+      "category": "groceries",
+      "confidence": 0.97,
+      "needsUserConfirmation": false,
+      "reason": "Known grocery chain"
+    }
+  },
+  {
+    "id": "tx-016",
+    "date": "2026-03-10",
+    "type": "out",
+    "amount": 11.95,
+    "currency": "EUR",
+    "description": "FARMACIA NACIONAL",
+    "expectedCurrentEngineTags": ["health"],
+    "expectedEnhancedSystem": {
+      "category": "health",
+      "confidence": 0.93,
+      "needsUserConfirmation": false,
+      "reason": "Healthcare keyword"
+    }
+  },
+  {
+    "id": "tx-017",
+    "date": "2026-03-10",
+    "type": "out",
+    "amount": 250,
+    "currency": "EUR",
+    "description": "WIRE TRANSFER BLUEWAVE HOLDINGS",
+    "expectedCurrentEngineTags": ["international_transfer"],
+    "expectedEnhancedSystem": {
+      "category": "international_transfer",
+      "confidence": 0.61,
+      "needsUserConfirmation": true,
+      "reason": "Wire transfer with generic counterparty"
+    }
+  },
+  {
+    "id": "tx-018",
+    "date": "2026-03-11",
+    "type": "out",
+    "amount": 39.99,
+    "currency": "EUR",
+    "description": "NETFLIX.COM",
+    "expectedCurrentEngineTags": ["subscriptions"],
+    "expectedEnhancedSystem": {
+      "category": "subscriptions",
+      "confidence": 0.99,
+      "needsUserConfirmation": false,
+      "reason": "Direct subscription merchant"
+    }
+  },
+  {
+    "id": "tx-019",
+    "date": "2026-03-11",
+    "type": "out",
+    "amount": 3.5,
+    "currency": "EUR",
+    "description": "COFFEE KIOSK METRO",
+    "expectedCurrentEngineTags": ["coffee_snacks"],
+    "expectedEnhancedSystem": {
+      "category": "coffee_snacks",
+      "confidence": 0.81,
+      "needsUserConfirmation": true,
+      "reason": "Likely snack/coffee but not fully deterministic"
+    }
+  },
+  {
+    "id": "tx-020",
+    "date": "2026-03-12",
+    "type": "in",
+    "amount": 850,
+    "currency": "EUR",
+    "description": "TRANSFERENCIA ORDENADO EMPRESA X",
+    "expectedCurrentEngineTags": [],
+    "expectedEnhancedSystem": {
+      "category": "income_salary",
+      "confidence": 0.74,
+      "needsUserConfirmation": true,
+      "reason": "Income pattern but no explicit salary rule"
+    }
+  }
+]

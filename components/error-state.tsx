@@ -37,9 +37,9 @@ export function ErrorState({ type, className, details, fileName }: ErrorStatePro
     const messageParts = errorTranslation.message.split('%fileName')
 
     return (
-        <Card className = {cn("justify-center items-center gap-3 | text-muted-foreground text-center", className)}>
-            <Icon className = "w-10 h-10 opacity-25"/>
-            <div> 
+        <Card className = {cn("justify-center items-center gap-3 | text-muted-foreground text-center animate-fade-in", className)}>
+            <Icon className = "w-10 h-10 opacity-25 animate-pulse"/>
+            <div className="animate-fade-in-up stagger-1"> 
                 <h3 className = "text-foreground">{errorTranslation.title}</h3>
                 <p className = "text-sm">
                     {messageParts.map((part, i) => (
