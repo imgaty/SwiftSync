@@ -992,6 +992,11 @@ export type BankFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Skip the first `n` Banks.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Banks.
+   */
   distinct?: Prisma.BankScalarFieldEnum | Prisma.BankScalarFieldEnum[]
 }
 

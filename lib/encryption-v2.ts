@@ -35,7 +35,7 @@ const VERSION_CONFIGS: Record<number, VersionConfig> = {
     saltLength: 64,       // Longer salt
     scryptN: 32768,       // Higher cost
     scryptR: 8,
-    scryptP: 2,           // More parallelization
+    scryptP: 1,           // Parallelization
     pepper: 'SwiftSync-V2-Evolved-2026',
   },
   3: {
@@ -43,9 +43,9 @@ const VERSION_CONFIGS: Record<number, VersionConfig> = {
     keyLength: 32,
     ivLength: 16,
     saltLength: 64,
-    scryptN: 65536,       // Even higher cost (slows down brute force)
+    scryptN: 32768,       // Higher cost (slows down brute force)
     scryptR: 8,
-    scryptP: 4,
+    scryptP: 1,
     pepper: 'SwiftSync-V3-Adaptive-2026-' + getRotatingPepper(),
   },
 };
@@ -98,6 +98,7 @@ function deriveKey(salt: Buffer, version: number): Buffer {
     N: config.scryptN,
     r: config.scryptR,
     p: config.scryptP,
+    maxmem: 128 * config.scryptN * config.scryptR * config.scryptP + (1024 * 1024),
   });
 }
 

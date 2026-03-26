@@ -34,10 +34,16 @@ async function postJson<T>(url: string, body: unknown, withCredentials = false):
       body: JSON.stringify(body),
     })
   } catch {
-    throw new Error('network')
+    throw new Error('Network error — check your internet connection.')
   }
 
-  const data = await res.json() as T
+  let data: T
+  try {
+    data = await res.json() as T
+  } catch {
+    throw new Error(`Server returned ${res.status} with no JSON body.`)
+  }
+
   return { ok: res.ok, data }
 }
 
@@ -138,9 +144,7 @@ export default function RegisterPage() {
         if (!ok) { setError(data.error || 'An account with this email already exists.'); return }
         goNext()
       } catch (e) {
-        setError(e instanceof Error && e.message === 'network'
-          ? 'Connection lost. Check your internet and try again.'
-          : 'Could not verify email. Please try again.')
+        setError(e instanceof Error ? e.message : 'Unknown error while checking email.')
       } finally {
         setLoading(false)
       }
@@ -189,9 +193,7 @@ export default function RegisterPage() {
         setBankStep(true)
       }
     } catch (e) {
-      setError(e instanceof Error && e.message === 'network'
-        ? 'Connection lost. Check your internet and try again.'
-        : 'An error occurred. Please try again.')
+      setError(e instanceof Error ? e.message : 'Unknown error during registration.')
     } finally {
       setLoading(false)
     }
@@ -201,7 +203,7 @@ export default function RegisterPage() {
   const start2FASetup = useCallback(async () => {
     setSetupState('loading')
     try {
-      const res = await fetch('/api/auth/2fa-setup', { method: 'POST', credentials: 'include' })
+      const res = await fetch('/api/auth/2fa/setup', { method: 'POST', credentials: 'include' })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
         toast.error(d.error || 'Failed to set up 2FA')
@@ -212,7 +214,7 @@ export default function RegisterPage() {
       setSecret(data.secret)
       const QRCode = await import('qrcode')
       const toDataURL = QRCode.toDataURL || QRCode.default?.toDataURL
-      const url = await toDataURL(data.uri, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+      const url = await toDataURL(data.otpauthUrl, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
       setQrDataUrl(url)
       setSetupState('scanning')
     } catch {
@@ -225,7 +227,7 @@ export default function RegisterPage() {
     if (!verifyCode || verifyCode.length < 6) { toast.error('Please enter the 6-digit code'); return }
     setIs2FAVerifying(true)
     try {
-      const res = await fetch('/api/auth/2fa-enable', {
+      const res = await fetch('/api/auth/2fa/verify', {
         method: 'POST', credentials: 'include',
         headers: JSON_HEADERS,
         body: JSON.stringify({ code: verifyCode })
@@ -421,6 +423,7 @@ export default function RegisterPage() {
 
           <form
             onSubmit={currentStep === 'security' ? handleSubmit : (e) => { e.preventDefault(); handleNext() }}
+            noValidate
             className="space-y-4"
           >
             <ErrorAlert message={error} />

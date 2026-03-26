@@ -4,6 +4,7 @@ import { randomBytes, randomInt, createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, hashPassword, passwordShouldUpgrade } from '@/lib/adaptive-encryption';
 import { send2FACode } from '@/lib/email';
+import { createSessionToken, verifySessionToken } from '@/lib/session';
 
 // --- Constants ---------------------------------------------------------------
 const TRUST_DEVICE_MAX_AGE = 30 * 24 * 60 * 60;                                                                                 // Amount of time the device will be trusted for (30 days)
@@ -18,7 +19,7 @@ const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 const MAX_2FA_ATTEMPTS = 5;
 const MAX_PENDING = 10_000;
-const PW_MIN = 6;
+const PW_MIN = 8;
 const PW_MAX = 128;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEN_MIN = 10 * 60 * 1000;
@@ -88,14 +89,18 @@ async function getAuth<T extends Record<string, boolean>>(select?: T) {
     const tok = cs.get('auth-token')?.value;
 
     if (!tok) return null;
+
+    const session = await verifySessionToken(tok);
+    if (!session) return null;
     
-    return prisma.user.findUnique({ where: { id: tok }, select: select as T });
+    return prisma.user.findUnique({ where: { id: session.uid }, select: select as T });
 }
 
 async function setAuth(userId: string) {
     const cs = await cookies();
+    const token = await createSessionToken(userId, SESSION_MAX_AGE);
 
-    cs.set('auth-token', userId, { httpOnly: true, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
+    cs.set('auth-token', token, { httpOnly: true, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
     cs.set('user-session', JSON.stringify({ id: userId }), { httpOnly: false, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
 }
 
@@ -111,7 +116,7 @@ async function maybeUpgrade(userId: string, password: string, storedHash: string
 const POST_ROUTES: Record<string, (r: Request) => Promise<NextResponse>> = {
     login: handleLogin, '2fa-login': handle2FALogin, register: handleRegister,
     'check-email': handleCheckEmail, logout: handleLogout, update: handleUpdate,
-    'trusted-devices': handleTrustedDevices,
+    'trusted-devices': handleTrustedDevices, 'delete-account': handleDeleteAccount,
 };
 
 const GET_ROUTES: Record<string, () => Promise<NextResponse>> = {
@@ -150,20 +155,20 @@ async function handleLogin(request: Request) {
 
         const user = await prisma.user.findFirst({
             where: { email: { equals: email, mode: 'insensitive' } },
-            select: { id: true, email: true, password: true, twoFactorEnabled: true },
+            select: { id: true, email: true, password: true, twoFactorEnabled: true, role: true },
         });
 
         if (!user) { 
             verifyPassword(password, dummyHash());
             rateFail(clientIp);
 
-            return err('Invalid email or password', 401);
+            return err('NO_ACCOUNT', 401);
         }
 
         if (!verifyPassword(password, user.password)) {
             rateFail(clientIp);
 
-            return err('Invalid email or password', 401);
+            return err('WRONG_PASSWORD', 401);
         }
 
         rateLimits.delete(clientIp);
@@ -184,7 +189,7 @@ async function handleLogin(request: Request) {
 
                     if (needsUpgrade) console.log(`🧬 User ${user.id} password hash auto-upgraded`);
 
-                    return ok({ success: true, message: 'Login successful (trusted device)', userId: user.id });
+                    return ok({ success: true, message: 'Login successful (trusted device)', userId: user.id, role: user.role });
                 }
 
                 if (td) await prisma.trustedDevice.delete({ where: { id: td.id } }).catch(() => {});
@@ -236,7 +241,8 @@ async function handleLogin(request: Request) {
         return ok({
             success: true,
             message: 'Login successful',
-            userId: user.id
+            userId: user.id,
+            role: user.role
         });
 
     } catch (e) {
@@ -269,6 +275,7 @@ async function handle2FALogin(request: Request) {
     if (sha256(code) !== user.twoFactorCode) { session.attempts++; return err('Invalid verification code', 401); }
 
     pending2FA.delete(tempToken);
+    const fullUser = await prisma.user.findUnique({ where: { id: session.userId }, select: { role: true } });
     await Promise.all([
       prisma.user.update({ where: { id: user.id }, data: { twoFactorCode: null, twoFactorCodeExpiry: null } }),
       setAuth(session.userId),
@@ -287,7 +294,7 @@ async function handle2FALogin(request: Request) {
       cs.set(TRUST_COOKIE, raw, { httpOnly: true, ...COOKIE_OPTS, maxAge: TRUST_DEVICE_MAX_AGE });
     }
 
-    return ok({ success: true, message: 'Login successful', userId: session.userId });
+    return ok({ success: true, message: 'Login successful', userId: session.userId, role: fullUser?.role });
   } catch (e) { console.error('2FA login error:', e); return err('Something went wrong while verifying your code. Please try again.', 500); }
 }
 
@@ -347,7 +354,10 @@ async function handleVerify() {
     const tok = cs.get('auth-token');
     if (!tok) return ok({ authenticated: false }, 401);
 
-    const user = await prisma.user.findUnique({ where: { id: tok.value }, select: { id: true } });
+    const session = await verifySessionToken(tok.value);
+    if (!session) { cs.delete('auth-token'); cs.delete('user-session'); return ok({ authenticated: false }, 401); }
+
+    const user = await prisma.user.findUnique({ where: { id: session.uid }, select: { id: true } });
     if (!user) { cs.delete('auth-token'); cs.delete('user-session'); return ok({ authenticated: false }, 401); }
     return ok({ authenticated: true, userId: user.id });
   } catch (e) { console.error('Verification error:', e); return ok({ authenticated: false }, 500); }
@@ -405,6 +415,30 @@ async function handleUpdate(request: Request) {
   } catch (e) { console.error('Update error:', e); return err('Could not update your profile. Please try again.', 500); }
 }
 
+// --- DELETE ACCOUNT ----------------------------------------------------------
+async function handleDeleteAccount(request: Request) {
+  try {
+    const user = await getAuth({ id: true, password: true } as const);
+    if (!user) return err('Not authenticated', 401);
+
+    const { password } = await request.json();
+    if (!password || typeof password !== 'string') return err('Password is required', 400);
+    if (!verifyPassword(password, user.password)) return err('Incorrect password', 403);
+
+    // Delete user — cascading deletes handle related records
+    await prisma.user.delete({ where: { id: user.id } });
+
+    // Clear auth cookies
+    const cs = await cookies();
+    const raw = cs.get(TRUST_COOKIE)?.value;
+    if (raw) cs.delete(TRUST_COOKIE);
+    cs.delete('auth-token');
+    cs.delete('user-session');
+
+    return ok({ success: true, message: 'Account deleted successfully' });
+  } catch (e) { console.error('Delete account error:', e); return err('Could not delete your account. Please try again.', 500); }
+}
+
 // --- TRUSTED DEVICES ---------------------------------------------------------
 async function handleTrustedDevices(request: Request) {
   try {
@@ -412,21 +446,25 @@ async function handleTrustedDevices(request: Request) {
     const tok = cs.get('auth-token')?.value;
     if (!tok) return err('Not authenticated', 401);
 
+    const session = await verifySessionToken(tok);
+    if (!session) return err('Not authenticated', 401);
+    const userId = session.uid;
+
     const { action: act, deviceId } = (await request.json().catch(() => ({}))) as { action?: string; deviceId?: string };
 
     if (act === 'revoke' && deviceId) {
-      await prisma.trustedDevice.deleteMany({ where: { id: deviceId, userId: tok } });
+      await prisma.trustedDevice.deleteMany({ where: { id: deviceId, userId } });
       return ok({ success: true, message: 'Device revoked' });
     }
     if (act === 'revoke-all') {
-      await prisma.trustedDevice.deleteMany({ where: { userId: tok } });
+      await prisma.trustedDevice.deleteMany({ where: { userId } });
       cs.delete(TRUST_COOKIE);
       return ok({ success: true, message: 'All devices revoked' });
     }
 
     const curHash = cs.get(TRUST_COOKIE)?.value ? sha256(cs.get(TRUST_COOKIE)!.value) : null;
     const [devices, cur] = await Promise.all([
-      prisma.trustedDevice.findMany({ where: { userId: tok }, orderBy: { createdAt: 'desc' }, select: { id: true, label: true, createdAt: true, expiresAt: true } }),
+      prisma.trustedDevice.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, select: { id: true, label: true, createdAt: true, expiresAt: true } }),
       curHash ? prisma.trustedDevice.findUnique({ where: { token: curHash }, select: { id: true } }) : null,
     ]);
 

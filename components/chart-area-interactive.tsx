@@ -207,8 +207,6 @@ export function ChartAreaInteractive({ accountIds }: ChartAreaInteractiveProps =
         return periodData.reduce((sum, item) => sum + keys.reduce((s, k) => s + ((item[k] as number) || 0), 0), 0)
     }, [periodData, selectedChart.showTotal, selectedChart.selectedCategories, selectedChart.metricType])
 
-    if (errorInfo) return <ErrorState type={errorInfo.type} details={errorInfo.details} className="h-[300px]" />
-
     const metricColor = getConfigColor(chartConfig, selectedChart.metricType)
     const metricColorStyle = React.useMemo(() => ({ backgroundColor: metricColor }), [metricColor])
     
@@ -275,6 +273,8 @@ export function ChartAreaInteractive({ accountIds }: ChartAreaInteractiveProps =
     const hasCustomDateRange = !!customDateRange
     const prevDisabled = periodType === 'all' || isBackDisabled || hasCustomDateRange
     const nextDisabled = periodType === 'all' || timeOffset === 0 || hasCustomDateRange
+
+    if (errorInfo) return <ErrorState type={errorInfo.type} details={errorInfo.details} className="h-[300px]" />
 
     return (
         <ChartProvider value = {contextValue}>

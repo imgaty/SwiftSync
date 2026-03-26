@@ -11,7 +11,6 @@ generator client {
 
 datasource db {
     provider = "postgresql"
-    url      = env("DATABASE_URL")
 }
 
 // =============================================================================
@@ -42,6 +41,9 @@ model User {
     // 2FA fields (TOTP — authenticator app)
     twoFactorEnabled    Boolean         @default(false)
     twoFactorSecret     String?                                 // TOTP secret (base32, for authenticator apps)
+    twoFactorCode       String?                                 // Hashed email 2FA code (for login verification)
+    twoFactorCodeExpiry DateTime?                               // Expiry for email 2FA code
+    twoFactorBackupCodes String?                                // Encrypted backup codes (JSON array)
 
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt

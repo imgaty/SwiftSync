@@ -519,7 +519,7 @@ function componentFactory<T extends React.ElementType>(
 
 const SidebarInset = componentFactory("main", [
     "relative | flex flex-col flex-1 | w-full h-svh",
-    "bg-background text-foreground | order-1 | overflow-y-auto",
+    "text-foreground | order-1 | overflow-y-auto",
 
     "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 | md:peer-data-[variant=inset]:h-[calc(100svh-16px)]",
     "md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",

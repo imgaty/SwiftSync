@@ -1382,6 +1382,11 @@ export type FinancialGoalFindManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Skip the first `n` FinancialGoals.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of FinancialGoals.
+   */
   distinct?: Prisma.FinancialGoalScalarFieldEnum | Prisma.FinancialGoalScalarFieldEnum[]
 }
 

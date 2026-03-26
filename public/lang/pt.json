@@ -118,7 +118,19 @@
         "backup_codes": "Códigos de Recuperação",
         "backup_codes_desc": "Guarde estes códigos num local seguro. Cada um pode ser usado uma vez.",
         "verify": "Verificar",
-        "saving": "A guardar..."
+        "saving": "A guardar...",
+        "danger_zone": "Zona de Perigo",
+        "danger_zone_desc": "Ações irreversíveis que afetam a sua conta",
+        "delete_account": "Eliminar Conta",
+        "delete_account_desc": "Elimina permanentemente a sua conta e todos os dados associados. Esta ação não pode ser revertida.",
+        "delete_confirm_title": "Eliminar a sua conta?",
+        "delete_confirm_desc": "Isto irá eliminar permanentemente a sua conta, incluindo todas as transações, orçamentos, contas a pagar e outros dados. Esta ação não pode ser revertida.",
+        "delete_enter_password": "Introduza a sua palavra-passe para confirmar",
+        "delete_password_required": "Por favor introduza a sua palavra-passe",
+        "delete_permanently": "Eliminar Permanentemente",
+        "deleting": "A eliminar...",
+        "account_deleted": "Conta eliminada com sucesso",
+        "cancel": "Cancelar"
     },
 
     "auth_page": {
@@ -157,6 +169,9 @@
         "resend_code": "Reenviar código",
         "resending_code": "A reenviar...",
         "error_fields_required": "Email e palavra-passe são obrigatórios",
+        "error_no_account": "Não existe conta com este email.",
+        "error_no_account_link": "Crie uma",
+        "error_wrong_password": "Palavra-passe incorreta. Tente novamente ou redefina-a.",
         "error_login_failed": "Falha ao iniciar sessão. Tente novamente.",
         "error_generic": "Ocorreu um erro inesperado. Tente novamente.",
         "error_network": "Ligação perdida. Verifique a sua internet e tente novamente.",

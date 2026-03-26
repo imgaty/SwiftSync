@@ -6,13 +6,12 @@ import { prisma } from './prisma';
 
 export interface User {
   id: string;
-  email: string;           // Encrypted with versioned AES-256-GCM
-  password: string;        // Hashed with versioned scrypt
-  name?: string;           // Encrypted
-  dateOfBirth?: string;    // Encrypted (stored as ISO date string)
-  recoveryEmail?: string;  // Encrypted
+  email: string;
+  password: string;
+  name: string;
+  dateOfBirth: string;
+  recoveryEmail?: string;
   createdAt: string;
-  encryptionVersion?: number; // Tracks which version was used
 }
 
 // =============================================================================
@@ -41,17 +40,15 @@ export async function findUserById(id: string): Promise<User | null> {
 export async function createUser(
   email: string, 
   password: string, 
-  name?: string,
-  dateOfBirth?: string,
-  encryptionVersion?: number
+  name: string,
+  dateOfBirth: string,
 ): Promise<User> {
   const user = await prisma.user.create({
     data: {
       email,
       password,
-      username: name || '',
-      dateOfBirth: dateOfBirth || null,
-      encryptionVersion: encryptionVersion || null,
+      name,
+      dateOfBirth,
     },
   });
 
@@ -69,10 +66,9 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
   
   if (updates.email !== undefined) data.email = updates.email;
   if (updates.password !== undefined) data.password = updates.password;
-  if (updates.name !== undefined) data.username = updates.name;
+  if (updates.name !== undefined) data.name = updates.name;
   if (updates.dateOfBirth !== undefined) data.dateOfBirth = updates.dateOfBirth;
   if (updates.recoveryEmail !== undefined) data.recoveryEmail = updates.recoveryEmail;
-  if (updates.encryptionVersion !== undefined) data.encryptionVersion = updates.encryptionVersion;
   
   if (Object.keys(data).length === 0) {
     return findUserById(id);
@@ -102,15 +98,14 @@ export async function deleteUser(id: string): Promise<boolean> {
 // HELPER FUNCTIONS
 // =============================================================================
 
-function rowToUser(row: { id: string; email: string; password: string; username: string; dateOfBirth: string | null; recoveryEmail: string | null; encryptionVersion: number | null; createdAt: Date }): User {
+function rowToUser(row: { id: string; email: string; password: string; name: string; dateOfBirth: string; recoveryEmail: string | null; createdAt: Date }): User {
   return {
     id: row.id,
     email: row.email,
     password: row.password,
-    name: row.username || undefined,
-    dateOfBirth: row.dateOfBirth ?? undefined,
+    name: row.name,
+    dateOfBirth: row.dateOfBirth,
     recoveryEmail: row.recoveryEmail ?? undefined,
     createdAt: row.createdAt.toISOString(),
-    encryptionVersion: row.encryptionVersion ?? undefined,
   };
 }
