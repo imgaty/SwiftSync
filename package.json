@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "test:login": "node scripts/login-test.js"
@@ -85,5 +85,13 @@
   "bugs": {
     "url": "https://github.com/HilFerr/SwiftSync/issues"
   },
-  "homepage": "https://github.com/HilFerr/SwiftSync#readme"
+  "homepage": "https://github.com/HilFerr/SwiftSync#readme",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
 }
