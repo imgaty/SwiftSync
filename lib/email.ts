@@ -8,7 +8,13 @@ import { Resend } from 'resend';
 // When you have a custom domain, set RESEND_FROM_EMAIL in .env
 // =============================================================================
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'SwiftSync <onboarding@resend.dev>';
 
@@ -22,7 +28,7 @@ export async function sendPasswordResetEmail(
 ) {
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: 'Reset Your Password — SwiftSync',
@@ -116,7 +122,7 @@ export async function sendPasswordResetEmail(
 // =============================================================================
 
 export async function send2FACode(to: string, code: string) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: 'Your Verification Code — SwiftSync',
