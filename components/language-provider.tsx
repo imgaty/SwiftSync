@@ -73,6 +73,9 @@ interface Translations {
         error_network: string
         error_2fa_required: string
         error_2fa_invalid: string
+        error_no_account: string
+        error_no_account_link: string
+        error_wrong_password: string
         show_password: string
         hide_password: string
     }
@@ -113,6 +116,14 @@ interface Translations {
         budgets: string
         bills: string
         accounts: string
+        overview: string
+        overview_desc: string
+        analytics: string
+        analytics_desc: string
+        financial_data: string
+        financial_data_desc: string
+        cash_flow: string
+        cash_flow_desc: string
         pages: Record<string, string>
         table: Record<string, string>
         filters: Record<string, string>

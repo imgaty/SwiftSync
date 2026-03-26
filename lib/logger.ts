@@ -9,7 +9,7 @@ type ErrorContext = {
 
 function getErrorDetails(err: unknown): { name: string; message: string; stack?: string; code?: string } {
     if (err instanceof Error) {
-        const code = (err as Record<string, unknown>).code as string | undefined
+        const code = (err as unknown as Record<string, unknown>).code as string | undefined
         return { name: err.name, message: err.message, stack: err.stack, code }
     }
     return { name: 'UnknownError', message: String(err) }
