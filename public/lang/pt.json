@@ -2,14 +2,11 @@
     "config": {
         "locale": "pt-PT"
     },
-
     "chart_description": "Um gráfico de área interativo",
     "loading": "Carregando dados...",
-
     "sidebar_dashboard": "Painel",
     "sidebar_calendar": "Calendário",
     "sidebar_goals": "Metas",
-
     "finance": {
         "transactions": "Transações",
         "budgets": "Orçamentos",
@@ -24,9 +21,16 @@
             "budgets_description": "Defina e acompanhe limites de gastos por categoria",
             "bills_title": "Contas a Pagar",
             "bills_description": "Acompanhe suas contas recorrentes e pagamentos"
-        }
+        },
+        "overview": "Visão Geral",
+        "overview_desc": "Seu resumo financeiro em um relance",
+        "analytics": "Análises",
+        "analytics_desc": "Acompanhe suas tendências de gastos e receitas",
+        "financial_data": "Dados Financeiros",
+        "financial_data_desc": "Visualize e gerencie seus registros financeiros",
+        "cash_flow": "Fluxo de Caixa",
+        "cash_flow_desc": "Previsão de receitas e despesas para as próximas semanas"
     },
-
     "command_palette": {
         "placeholder": "Escreva um comando ou pesquise...",
         "no_results": "Sem resultados.",
@@ -46,7 +50,6 @@
         "switch_to_english": "Mudar para Inglês",
         "switch_to_portuguese": "Mudar para Português"
     },
-
     "settings": {
         "title": "Definições",
         "description": "Gerir as suas preferências",
@@ -132,11 +135,9 @@
         "account_deleted": "Conta eliminada com sucesso",
         "cancel": "Cancelar"
     },
-
     "auth_page": {
         "footer": "© %{CURRENT_YEAR} SwiftSync. Todos os direitos reservados."
     },
-
     "oauth_buttons": {
         "divider_label": "ou",
         "login_google": "Continuar com Google",
@@ -148,7 +149,6 @@
         "login_microsoft": "Continuar com Microsoft",
         "register_microsoft": "Registar com Microsoft"
     },
-
     "login_page": {
         "title": "Bem-vindo de volta",
         "subtitle": "Vamos sincronizar as suas finanças!",
@@ -180,7 +180,6 @@
         "show_password": "Mostrar palavra-passe",
         "hide_password": "Ocultar palavra-passe"
     },
-
     "register_page": {
         "title": "Crie a sua conta",
         "subtitle_email": "Comece a gerir as suas finanças em minutos",
@@ -188,7 +187,6 @@
         "subtitle_password": "Proteja a sua conta",
         "subtitle_security": "Proteção extra opcional"
     },
-
     "forgot_password_page": {
         "title": "Esqueceu a palavra-passe?",
         "subtitle": "Insira o seu email para redefinir a sua palavra-passe",
@@ -202,12 +200,10 @@
         "sending": "A enviar...",
         "send_reset_link": "Enviar link"
     },
-
     "reset_password_page": {
         "title": "Definir nova palavra-passe",
         "subtitle": "Escolha uma palavra-passe forte para a sua conta"
     },
-
     "errors": {
         "file_not_found": {
             "title": "Ficheiro não encontrado",
@@ -222,14 +218,12 @@
             "message": "Ocorreu um erro inesperado."
         }
     },
-    
     "time_range": {
         "today": "Hoje",
         "month": "Este mês",
         "year": "Este ano",
         "all": "Sempre"
     },
-    
     "data_type_labels": {
         "total": "Total",
         "income": "Receitas",
@@ -281,17 +275,14 @@
         "list_chart": "Lista",
         "chart_style": "Estilo do gráfico"
     },
-    
     "navigation": {
         "previous": "Anterior",
         "next": "Próximo"
     },
-    
     "list_view_headers": {
         "date": "Data",
         "value": "Valor"
     },
-
     "descriptions": {
         "no_data": {
             "label": "Sem dados a exibir."
@@ -299,58 +290,65 @@
         "total_billed": {
             "label": "Total faturado."
         },
-        
         "today_current": {
             "label": "%category hoje"
         },
         "today_offset": {
             "label": "%category a %date",
-            "format": { "day": "numeric", "month": "long", "year": "numeric" }
-        }, 
-        
+            "format": {
+                "day": "numeric",
+                "month": "long",
+                "year": "numeric"
+            }
+        },
         "month_current": {
             "label": "%category este mês"
         },
         "month_offset": {
             "label": "%category em %date",
-            "format": { "month": "long", "year": "numeric" }
+            "format": {
+                "month": "long",
+                "year": "numeric"
+            }
         },
-        
         "year_current": {
             "label": "%category em %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         },
         "year_offset": {
             "label": "%category em %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         },
-        
         "all_single": {
             "label": "%category em %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         },
         "all_range": {
             "label": "%category de %date a %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         }
     },
-
     "chart_names": {
         "area": "Gráfico de linha",
         "bar": "Gráfico de barras",
         "pie": "Gráfico circular",
         "list": "Lista"
     },
-
     "sidebar": {
         "resize_tooltip_collapse": "Recolher barra lateral (%shortcut)",
         "resize_tooltip_expand": "Expandir barra lateral (%shortcut)"
     },
-
     "expanded_view": {
         "press_esc_to_close": "Pressione ESC ou clique × para fechar"
     },
-
     "loading_hints": [
         "Dica: Pressione ⌘K para abrir a paleta de comandos",
         "Podes conectar várias contas bancárias de diferentes bancos",
