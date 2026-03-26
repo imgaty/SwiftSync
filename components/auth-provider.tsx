@@ -24,7 +24,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuth = async () => {
     try {
       const response = await fetch('/api/auth/verify');
-      const data = await response.json();
+
+      if (!response.ok) {
+        setIsAuthenticated(false);
+        setUserId(null);
+        return;
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        setIsAuthenticated(false);
+        setUserId(null);
+        return;
+      }
       
       if (data.authenticated) {
         setIsAuthenticated(true);
@@ -33,8 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(false);
         setUserId(null);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    } catch {
       setIsAuthenticated(false);
       setUserId(null);
     } finally {

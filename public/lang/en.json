@@ -118,7 +118,19 @@
         "backup_codes": "Backup Codes",
         "backup_codes_desc": "Save these codes in a safe place. Each can be used once.",
         "verify": "Verify",
-        "saving": "Saving..."
+        "saving": "Saving...",
+        "danger_zone": "Danger Zone",
+        "danger_zone_desc": "Irreversible actions that affect your account",
+        "delete_account": "Delete Account",
+        "delete_account_desc": "Permanently delete your account and all associated data. This action cannot be undone.",
+        "delete_confirm_title": "Delete your account?",
+        "delete_confirm_desc": "This will permanently delete your account, including all transactions, budgets, bills, and other data. This action cannot be undone.",
+        "delete_enter_password": "Enter your password to confirm",
+        "delete_password_required": "Please enter your password",
+        "delete_permanently": "Delete Permanently",
+        "deleting": "Deleting...",
+        "account_deleted": "Account deleted successfully",
+        "cancel": "Cancel"
     },
 
     "auth_page": {
@@ -157,6 +169,9 @@
         "resend_code": "Resend code",
         "resending_code": "Resending...",
         "error_fields_required": "Email and password are required",
+        "error_no_account": "No account found with this email.",
+        "error_no_account_link": "Create one",
+        "error_wrong_password": "Incorrect password. Please try again or reset it.",
         "error_login_failed": "Login failed. Please try again.",
         "error_generic": "An unexpected error occurred. Please try again.",
         "error_network": "Connection lost. Check your internet and try again.",

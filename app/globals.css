@@ -220,9 +220,9 @@ input:not(:-webkit-autofill) {
 .dark {
     color-scheme: dark;
 
-    --background: rgba(9, 9, 11, 1);
+    --background: rgba(0, 0, 0, 1);
     --foreground: rgba(250, 250, 250, 1);
-    --card: rgba(9, 9, 11, 1);
+    --card: rgba(0, 0, 0, 1);
     --card-foreground: rgba(250, 250, 250, 1);
     --popover: rgba(23, 23, 26, 1);
     --popover-foreground: rgba(250, 250, 250, 1);
@@ -245,7 +245,7 @@ input:not(:-webkit-autofill) {
     --chart-3: rgba(251, 191, 36, 1);
     --chart-4: rgba(192, 132, 252, 1);
     --chart-5: rgba(248, 113, 113, 1);
-    --sidebar: rgba(9, 9, 11, 1);
+    --sidebar: rgba(0, 0, 0, 1);
     --sidebar-foreground: rgba(250, 250, 250, 1);
     --sidebar-primary: rgba(99, 102, 241, 1);
     --sidebar-primary-foreground: rgba(250, 250, 250, 1);

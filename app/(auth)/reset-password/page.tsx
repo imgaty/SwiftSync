@@ -20,10 +20,16 @@ async function postAuth<T>(url: string, body: unknown): Promise<{ ok: boolean; d
       body: JSON.stringify(body),
     })
   } catch {
-    throw new Error('network')
+    throw new Error('Network error — check your internet connection.')
   }
 
-  const data = await res.json() as T
+  let data: T
+  try {
+    data = await res.json() as T
+  } catch {
+    throw new Error(`Server returned ${res.status} with no JSON body.`)
+  }
+
   return { ok: res.ok, data }
 }
 
@@ -51,9 +57,7 @@ function ResetPasswordForm() {
       if (!ok) { setError(data.error || 'Password reset failed. Please try again.'); return }
       setSuccess(true)
     } catch (e) {
-      setError(e instanceof Error && e.message === 'network'
-        ? 'Connection lost. Check your internet and try again.'
-        : 'An error occurred. Please try again.')
+      setError(e instanceof Error ? e.message : 'Unknown error during password reset.')
     } finally {
       setLoading(false)
     }
@@ -102,7 +106,7 @@ function ResetPasswordForm() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 animate-slide-in-right">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4 animate-slide-in-right">
           <ErrorAlert message={error} />
 
           <div>

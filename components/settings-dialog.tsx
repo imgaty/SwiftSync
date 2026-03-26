@@ -20,6 +20,8 @@ import {
     Calendar,
     Save,
     Loader2,
+    Trash2,
+    AlertTriangle,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -475,6 +477,11 @@ function AccountSettings({ s }: { s: SettingsTranslations }) {
                 </div>
             </div>
 
+            <Separator />
+
+            {/* Danger Zone — Delete Account */}
+            <DeleteAccountSection s={s} />
+
             {/* Sticky Save Bar */}
             <div className="sticky bottom-0 -mx-4 -mb-4 px-4 py-4 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-t">
                 <div className="flex items-center justify-between">
@@ -502,6 +509,127 @@ function AccountSettings({ s }: { s: SettingsTranslations }) {
                 </div>
             </div>
         </div>
+    )
+}
+
+// Delete Account Section with confirmation dialog
+function DeleteAccountSection({ s }: { s: SettingsTranslations }) {
+    const [open, setOpen] = React.useState(false)
+    const [password, setPassword] = React.useState("")
+    const [isDeleting, setIsDeleting] = React.useState(false)
+    const [error, setError] = React.useState("")
+
+    const handleDelete = async () => {
+        if (!password) {
+            setError(s.delete_password_required || "Please enter your password")
+            return
+        }
+
+        setIsDeleting(true)
+        setError("")
+
+        try {
+            const res = await fetch("/api/auth/delete-account", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password }),
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                toast.success(s.account_deleted || "Account deleted successfully")
+                window.location.href = "/login"
+            } else {
+                setError(data.error || "Failed to delete account")
+            }
+        } catch {
+            setError("Something went wrong. Please try again.")
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
+    return (
+        <>
+            <div className="space-y-4">
+                <div>
+                    <h3 className="text-lg font-semibold text-destructive">{s.danger_zone || "Danger Zone"}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        {s.danger_zone_desc || "Irreversible actions that affect your account"}
+                    </p>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+                    <div className="space-y-1 min-w-0 flex-1">
+                        <p className="text-sm font-medium">{s.delete_account || "Delete Account"}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {s.delete_account_desc || "Permanently delete your account and all associated data. This action cannot be undone."}
+                        </p>
+                    </div>
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => { setOpen(true); setPassword(""); setError("") }}
+                    >
+                        <Trash2 className="size-4 mr-2" />
+                        {s.delete_account || "Delete Account"}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Confirmation Dialog */}
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="size-5" />
+                            {s.delete_confirm_title || "Delete your account?"}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {s.delete_confirm_desc || "This will permanently delete your account, including all transactions, budgets, bills, and other data. This action cannot be undone."}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="delete-password" className="text-sm font-medium">
+                                {s.delete_enter_password || "Enter your password to confirm"}
+                            </Label>
+                            <Input
+                                id="delete-password"
+                                type="password"
+                                placeholder={s.current_password || "Current Password"}
+                                value={password}
+                                onChange={(e) => { setPassword(e.target.value); setError("") }}
+                                onKeyDown={(e) => { if (e.key === "Enter" && password) handleDelete() }}
+                                className="h-10"
+                                autoFocus
+                            />
+                            {error && <p className="text-sm text-destructive">{error}</p>}
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setOpen(false)} disabled={isDeleting}>
+                                {s.cancel || "Cancel"}
+                            </Button>
+                            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || !password}>
+                                {isDeleting ? (
+                                    <>
+                                        <Loader2 className="size-4 mr-2 animate-spin" />
+                                        {s.deleting || "Deleting..."}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="size-4 mr-2" />
+                                        {s.delete_permanently || "Delete Permanently"}
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }
 

@@ -12,13 +12,24 @@ import { Loader2, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 async function postAuth<T>(url: string, body: unknown): Promise<{ ok: boolean; data: T }> {
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: JSON_HEADERS,
-        body: JSON.stringify(body),
-    })
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: 'POST',
+            headers: JSON_HEADERS,
+            body: JSON.stringify(body),
+        })
+    } catch {
+        throw new Error('Network error — check your internet connection.')
+    }
 
-    const data = await res.json() as T
+    let data: T
+    try {
+        data = await res.json() as T
+    } catch {
+        throw new Error(`Server returned ${res.status} with no JSON body.`)
+    }
+
     return { ok: res.ok, data }
 }
 
@@ -41,11 +52,11 @@ export default function ForgotPasswordPage() {
         try {
             const { ok, data } = await postAuth<{ error?: string }>('/api/auth/forgot-password', { email })
 
-            if (!ok) { setError(data.error || page?.error_generic); return }
+            if (!ok) { setError(data.error || 'Failed to send reset email.'); return }
             setSuccess(true)
 
-        } catch {
-            setError(page?.error_network)
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Unknown error.')
 
         } finally {
             setLoading(false)
@@ -82,7 +93,7 @@ export default function ForgotPasswordPage() {
                 <>
                     <AuthHeader page = "forgot_password" />
 
-                    <form onSubmit = {handleSubmit} className = "flex flex-col gap-8 | animate-slide-in-right">
+                    <form onSubmit = {handleSubmit} noValidate className = "flex flex-col gap-8 | animate-slide-in-right">
                         <ErrorAlert message = {error} />
 
                         <Input id = "email" type = "email" label = {page?.email_label} value = {email} onChange = {e => setEmail(e.target.value)} disabled = {loading} required />

@@ -43,6 +43,7 @@ export type UserMinAggregateOutputType = {
   twoFactorSecret: string | null
   twoFactorCode: string | null
   twoFactorCodeExpiry: Date | null
+  twoFactorBackupCodes: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -66,6 +67,7 @@ export type UserMaxAggregateOutputType = {
   twoFactorSecret: string | null
   twoFactorCode: string | null
   twoFactorCodeExpiry: Date | null
+  twoFactorBackupCodes: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -89,6 +91,7 @@ export type UserCountAggregateOutputType = {
   twoFactorSecret: number
   twoFactorCode: number
   twoFactorCodeExpiry: number
+  twoFactorBackupCodes: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -114,6 +117,7 @@ export type UserMinAggregateInputType = {
   twoFactorSecret?: true
   twoFactorCode?: true
   twoFactorCodeExpiry?: true
+  twoFactorBackupCodes?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -137,6 +141,7 @@ export type UserMaxAggregateInputType = {
   twoFactorSecret?: true
   twoFactorCode?: true
   twoFactorCodeExpiry?: true
+  twoFactorBackupCodes?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -160,6 +165,7 @@ export type UserCountAggregateInputType = {
   twoFactorSecret?: true
   twoFactorCode?: true
   twoFactorCodeExpiry?: true
+  twoFactorBackupCodes?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -256,6 +262,7 @@ export type UserGroupByOutputType = {
   twoFactorSecret: string | null
   twoFactorCode: string | null
   twoFactorCodeExpiry: Date | null
+  twoFactorBackupCodes: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -300,6 +307,7 @@ export type UserWhereInput = {
   twoFactorSecret?: Prisma.StringNullableFilter<"User"> | string | null
   twoFactorCode?: Prisma.StringNullableFilter<"User"> | string | null
   twoFactorCodeExpiry?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  twoFactorBackupCodes?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   bankAccounts?: Prisma.BankAccountListRelationFilter
@@ -335,6 +343,7 @@ export type UserOrderByWithRelationInput = {
   twoFactorSecret?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrderInput | Prisma.SortOrder
+  twoFactorBackupCodes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   bankAccounts?: Prisma.BankAccountOrderByRelationAggregateInput
@@ -373,6 +382,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   twoFactorSecret?: Prisma.StringNullableFilter<"User"> | string | null
   twoFactorCode?: Prisma.StringNullableFilter<"User"> | string | null
   twoFactorCodeExpiry?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  twoFactorBackupCodes?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   bankAccounts?: Prisma.BankAccountListRelationFilter
@@ -408,6 +418,7 @@ export type UserOrderByWithAggregationInput = {
   twoFactorSecret?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrderInput | Prisma.SortOrder
+  twoFactorBackupCodes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -437,6 +448,7 @@ export type UserScalarWhereWithAggregatesInput = {
   twoFactorSecret?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   twoFactorCode?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   twoFactorCodeExpiry?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  twoFactorBackupCodes?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -460,6 +472,7 @@ export type UserCreateInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -495,6 +508,7 @@ export type UserUncheckedCreateInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -530,6 +544,7 @@ export type UserUpdateInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -565,6 +580,7 @@ export type UserUncheckedUpdateInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -600,6 +616,7 @@ export type UserCreateManyInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -623,6 +640,7 @@ export type UserUpdateManyMutationInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -646,6 +664,7 @@ export type UserUncheckedUpdateManyInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -669,6 +688,7 @@ export type UserCountOrderByAggregateInput = {
   twoFactorSecret?: Prisma.SortOrder
   twoFactorCode?: Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrder
+  twoFactorBackupCodes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -692,6 +712,7 @@ export type UserMaxOrderByAggregateInput = {
   twoFactorSecret?: Prisma.SortOrder
   twoFactorCode?: Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrder
+  twoFactorBackupCodes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -715,6 +736,7 @@ export type UserMinOrderByAggregateInput = {
   twoFactorSecret?: Prisma.SortOrder
   twoFactorCode?: Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrder
+  twoFactorBackupCodes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -938,6 +960,7 @@ export type UserCreateWithoutTrustedDevicesInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -972,6 +995,7 @@ export type UserUncheckedCreateWithoutTrustedDevicesInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -1022,6 +1046,7 @@ export type UserUpdateWithoutTrustedDevicesInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -1056,6 +1081,7 @@ export type UserUncheckedUpdateWithoutTrustedDevicesInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1090,6 +1116,7 @@ export type UserCreateWithoutOauthAccountsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -1124,6 +1151,7 @@ export type UserUncheckedCreateWithoutOauthAccountsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -1174,6 +1202,7 @@ export type UserUpdateWithoutOauthAccountsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -1208,6 +1237,7 @@ export type UserUncheckedUpdateWithoutOauthAccountsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1242,6 +1272,7 @@ export type UserCreateWithoutSaltEdgeConnectionsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -1276,6 +1307,7 @@ export type UserUncheckedCreateWithoutSaltEdgeConnectionsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -1326,6 +1358,7 @@ export type UserUpdateWithoutSaltEdgeConnectionsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -1360,6 +1393,7 @@ export type UserUncheckedUpdateWithoutSaltEdgeConnectionsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1394,6 +1428,7 @@ export type UserCreateWithoutBankAccountsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
@@ -1428,6 +1463,7 @@ export type UserUncheckedCreateWithoutBankAccountsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
@@ -1478,6 +1514,7 @@ export type UserUpdateWithoutBankAccountsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
@@ -1512,6 +1549,7 @@ export type UserUncheckedUpdateWithoutBankAccountsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
@@ -1546,6 +1584,7 @@ export type UserCreateWithoutTransactionsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -1580,6 +1619,7 @@ export type UserUncheckedCreateWithoutTransactionsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -1630,6 +1670,7 @@ export type UserUpdateWithoutTransactionsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -1664,6 +1705,7 @@ export type UserUncheckedUpdateWithoutTransactionsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1698,6 +1740,7 @@ export type UserCreateWithoutBillsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -1732,6 +1775,7 @@ export type UserUncheckedCreateWithoutBillsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -1782,6 +1826,7 @@ export type UserUpdateWithoutBillsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -1816,6 +1861,7 @@ export type UserUncheckedUpdateWithoutBillsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -1850,6 +1896,7 @@ export type UserCreateWithoutBudgetsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -1884,6 +1931,7 @@ export type UserUncheckedCreateWithoutBudgetsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -1934,6 +1982,7 @@ export type UserUpdateWithoutBudgetsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -1968,6 +2017,7 @@ export type UserUncheckedUpdateWithoutBudgetsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -2002,6 +2052,7 @@ export type UserCreateWithoutFinancialGoalsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -2036,6 +2087,7 @@ export type UserUncheckedCreateWithoutFinancialGoalsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -2086,6 +2138,7 @@ export type UserUpdateWithoutFinancialGoalsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -2120,6 +2173,7 @@ export type UserUncheckedUpdateWithoutFinancialGoalsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -2154,6 +2208,7 @@ export type UserCreateWithoutNotificationsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -2188,6 +2243,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -2238,6 +2294,7 @@ export type UserUpdateWithoutNotificationsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -2272,6 +2329,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -2306,6 +2364,7 @@ export type UserCreateWithoutCategorizationRulesInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -2340,6 +2399,7 @@ export type UserUncheckedCreateWithoutCategorizationRulesInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -2390,6 +2450,7 @@ export type UserUpdateWithoutCategorizationRulesInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -2424,6 +2485,7 @@ export type UserUncheckedUpdateWithoutCategorizationRulesInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -2458,6 +2520,7 @@ export type UserCreateWithoutAuditLogsPerformedInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -2492,6 +2555,7 @@ export type UserUncheckedCreateWithoutAuditLogsPerformedInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -2531,6 +2595,7 @@ export type UserCreateWithoutAuditLogsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
@@ -2565,6 +2630,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   twoFactorSecret?: string | null
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
@@ -2615,6 +2681,7 @@ export type UserUpdateWithoutAuditLogsPerformedInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -2649,6 +2716,7 @@ export type UserUncheckedUpdateWithoutAuditLogsPerformedInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -2694,6 +2762,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
@@ -2728,6 +2797,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
@@ -2892,6 +2962,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   twoFactorSecret?: boolean
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
+  twoFactorBackupCodes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   bankAccounts?: boolean | Prisma.User$bankAccountsArgs<ExtArgs>
@@ -2928,6 +2999,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   twoFactorSecret?: boolean
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
+  twoFactorBackupCodes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -2951,6 +3023,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   twoFactorSecret?: boolean
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
+  twoFactorBackupCodes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -2974,11 +3047,12 @@ export type UserSelectScalar = {
   twoFactorSecret?: boolean
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
+  twoFactorBackupCodes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "dateOfBirth" | "recoveryEmail" | "role" | "status" | "suspendedAt" | "suspendedReason" | "lastLoginAt" | "lastLoginIp" | "resetToken" | "resetTokenExpiry" | "twoFactorEnabled" | "twoFactorSecret" | "twoFactorCode" | "twoFactorCodeExpiry" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "dateOfBirth" | "recoveryEmail" | "role" | "status" | "suspendedAt" | "suspendedReason" | "lastLoginAt" | "lastLoginIp" | "resetToken" | "resetTokenExpiry" | "twoFactorEnabled" | "twoFactorSecret" | "twoFactorCode" | "twoFactorCodeExpiry" | "twoFactorBackupCodes" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bankAccounts?: boolean | Prisma.User$bankAccountsArgs<ExtArgs>
   transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>
@@ -3032,6 +3106,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     twoFactorSecret: string | null
     twoFactorCode: string | null
     twoFactorCodeExpiry: Date | null
+    twoFactorBackupCodes: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -3487,6 +3562,7 @@ export interface UserFieldRefs {
   readonly twoFactorSecret: Prisma.FieldRef<"User", 'String'>
   readonly twoFactorCode: Prisma.FieldRef<"User", 'String'>
   readonly twoFactorCodeExpiry: Prisma.FieldRef<"User", 'DateTime'>
+  readonly twoFactorBackupCodes: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -3685,6 +3761,11 @@ export type UserFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Skip the first `n` Users.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Users.
+   */
   distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 

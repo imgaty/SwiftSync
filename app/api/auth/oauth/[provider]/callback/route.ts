@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { cookies } from "next/headers"
-import { encrypt, hashPassword } from "@/lib/adaptive-encryption"
+import { hashPassword } from "@/lib/adaptive-encryption"
 
 /**
  * GET /api/auth/oauth/[provider]/callback — Handle OAuth callback
@@ -61,37 +61,20 @@ export async function GET(
       userId = oauthAccount.userId
     } else {
       // Check if email already registered
-      const users = await prisma.user.findMany()
-      let existingUser = null
-      
-      // Note: In production, emails are encrypted, so we'd need to decrypt each.
-      // For simplification, we try to find by encrypted email match.
-      for (const user of users) {
-        try {
-          const { decrypt: dec } = await import("@/lib/adaptive-encryption")
-          const decryptedEmail = dec(user.email)
-          if (decryptedEmail === userInfo.email) {
-            existingUser = user
-            break
-          }
-        } catch {
-          continue
-        }
-      }
+      const existingUser = await prisma.user.findFirst({
+        where: { email: { equals: userInfo.email, mode: 'insensitive' } },
+      })
 
       if (existingUser) {
         // Link OAuth to existing account
         userId = existingUser.id
       } else {
         // Create new user
-        const encryptedEmail = encrypt(userInfo.email)
-        const encryptedName = userInfo.name ? encrypt(userInfo.name) : ""
-        // Generate a random password for OAuth users (they won't use it)
         const randomPassword = hashPassword(crypto.randomUUID())
 
         const newUser = await prisma.user.create({
           data: {
-            email: encryptedEmail,
+            email: userInfo.email.trim().toLowerCase(),
             name: userInfo.name || userInfo.email.split("@")[0],
             password: randomPassword,
             dateOfBirth: '',

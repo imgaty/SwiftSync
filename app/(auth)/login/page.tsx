@@ -34,10 +34,17 @@ async function postAuth<T>(url: string, body: unknown): Promise<{ ok: boolean; d
             body: JSON.stringify(body)
         })
     } catch {
-        throw new Error('network')
+        throw new Error('Network error — check your internet connection.')
+    }
+
+    let data: T
+    try {
+        data = await res.json() as T
+    } catch {
+        throw new Error(`Server returned ${res.status} with no JSON body.`)
     }
     
-    return { ok: res.ok, data: await res.json() as T }
+    return { ok: res.ok, data }
 }
 
 export default function LoginPage() {
@@ -95,14 +102,12 @@ export default function LoginPage() {
             }
 
         } catch (e) {
-            setError(e instanceof Error && e.message === 'network'
-                ? page?.error_network
-                : page?.error_generic)
+            setError(e instanceof Error ? e.message : 'Unknown error while resending code.')
 
         } finally {
             setResending(false)
         }
-    }, [resending, resendCooldown, email, password, page, attemptLogin])
+    }, [resending, resendCooldown, email, password, attemptLogin])
 
     const reset2FAState = useCallback(() => {
         setNeeds2FA(false)
@@ -157,14 +162,12 @@ export default function LoginPage() {
             redirectAfterAuth(data.role)
 
         } catch (e) {
-            setError(e instanceof Error && e.message === 'network'
-                ? page?.error_network
-                : page?.error_generic)
+            setError(e instanceof Error ? e.message : 'Unknown error during login.')
 
         } finally {
             setLoading(false)
         }
-    }, [loading, email, password, page, attemptLogin, redirectAfterAuth])
+    }, [loading, email, password, attemptLogin, redirectAfterAuth])
 
     // Handles the submission of the 2FA code. Sends the tempToken, 2FA code and trustDevice flag to api/auth/2fa-login and redirects on success.
     const handle2FASubmit = useCallback(async (e: React.FormEvent) => {
@@ -184,9 +187,7 @@ export default function LoginPage() {
             redirectAfterAuth(data.role)
 
         } catch (e) {
-            setError(e instanceof Error && e.message === 'network'
-                ? page?.error_network
-                : page?.error_generic)
+            setError(e instanceof Error ? e.message : 'Unknown error during 2FA verification.')
             
         } finally {
             setLoading(false)
@@ -196,8 +197,19 @@ export default function LoginPage() {
 
     return (
         <AuthShell>
-            <form onSubmit = {needs2FA ? handle2FASubmit : handleSubmit} className = "flex flex-col gap-8 | w-full | animate-slide-in-right">
-                <ErrorAlert message = {error} />
+            <form onSubmit = {needs2FA ? handle2FASubmit : handleSubmit} noValidate className = "flex flex-col gap-8 | w-full | animate-slide-in-right">
+                {error === 'NO_ACCOUNT' ? (
+                    <ErrorAlert>
+                        {page?.error_no_account || "No account found with this email."}{' '}
+                        <Link href="/register" className="underline hover:text-red-800 dark:hover:text-red-100 transition-colors">
+                            {page?.error_no_account_link || "Create one"}
+                        </Link>
+                    </ErrorAlert>
+                ) : error === 'WRONG_PASSWORD' ? (
+                    <ErrorAlert message={page?.error_wrong_password || "Incorrect password. Please try again or reset it."} />
+                ) : (
+                    <ErrorAlert message={error} />
+                )}
 
                 {needs2FA ? (
                     <div className = "flex flex-col items-center gap-8">

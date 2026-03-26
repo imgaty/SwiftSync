@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthUserId } from "@/lib/auth-helpers"
 import * as OTPAuth from "otpauth"
-import { decrypt } from "@/lib/adaptive-encryption"
+import { decrypt } from "@/lib/encryption-v2"
 
 // POST /api/auth/2fa/verify — Verify TOTP code and enable 2FA
 export async function POST(request: Request) {

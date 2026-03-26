@@ -1271,6 +1271,11 @@ export type CategorizationRuleFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Skip the first `n` CategorizationRules.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of CategorizationRules.
+   */
   distinct?: Prisma.CategorizationRuleScalarFieldEnum | Prisma.CategorizationRuleScalarFieldEnum[]
 }
 

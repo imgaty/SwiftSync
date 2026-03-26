@@ -1471,6 +1471,11 @@ export type SaltEdgeConnectionFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Skip the first `n` SaltEdgeConnections.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of SaltEdgeConnections.
+   */
   distinct?: Prisma.SaltEdgeConnectionScalarFieldEnum | Prisma.SaltEdgeConnectionScalarFieldEnum[]
 }
 

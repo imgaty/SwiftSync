@@ -14,6 +14,16 @@ export interface CategorizationRule {
     tag: string
 }
 
+export const DEFAULT_RULES: Omit<CategorizationRule, "id">[] = []
+
+export function mergeRules(
+    userRules: { pattern: string; matchField: string; tag: string; priority?: number }[],
+    defaultRules: Omit<CategorizationRule, "id">[]
+): Omit<CategorizationRule, "id">[] {
+    // User rules take priority, followed by default rules
+    return [...userRules, ...defaultRules]
+}
+
 export function autoCategorize(
     description: string,
     rules: Omit<CategorizationRule, "id">[]

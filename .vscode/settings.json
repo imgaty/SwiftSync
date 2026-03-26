@@ -1,7 +1,17 @@
 {
-    "workbench.colorTheme": "Vercel",
     "window.commandCenter": true,
     "workbench.editor.centeredLayoutFixedWidth": false,
     "chat.commandCenter.enabled": false,
-    "css.lint.unknownAtRules": "ignore"
+    "css.lint.unknownAtRules": "ignore",
+    "workbench.colorCustomizations": {
+        "diffEditor.insertedTextBackground": "#2ea04330",
+        "diffEditor.removedTextBackground": "#f8514930",
+        "diffEditor.insertedLineBackground": "#2ea04318",
+        "diffEditor.removedLineBackground": "#f8514918",
+        "diffEditor.insertedTextBorder": "#2ea04380",
+        "diffEditor.removedTextBorder": "#f8514980",
+        "editorGutter.addedBackground": "#2ea043",
+        "editorGutter.deletedBackground": "#f85149",
+        "editorGutter.modifiedBackground": "#d29922"
+    }
 }
