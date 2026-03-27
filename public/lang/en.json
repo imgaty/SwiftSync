@@ -2,14 +2,11 @@
     "config": {
         "locale": "en-US"
     },
-    
     "chart_description": "An interactive area chart",
     "loading": "Loading data...",
-
     "sidebar_dashboard": "Dashboard",
     "sidebar_calendar": "Calendar",
     "sidebar_goals": "Goals",
-
     "finance": {
         "transactions": "Transactions",
         "budgets": "Budgets",
@@ -24,9 +21,16 @@
             "budgets_description": "Set and track spending limits by category",
             "bills_title": "Bills",
             "bills_description": "Track your recurring bills and payments"
-        }
+        },
+        "overview": "Overview",
+        "overview_desc": "Your financial snapshot at a glance",
+        "analytics": "Analytics",
+        "analytics_desc": "Track your spending and income trends",
+        "financial_data": "Financial Data",
+        "financial_data_desc": "View and manage your financial records",
+        "cash_flow": "Cash Flow",
+        "cash_flow_desc": "Predicted income and expenses for the coming weeks"
     },
-
     "command_palette": {
         "placeholder": "Type a command or search...",
         "no_results": "No results found.",
@@ -46,7 +50,6 @@
         "switch_to_english": "Switch to English",
         "switch_to_portuguese": "Switch to Portuguese"
     },
-
     "settings": {
         "title": "Settings",
         "description": "Manage your preferences",
@@ -132,11 +135,9 @@
         "account_deleted": "Account deleted successfully",
         "cancel": "Cancel"
     },
-
     "auth_page": {
         "footer": "© %{CURRENT_YEAR} SwiftSync. All rights reserved."
     },
-
     "oauth_buttons": {
         "divider_label": "or",
         "login_google": "Continue with Google",
@@ -148,7 +149,6 @@
         "login_microsoft": "Continue with Microsoft",
         "register_microsoft": "Sign up with Microsoft"
     },
-
     "login_page": {
         "title": "Welcome Back",
         "subtitle": "Let's get your finances in sync!",
@@ -180,7 +180,6 @@
         "show_password": "Show password",
         "hide_password": "Hide password"
     },
-
     "register_page": {
         "title": "Create your account",
         "subtitle_email": "Start managing your finances in minutes",
@@ -188,7 +187,6 @@
         "subtitle_password": "Secure your account",
         "subtitle_security": "Optional extra protection"
     },
-
     "forgot_password_page": {
         "title": "Forgot password?",
         "subtitle": "Enter your email to reset your password",
@@ -202,12 +200,10 @@
         "sending": "Sending...",
         "send_reset_link": "Send link"
     },
-
     "reset_password_page": {
         "title": "Set new password",
         "subtitle": "Choose a strong password for your account"
     },
-
     "errors": {
         "file_not_found": {
             "title": "File Not Found",
@@ -222,14 +218,12 @@
             "message": "An unexpected error occurred."
         }
     },
-    
     "time_range": {
         "today": "Today",
         "month": "This month",
         "year": "This year",
         "all": "All time"
     },
-    
     "data_type_labels": {
         "total": "Total",
         "income": "Income",
@@ -281,17 +275,14 @@
         "list_chart": "List",
         "chart_style": "Chart style"
     },
-    
     "navigation": {
         "previous": "Previous",
         "next": "Next"
     },
-    
     "list_view_headers": {
         "date": "Date",
         "value": "Value"
     },
-
     "descriptions": {
         "no_data": {
             "label": "No data to be shown."
@@ -299,58 +290,65 @@
         "total_billed": {
             "label": "Total billed."
         },
-        
         "today_current": {
             "label": "%category today"
         },
         "today_offset": {
             "label": "%category on %date",
-            "format": { "day": "numeric", "month": "long", "year": "numeric" }
-        }, 
-        
+            "format": {
+                "day": "numeric",
+                "month": "long",
+                "year": "numeric"
+            }
+        },
         "month_current": {
             "label": "%category this month"
         },
         "month_offset": {
             "label": "%category in %date",
-            "format": { "month": "long", "year": "numeric" }
+            "format": {
+                "month": "long",
+                "year": "numeric"
+            }
         },
-        
         "year_current": {
             "label": "%category in %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         },
         "year_offset": {
             "label": "%category in %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         },
-        
         "all_single": {
             "label": "%category in %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         },
         "all_range": {
             "label": "%category from %date to %date",
-            "format": { "year": "numeric" }
+            "format": {
+                "year": "numeric"
+            }
         }
     },
-
     "chart_names": {
         "area": "Line Chart",
         "bar": "Bar Chart",
         "pie": "Pie Chart",
         "list": "List"
     },
-
     "sidebar": {
         "resize_tooltip_collapse": "Collapse sidebar (%shortcut)",
         "resize_tooltip_expand": "Expand sidebar (%shortcut)"
     },
-
     "expanded_view": {
         "press_esc_to_close": "Press ESC or click × to close"
     },
-
     "loading_hints": [
         "Tip: Press ⌘K to open the command palette",
         "You can connect multiple bank accounts from different banks",

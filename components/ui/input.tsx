@@ -6,7 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, TOOLTIP_DELAY } from '@/components/ui/tooltip';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-    label: string;
+    label?: string;
     ref?: Ref<HTMLInputElement>;
     showPasswordLabel?: string;
     hidePasswordLabel?: string;

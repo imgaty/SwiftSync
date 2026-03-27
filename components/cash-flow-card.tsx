@@ -25,7 +25,11 @@ interface CashFlowData {
     projections: CashFlowProjection[]
 }
 
-export function CashFlowCard() {
+interface CashFlowCardProps {
+    accountIds?: string[]
+}
+
+export function CashFlowCard({ accountIds }: CashFlowCardProps) {
     const { language } = useLanguage()
     const [data, setData] = React.useState<CashFlowData | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
