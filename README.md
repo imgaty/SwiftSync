@@ -31,6 +31,42 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1. Create a hosted PostgreSQL database
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+You need a cloud-hosted PostgreSQL instance. Recommended providers:
+
+| Provider | Free tier | Setup |
+|----------|-----------|-------|
+| [Neon](https://neon.tech) | 3 GB | Create a project → copy the connection string |
+| [Supabase](https://supabase.com) | 500 MB | New project → Settings → Database → Connection string |
+| [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) | 256 MB | Dashboard → Storage → Create Database |
+
+### 2. Set environment variables on Vercel
+
+In your Vercel project dashboard go to **Settings → Environment Variables** and add:
+
+```
+DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
+```
+
+Replace the value with the connection string from your provider. Make sure `sslmode=require` is included for SSL connections.
+
+### 3. Run migrations against the hosted database
+
+Before the first deployment, apply your Prisma migrations to the remote database:
+
+```bash
+# Set the remote DATABASE_URL locally (one-time)
+DATABASE_URL="postgresql://user:password@host:5432/dbname?sslmode=require" npx prisma migrate deploy
+```
+
+### 4. Deploy
+
+```bash
+# Push to your repository — Vercel auto-deploys on push
+git push
+```
+
+The build script (`prisma generate && next build`) automatically generates the Prisma client during the Vercel build step.
+
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
