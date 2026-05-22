@@ -148,12 +148,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     <Image
                                         src="/full-icon-black.svg"
                                         alt="Argent"
+                                        width={20}
+                                        height={100}
                                         priority
                                         className="h-8 w-auto max-w-full dark:hidden"
                                     />
                                     <Image
                                         src="/full-icon-white.svg"
                                         alt=""
+                                        width={20}
+                                        height={100}
                                         priority
                                         aria-hidden
                                         className="hidden h-7 w-auto max-w-full dark:block"
@@ -163,12 +167,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     <Image
                                         src="/icon-black.svg"
                                         alt=""
+                                        width={151}
+                                        height={131}
                                         priority
                                         className="size-5 object-contain dark:hidden"
                                     />
                                     <Image
                                         src="/icon-white.svg"
                                         alt=""
+                                        width={151}
+                                        height={131}
                                         priority
                                         aria-hidden
                                         className="hidden size-5 object-contain dark:block"
