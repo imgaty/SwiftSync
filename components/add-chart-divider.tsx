@@ -60,7 +60,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                                 ${disabled 
                                     ? 'opacity-30 cursor-not-allowed border-transparent' 
                                     : isHovered 
-                                        ? 'opacity-100 border-border/50 bg-background text-muted-foreground hover:border-primary/50 hover:text-primary hover:scale-110' 
+                                        ? 'opacity-100 border-border/50 bg-background text-neutral-400 hover:border-primary/50 hover:text-primary hover:scale-110' 
                                         : 'opacity-0 border-transparent'
                                 }`}
                         >
@@ -117,7 +117,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                                 ${disabled 
                                     ? 'opacity-30 cursor-not-allowed border-transparent' 
                                     : isHovered 
-                                        ? 'opacity-100 border-border/50 bg-background text-muted-foreground hover:border-primary/50 hover:text-primary hover:scale-110' 
+                                        ? 'opacity-100 border-border/50 bg-background text-neutral-400 hover:border-primary/50 hover:text-primary hover:scale-110' 
                                         : 'opacity-0 border-transparent pointer-events-none'
                                 }`}
                         >
@@ -160,7 +160,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                             ${disabled 
                                 ? 'opacity-30 cursor-not-allowed border-transparent' 
                                 : isHovered 
-                                    ? 'opacity-100 border-border/50 bg-background text-muted-foreground hover:border-primary/50 hover:text-primary hover:scale-110' 
+                                    ? 'opacity-100 border-border/50 bg-background text-neutral-400 hover:border-primary/50 hover:text-primary hover:scale-110' 
                                     : 'opacity-0 border-transparent pointer-events-none'
                             }`}
                     >

@@ -28,7 +28,7 @@ export async function logAdminAction(entry: AuditLogEntry): Promise<void> {
             action: entry.action,
             entity: entry.entity,
             entityId: entry.entityId ?? null,
-            details: entry.details ? JSON.stringify(entry.details) : null,
+            details: entry.details ? JSON.stringify(entry.details) : undefined,
             ipAddress,
         },
     })

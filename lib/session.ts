@@ -1,11 +1,27 @@
 const encoder = new TextEncoder()
 
-const SESSION_FALLBACK_SECRET = "dev-insecure-session-secret-change-me"
 const SESSION_SECRET =
   process.env.SESSION_SECRET ||
   process.env.AUTH_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  SESSION_FALLBACK_SECRET
+  process.env.NEXTAUTH_SECRET
+
+if (!SESSION_SECRET) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "SESSION_SECRET is not set. Refusing to start in production without a signing secret.",
+    )
+  }
+  // Dev-only: warn loudly so it's obvious in logs, but do not fall back to a hardcoded value
+  // that would let anyone reading the source forge tokens.
+  console.warn(
+    "⚠️  SESSION_SECRET is not set. Using a process-lifetime random secret — all sessions will be invalidated on restart.",
+  )
+}
+
+// Dev fallback: a random per-process secret so tokens don't survive a restart
+// but we still don't ship with a known-plaintext default.
+const EFFECTIVE_SECRET =
+  SESSION_SECRET ?? Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex")
 
 const KEY_ALGORITHM: HmacImportParams = { name: "HMAC", hash: "SHA-256" }
 
@@ -15,7 +31,7 @@ export interface SessionPayload {
   uid: string
   iat: number
   exp: number
-  v: 1
+  v: 2
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -64,7 +80,7 @@ async function getSigningKey(): Promise<CryptoKey> {
   if (!cachedKeyPromise) {
     cachedKeyPromise = crypto.subtle.importKey(
       "raw",
-      encoder.encode(SESSION_SECRET),
+      encoder.encode(EFFECTIVE_SECRET),
       KEY_ALGORITHM,
       false,
       ["sign", "verify"]
@@ -86,20 +102,20 @@ export async function createSessionToken(userId: string, maxAgeSeconds: number):
     uid: userId,
     iat: now,
     exp: now + maxAgeSeconds,
-    v: 1,
+    v: 2,
   }
 
   const payloadB64 = toBase64Url(JSON.stringify(payload))
   const sig = await signMessage(payloadB64)
   const sigB64 = toBase64Url(sig)
 
-  return `v1.${payloadB64}.${sigB64}`
+  return `v2.${payloadB64}.${sigB64}`
 }
 
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
     const [version, payloadB64, sigB64] = token.split(".")
-    if (version !== "v1" || !payloadB64 || !sigB64) return null
+    if (version !== "v2" || !payloadB64 || !sigB64) return null
 
     const expectedSig = await signMessage(payloadB64)
     const receivedSig = fromBase64Url(sigB64)
@@ -108,7 +124,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     const payloadJson = new TextDecoder().decode(fromBase64Url(payloadB64))
     const payload = JSON.parse(payloadJson) as SessionPayload
 
-    if (!payload?.uid || payload.v !== 1) return null
+    if (!payload?.uid || payload.v !== 2) return null
 
     const now = Math.floor(Date.now() / 1000)
     if (payload.exp <= now) return null

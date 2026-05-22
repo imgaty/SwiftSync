@@ -1,27 +1,25 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeRecordFilter, requirePermission } from "@/lib/data-access"
 
 // PUT /api/budgets/[id]
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:write")
+  if (permissionError) return permissionError
 
   const { id } = await params
   const body = await request.json()
 
-  const existing = await prisma.budget.findFirst({ where: { id, userId } })
-  if (!existing) {
-    return NextResponse.json({ error: "Budget not found" }, { status: 404 })
-  }
-
-  const updated = await prisma.budget.update({
-    where: { id },
+  const { count } = await prisma.budget.updateMany({
+    where: scopeRecordFilter(ctx, id),
     data: {
       ...(body.tag && { tag: body.tag }),
       ...(body.category && { category: body.category }),
@@ -29,6 +27,11 @@ export async function PUT(
       ...(body.color && { color: body.color }),
     },
   })
+  if (count === 0) {
+    return NextResponse.json({ error: "Budget not found" }, { status: 404 })
+  }
+
+  const updated = await prisma.budget.findUniqueOrThrow({ where: { id } })
 
   return NextResponse.json({
     id: updated.id,
@@ -45,17 +48,18 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:delete")
+  if (permissionError) return permissionError
 
   const { id } = await params
-  const existing = await prisma.budget.findFirst({ where: { id, userId } })
-  if (!existing) {
+  const { count } = await prisma.budget.deleteMany({ where: scopeRecordFilter(ctx, id) })
+  if (count === 0) {
     return NextResponse.json({ error: "Budget not found" }, { status: 404 })
   }
 
-  await prisma.budget.delete({ where: { id } })
   return NextResponse.json({ success: true })
 }

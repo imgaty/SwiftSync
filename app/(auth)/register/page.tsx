@@ -10,42 +10,28 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { OAuthButtons } from '@/components/oauth-buttons'
 import { DatePicker } from '@/components/date-picker'
-import { AuthShell, AuthHeader, ErrorAlert, PasswordStrength, usePasswordStrength } from '@/components/auth'
-import { BTN_PRIMARY, BTN_OUTLINE, DIVIDER_LINE, DIVIDER_LABEL, SURFACE } from '@/lib/styles'
+import {
+  AuthShell,
+  AuthHeader,
+  BackButton,
+  ErrorAlert,
+  PasswordStrength,
+  usePasswordStrength,
+  BTN_PRIMARY,
+  BTN_OUTLINE,
+} from '@/components/auth'
+import { PRISM } from '@/lib/PRISM'
 import { cn } from '@/lib/utils'
-import { Loader2, ArrowRight, ArrowLeft, Building2, CheckCircle2, Shield, ShieldCheck, Smartphone, Copy } from 'lucide-react'
-import { useLanguage } from '@/components/language-provider'
+import { postAuth } from '@/lib/auth-fetch'
+import { EMAIL_RE } from '@/lib/validation'
+
+import { Loader2, ArrowRight, Building2, CheckCircle2, Shield, ShieldCheck, Smartphone, Copy } from 'lucide-react'
+import { useLanguage, useTranslationNamespace } from '@/components/language-provider'
 import { toast } from 'sonner'
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
 const FORM_STEPS = ['email', 'details', 'password', 'security'] as const
-type FormStep = (typeof FORM_STEPS)[number]
 const TOTAL_STEPS = FORM_STEPS.length
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const JSON_HEADERS = { 'Content-Type': 'application/json' }
-
-async function postJson<T>(url: string, body: unknown, withCredentials = false): Promise<{ ok: boolean; data: T }> {
-  let res: Response
-  try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: JSON_HEADERS,
-      ...(withCredentials ? { credentials: 'include' as const } : {}),
-      body: JSON.stringify(body),
-    })
-  } catch {
-    throw new Error('Network error — check your internet connection.')
-  }
-
-  let data: T
-  try {
-    data = await res.json() as T
-  } catch {
-    throw new Error(`Server returned ${res.status} with no JSON body.`)
-  }
-
-  return { ok: res.ok, data }
-}
 
 /* ─── Step indicator ─────────────────────────────────────────────── */
 
@@ -68,21 +54,12 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   )
 }
 
-/* ─── Back button ────────────────────────────────────────────────── */
-
-function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <Button type="button" variant="outline" className={`${BTN_OUTLINE} group/back`} onClick={onClick}>
-      <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-200 group-hover/back:-translate-x-1" />Back
-    </Button>
-  )
-}
-
 /* ═══════════════════════════════════════════════════════════════════════ */
 
 export default function RegisterPage() {
   const router = useRouter()
   const { language, t } = useLanguage()
+  const re = useTranslationNamespace('register_page_extra')
 
   /* form fields */
   const [name, setName] = useState('')
@@ -91,7 +68,6 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [recoveryEmail, setRecoveryEmail] = useState('')
-
   /* security toggles */
   const [enableRecoveryEmail, setEnableRecoveryEmail] = useState(false)
   const [enable2FA, setEnable2FA] = useState(false)
@@ -134,33 +110,33 @@ export default function RegisterPage() {
   const handleNext = useCallback(async () => {
     setError('')
     if (currentStep === 'email') {
-      if (!email) { setError('Please enter your email address.'); return }
-      if (!EMAIL_RE.test(email)) { setError('Please enter a valid email address.'); return }
+      if (!email) { setError(re.error_enter_email || 'Please enter your email address.'); return }
+      if (!EMAIL_RE.test(email)) { setError(re.error_valid_email || 'Please enter a valid email address.'); return }
 
       // Check if email is already taken
       setLoading(true)
       try {
-        const { ok, data } = await postJson<{ error?: string }>('/api/auth/check-email', { email })
-        if (!ok) { setError(data.error || 'An account with this email already exists.'); return }
+        const { ok, data } = await postAuth<{ error?: string }>('/api/auth/check-email', { email })
+        if (!ok) { setError(data.error || (re.error_email_exists || 'An account with this email already exists.')); return }
         goNext()
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Unknown error while checking email.')
+        setError(e instanceof Error ? e.message : (re.error_check_email_unknown || 'Unknown error while checking email.'))
       } finally {
         setLoading(false)
       }
 
       return
     } else if (currentStep === 'details') {
-      if (!name) { setError('Please enter your full name.'); return }
-      if (!dateOfBirth) { setError('Please enter your date of birth.'); return }
+      if (!name) { setError(re.error_enter_name || 'Please enter your full name.'); return }
+      if (!dateOfBirth) { setError(re.error_enter_dob || 'Please enter your date of birth.'); return }
       goNext()
     } else if (currentStep === 'password') {
-      if (!password || !confirmPassword) { setError('Please fill in both password fields.'); return }
-      if (!allPassed) { setError('Password does not meet the requirements.'); return }
-      if (password !== confirmPassword) { setError('Passwords do not match.'); return }
+      if (!password || !confirmPassword) { setError(re.error_fill_passwords || 'Please fill in both password fields.'); return }
+      if (!allPassed) { setError(re.error_password_requirements || 'Password does not meet the requirements.'); return }
+      if (password !== confirmPassword) { setError(re.error_passwords_dont_match || 'Passwords do not match.'); return }
       goNext()
     }
-  }, [currentStep, email, name, dateOfBirth, password, confirmPassword, allPassed, goNext])
+  }, [currentStep, email, name, dateOfBirth, password, confirmPassword, allPassed, goNext, re])
 
   /* ── Final submit (security step) ─────────────────────────────────── */
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -168,21 +144,21 @@ export default function RegisterPage() {
     setError('')
 
     if (enableRecoveryEmail && recoveryEmail && !EMAIL_RE.test(recoveryEmail)) {
-      setError('Please enter a valid recovery email address.'); return
+      setError(re.error_valid_recovery_email || 'Please enter a valid recovery email address.'); return
     }
 
     setLoading(true)
     try {
-      const { ok, data } = await postJson<{ error?: string }>('/api/auth/register', {
+      const { ok, data } = await postAuth<{ error?: string }>('/api/auth/register', {
         name,
         email,
         dateOfBirth,
         password,
         recoveryEmail: (enableRecoveryEmail && recoveryEmail) || undefined,
-      }, true)
+      }, { withCredentials: true })
 
       if (!ok) {
-        setError(data.error || 'Registration failed')
+        setError(data.error || (re.error_registration_failed || 'Registration failed'))
         return
       }
 
@@ -193,11 +169,11 @@ export default function RegisterPage() {
         setBankStep(true)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error during registration.')
+      setError(e instanceof Error ? e.message : (re.error_registration_unknown || 'Unknown error during registration.'))
     } finally {
       setLoading(false)
     }
-  }, [name, email, dateOfBirth, password, recoveryEmail, enableRecoveryEmail, enable2FA])
+  }, [name, email, dateOfBirth, password, recoveryEmail, enableRecoveryEmail, enable2FA, re])
 
   /* ── 2FA setup handlers ──────────────────────────────────────────── */
   const start2FASetup = useCallback(async () => {
@@ -206,7 +182,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/2fa/setup', { method: 'POST', credentials: 'include' })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
-        toast.error(d.error || 'Failed to set up 2FA')
+        toast.error(d.error || (re.error_2fa_setup || 'Failed to set up 2FA'))
         setSetupState('idle')
         return
       }
@@ -218,7 +194,7 @@ export default function RegisterPage() {
       setQrDataUrl(url)
       setSetupState('scanning')
     } catch {
-      toast.error('Failed to set up 2FA')
+      toast.error(re.error_2fa_setup || 'Failed to set up 2FA')
       setSetupState('idle')
     }
   }, [])
@@ -227,18 +203,13 @@ export default function RegisterPage() {
     if (!verifyCode || verifyCode.length < 6) { toast.error('Please enter the 6-digit code'); return }
     setIs2FAVerifying(true)
     try {
-      const res = await fetch('/api/auth/2fa/verify', {
-        method: 'POST', credentials: 'include',
-        headers: JSON_HEADERS,
-        body: JSON.stringify({ code: verifyCode })
-      })
-      const data = await res.json()
-      if (!res.ok) { toast.error(data.error || 'Invalid code'); setIs2FAVerifying(false); return }
-      toast.success('2FA has been enabled!')
+      const { ok, data } = await postAuth<{ error?: string }>('/api/auth/2fa/verify', { code: verifyCode }, { withCredentials: true })
+      if (!ok) { toast.error(data.error || 'Invalid code'); setIs2FAVerifying(false); return }
+      toast.success(re.twofa_enabled || '2FA has been enabled!')
       setBankStep(true)
       setTwoFAStep(false)
     } catch {
-      toast.error('Failed to enable 2FA')
+      toast.error(re.error_2fa_enable || 'Failed to enable 2FA')
       setIs2FAVerifying(false)
     }
   }, [verifyCode])
@@ -256,18 +227,18 @@ export default function RegisterPage() {
 
     try {
       const returnTo = `${window.location.origin}/Accounts/callback?redirect=%2F`
-      const { ok, data } = await postJson<{ error?: string; connectUrl?: string }>('/api/bank/connect', {
+      const { ok, data } = await postAuth<{ error?: string; connectUrl?: string }>('/api/bank/connect', {
         returnTo,
         action: 'connect',
       })
 
       if (!ok || !data.connectUrl) {
-        throw new Error(data.error || 'Failed to create connect session')
+        throw new Error(data.error || (re.error_connect_session || 'Failed to create connect session'))
       }
 
       window.location.href = data.connectUrl
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : 'Connection failed')
+      setConnectError(err instanceof Error ? err.message : (re.error_connection_failed || 'Connection failed'))
       setIsConnectingBank(false)
     }
   }, [])
@@ -291,7 +262,7 @@ export default function RegisterPage() {
               <ShieldCheck className="w-7 h-7 text-blue-500 dark:text-blue-400" />
             </div>
             <h1 className="text-[22px] font-bold tracking-tight text-black dark:text-white">Set up Two-Factor Authentication</h1>
-            <p className="text-[15px] text-neutral-500 dark:text-neutral-400">Scan the QR code with your authenticator app</p>
+            <p className="text-[15px] text-neutral-400">Scan the QR code with your authenticator app</p>
           </div>
 
           {setupState === 'loading' && (
@@ -304,24 +275,25 @@ export default function RegisterPage() {
             <div className="space-y-5">
               <div className="flex justify-center">
                 <div className="p-4 bg-white rounded-2xl shadow-sm border border-black/8">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- QR is a generated data URL; next/image adds no value here */}
                   <img src={qrDataUrl} alt="2FA QR Code" className="w-[180px] h-[180px]" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-[12px] font-medium text-neutral-500 dark:text-neutral-400 text-center">Or enter this code manually:</p>
+                <p className="text-[12px] font-medium text-neutral-400 text-center">Or enter this code manually:</p>
                 <div className="flex items-center justify-center gap-2">
                   <code className="px-3 py-2 rounded-lg bg-neutral-100 dark:bg-white/5 border border-black/8 dark:border-white/10 text-[13px] font-mono tracking-wider text-neutral-900 dark:text-white select-all">
                     {secret}
                   </code>
-                  <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-lg" onClick={copySecret}>
+                  <Button type="button" variant="glass" size="icon" onClick={copySecret}>
                     {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-[13px] font-medium text-neutral-700 dark:text-neutral-300 text-center">Enter the 6-digit code from your app:</p>
+                <p className="text-[13px] font-medium text-neutral-400 text-center">Enter the 6-digit code from your app:</p>
                 <div className="flex justify-center">
                   <InputOTP maxLength={6} value={verifyCode} onChange={setVerifyCode} autoFocus>
                     <InputOTPGroup>
@@ -337,7 +309,8 @@ export default function RegisterPage() {
                 <div className="flex gap-2 pt-1">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="glass"
+                    size="lg"
                     className={`flex-1 ${BTN_OUTLINE}`}
                     onClick={() => { setTwoFAStep(false); setBankStep(true) }}
                   >
@@ -345,7 +318,8 @@ export default function RegisterPage() {
                   </Button>
                   <Button
                     type="button"
-                    className="flex-1 h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
+                    size="lg"
+                    className="flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
                     onClick={handleVerify2FA}
                     disabled={is2FAVerifying || verifyCode.length < 6}
                   >
@@ -360,12 +334,12 @@ export default function RegisterPage() {
 
           {setupState === 'idle' && (
             <div className="space-y-3">
-              <p className="text-sm text-center text-neutral-500 dark:text-neutral-400">Something went wrong setting up 2FA.</p>
+              <p className="text-sm text-center text-neutral-400">Something went wrong setting up 2FA.</p>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" className={`flex-1 ${BTN_OUTLINE}`} onClick={() => { setTwoFAStep(false); setBankStep(true) }}>
+                <Button type="button" variant="glass" size="lg" className={`flex-1 ${BTN_OUTLINE}`} onClick={() => { setTwoFAStep(false); setBankStep(true) }}>
                   Skip
                 </Button>
-                <Button type="button" className={`flex-1 ${BTN_PRIMARY}`} onClick={start2FASetup}>
+                <Button type="button" variant="solid" size="lg" className={`flex-1 ${BTN_PRIMARY}`} onClick={start2FASetup}>
                   Try again
                 </Button>
               </div>
@@ -380,38 +354,40 @@ export default function RegisterPage() {
               <CheckCircle2 className="w-7 h-7 text-emerald-500 dark:text-emerald-400" />
             </div>
             <h1 className="text-[22px] font-bold tracking-tight text-black dark:text-white">Account created!</h1>
-            <p className="text-[15px] text-neutral-500 dark:text-neutral-400">Connect your bank to automatically import accounts &amp; transactions.</p>
+            <p className="text-[15px] text-neutral-400">
+              Connect your bank to automatically import accounts &amp; transactions into your personal finance dashboard.
+            </p>
           </div>
 
-          <div className={`${SURFACE} p-4`}>
+          <div className={`${PRISM.surface} p-4`}>
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex items-center justify-center w-8 h-8 shrink-0 rounded-full bg-blue-500/10">
                 <Building2 className="w-4 h-4 text-blue-500 dark:text-blue-400" />
               </div>
               <div className="text-sm">
                 <p className="font-medium text-black dark:text-white">How it works</p>
-                <ol className="mt-1.5 list-inside list-decimal space-y-1 text-neutral-600 dark:text-neutral-400">
+                <ol className="mt-1.5 list-inside list-decimal space-y-1 text-neutral-400">
                   <li>You&apos;ll be redirected to Salt Edge Connect</li>
                   <li>Choose your bank and log in securely</li>
-                  <li>Authorize SwiftSync to read your data</li>
+                  <li>Authorize Argent to read your data</li>
                   <li>Accounts &amp; transactions are imported automatically</li>
                 </ol>
               </div>
             </div>
           </div>
 
-          <div className={`${SURFACE} border-dashed p-3 text-center text-xs text-neutral-500 dark:text-neutral-400`}>
+          <div className={`${PRISM.surface} border-dashed p-3 text-center text-xs text-neutral-400`}>
             <p>Your banking credentials are handled directly by your bank.</p>
-            <p className="mt-1">SwiftSync never sees or stores your login details.</p>
+            <p className="mt-1">Argent never sees or stores your login details.</p>
           </div>
 
           <ErrorAlert message={connectError} />
 
           <div className="space-y-4 pt-2">
-            <Button type="button" className={`${BTN_PRIMARY} gap-2`} disabled={isConnectingBank} onClick={handleBankConnect}>
+            <Button type="button" variant="solid" size="lg" className={`${BTN_PRIMARY} gap-2`} disabled={isConnectingBank} onClick={handleBankConnect}>
               {isConnectingBank ? <><Loader2 className="w-5 h-5 animate-spin" />Connecting...</> : <><Building2 className="w-5 h-5" />Connect Your Bank</>}
             </Button>
-            <button type="button" onClick={() => router.push('/')} className="w-full h-10 text-[13px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-neutral-300 transition-colors cursor-pointer">
+            <button type="button" onClick={() => router.push('/')} className="w-full h-10 text-[13px] font-medium text-neutral-400 hover:text-black dark:hover:text-neutral-400 transition-colors cursor-pointer">
               Skip for now — I&apos;ll add accounts later
             </button>
           </div>
@@ -426,6 +402,7 @@ export default function RegisterPage() {
             noValidate
             className="space-y-4"
           >
+
             <ErrorAlert message={error} />
 
             {/* ── Step 1: Email ────────────────────────────────────── */}
@@ -443,22 +420,22 @@ export default function RegisterPage() {
                     required
                   />
 
-                  <Button type="submit" className={BTN_PRIMARY} disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading}>
                     {loading
                       ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Checking...</>
-                      : <>Continue<ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" /></>}
+                      : <>Continue<ArrowRight className="w-4 h-4" /></>}
                   </Button>
 
                   <div className="flex items-center gap-3">
-                    <div className={DIVIDER_LINE} />
-                    <span className={DIVIDER_LABEL}>{t.oauth_buttons?.divider_label ?? 'or'}</span>
-                    <div className={DIVIDER_LINE} />
+                    <div className={PRISM.dividerLine} />
+                    <span className={PRISM.dividerLabel}>{t.oauth_buttons?.divider_label ?? 'or'}</span>
+                    <div className={PRISM.dividerLine} />
                   </div>
 
                   <div className="pb-2"><OAuthButtons mode="register" /></div>
 
-                  <p className="text-[13px] text-center text-neutral-500 dark:text-neutral-400 pt-2">
-                    Already have an account?{' '}<Link href="/login" className="link-underline">Sign in</Link>
+                  <p className="text-[13px] text-center text-neutral-400 pt-2">
+                    Already have an account?{' '}<Link href="/login">Sign in</Link>
                   </p>
                 </div>
               </div>
@@ -488,11 +465,11 @@ export default function RegisterPage() {
                     dobMode
                   />
 
-                  <Button type="submit" className={BTN_PRIMARY} disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading}>
                     Continue
-                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
-                  <BackButton onClick={goBack} />
+                  <BackButton onClick={goBack} label="Back" />
                 </div>
               </div>
             )}
@@ -524,18 +501,18 @@ export default function RegisterPage() {
                       onChange={e => setConfirmPassword(e.target.value)}
                       disabled={loading}
                       required
-                      className={confirmPassword && password !== confirmPassword ? 'border-red-500/50! ring-red-500/20!' : ''}
+                      className={confirmPassword && password !== confirmPassword ? PRISM.destructiveValidation : ''}
                     />
                     {confirmPassword && password !== confirmPassword && (
                       <p className="text-xs text-red-400 mt-1 ml-1">Passwords don&apos;t match</p>
                     )}
                   </div>
 
-                  <Button type="submit" className={BTN_PRIMARY} disabled={loading || (!!password && !allPassed)}>
+                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading || (!!password && !allPassed)}>
                     Continue
-                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
-                  <BackButton onClick={goBack} />
+                  <BackButton onClick={goBack} label="Back" />
                 </div>
               </div>
             )}
@@ -544,7 +521,6 @@ export default function RegisterPage() {
             {currentStep === 'security' && (
               <div key="step-security" className={slideClass}>
                 <div className="space-y-4">
-
                   <Accordion
                     type="multiple"
                     value={[
@@ -555,7 +531,7 @@ export default function RegisterPage() {
                     {/* Recovery Email toggle */}
                     <AccordionItem value="recovery">
                       <AccordionTrigger asChild>
-                        <div className={`${SURFACE} p-4 transition-colors duration-200 ${enableRecoveryEmail ? 'ring-1 ring-emerald-500/20' : ''}`}>
+                        <div className={`${PRISM.surface} p-4 transition-colors duration-200 ${enableRecoveryEmail ? 'ring-1 ring-emerald-500/20' : ''}`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className={cn(
@@ -569,7 +545,7 @@ export default function RegisterPage() {
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-black dark:text-white">Recovery Email</p>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">Recover your account if you lose access</p>
+                                <p className="text-xs text-neutral-400">Recover your account if you lose access</p>
                               </div>
                             </div>
                             <Switch
@@ -598,7 +574,7 @@ export default function RegisterPage() {
                     {/* 2FA toggle */}
                     <AccordionItem value="2fa" className="mt-4">
                       <AccordionTrigger asChild>
-                        <div className={`${SURFACE} p-4 transition-colors duration-200 ${enable2FA ? 'ring-1 ring-blue-500/20' : ''}`}>
+                        <div className={`${PRISM.surface} p-4 transition-colors duration-200 ${enable2FA ? 'ring-1 ring-blue-500/20' : ''}`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className={cn(
@@ -612,7 +588,7 @@ export default function RegisterPage() {
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-black dark:text-white">Two-Factor Authentication</p>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">Extra security with an authenticator app</p>
+                                <p className="text-xs text-neutral-400">Extra security with an authenticator app</p>
                               </div>
                             </div>
                             <Switch
@@ -625,7 +601,7 @@ export default function RegisterPage() {
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="px-1">
-                          <div className={`${SURFACE} border-dashed p-3 text-xs text-neutral-500 dark:text-neutral-400`}>
+                          <div className={`${PRISM.surface} border-dashed p-3 text-xs text-neutral-400`}>
                             <p>After creating your account, you&apos;ll scan a QR code with your authenticator app (Google Authenticator, Authy, etc.) and enter a 6-digit code to confirm.</p>
                           </div>
                         </div>
@@ -633,12 +609,12 @@ export default function RegisterPage() {
                     </AccordionItem>
                   </Accordion>
 
-                  <Button type="submit" className={BTN_PRIMARY} disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading}>
                     {loading
                       ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Creating account...</>
-                      : <>Create account<ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" /></>}
+                      : <>Create account<ArrowRight className="w-4 h-4" /></>}
                   </Button>
-                  <BackButton onClick={goBack} />
+                  <BackButton onClick={goBack} label="Back" />
                 </div>
               </div>
             )}

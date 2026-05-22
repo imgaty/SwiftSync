@@ -26,7 +26,6 @@ import {
     AreaChart as AreaIcon,
     ChartColumn as BarIcon,
     PieChart as PieIcon,
-    List as ListIcon,
     TrendingUp,
     Wallet,
     CreditCard,
@@ -46,6 +45,7 @@ import {
     DrawerTrigger,
 } from "@/components/ui/drawer"
 import { useLanguage } from "@/components/language-provider"
+import { useCurrency } from "@/components/currency-provider"
 import { cn } from "@/lib/utils"
 
 // ==============================================================================
@@ -133,7 +133,7 @@ function DraggableWidgetItem({ definition }: { definition: WidgetDefinition }) {
                 <p className="font-medium text-sm truncate">
                     {w[definition.labelKey] || definition.labelKey}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-xs text-neutral-400 truncate">
                     {w[definition.descriptionKey] || definition.descriptionKey}
                 </p>
             </div>
@@ -189,7 +189,7 @@ function SortableWidget({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 cursor-grab active:cursor-grabbing"
+                        className="cursor-grab active:cursor-grabbing"
                         {...attributes}
                         {...listeners}
                     >
@@ -198,7 +198,7 @@ function SortableWidget({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
+                        className="hover:bg-destructive hover:text-destructive-foreground"
                         onClick={() => onRemove(widget.id)}
                     >
                         <X className="h-4 w-4" />
@@ -225,7 +225,7 @@ function DropZone({ isOver }: { isOver: boolean }) {
                 isOver ? "border-primary bg-primary/5" : "border-muted-foreground/25"
             )}
         >
-            <div className="text-center text-muted-foreground">
+            <div className="text-center text-neutral-400">
                 <Plus className="w-8 h-8 mx-auto mb-2" />
                 <p className="text-sm">{w.drop_here || "Drop widgets here"}</p>
             </div>
@@ -245,13 +245,14 @@ interface WidgetContentProps {
 }
 
 function WidgetContent({ widget, data, chartConfig, locale }: WidgetContentProps) {
-    const { t } = useLanguage()
+    const { formatCurrency } = useCurrency()
     
     // Dynamic import chart components to avoid circular dependencies
     const {
         AreaChartComponent,
         BarChartComponent,
         PieChartComponent,
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- avoid circular dep at module load
     } = require("@/components/ui/chart")
 
     const chartKeys = React.useMemo(() => {
@@ -289,10 +290,10 @@ function WidgetContent({ widget, data, chartConfig, locale }: WidgetContentProps
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
-                        <span className="text-sm text-muted-foreground">{label}</span>
+                        <span className="text-sm text-neutral-400">{label}</span>
                     </div>
                     <span className="text-2xl font-bold">
-                        {total.toLocaleString(locale, { style: 'currency', currency: 'EUR' })}
+                        {formatCurrency(total, { locale })}
                     </span>
                 </div>
             </div>
@@ -474,7 +475,7 @@ export function ModularChartArea({ initialWidgets = [] }: ModularChartAreaProps)
                     
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
                         <DrawerTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2">
+                            <Button variant="glass" size="sm" className="gap-2">
                                 <Plus className="w-4 h-4" />
                                 {w.add_widget || "Add Widget"}
                             </Button>
@@ -490,7 +491,7 @@ export function ModularChartArea({ initialWidgets = [] }: ModularChartAreaProps)
                             <div className="px-4 pb-4 space-y-6 overflow-y-auto flex-1">
                                 {/* Charts */}
                                 <div>
-                                    <h3 className="text-sm font-medium mb-3 text-muted-foreground">
+                                    <h3 className="text-sm font-medium mb-3 text-neutral-400">
                                         {w.category_charts || "Charts"}
                                     </h3>
                                     <div className="space-y-2">
@@ -504,7 +505,7 @@ export function ModularChartArea({ initialWidgets = [] }: ModularChartAreaProps)
                                 
                                 {/* Stats */}
                                 <div>
-                                    <h3 className="text-sm font-medium mb-3 text-muted-foreground">
+                                    <h3 className="text-sm font-medium mb-3 text-neutral-400">
                                         {w.category_stats || "Statistics"}
                                     </h3>
                                     <div className="space-y-2">
@@ -519,7 +520,7 @@ export function ModularChartArea({ initialWidgets = [] }: ModularChartAreaProps)
                             
                             <DrawerFooter>
                                 <DrawerClose asChild>
-                                    <Button variant="outline">{w.close || "Close"}</Button>
+                                    <Button variant="glass">{w.close || "Close"}</Button>
                                 </DrawerClose>
                             </DrawerFooter>
                         </DrawerContent>
@@ -545,7 +546,7 @@ export function ModularChartArea({ initialWidgets = [] }: ModularChartAreaProps)
                                         >
                                             {isLoading ? (
                                                 <div className="p-4">
-                                                    <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                                                    <div className="h-[200px] flex items-center justify-center text-neutral-400">
                                                         {t.loading || "Loading..."}
                                                     </div>
                                                 </div>

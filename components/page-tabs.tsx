@@ -53,7 +53,7 @@ function PageTab({ tab, title, isActive, onActivate, onClose, canClose }: PageTa
                 "transition-colors duration-150",
                 isActive 
                     ? "bg-background text-foreground" 
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "bg-muted/50 text-neutral-400 hover:bg-muted hover:text-foreground"
             )}
         >
             <Icon className="w-4 h-4 shrink-0" />
@@ -134,7 +134,7 @@ export function PageTabsBar() {
                         <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 ml-1 shrink-0"
+                            className="ml-1 shrink-0"
                             aria-label="Open new tab"
                         >
                             <Plus className="w-4 h-4" />

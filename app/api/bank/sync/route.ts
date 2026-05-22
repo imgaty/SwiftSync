@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
 import { simulateBankSync } from "@/lib/bank-api"
 
 // POST /api/bank/sync — Simulate a bank sync to retrieve account data
 export async function POST(request: Request) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
 

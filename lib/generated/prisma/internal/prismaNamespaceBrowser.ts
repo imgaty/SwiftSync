@@ -62,7 +62,12 @@ export const ModelName = {
   Budget: 'Budget',
   FinancialGoal: 'FinancialGoal',
   Notification: 'Notification',
-  CategorizationRule: 'CategorizationRule',
+  Tag: 'Tag',
+  Counterparty: 'Counterparty',
+  Rule: 'Rule',
+  PACERule: 'PACERule',
+  SpreadsheetDocument: 'SpreadsheetDocument',
+  SpreadsheetLog: 'SpreadsheetLog',
   AuditLog: 'AuditLog',
   SystemAnnouncement: 'SystemAnnouncement'
 } as const
@@ -85,12 +90,13 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
-  email: 'email',
   name: 'name',
+  email: 'email',
   password: 'password',
   dateOfBirth: 'dateOfBirth',
   recoveryEmail: 'recoveryEmail',
   role: 'role',
+  avatar: 'avatar',
   status: 'status',
   suspendedAt: 'suspendedAt',
   suspendedReason: 'suspendedReason',
@@ -103,6 +109,7 @@ export const UserScalarFieldEnum = {
   twoFactorCode: 'twoFactorCode',
   twoFactorCodeExpiry: 'twoFactorCodeExpiry',
   twoFactorBackupCodes: 'twoFactorBackupCodes',
+  saltEdgeCustomerId: 'saltEdgeCustomerId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -127,9 +134,6 @@ export const OAuthAccountScalarFieldEnum = {
   userId: 'userId',
   provider: 'provider',
   providerAccountId: 'providerAccountId',
-  accessToken: 'accessToken',
-  refreshToken: 'refreshToken',
-  expiresAt: 'expiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -192,6 +196,8 @@ export const TransactionScalarFieldEnum = {
   description: 'description',
   tags: 'tags',
   accountId: 'accountId',
+  counterpartyId: 'counterpartyId',
+  counterpartyRaw: 'counterpartyRaw',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -263,7 +269,53 @@ export const NotificationScalarFieldEnum = {
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
 
 
-export const CategorizationRuleScalarFieldEnum = {
+export const TagScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  slug: 'slug',
+  name: 'name',
+  color: 'color',
+  icon: 'icon',
+  isSystem: 'isSystem',
+  isArchived: 'isArchived',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const CounterpartyScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  normalizedKey: 'normalizedKey',
+  displayName: 'displayName',
+  cachedTagSlug: 'cachedTagSlug',
+  cachedSource: 'cachedSource',
+  cachedAt: 'cachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CounterpartyScalarFieldEnum = (typeof CounterpartyScalarFieldEnum)[keyof typeof CounterpartyScalarFieldEnum]
+
+
+export const RuleScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  enabled: 'enabled',
+  filters: 'filters',
+  addTagSlugs: 'addTagSlugs',
+  priority: 'priority',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RuleScalarFieldEnum = (typeof RuleScalarFieldEnum)[keyof typeof RuleScalarFieldEnum]
+
+
+export const PACERuleScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   pattern: 'pattern',
@@ -274,7 +326,34 @@ export const CategorizationRuleScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type CategorizationRuleScalarFieldEnum = (typeof CategorizationRuleScalarFieldEnum)[keyof typeof CategorizationRuleScalarFieldEnum]
+export type PACERuleScalarFieldEnum = (typeof PACERuleScalarFieldEnum)[keyof typeof PACERuleScalarFieldEnum]
+
+
+export const SpreadsheetDocumentScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  description: 'description',
+  sheetType: 'sheetType',
+  linkedEntity: 'linkedEntity',
+  content: 'content',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SpreadsheetDocumentScalarFieldEnum = (typeof SpreadsheetDocumentScalarFieldEnum)[keyof typeof SpreadsheetDocumentScalarFieldEnum]
+
+
+export const SpreadsheetLogScalarFieldEnum = {
+  id: 'id',
+  spreadsheetId: 'spreadsheetId',
+  userId: 'userId',
+  action: 'action',
+  summary: 'summary',
+  createdAt: 'createdAt'
+} as const
+
+export type SpreadsheetLogScalarFieldEnum = (typeof SpreadsheetLogScalarFieldEnum)[keyof typeof SpreadsheetLogScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {
@@ -316,6 +395,21 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -330,4 +424,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

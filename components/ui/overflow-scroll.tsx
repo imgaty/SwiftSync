@@ -118,26 +118,21 @@ export function OverflowScroll({
         }
     }, [isOverflowing, maxScroll, speed, pauseDuration])
 
-    const showLeftGradient = isOverflowing && scrollPosition > 1
-    const showRightGradient = isOverflowing && scrollPosition < maxScroll - 1
+    const maskImage = React.useMemo(() => {
+        if (!isOverflowing) return undefined
+        const fadeLeft = scrollPosition > 1
+        const fadeRight = scrollPosition < maxScroll - 1
+        const l = fadeLeft ? `transparent, black ${fadeWidth}px` : 'black, black 0px'
+        const r = fadeRight ? `black calc(100% - ${fadeWidth}px), transparent` : 'black 100%, black'
+        return `linear-gradient(to right, ${l}, ${r})`
+    }, [isOverflowing, scrollPosition, maxScroll, fadeWidth])
 
     return (
         <div 
             ref={containerRef} 
             className={cn("relative overflow-hidden", center && !isOverflowing && "flex justify-center", className)}
+            style={{ maskImage, WebkitMaskImage: maskImage }}
         >
-            {isOverflowing && (
-                <>
-                    <div 
-                        className="absolute left-0 top-0 bottom-0 z-10 pointer-events-none transition-opacity duration-150 bg-linear-to-r from-background to-transparent"
-                        style={{ width: fadeWidth, opacity: showLeftGradient ? 1 : 0 }}
-                    />
-                    <div 
-                        className="absolute right-0 top-0 bottom-0 z-10 pointer-events-none transition-opacity duration-150 bg-linear-to-l from-background to-transparent"
-                        style={{ width: fadeWidth, opacity: showRightGradient ? 1 : 0 }}
-                    />
-                </>
-            )}
             <div 
                 ref={contentRef}
                 className={cn("whitespace-nowrap will-change-transform", isOverflowing ? "inline-block" : "inline-flex")}
@@ -151,7 +146,7 @@ export function OverflowScroll({
 
 // Universal auto-scroll: Add class "auto-scroll" to any parent element
 // and all overflowing children will automatically animate
-export function AutoScrollProvider({ children }: { children: React.ReactNode }) {
+export function AutoScrollProvider({ children }: { children?: React.ReactNode }) {
     React.useEffect(() => {
         const scrollStates = new Map<HTMLElement, {
             animationId: number | null
@@ -187,14 +182,15 @@ export function AutoScrollProvider({ children }: { children: React.ReactNode }) 
             el.appendChild(wrapper)
             el.style.overflow = 'hidden'
 
-            const leftGrad = document.createElement('div')
-            leftGrad.style.cssText = `position:absolute;left:0;top:0;bottom:0;width:${FADE_WIDTH}px;z-index:10;pointer-events:none;background:linear-gradient(to right,var(--background),transparent);opacity:0;transition:opacity 150ms;`
-            
-            const rightGrad = document.createElement('div')
-            rightGrad.style.cssText = `position:absolute;right:0;top:0;bottom:0;width:${FADE_WIDTH}px;z-index:10;pointer-events:none;background:linear-gradient(to left,var(--background),transparent);opacity:0;transition:opacity 150ms;`
-            
-            wrapper.appendChild(leftGrad)
-            wrapper.appendChild(rightGrad)
+            const updateMask = (position: number, max: number) => {
+                const fadeLeft = position > 1
+                const fadeRight = position < max - 1
+                const l = fadeLeft ? `transparent, black ${FADE_WIDTH}px` : 'black, black 0px'
+                const r = fadeRight ? `black calc(100% - ${FADE_WIDTH}px), transparent` : 'black 100%, black'
+                const mask = `linear-gradient(to right, ${l}, ${r})`
+                wrapper.style.maskImage = mask
+                wrapper.style.webkitMaskImage = mask
+            }
 
             const checkAndAnimate = () => {
                 const containerWidth = wrapper.clientWidth
@@ -203,8 +199,8 @@ export function AutoScrollProvider({ children }: { children: React.ReactNode }) 
 
                 if (!isOverflowing) {
                     content.style.transform = 'translateX(0)'
-                    leftGrad.style.opacity = '0'
-                    rightGrad.style.opacity = '0'
+                    wrapper.style.maskImage = ''
+                    wrapper.style.webkitMaskImage = ''
                     const state = scrollStates.get(el)
                     if (state?.animationId) {
                         cancelAnimationFrame(state.animationId)
@@ -263,8 +259,7 @@ export function AutoScrollProvider({ children }: { children: React.ReactNode }) 
                         }
 
                         content.style.transform = `translateX(-${state.position}px)`
-                        leftGrad.style.opacity = state.position > 1 ? '1' : '0'
-                        rightGrad.style.opacity = state.position < state.maxScroll - 1 ? '1' : '0'
+                        updateMask(state.position, state.maxScroll)
 
                         state.animationId = requestAnimationFrame(animate)
                     }
@@ -322,5 +317,5 @@ export function AutoScrollProvider({ children }: { children: React.ReactNode }) 
         }
     }, [])
 
-    return <>{children}</>
+    return children ? <>{children}</> : null
 }

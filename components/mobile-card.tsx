@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button"
 import { Pencil, Trash2, MoreVertical } from "lucide-react"
 import {
     Dropdown,
-    DropdownShell,
+    DropdownContent,
     DropdownItem,
     DropdownTrigger,
-} from "@/components/ui/app-dropdown"
+} from "@/components/ui/dropdown"
 
 
 interface MobileCardField {
@@ -39,11 +39,12 @@ interface MobileCardProps<T> {
     onDelete?: () => void
     icon?: React.ReactNode
     index?: number
+    fieldLayout?: "grid" | "carousel"
 }
 
 export function MobileCard<T>({
-    item,
-    id,
+    item: _item,
+    id: _id,
     title,
     subtitle,
     badge,
@@ -53,7 +54,8 @@ export function MobileCard<T>({
     onEdit,
     onDelete,
     icon,
-    index = 0
+    index = 0,
+    fieldLayout = "grid",
 }: MobileCardProps<T>) {
     return (
         <motion.div
@@ -100,7 +102,7 @@ export function MobileCard<T>({
                             )}
                         </div>
                         {subtitle && (
-                            <p className="auto-scroll mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                            <p className="auto-scroll mt-0.5 text-xs text-neutral-400">
                                 {subtitle}
                             </p>
                         )}
@@ -110,11 +112,11 @@ export function MobileCard<T>({
                     {(onEdit || onDelete) && (
                         <Dropdown>
                             <DropdownTrigger asChild>
-                                <Button variant="ghost" size="icon" className="size-8 shrink-0">
+                                <Button variant="ghost" size="icon" className="shrink-0">
                                     <MoreVertical className="size-4" />
                                 </Button>
                             </DropdownTrigger>
-                            <DropdownShell align="end">
+                            <DropdownContent align="end">
                                 {onEdit && (
                                     <DropdownItem onClick={onEdit}>
                                         <Pencil className="mr-2 size-4" />
@@ -130,20 +132,37 @@ export function MobileCard<T>({
                                         Delete
                                     </DropdownItem>
                                 )}
-                            </DropdownShell>
+                            </DropdownContent>
                         </Dropdown>
                     )}
                 </CardHeader>
                 
                 <CardContent className="pt-0">
-                    <div className="grid grid-cols-2 gap-2">
-                        {fields.map((field, i) => (
-                            <div key={i} className={cn("space-y-0.5", field.className)}>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">{field.label}</p>
-                                <p className="text-sm font-medium">{field.value}</p>
-                            </div>
-                        ))}
-                    </div>
+                    {fieldLayout === "carousel" ? (
+                        <div className="-mx-1 flex items-stretch gap-2 overflow-x-auto px-1 pb-0.5 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            {fields.map((field, i) => (
+                                <div
+                                    key={i}
+                                    className={cn(
+                                        "min-w-[148px] max-w-[80vw] snap-start rounded-lg border border-black/6 bg-black/3 px-2.5 py-2 dark:border-white/8 dark:bg-white/4",
+                                        field.className,
+                                    )}
+                                >
+                                    <p className="text-[11px] text-neutral-400">{field.label}</p>
+                                    <p className="mt-0.5 text-sm font-medium auto-scroll">{field.value}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                            {fields.map((field, i) => (
+                                <div key={i} className={cn("space-y-0.5", field.className)}>
+                                    <p className="text-xs text-neutral-400">{field.label}</p>
+                                    <p className="text-sm font-medium">{field.value}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </motion.div>
@@ -165,19 +184,5 @@ export function MobileCardList({ children, className }: MobileCardListProps) {
     )
 }
 
-// Hook to detect if we're on mobile
-export function useIsMobileView(breakpoint: number = 768) {
-    const [isMobile, setIsMobile] = React.useState(false)
-
-    React.useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < breakpoint)
-        }
-        
-        checkMobile()
-        window.addEventListener("resize", checkMobile)
-        return () => window.removeEventListener("resize", checkMobile)
-    }, [breakpoint])
-
-    return isMobile
-}
+// Re-export the canonical mobile hook for backwards compatibility
+export { useIsMobile as useIsMobileView } from "@/hooks/use-mobile"

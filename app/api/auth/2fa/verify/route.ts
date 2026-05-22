@@ -3,12 +3,28 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUserId } from "@/lib/auth-helpers"
 import * as OTPAuth from "otpauth"
 import { decrypt } from "@/lib/encryption-v2"
+import { rateLimit } from "@/lib/rate-limit"
 
 // POST /api/auth/2fa/verify — Verify TOTP code and enable 2FA
 export async function POST(request: Request) {
   const userId = await getAuthUserId()
   if (!userId) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  }
+
+  const rl = rateLimit({
+    scope: "2fa-verify",
+    identifier: userId,
+    max: 10,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (!rl.ok) {
+    const res = NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfter} seconds.` },
+      { status: 429 },
+    )
+    res.headers.set("Retry-After", String(rl.retryAfter))
+    return res
   }
 
   const { code } = await request.json()
@@ -25,7 +41,7 @@ export async function POST(request: Request) {
   const secret = decrypt(user.twoFactorSecret)
 
   const totp = new OTPAuth.TOTP({
-    issuer: "SwiftSync",
+    issuer: "Argent",
     label: user.name || user.email,
     algorithm: "SHA1",
     digits: 6,

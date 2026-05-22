@@ -21,6 +21,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { PRISM } from "@/lib/PRISM"
 
 // ─── Page registry ──────────────────────────────────────────────────────────
 interface PageDef {
@@ -30,7 +31,7 @@ interface PageDef {
     icon: React.ElementType
 }
 
-const STORAGE_KEY = "swiftsync-nav-tabs"
+const STORAGE_KEY = "argent-nav-tabs"
 
 function usePageRegistry() {
     const { t } = useLanguage()
@@ -95,14 +96,14 @@ const TabItem = React.memo(function TabItem({
                 "transition-colors duration-100",
                 active
                     ? "text-foreground"
-                    : "text-muted-foreground/50 hover:text-foreground/70",
+                    : "text-neutral-400/50 hover:text-foreground/70",
             )}
         >
             <Icon className={cn(
                 "size-[15px] shrink-0 transition-opacity duration-100",
                 active ? "opacity-80" : "opacity-40 group-hover/tab:opacity-60"
             )} />
-            <span className="truncate max-w-[120px]">
+            <span className="auto-scroll max-w-[80px] sm:max-w-[120px]">
                 {tab.label}
             </span>
             {canClose && (
@@ -313,7 +314,7 @@ export function NavTabs() {
                                 <button
                                     className={cn(
                                         "glass-tab-add flex items-center justify-center size-8 shrink-0 ml-0.5 z-1",
-                                        "text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors duration-150",
+                                        "text-neutral-400/40 hover:text-neutral-400/70 transition-colors duration-150",
                                         availablePages.length === 0 && "opacity-30 cursor-not-allowed"
                                     )}
                                     aria-label="New tab"
@@ -322,9 +323,9 @@ export function NavTabs() {
                                     <Plus className="size-3.5" />
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent align="start" className="w-52 p-1.5">
-                                <div className="space-y-0.5">
-                                    <p className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                            <PopoverContent align="start" className="w-52">
+                                <div>
+                                    <p className={PRISM.label}>
                                         Open page
                                     </p>
                                     {availablePages.map(page => {
@@ -333,10 +334,10 @@ export function NavTabs() {
                                             <button
                                                 key={page.id}
                                                 onClick={() => addTab(page.id)}
-                                                className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-sm font-medium text-foreground/80 hover:bg-foreground/5 transition-colors duration-100"
+                                                className={`${PRISM.item} ${PRISM.itemHover} ${PRISM.itemIcon} w-full cursor-pointer text-left`}
                                             >
-                                                <Icon className="size-4 shrink-0 opacity-50" />
-                                                {page.label}
+                                                <Icon className="size-4 shrink-0" />
+                                                <span className="auto-scroll flex-1 min-w-0">{page.label}</span>
                                             </button>
                                         )
                                     })}

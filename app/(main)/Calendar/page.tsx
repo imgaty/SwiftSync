@@ -1,13 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { PageShell, PageHeader, PageTitle, StatCards, PageSection } from "@/components/page-framework"
-import { Skeleton } from "@/components/ui/skeleton"
+import { PageShell, PageHeader, StatCards, PageSection } from "@/components/page-framework"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, CalendarDays, TrendingUp, TrendingDown, Bell } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
+import { useCurrency } from "@/components/currency-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
 import type { Transaction, Bill } from "@/lib/types"
 
@@ -21,7 +21,6 @@ type CalendarDay = {
 
 function getCalendarDays(year: number, month: number, transactions: Transaction[], bills: Bill[]): CalendarDay[] {
     const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
     const startDate = new Date(firstDay)
     startDate.setDate(startDate.getDate() - firstDay.getDay())  // Start from Sunday
 
@@ -58,13 +57,12 @@ function getCalendarDays(year: number, month: number, transactions: Transaction[
     return days
 }
 
-const MONTHS_PT = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
-const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-const DAYS_PT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
-const DAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const DAYS_DEFAULT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 export default function CalendarPage() {
-    const { t, language } = useLanguage()
+    const { t } = useLanguage()
+    const { formatCurrency } = useCurrency()
+    const cal = (t as any).calendar_page || {} as Record<string, any>
     const { data, isLoading } = useFinanceData()
 
     const today = new Date()
@@ -80,8 +78,7 @@ export default function CalendarPage() {
         [currentYear, currentMonth, transactions, bills]
     )
 
-    const months = language === "pt" ? MONTHS_PT : MONTHS_EN
-    const days = language === "pt" ? DAYS_PT : DAYS_EN
+    const days: string[] = cal.days_short || DAYS_DEFAULT
 
     const prevMonth = () => {
         if (currentMonth === 0) {
@@ -109,15 +106,24 @@ export default function CalendarPage() {
         setSelectedDay(null)
     }
 
-    // Summary for current month
-    const monthlyIncome = transactions
-        .filter((t) => t.type === "in" && t.date.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`))
-        .reduce((s, t) => s + t.amount, 0)
-    const monthlyExpenses = transactions
-        .filter((t) => t.type === "out" && t.date.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`))
-        .reduce((s, t) => s + t.amount, 0)
+    // Summary for current month (single-pass, memoized)
+    const { monthlyIncome, monthlyExpenses } = React.useMemo(() => {
+        const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`
+        let income = 0, expenses = 0
+        for (const tx of transactions) {
+            if (tx.date.startsWith(prefix)) {
+                if (tx.type === "in") income += tx.amount
+                else if (tx.type === "out") expenses += tx.amount
+            }
+        }
+        return { monthlyIncome: income, monthlyExpenses: expenses }
+    }, [transactions, currentYear, currentMonth])
 
-    const upcomingBills = bills.filter((b) => b.dueDay >= today.getDate()).length
+    const upcomingBills = React.useMemo(
+        () => bills.filter((b) => b.dueDay >= today.getDate()).length,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [bills]
+    )
 
     return (
         <PageShell>
@@ -128,32 +134,26 @@ export default function CalendarPage() {
                 ]}
                 isLoading={isLoading}
                 actions={
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={goToToday} className="rounded-xl">
-                            {language === "pt" ? "Hoje" : "Today"}
+                    <>
+                        <Button onClick={goToToday} title={cal.today || "Today"}>
+                            <CalendarDays />
                         </Button>
-                        <Button variant="outline" size="icon" onClick={prevMonth} className="h-9 w-9 rounded-xl">
-                            <ChevronLeft className="h-4 w-4" />
+                        <Button onClick={prevMonth} title={cal.prev_month || "Previous month"}>
+                            <ChevronLeft />
                         </Button>
-                        <Button variant="outline" size="icon" onClick={nextMonth} className="h-9 w-9 rounded-xl">
-                            <ChevronRight className="h-4 w-4" />
+                        <Button onClick={nextMonth} title={cal.next_month || "Next month"}>
+                            <ChevronRight />
                         </Button>
-                    </div>
+                    </>
                 }
             />
 
-            <PageTitle
-                title={`${months[currentMonth]} ${currentYear}`}
-                description={language === "pt" ? "Vista de calendário financeiro" : "Financial calendar view"}
-                isLoading={isLoading}
-                icon={<CalendarDays className="h-5 w-5" />}
-            />
 
             <StatCards
                 stats={[
-                    { label: language === "pt" ? "Receitas do mês" : "Monthly Income", value: `€${monthlyIncome.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}`, trend: "up" as const, icon: <TrendingUp className="h-4 w-4" /> },
-                    { label: language === "pt" ? "Despesas do mês" : "Monthly Expenses", value: `€${monthlyExpenses.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}`, trend: "down" as const, icon: <TrendingDown className="h-4 w-4" /> },
-                    { label: language === "pt" ? "Contas a vencer" : "Upcoming Bills", value: String(upcomingBills), icon: <Bell className="h-4 w-4" /> },
+                    { label: cal.monthly_income || "Monthly Income", value: formatCurrency(monthlyIncome), trend: "up" as const, icon: <TrendingUp className="h-4 w-4" /> },
+                    { label: cal.monthly_expenses || "Monthly Expenses", value: formatCurrency(monthlyExpenses), trend: "down" as const, icon: <TrendingDown className="h-4 w-4" /> },
+                    { label: cal.upcoming_bills || "Upcoming Bills", value: String(upcomingBills), icon: <Bell className="h-4 w-4" /> },
                 ]}
                 isLoading={isLoading}
             />
@@ -161,31 +161,30 @@ export default function CalendarPage() {
             {/* Calendar Grid */}
             <PageSection stagger={3}>
             <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-2 sm:p-4 overflow-x-auto">
                     {/* Day Headers */}
-                    <div className="grid grid-cols-7 gap-px mb-2">
+                    <div className="grid grid-cols-7 gap-px mb-2 min-w-[500px]">
                         {days.map((day) => (
-                            <div key={day} className="text-center text-xs font-medium text-neutral-500 dark:text-neutral-400 py-2">
+                            <div key={day} className="text-center text-xs font-medium text-neutral-400 py-2">
                                 {day}
                             </div>
                         ))}
                     </div>
 
                     {/* Calendar Days */}
-                    <div className="grid grid-cols-7 gap-px">
-                        {calendarDays.map((day, i) => {
-                            const hasTransactions = day.transactions.length > 0
+                    <div className="grid grid-cols-7 gap-px min-w-[500px]">
+                        {calendarDays.map((day) => {
                             const hasBills = day.bills.length > 0
                             const income = day.transactions.filter((t) => t.type === "in").reduce((s, t) => s + t.amount, 0)
                             const expenses = day.transactions.filter((t) => t.type === "out").reduce((s, t) => s + t.amount, 0)
 
                             return (
                                 <button
-                                    key={i}
+                                    key={day.date.toISOString().slice(0, 10)}
                                     onClick={() => setSelectedDay(day)}
                                     className={`
-                                        relative min-h-[80px] p-1.5 text-left rounded-md transition-all border
-                                        ${day.isCurrentMonth ? "bg-background" : "bg-black/5 dark:bg-white/5/30 text-neutral-500 dark:text-neutral-400"}
+                                        relative min-h-20 p-1.5 text-left rounded-md transition-all border
+                                        ${day.isCurrentMonth ? "bg-background" : "bg-black/5 dark:bg-white/5/30 text-neutral-400"}
                                         ${day.isToday ? "ring-2 ring-primary border-primary" : "border-transparent"}
                                         ${selectedDay?.date.getTime() === day.date.getTime() ? "bg-black/5 dark:bg-white/5" : ""}
                                         hover:bg-black/5 dark:hover:bg-white/10/50
@@ -197,13 +196,13 @@ export default function CalendarPage() {
 
                                     <div className="mt-1 space-y-0.5">
                                         {income > 0 && (
-                                            <div className="text-[10px] text-green-600 truncate">
-                                                +€{income.toFixed(0)}
+                                            <div className="text-[10px] text-positive truncate">
+                                                +{formatCurrency(income, { maximumFractionDigits: 0 })}
                                             </div>
                                         )}
                                         {expenses > 0 && (
-                                            <div className="text-[10px] text-red-600 truncate">
-                                                -€{expenses.toFixed(0)}
+                                            <div className="text-[10px] text-negative truncate">
+                                                -{formatCurrency(expenses, { maximumFractionDigits: 0 })}
                                             </div>
                                         )}
                                         {hasBills && (
@@ -229,7 +228,7 @@ export default function CalendarPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">
-                            {selectedDay.date.toLocaleDateString(language === "pt" ? "pt-PT" : "en-US", {
+                            {selectedDay.date.toLocaleDateString(t.config?.locale || "en-US", {
                                 weekday: "long",
                                 year: "numeric",
                                 month: "long",
@@ -242,13 +241,13 @@ export default function CalendarPage() {
                         {selectedDay.bills.length > 0 && (
                             <div>
                                 <h4 className="text-sm font-medium mb-2 text-amber-600">
-                                    {language === "pt" ? "Contas a vencer" : "Bills Due"}
+                                    {cal.bills_due || "Bills Due"}
                                 </h4>
                                 {selectedDay.bills.map((bill, i) => (
                                     <div key={i} className="flex justify-between items-center py-1.5 border-b last:border-0">
                                         <span className="text-sm">{bill.name}</span>
                                         <Badge variant="outline" className="text-amber-600">
-                                            €{bill.amount.toFixed(2)}
+                                            {formatCurrency(bill.amount)}
                                         </Badge>
                                     </div>
                                 ))}
@@ -259,7 +258,7 @@ export default function CalendarPage() {
                         {selectedDay.transactions.length > 0 ? (
                             <div>
                                 <h4 className="text-sm font-medium mb-2">
-                                    {language === "pt" ? "Transações" : "Transactions"}
+                                    {t.finance?.transactions || "Transactions"}
                                 </h4>
                                 {selectedDay.transactions.map((txn) => (
                                     <div key={txn.id} className="flex justify-between items-center py-1.5 border-b last:border-0">
@@ -273,16 +272,16 @@ export default function CalendarPage() {
                                                 ))}
                                             </div>
                                         </div>
-                                        <span className={`text-sm font-medium ${txn.type === "in" ? "text-green-600" : "text-red-600"}`}>
-                                            {txn.type === "in" ? "+" : "-"}€{txn.amount.toFixed(2)}
+                                        <span className={`text-sm font-medium ${txn.type === "in" ? "text-positive" : "text-negative"}`}>
+                                            {txn.type === "in" ? "+" : "-"}{formatCurrency(txn.amount)}
                                         </span>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             !selectedDay.bills.length && (
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                    {language === "pt" ? "Sem movimentos neste dia." : "No transactions on this day."}
+                                <p className="text-sm text-neutral-400">
+                                    {cal.no_transactions || "No transactions on this day."}
                                 </p>
                             )
                         )}

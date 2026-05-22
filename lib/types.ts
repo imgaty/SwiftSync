@@ -76,6 +76,83 @@ export interface FinanceData {
 export type DataFile = FinanceData
 
 // ==============================================================================
+// SPREADSHEET TYPES
+// ==============================================================================
+
+export type BorderStyle = "thin" | "medium" | "thick" | "dashed" | "dotted"
+
+export interface CellBorders {
+  t?: { style: BorderStyle; color: string }
+  r?: { style: BorderStyle; color: string }
+  b?: { style: BorderStyle; color: string }
+  l?: { style: BorderStyle; color: string }
+}
+
+export interface SpreadsheetCellData {
+  v: string
+  b?: boolean
+  i?: boolean
+  u?: boolean
+  s?: boolean
+  fs?: number
+  /** Font family name */
+  ff?: string
+  wrap?: boolean
+  c?: string
+  bg?: string
+  al?: "l" | "c" | "r" | "j"
+  /** Vertical alignment: top | middle | bottom (default top) */
+  va?: "t" | "m" | "b"
+  /** Indent level (each unit = 12px of left padding) */
+  ind?: number
+  /** Text rotation in degrees, -90..90, or 255 for stacked vertical */
+  rot?: number
+  bd?: CellBorders
+  /** Number format code: general | number | currency | accounting | percent | comma | scientific | date | time | text | custom string with decimals encoded e.g. "number:2" */
+  nf?: string
+}
+
+export interface MergedRange {
+  sc: number
+  sr: number
+  ec: number
+  er: number
+}
+
+export interface SpreadsheetSheetTab {
+  name: string
+  cells: Record<string, SpreadsheetCellData>
+  colWidths?: Record<number, number>
+  mergedCells?: MergedRange[]
+}
+
+export interface SpreadsheetDocumentData {
+  sheets: SpreadsheetSheetTab[]
+  activeSheet?: number
+}
+
+export interface SpreadsheetDocument {
+  id: string
+  name: string
+  description: string | null
+  sheetType: "manual" | "linked" | "grid" | string
+  linkedEntity: string | null
+  content: SpreadsheetDocumentData
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SpreadsheetLog {
+  id: string
+  spreadsheetId: string
+  userId: string
+  action: string
+  summary: string | null
+  createdAt: string
+  user?: { id: string; name: string | null; email: string }
+}
+
+// ==============================================================================
 // CHART AGGREGATION TYPES
 // ==============================================================================
 

@@ -1,7 +1,33 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { cookies } from "next/headers"
-import { hashPassword } from "@/lib/adaptive-encryption"
+import { hashPassword } from "@/lib/password"
+import { createSessionToken } from "@/lib/session"
+import { generateDefaultAvatarDataUrl } from "@/lib/avatar"
+import { timingSafeEqual } from "crypto"
+
+const SESSION_MAX_AGE = 7 * 24 * 60 * 60
+const VALID_PROVIDERS = ["google", "github", "microsoft"] as const
+
+interface OAuthTokenData {
+  access_token: string
+  id_token?: string
+}
+
+interface OAuthUserInfo {
+  id: string
+  email: string
+  name: string
+  emailVerified: boolean
+}
+
+function safeEqual(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b) return false
+  const aBuf = Buffer.from(a)
+  const bBuf = Buffer.from(b)
+  if (aBuf.length !== bBuf.length) return false
+  return timingSafeEqual(aBuf, bBuf)
+}
 
 /**
  * GET /api/auth/oauth/[provider]/callback — Handle OAuth callback
@@ -11,6 +37,10 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   const { provider } = await params
+  if (!VALID_PROVIDERS.includes(provider as (typeof VALID_PROVIDERS)[number])) {
+    return NextResponse.redirect(new URL("/login?error=invalid_provider", request.url))
+  }
+
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
   const state = searchParams.get("state")
@@ -18,12 +48,10 @@ export async function GET(
   const cookieStore = await cookies()
   const storedState = cookieStore.get(`oauth_state_${provider}`)?.value
 
-  // Verify state for CSRF protection
-  if (!state || state !== storedState) {
+  if (!state || !safeEqual(state, storedState)) {
     return NextResponse.redirect(new URL("/login?error=invalid_state", request.url))
   }
 
-  // Clean up state cookie
   cookieStore.delete(`oauth_state_${provider}`)
 
   if (!code) {
@@ -31,20 +59,22 @@ export async function GET(
   }
 
   try {
-    // Exchange code for tokens (provider-specific)
     const tokenData = await exchangeCodeForToken(provider, code, request.url)
     if (!tokenData) {
       return NextResponse.redirect(new URL("/login?error=token_exchange_failed", request.url))
     }
 
-    // Get user info from provider
-    const userInfo = await getUserInfo(provider, tokenData.access_token)
-    if (!userInfo || !userInfo.email) {
+    const userInfo = await getUserInfo(provider, tokenData)
+    if (!userInfo?.email) {
       return NextResponse.redirect(new URL("/login?error=no_email", request.url))
     }
+    if (!userInfo.emailVerified) {
+      return NextResponse.redirect(new URL("/login?error=email_not_verified", request.url))
+    }
 
-    // Check if OAuth account already linked
-    let oauthAccount = await prisma.oAuthAccount.findUnique({
+    const normalizedEmail = userInfo.email.trim().toLowerCase()
+
+    const oauthAccount = await prisma.oAuthAccount.findUnique({
       where: {
         provider_providerAccountId: {
           provider,
@@ -57,61 +87,56 @@ export async function GET(
     let userId: string
 
     if (oauthAccount) {
-      // Existing OAuth link — log in
       userId = oauthAccount.userId
     } else {
-      // Check if email already registered
       const existingUser = await prisma.user.findFirst({
-        where: { email: { equals: userInfo.email, mode: 'insensitive' } },
+        where: { email: { equals: normalizedEmail, mode: "insensitive" } },
       })
 
       if (existingUser) {
-        // Link OAuth to existing account
         userId = existingUser.id
       } else {
-        // Create new user
         const randomPassword = hashPassword(crypto.randomUUID())
+        const resolvedName = userInfo.name || normalizedEmail.split("@")[0]
 
         const newUser = await prisma.user.create({
           data: {
-            email: userInfo.email.trim().toLowerCase(),
-            name: userInfo.name || userInfo.email.split("@")[0],
+            email: normalizedEmail,
+            name: resolvedName,
+            avatar: generateDefaultAvatarDataUrl(resolvedName),
             password: randomPassword,
-            dateOfBirth: '',
+            dateOfBirth: "",
           },
         })
         userId = newUser.id
       }
 
-      // Create OAuth account link
       await prisma.oAuthAccount.create({
         data: {
           userId,
           provider,
           providerAccountId: userInfo.id,
-          accessToken: tokenData.access_token,
-          refreshToken: tokenData.refresh_token,
-          expiresAt: tokenData.expires_in
-            ? new Date(Date.now() + tokenData.expires_in * 1000)
-            : null,
         },
       })
     }
 
-    // Set auth cookies
-    cookieStore.set("auth-token", userId, {
-      httpOnly: true,
+    // Refuse sign-in for suspended/banned/deleted accounts
+    const status = await prisma.user.findUnique({ where: { id: userId }, select: { status: true } })
+    if (!status || status.status !== "active") {
+      return NextResponse.redirect(new URL("/login?error=account_inactive", request.url))
+    }
+
+    const sessionToken = await createSessionToken(userId, SESSION_MAX_AGE)
+    const cookieOpts = {
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax" as const,
       path: "/",
-    })
+      maxAge: SESSION_MAX_AGE,
+    }
+    cookieStore.set("auth-token", sessionToken, { httpOnly: true, ...cookieOpts })
     cookieStore.set("user-session", JSON.stringify({ id: userId }), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30,
-      path: "/",
+      httpOnly: true,
+      ...cookieOpts,
     })
 
     return NextResponse.redirect(new URL("/", request.url))
@@ -121,8 +146,7 @@ export async function GET(
   }
 }
 
-// Exchange authorization code for access token
-async function exchangeCodeForToken(provider: string, code: string, requestUrl: string) {
+async function exchangeCodeForToken(provider: string, code: string, _requestUrl: string): Promise<OAuthTokenData | null> {
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/oauth/${provider}/callback`
 
   const configs: Record<string, { tokenUrl: string; clientId: string; clientSecret: string }> = {
@@ -144,7 +168,7 @@ async function exchangeCodeForToken(provider: string, code: string, requestUrl: 
   }
 
   const config = configs[provider]
-  if (!config) return null
+  if (!config || !config.clientId || !config.clientSecret) return null
 
   const response = await fetch(config.tokenUrl, {
     method: "POST",
@@ -162,11 +186,39 @@ async function exchangeCodeForToken(provider: string, code: string, requestUrl: 
   })
 
   if (!response.ok) return null
-  return response.json()
+  const data = (await response.json()) as Partial<OAuthTokenData>
+  if (!data.access_token) return null
+  return { access_token: data.access_token, id_token: data.id_token }
 }
 
-// Get user info from OAuth provider
-async function getUserInfo(provider: string, accessToken: string) {
+function decodeJwtPayload(token: string | undefined): Record<string, unknown> | null {
+  if (!token) return null
+  const [, payload] = token.split(".")
+  if (!payload) return null
+  try {
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/")
+    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4)
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8")) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+function validMicrosoftClaims(claims: Record<string, unknown> | null): boolean {
+  if (!claims) return false
+  const expectedClientId = process.env.MICROSOFT_CLIENT_ID
+  const exp = typeof claims.exp === "number" ? claims.exp : 0
+  const aud = typeof claims.aud === "string" ? claims.aud : ""
+  const iss = typeof claims.iss === "string" ? claims.iss : ""
+  return (
+    !!expectedClientId &&
+    aud === expectedClientId &&
+    exp > Math.floor(Date.now() / 1000) &&
+    iss.startsWith("https://login.microsoftonline.com/")
+  )
+}
+
+async function getUserInfo(provider: string, tokenData: OAuthTokenData): Promise<OAuthUserInfo | null> {
   const endpoints: Record<string, string> = {
     google: "https://www.googleapis.com/oauth2/v2/userinfo",
     github: "https://api.github.com/user",
@@ -177,31 +229,62 @@ async function getUserInfo(provider: string, accessToken: string) {
   if (!endpoint) return null
 
   const response = await fetch(endpoint, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${tokenData.access_token}` },
   })
 
   if (!response.ok) return null
   const data = await response.json()
 
-  // Normalize response
   switch (provider) {
     case "google":
-      return { id: data.id, email: data.email, name: data.name }
-    case "github": {
-      // GitHub may not return email in profile, need separate call
-      let email = data.email
-      if (!email) {
-        const emailRes = await fetch("https://api.github.com/user/emails", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        const emails = await emailRes.json()
-        const primary = emails.find((e: { primary: boolean }) => e.primary)
-        email = primary?.email
+      return {
+        id: String(data.id),
+        email: String(data.email || ""),
+        name: String(data.name || ""),
+        emailVerified: data.verified_email === true || data.email_verified === true,
       }
-      return { id: String(data.id), email, name: data.name || data.login }
+    case "github": {
+      const emailRes = await fetch("https://api.github.com/user/emails", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      })
+      if (!emailRes.ok) return null
+
+      const emails = (await emailRes.json()) as Array<{
+        email?: string
+        primary?: boolean
+        verified?: boolean
+      }>
+      const profileEmail = typeof data.email === "string" ? data.email : ""
+      const primaryVerified =
+        emails.find((e) => e.primary && e.verified && e.email) ??
+        emails.find((e) => e.verified && e.email === profileEmail)
+
+      if (!primaryVerified?.email) {
+        return { id: String(data.id), email: profileEmail, name: data.name || data.login || "", emailVerified: false }
+      }
+
+      return {
+        id: String(data.id),
+        email: primaryVerified.email,
+        name: data.name || data.login || "",
+        emailVerified: true,
+      }
     }
-    case "microsoft":
-      return { id: data.id, email: data.mail || data.userPrincipalName, name: data.displayName }
+    case "microsoft": {
+      const claims = decodeJwtPayload(tokenData.id_token)
+      const email =
+        data.mail ||
+        data.userPrincipalName ||
+        claims?.email ||
+        claims?.preferred_username ||
+        ""
+      return {
+        id: String(data.id || claims?.sub || ""),
+        email: String(email),
+        name: String(data.displayName || claims?.name || ""),
+        emailVerified: validMicrosoftClaims(claims) && Boolean(email),
+      }
+    }
     default:
       return null
   }

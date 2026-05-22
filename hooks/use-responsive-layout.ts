@@ -90,20 +90,16 @@ export type ElementRefs<T extends ResponsiveConfig> = {
  */
 export function useResponsiveLayout<T extends ResponsiveConfig, C extends HTMLElement = HTMLDivElement>(config: T) {
     const containerRef = React.useRef<C>(null)
-    
-    // Create stable refs for each element (only recreate if keys change)
-    const elementRefsRef = React.useRef<ElementRefs<T> | null>(null)
+
+    // Stable refs for each element, created once on mount.
     const configKeys = Object.keys(config).sort().join(',')
-    
-    if (!elementRefsRef.current) {
+    const [elementRefs] = React.useState<ElementRefs<T>>(() => {
         const refs = {} as ElementRefs<T>
         for (const key of Object.keys(config)) {
             refs[key as keyof T] = React.createRef<HTMLElement>()
         }
-        elementRefsRef.current = refs
-    }
-    
-    const elementRefs = elementRefsRef.current
+        return refs
+    })
     
     // Initialize with most spacious views (will collapse as needed)
     const getInitialViews = () => {
@@ -122,11 +118,11 @@ export function useResponsiveLayout<T extends ResponsiveConfig, C extends HTMLEl
     
     // Track current views to avoid stale closures
     const viewsRef = React.useRef(views)
-    viewsRef.current = views
-    
+    React.useEffect(() => { viewsRef.current = views })
+
     // Config ref
     const configRef = React.useRef(config)
-    configRef.current = config
+    React.useEffect(() => { configRef.current = config })
     
     React.useEffect(() => {
         const container = containerRef.current
@@ -244,7 +240,7 @@ export function useResponsiveLayout<T extends ResponsiveConfig, C extends HTMLEl
             cancelAnimationFrame(rafId)
             observer.disconnect()
         }
-    }, [configKeys])
+    }, [configKeys, elementRefs])
     
     return { views, containerRef, elementRefs }
 }
@@ -267,7 +263,7 @@ export function useResponsiveView<T extends ViewConfig[]>(viewConfigs: T) {
     const [view, setView] = React.useState<T[number]['name']>(viewConfigs[viewConfigs.length - 1].name)
     
     const configRef = React.useRef(viewConfigs)
-    configRef.current = viewConfigs
+    React.useEffect(() => { configRef.current = viewConfigs })
     
     React.useEffect(() => {
         const element = ref.current

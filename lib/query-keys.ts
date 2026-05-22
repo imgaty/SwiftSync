@@ -11,6 +11,7 @@ export const queryKeys = {
     budgets: ["budgets"] as const,
     bills: ["bills"] as const,
     financeData: ["financeData"] as const,
+    spreadsheets: ["spreadsheets"] as const,
 
     // Goals
     goals: ["goals"] as const,
@@ -26,7 +27,7 @@ export const queryKeys = {
 
     // Settings
     profile: ["profile"] as const,
-    categorizationRules: ["categorizationRules"] as const,
+    PACERules: ["PACERules"] as const,
 }
 
 /**

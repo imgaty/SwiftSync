@@ -131,7 +131,7 @@ export function AnimatedToggle({
                             width="10"
                             height="10"
                             viewBox="0 0 10 10"
-                            className="text-muted-foreground"
+                            className="text-neutral-400"
                             initial={{ opacity: 0, scale: 0.6 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.6 }}
@@ -153,7 +153,7 @@ export function AnimatedToggle({
                             width="10"
                             height="10"
                             viewBox="0 0 10 10"
-                            className="text-muted-foreground"
+                            className="text-neutral-400"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}

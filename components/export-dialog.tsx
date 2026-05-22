@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Download, FileSpreadsheet, FileJson, FileText } from "lucide-react"
+import { Download, FileSpreadsheet, FileJson } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -11,7 +11,6 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/date-picker"
 import {
     Select,
@@ -21,7 +20,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { useLanguage } from "@/components/language-provider"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 interface ExportDialogProps {
     open: boolean
@@ -50,16 +49,22 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
             const url = URL.createObjectURL(blob)
             const a = document.createElement("a")
             a.href = url
-            a.download = `swiftsync_${entity}_${new Date().toISOString().slice(0, 10)}.${format}`
+            a.download = `argent_${entity}_${new Date().toISOString().slice(0, 10)}.${format}`
             document.body.appendChild(a)
             a.click()
             a.remove()
             URL.revokeObjectURL(url)
 
-            toast.success(language === "pt" ? "Exportação concluída" : "Export completed")
+            notify.success({
+                title: language === "pt" ? "Exportação concluída" : "Export completed",
+                message: `${entity} · ${format.toUpperCase()}`,
+            })
             onOpenChange(false)
         } catch {
-            toast.error(language === "pt" ? "Erro na exportação" : "Export failed")
+            notify.error({
+                title: language === "pt" ? "Erro na exportação" : "Export failed",
+                message: `${entity} · ${format.toUpperCase()}`,
+            })
         } finally {
             setIsExporting(false)
         }
@@ -67,7 +72,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md w-[calc(100vw-2rem)]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Download className="h-5 w-5" />
@@ -102,7 +107,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                         <div className="grid grid-cols-2 gap-2 mt-1.5">
                             <Button
                                 type="button"
-                                variant={format === "csv" ? "default" : "outline"}
+                                variant={format === "csv" ? "solid" : "glass"}
                                 onClick={() => setFormat("csv")}
                                 className="justify-start"
                             >
@@ -111,7 +116,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                             </Button>
                             <Button
                                 type="button"
-                                variant={format === "json" ? "default" : "outline"}
+                                variant={format === "json" ? "solid" : "glass"}
                                 onClick={() => setFormat("json")}
                                 className="justify-start"
                             >
@@ -145,7 +150,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                     )}
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button variant="glass" onClick={() => onOpenChange(false)}>
                             {language === "pt" ? "Cancelar" : "Cancel"}
                         </Button>
                         <Button onClick={handleExport} disabled={isExporting}>

@@ -8,33 +8,58 @@ interface UseFinanceDataResult {
   data: DataFile | null
   isLoading: boolean
   error: string | null
+  partial: boolean
   refetch: () => void
 }
 
-async function fetchFinanceData(): Promise<DataFile> {
-  const [accountsRes, transactionsRes, budgetsRes, billsRes] = await Promise.all([
+interface FetchResult {
+  financeData: DataFile
+  partial: boolean
+}
+
+async function fetchFinanceData(): Promise<FetchResult> {
+  // Use allSettled so one slow/failing endpoint doesn't block the whole dashboard.
+  const results = await Promise.allSettled([
     fetch('/api/accounts'),
     fetch('/api/transactions'),
     fetch('/api/budgets'),
     fetch('/api/bills'),
   ])
+  const [accountsSettled, transactionsSettled, budgetsSettled, billsSettled] = results
 
-  // Check for auth errors
-  if (accountsRes.status === 401 || transactionsRes.status === 401) {
-    return {
-      meta: { generatedAt: new Date().toISOString(), currency: 'EUR', locale: 'pt-PT', dateRange: { start: '', end: '' }, totalTransactions: 0 },
-      accounts: [],
-      transactions: [],
-      budgets: [],
-      bills: [],
-    }
+  const pickRes = (s: PromiseSettledResult<Response>): Response | null =>
+    s.status === 'fulfilled' ? s.value : null
+
+  const accountsRes = pickRes(accountsSettled)
+  const transactionsRes = pickRes(transactionsSettled)
+  const budgetsRes = pickRes(budgetsSettled)
+  const billsRes = pickRes(billsSettled)
+  // Auth error — throw AuthError so the useQuery retry logic skips (not a transient failure).
+  if (accountsRes?.status === 401 || transactionsRes?.status === 401) {
+    throw new AuthError('Not authenticated')
+  }
+
+  // If every data endpoint failed (network down, server 500), surface a real error
+  // instead of rendering an empty dashboard that looks like "you have no data".
+  const dataEndpoints = [accountsRes, transactionsRes, budgetsRes, billsRes]
+  const allFailed = dataEndpoints.every((r) => !r || !r.ok)
+  if (allFailed) {
+    throw new Error('Failed to load dashboard data')
+  }
+
+  // At least one endpoint succeeded — mark partial if any failed so the UI can warn.
+  const partial = dataEndpoints.some((r) => !r || !r.ok)
+
+  const safeJson = async (res: Response | null, fallback: unknown): Promise<any> => {
+    if (!res || !res.ok) return fallback
+    try { return await res.json() } catch { return fallback }
   }
 
   const [accounts, transactions, budgets, bills] = await Promise.all([
-    accountsRes.ok ? accountsRes.json() : [],
-    transactionsRes.ok ? transactionsRes.json() : [],
-    budgetsRes.ok ? budgetsRes.json() : [],
-    billsRes.ok ? billsRes.json() : [],
+    safeJson(accountsRes, []),
+    safeJson(transactionsRes, []),
+    safeJson(budgetsRes, []),
+    safeJson(billsRes, []),
   ])
 
   let startDate = ''
@@ -46,17 +71,20 @@ async function fetchFinanceData(): Promise<DataFile> {
   }
 
   return {
-    meta: {
-      generatedAt: new Date().toISOString(),
-      currency: 'EUR',
-      locale: 'pt-PT',
-      dateRange: { start: startDate, end: endDate },
-      totalTransactions: transactions.length,
+    financeData: {
+      meta: {
+        generatedAt: new Date().toISOString(),
+        currency: 'EUR',
+        locale: 'pt-PT',
+        dateRange: { start: startDate, end: endDate },
+        totalTransactions: transactions.length,
+      },
+      accounts,
+      transactions,
+      budgets,
+      bills,
     },
-    accounts,
-    transactions,
-    budgets,
-    bills,
+    partial,
   }
 }
 
@@ -69,7 +97,7 @@ async function fetchFinanceData(): Promise<DataFile> {
 export function useFinanceData(): UseFinanceDataResult {
   const queryClient = useQueryClient()
 
-  const { data, isLoading, error } = useQuery({
+  const { data: result, isLoading, error } = useQuery({
     queryKey: queryKeys.financeData,
     queryFn: fetchFinanceData,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -80,9 +108,10 @@ export function useFinanceData(): UseFinanceDataResult {
   })
 
   return {
-    data: data ?? null,
+    data: result?.financeData ?? null,
     isLoading,
     error: error ? (error instanceof Error ? error.message : 'Failed to load data') : null,
+    partial: result?.partial ?? false,
     refetch: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
     },

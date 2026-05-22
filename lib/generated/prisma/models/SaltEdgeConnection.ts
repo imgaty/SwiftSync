@@ -200,7 +200,7 @@ export type SaltEdgeConnectionGroupByOutputType = {
   _max: SaltEdgeConnectionMaxAggregateOutputType | null
 }
 
-type GetSaltEdgeConnectionGroupByPayload<T extends SaltEdgeConnectionGroupByArgs> = Prisma.PrismaPromise<
+export type GetSaltEdgeConnectionGroupByPayload<T extends SaltEdgeConnectionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<SaltEdgeConnectionGroupByOutputType, T['by']> &
       {
@@ -230,8 +230,8 @@ export type SaltEdgeConnectionWhereInput = {
   lastSyncAt?: Prisma.DateTimeNullableFilter<"SaltEdgeConnection"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"SaltEdgeConnection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SaltEdgeConnection"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   accounts?: Prisma.BankAccountListRelationFilter
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type SaltEdgeConnectionOrderByWithRelationInput = {
@@ -246,8 +246,8 @@ export type SaltEdgeConnectionOrderByWithRelationInput = {
   lastSyncAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
   accounts?: Prisma.BankAccountOrderByRelationAggregateInput
+  user?: Prisma.UserOrderByWithRelationInput
 }
 
 export type SaltEdgeConnectionWhereUniqueInput = Prisma.AtLeast<{
@@ -265,8 +265,8 @@ export type SaltEdgeConnectionWhereUniqueInput = Prisma.AtLeast<{
   lastSyncAt?: Prisma.DateTimeNullableFilter<"SaltEdgeConnection"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"SaltEdgeConnection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SaltEdgeConnection"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   accounts?: Prisma.BankAccountListRelationFilter
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "connectionId">
 
 export type SaltEdgeConnectionOrderByWithAggregationInput = {
@@ -314,8 +314,8 @@ export type SaltEdgeConnectionCreateInput = {
   lastSyncAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutSaltEdgeConnectionsInput
   accounts?: Prisma.BankAccountCreateNestedManyWithoutConnectionInput
+  user: Prisma.UserCreateNestedOneWithoutSaltEdgeConnectionsInput
 }
 
 export type SaltEdgeConnectionUncheckedCreateInput = {
@@ -344,8 +344,8 @@ export type SaltEdgeConnectionUpdateInput = {
   lastSyncAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutSaltEdgeConnectionsNestedInput
   accounts?: Prisma.BankAccountUpdateManyWithoutConnectionNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutSaltEdgeConnectionsNestedInput
 }
 
 export type SaltEdgeConnectionUncheckedUpdateInput = {
@@ -759,8 +759,8 @@ export type SaltEdgeConnectionSelect<ExtArgs extends runtime.Types.Extensions.In
   lastSyncAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   accounts?: boolean | Prisma.SaltEdgeConnection$accountsArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.SaltEdgeConnectionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["saltEdgeConnection"]>
 
@@ -810,8 +810,8 @@ export type SaltEdgeConnectionSelectScalar = {
 
 export type SaltEdgeConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "customerId" | "connectionId" | "providerCode" | "providerName" | "countryCode" | "status" | "lastSyncAt" | "createdAt" | "updatedAt", ExtArgs["result"]["saltEdgeConnection"]>
 export type SaltEdgeConnectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   accounts?: boolean | Prisma.SaltEdgeConnection$accountsArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.SaltEdgeConnectionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SaltEdgeConnectionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -824,8 +824,8 @@ export type SaltEdgeConnectionIncludeUpdateManyAndReturn<ExtArgs extends runtime
 export type $SaltEdgeConnectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SaltEdgeConnection"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
     accounts: Prisma.$BankAccountPayload<ExtArgs>[]
+    user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1233,8 +1233,8 @@ readonly fields: SaltEdgeConnectionFieldRefs;
  */
 export interface Prisma__SaltEdgeConnectionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   accounts<T extends Prisma.SaltEdgeConnection$accountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SaltEdgeConnection$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BankAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

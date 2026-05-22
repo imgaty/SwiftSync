@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { AdminHeader } from "@/components/admin/admin-header"
 import { UserGrowthChart } from "@/components/admin/user-growth-chart"
+import { useLanguage } from "@/components/language-provider"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
     Users,
@@ -19,7 +20,7 @@ import {
     LogIn,
     ScrollText,
     TrendingUp,
-    ExternalLink,
+    SquareArrowOutUpRight as ExternalLink,
 } from "lucide-react"
 
 // --- Types ---
@@ -70,15 +71,15 @@ interface DashboardData {
 }
 
 // --- Helpers ---
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, a: Record<string, any>): string {
     const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-    if (seconds < 60) return "just now"
+    if (seconds < 60) return a.just_now || "just now"
     const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return `${minutes}m ago`
+    if (minutes < 60) return `${minutes}${a.m_ago || "m ago"}`
     const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours}h ago`
+    if (hours < 24) return `${hours}${a.h_ago || "h ago"}`
     const days = Math.floor(hours / 24)
-    if (days < 30) return `${days}d ago`
+    if (days < 30) return `${days}${a.d_ago || "d ago"}`
     return new Date(dateStr).toLocaleDateString()
 }
 
@@ -93,7 +94,7 @@ const statusColors: Record<string, string> = {
     active: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
     suspended: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
     banned: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    deleted: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400",
+    deleted: "bg-neutral-100 text-neutral-400 dark:bg-neutral-800/50 dark:text-neutral-400",
 }
 
 // --- Stat Card ---
@@ -113,8 +114,8 @@ function StatCard({
     return (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium text-neutral-400">{title}</p>
+                <Icon className="h-4 w-4 text-neutral-400" />
             </div>
             <div className="mt-2">
                 <p className="text-2xl font-bold">{value}</p>
@@ -125,7 +126,7 @@ function StatCard({
                     </p>
                 )}
                 {description && !trend && (
-                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                    <p className="text-xs text-neutral-400 mt-1">{description}</p>
                 )}
             </div>
         </div>
@@ -150,6 +151,8 @@ function StatCardSkeleton() {
 
 // --- Main Page ---
 export default function AdminDashboardPage() {
+    const { t } = useLanguage()
+    const ad = (t as any).admin || {} as Record<string, any>
     const [data, setData] = useState<DashboardData | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -166,7 +169,7 @@ export default function AdminDashboardPage() {
 
     return (
         <>
-            <AdminHeader title="Dashboard" />
+            <AdminHeader title={ad.dashboard || "Dashboard"} />
 
             <div className="flex-1 overflow-auto">
                 <div className="p-4 lg:p-6 space-y-6">
@@ -177,29 +180,29 @@ export default function AdminDashboardPage() {
                         ) : (
                             <>
                                 <StatCard
-                                    title="Total Users"
+                                    title={ad.users || "Total Users"}
                                     value={c?.totalUsers ?? 0}
                                     icon={Users}
                                     trend={a?.newUsersThisWeek ? { value: a.newUsersThisWeek, label: "this week" } : undefined}
-                                    description={!a?.newUsersThisWeek ? `${c?.activeUsers ?? 0} active` : undefined}
+                                    description={!a?.newUsersThisWeek ? `${c?.activeUsers ?? 0} ${ad.active || "active"}` : undefined}
                                 />
                                 <StatCard
-                                    title="Transactions"
+                                    title={ad.transactions || "Transactions"}
                                     value={(c?.totalTransactions ?? 0).toLocaleString()}
                                     icon={ArrowLeftRight}
                                     trend={a?.transactionsThisWeek ? { value: a.transactionsThisWeek, label: "this week" } : undefined}
                                 />
                                 <StatCard
-                                    title="Active Today"
+                                    title={ad.health_page?.logins_today || "Active Today"}
                                     value={a?.loginsToday ?? 0}
                                     icon={LogIn}
-                                    description={`${a?.loginsThisWeek ?? 0} this week`}
+                                    description={`${a?.loginsThisWeek ?? 0} ${ad.health_page?.logins_week ? ad.health_page.logins_week.toLowerCase() : "this week"}`}
                                 />
                                 <StatCard
-                                    title="New Today"
+                                    title={ad.health_page?.new_users_today || "New Today"}
                                     value={a?.newUsersToday ?? 0}
                                     icon={UserPlus}
-                                    description={`${a?.newUsersThisWeek ?? 0} this week`}
+                                    description={`${a?.newUsersThisWeek ?? 0} ${ad.health_page?.new_users_week ? ad.health_page.new_users_week.toLowerCase() : "this week"}`}
                                 />
                             </>
                         )}
@@ -211,10 +214,10 @@ export default function AdminDashboardPage() {
                             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
                         ) : (
                             <>
-                                <StatCard title="Bank Accounts" value={c?.totalAccounts ?? 0} icon={Wallet} />
-                                <StatCard title="Bills" value={c?.totalBills ?? 0} icon={Receipt} />
-                                <StatCard title="Budgets" value={c?.totalBudgets ?? 0} icon={PiggyBank} />
-                                <StatCard title="Goals" value={c?.totalGoals ?? 0} icon={Target} />
+                                <StatCard title={ad.accounts_page?.total_accounts || "Bank Accounts"} value={c?.totalAccounts ?? 0} icon={Wallet} />
+                                <StatCard title={ad.bills || "Bills"} value={c?.totalBills ?? 0} icon={Receipt} />
+                                <StatCard title={ad.budgets || "Budgets"} value={c?.totalBudgets ?? 0} icon={PiggyBank} />
+                                <StatCard title={ad.goals || "Goals"} value={c?.totalGoals ?? 0} icon={Target} />
                             </>
                         )}
                     </div>
@@ -224,8 +227,8 @@ export default function AdminDashboardPage() {
                         {/* Account Status Breakdown */}
                         <div className="lg:col-span-2 rounded-xl border bg-card shadow-sm">
                             <div className="p-4 border-b">
-                                <h3 className="font-semibold">Account Status</h3>
-                                <p className="text-sm text-muted-foreground">User distribution by status</p>
+                                <h3 className="font-semibold">{ad.users_page?.status || "Account Status"}</h3>
+                                <p className="text-sm text-neutral-400">{"User distribution by status"}</p>
                             </div>
                             <div className="p-4 space-y-3">
                                 {loading ? (
@@ -234,9 +237,9 @@ export default function AdminDashboardPage() {
                                     ))
                                 ) : (
                                     [
-                                        { label: "Active", value: c?.activeUsers ?? 0, icon: Activity, color: "text-green-600 dark:text-green-400" },
-                                        { label: "Suspended", value: c?.suspendedUsers ?? 0, icon: ShieldAlert, color: "text-yellow-600 dark:text-yellow-400" },
-                                        { label: "Banned", value: c?.bannedUsers ?? 0, icon: Ban, color: "text-red-600 dark:text-red-400" },
+                                        { label: ad.active || "Active", value: c?.activeUsers ?? 0, icon: Activity, color: "text-green-600 dark:text-green-400" },
+                                        { label: ad.suspended || "Suspended", value: c?.suspendedUsers ?? 0, icon: ShieldAlert, color: "text-yellow-600 dark:text-yellow-400" },
+                                        { label: ad.banned || "Banned", value: c?.bannedUsers ?? 0, icon: Ban, color: "text-red-600 dark:text-red-400" },
                                     ].map((item) => (
                                         <div key={item.label} className="flex items-center justify-between py-2">
                                             <div className="flex items-center gap-3">
@@ -245,7 +248,7 @@ export default function AdminDashboardPage() {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-sm font-semibold">{item.value}</span>
-                                                <span className="text-xs text-muted-foreground w-12 text-right">
+                                                <span className="text-xs text-neutral-400 w-12 text-right">
                                                     {c && c.totalUsers > 0
                                                         ? `${Math.round((item.value / c.totalUsers) * 100)}%`
                                                         : "0%"}
@@ -260,8 +263,8 @@ export default function AdminDashboardPage() {
                         {/* User Growth Chart */}
                         <div className="lg:col-span-3 rounded-xl border bg-card shadow-sm">
                             <div className="p-4 border-b">
-                                <h3 className="font-semibold">User Growth</h3>
-                                <p className="text-sm text-muted-foreground">Signups & total users — last 30 days</p>
+                                <h3 className="font-semibold">{ad.chart?.total_users ? "User Growth" : "User Growth"}</h3>
+                                <p className="text-sm text-neutral-400">{"Signups & total users — last 30 days"}</p>
                             </div>
                             <div className="p-4">
                                 {loading ? (
@@ -279,12 +282,12 @@ export default function AdminDashboardPage() {
                         <div className="rounded-xl border bg-card shadow-sm">
                             <div className="p-4 border-b flex items-center justify-between">
                                 <div>
-                                    <h3 className="font-semibold">Recent Users</h3>
-                                    <p className="text-sm text-muted-foreground">Latest registered accounts</p>
+                                    <h3 className="font-semibold">{ad.users_page ? (ad.users || "Recent Users") : "Recent Users"}</h3>
+                                    <p className="text-sm text-neutral-400">{"Latest registered accounts"}</p>
                                 </div>
                                 <Link
                                     href="/admin/users"
-                                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                                    className="text-xs text-neutral-400 hover:text-foreground flex items-center gap-1 transition-colors"
                                 >
                                     View all <ExternalLink className="h-3 w-3" />
                                 </Link>
@@ -302,7 +305,7 @@ export default function AdminDashboardPage() {
                                         </div>
                                     ))
                                 ) : data?.recentUsers.length === 0 ? (
-                                    <div className="p-8 text-center text-sm text-muted-foreground">
+                                    <div className="p-8 text-center text-sm text-neutral-400">
                                         No users yet
                                     </div>
                                 ) : (
@@ -314,7 +317,7 @@ export default function AdminDashboardPage() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium truncate">{user.name}</p>
-                                                    <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
+                                                    <p className="text-[11px] text-neutral-400 truncate">{user.email}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
@@ -324,8 +327,8 @@ export default function AdminDashboardPage() {
                                                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[user.status] || statusColors.active}`}>
                                                     {user.status}
                                                 </span>
-                                                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                                                    {timeAgo(user.createdAt)}
+                                                <span className="text-[11px] text-neutral-400 whitespace-nowrap">
+                                                    {timeAgo(user.createdAt, ad)}
                                                 </span>
                                             </div>
                                         </div>
@@ -338,12 +341,12 @@ export default function AdminDashboardPage() {
                         <div className="rounded-xl border bg-card shadow-sm">
                             <div className="p-4 border-b flex items-center justify-between">
                                 <div>
-                                    <h3 className="font-semibold">Recent Admin Activity</h3>
-                                    <p className="text-sm text-muted-foreground">Latest audit log entries</p>
+                                    <h3 className="font-semibold">{ad.audit_page?.title || "Recent Admin Activity"}</h3>
+                                    <p className="text-sm text-neutral-400">{"Latest audit log entries"}</p>
                                 </div>
                                 <Link
                                     href="/admin/audit-log"
-                                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                                    className="text-xs text-neutral-400 hover:text-foreground flex items-center gap-1 transition-colors"
                                 >
                                     View all <ExternalLink className="h-3 w-3" />
                                 </Link>
@@ -361,8 +364,8 @@ export default function AdminDashboardPage() {
                                         </div>
                                     ))
                                 ) : data?.recentAuditLogs.length === 0 ? (
-                                    <div className="p-8 text-center text-sm text-muted-foreground">
-                                        <ScrollText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                                    <div className="p-8 text-center text-sm text-neutral-400">
+                                        <ScrollText className="h-8 w-8 mx-auto mb-2 text-neutral-400/50" />
                                         <p>No admin activity yet</p>
                                         <p className="text-xs mt-1">Actions will appear here as admins manage the platform</p>
                                     </div>
@@ -370,19 +373,19 @@ export default function AdminDashboardPage() {
                                     data?.recentAuditLogs.map((log) => (
                                         <div key={log.id} className="flex items-start justify-between p-3 px-4 gap-3">
                                             <div className="flex items-start gap-3 min-w-0">
-                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground mt-0.5">
+                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-neutral-400 mt-0.5">
                                                     <ScrollText className="h-3.5 w-3.5" />
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium">{formatAction(log.action)}</p>
-                                                    <p className="text-[11px] text-muted-foreground truncate">
+                                                    <p className="text-[11px] text-neutral-400 truncate">
                                                         by {log.performer.name}
                                                         {log.targetUser && <> → {log.targetUser.name}</>}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
-                                                {timeAgo(log.createdAt)}
+                                            <span className="text-[11px] text-neutral-400 whitespace-nowrap shrink-0">
+                                                {timeAgo(log.createdAt, ad)}
                                             </span>
                                         </div>
                                     ))

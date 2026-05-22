@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeFilter, requirePermission } from "@/lib/data-access"
 
 // GET /api/accounts — List all bank accounts for the user (all sourced from Salt Edge)
 export async function GET() {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
 
   const accounts = await prisma.bankAccount.findMany({
-    where: { userId },
+    where: scopeFilter(ctx),
     include: { bank: true, connection: true },
     orderBy: { createdAt: "desc" },
   })
@@ -19,7 +22,7 @@ export async function GET() {
   const accountIds = accounts.map((a) => a.id)
   const txAggregates = await prisma.transaction.groupBy({
     by: ["accountId", "type"],
-    where: { userId, accountId: { in: accountIds } },
+    where: { ...scopeFilter(ctx), accountId: { in: accountIds } },
     _sum: { amount: true },
     _count: true,
   })

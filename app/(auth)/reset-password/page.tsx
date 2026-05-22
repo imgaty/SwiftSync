@@ -5,36 +5,24 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AuthShell, AuthHeader, ErrorAlert, PasswordStrength, usePasswordStrength } from '@/components/auth'
-import { BTN_PRIMARY, BTN_OUTLINE, ICON_BADGE } from '@/lib/styles'
-import { Loader2, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
-
-const JSON_HEADERS = { 'Content-Type': 'application/json' }
-
-async function postAuth<T>(url: string, body: unknown): Promise<{ ok: boolean; data: T }> {
-  let res: Response
-  try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: JSON_HEADERS,
-      body: JSON.stringify(body),
-    })
-  } catch {
-    throw new Error('Network error — check your internet connection.')
-  }
-
-  let data: T
-  try {
-    data = await res.json() as T
-  } catch {
-    throw new Error(`Server returned ${res.status} with no JSON body.`)
-  }
-
-  return { ok: res.ok, data }
-}
+import {
+  AuthShell,
+  AuthHeader,
+  BackButton,
+  StatusCard,
+  ErrorAlert,
+  PasswordStrength,
+  usePasswordStrength,
+  BTN_PRIMARY,
+} from '@/components/auth'
+import { PRISM } from '@/lib/PRISM'
+import { postAuth } from '@/lib/auth-fetch'
+import { Loader2, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { useTranslationNamespace } from '@/components/language-provider'
 
 function ResetPasswordForm() {
   const token = useSearchParams().get('token')
+  const rp = useTranslationNamespace('reset_password_page_extra')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -47,17 +35,17 @@ function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!password || !confirmPassword) { setError('Both fields are required'); return }
-    if (password !== confirmPassword) { setError('Passwords do not match'); return }
-    if (!allPassed) { setError('Password does not meet requirements'); return }
+    if (!password || !confirmPassword) { setError(rp.error_both_required || 'Both fields are required'); return }
+    if (password !== confirmPassword) { setError(rp.error_passwords_dont_match || 'Passwords do not match'); return }
+    if (!allPassed) { setError(rp.error_password_requirements || 'Password does not meet requirements'); return }
 
     setLoading(true)
     try {
       const { ok, data } = await postAuth<{ error?: string }>('/api/auth/reset-password', { token, password })
-      if (!ok) { setError(data.error || 'Password reset failed. Please try again.'); return }
+      if (!ok) { setError(data.error || (rp.error_reset_failed || 'Password reset failed. Please try again.')); return }
       setSuccess(true)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error during password reset.')
+      setError(e instanceof Error ? e.message : (rp.error_unknown || 'Unknown error during password reset.'))
     } finally {
       setLoading(false)
     }
@@ -66,81 +54,69 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <AuthShell>
-        <div className="flex flex-col items-center gap-4 py-8 animate-slide-in-right">
-          <div className={`${ICON_BADGE} bg-red-500/10 border border-red-500/20`}>
-            <AlertCircle className="w-7 h-7 text-red-500" />
-          </div>
-          <div className="text-center space-y-2">
-            <h3 className="text-[17px] font-semibold text-black dark:text-white">Invalid reset link</h3>
-            <p className="text-[13px] text-neutral-500 dark:text-neutral-400">This password reset link is invalid or has expired.</p>
-          </div>
-          <Link href="/forgot-password" className="mt-2">
-            <Button variant="outline" className={`${BTN_OUTLINE} w-auto px-6`}>
-              Request a new link
-            </Button>
-          </Link>
-        </div>
+        <StatusCard
+          tone="error"
+          icon={AlertCircle}
+          title={rp.invalid_link || 'Invalid reset link'}
+          description={rp.invalid_link_desc || 'This password reset link is invalid or has expired.'}
+        >
+          <BackButton href="/forgot-password" label={rp.request_new_link || 'Request a new link'} />
+        </StatusCard>
       </AuthShell>
     )
   }
 
   return (
     <AuthShell>
-      <AuthHeader page="reset_password" />
-
       {success ? (
-        <div className="space-y-4 animate-slide-in-right">
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className={`${ICON_BADGE} bg-emerald-500/10 border border-emerald-500/20`}>
-              <CheckCircle2 className="w-7 h-7 text-emerald-500" />
-            </div>
-            <div className="text-center space-y-2">
-              <h3 className="text-[17px] font-semibold text-black dark:text-white">Password reset!</h3>
-              <p className="text-[13px] text-neutral-500 dark:text-neutral-400">Your password has been updated. You can now sign in.</p>
-            </div>
-          </div>
+        <StatusCard
+          tone="success"
+          icon={CheckCircle2}
+          title={rp.password_reset_success || 'Password reset!'}
+          description={rp.password_reset_desc || 'Your password has been updated. You can now sign in.'}
+        >
           <Link href="/login" className="block">
-            <Button className={BTN_PRIMARY}>
-              Sign in<ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+            <Button variant="solid" size="lg" className={BTN_PRIMARY}>
+              {rp.sign_in || 'Sign in'}<ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-        </div>
+        </StatusCard>
       ) : (
-        <form onSubmit={handleSubmit} noValidate className="space-y-4 animate-slide-in-right">
-          <ErrorAlert message={error} />
+        <>
+          <AuthHeader page="reset_password" />
 
-          <div>
-            <Input id="password" type="password" label="New password" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} required />
-            <PasswordStrength password={password} strength={passwordStrength} results={passwordResults} />
-          </div>
+          <form onSubmit={handleSubmit} noValidate className="space-y-4 animate-slide-in-right">
+            <ErrorAlert message={error} />
 
-          <div>
-            <Input
-              id="confirmPassword"
-              type="password"
-              label="Confirm password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              disabled={loading}
-              required
-              className={confirmPassword && !passwordsMatch ? 'border-red-500/50! ring-red-500/20!' : ''}
-            />
-            {confirmPassword && !passwordsMatch && (
-              <p className="text-[11px] text-red-500 dark:text-red-400 ml-1 mt-1.5">Passwords do not match</p>
-            )}
-          </div>
+            <div>
+              <Input id="password" type="password" label="New password" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} required />
+              <PasswordStrength password={password} strength={passwordStrength} results={passwordResults} />
+            </div>
 
-          <div className="space-y-4">
-            <Button type="submit" className={BTN_PRIMARY} disabled={loading || !passwordsMatch || !allPassed}>
-              {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Resetting...</> : <>Reset password<ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" /></>}
-            </Button>
-            <Link href="/login" className="block">
-              <Button type="button" variant="outline" className={`${BTN_OUTLINE} group/back`}>
-                <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-200 group-hover/back:-translate-x-1" />Back to login
+            <div>
+              <Input
+                id="confirmPassword"
+                type="password"
+                label="Confirm password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                disabled={loading}
+                required
+                className={confirmPassword && !passwordsMatch ? PRISM.destructiveValidation : ''}
+              />
+              {confirmPassword && !passwordsMatch && (
+                <p className="text-[11px] text-red-500 dark:text-red-400 ml-1 mt-1.5">{rp.error_passwords_dont_match || 'Passwords do not match'}</p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading || !passwordsMatch || !allPassed}>
+                {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />{rp.resetting || 'Resetting...'}</> : <>{rp.reset_password || 'Reset password'}<ArrowRight className="w-4 h-4" /></>}
               </Button>
-            </Link>
-          </div>
-        </form>
+              <BackButton href="/login" label={rp.back_to_login || 'Back to login'} />
+            </div>
+          </form>
+        </>
       )}
     </AuthShell>
   )

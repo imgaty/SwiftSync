@@ -3,12 +3,14 @@
 import * as React from "react"
 import Link from "next/link"
 import {
-    Search, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    Shield, ShieldAlert, ShieldCheck, UserX, Eye, MoreHorizontal,
-    Ban, Unlock, KeyRound, Lock, ArrowUpDown, RefreshCw, Users,
+    Filter,
+    Shield, ShieldAlert, ShieldCheck, Eye, MoreHorizontal,
+    Ban, Unlock, KeyRound, Lock, RefreshCw, Users,
 } from "lucide-react"
 
 import { AdminHeader } from "@/components/admin/admin-header"
+import { useLanguage } from "@/components/language-provider"
+import { PRISM } from "@/lib/PRISM"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +18,20 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableEmptyRow,
+    TableHead,
+    TableHeader,
+    TablePaginationBar,
+    TableRow,
+    TableSearchControl,
+    TableSkeletonRows,
+    TableSortHeader,
+    TableToolbar,
+    TableToolbarGroup,
+    UniversalTable,
 } from "@/components/ui/table"
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -60,48 +75,51 @@ interface Pagination {
     total: number
     totalPages: number
 }
+type AdminCopy = Record<string, string | undefined> & {
+    users_page?: Record<string, string>
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function statusBadge(status: string) {
+function statusBadge(status: string, ad: Record<string, string | undefined> = {}) {
     switch (status) {
         case "active":
-            return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Active</Badge>
+            return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{ad.active || "Active"}</Badge>
         case "suspended":
-            return <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">Suspended</Badge>
+            return <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">{ad.suspended || "Suspended"}</Badge>
         case "banned":
-            return <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400">Banned</Badge>
+            return <Badge variant="outline" className={PRISM.destructiveBadge}>{ad.banned || "Banned"}</Badge>
         case "deleted":
-            return <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-500">Deleted</Badge>
+            return <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-400">{ad.deleted || "Deleted"}</Badge>
         default:
             return <Badge variant="outline">{status}</Badge>
     }
 }
 
-function roleBadge(role: string) {
+function roleBadge(role: string, up: Record<string, string | undefined> = {}) {
     switch (role) {
         case "superadmin":
-            return <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400"><ShieldAlert className="size-3" />Super</Badge>
+            return <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400"><ShieldAlert className="size-3" />{up.super_admin || "Super"}</Badge>
         case "admin":
-            return <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"><ShieldCheck className="size-3" />Admin</Badge>
+            return <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"><ShieldCheck className="size-3" />{up.admin_role || "Admin"}</Badge>
         default:
-            return <Badge variant="outline" className="text-neutral-500">User</Badge>
+            return <Badge variant="outline" className="text-neutral-400">{up.user_role || "User"}</Badge>
     }
 }
 
-function timeAgo(dateStr: string | null) {
-    if (!dateStr) return "Never"
+function timeAgo(dateStr: string | null, ad: Record<string, string | undefined> = {}) {
+    if (!dateStr) return ad.never || "Never"
     const d = new Date(dateStr)
     const now = Date.now()
     const diff = now - d.getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 1) return "Just now"
-    if (mins < 60) return `${mins}m ago`
+    if (mins < 1) return ad.just_now || "Just now"
+    if (mins < 60) return `${mins}${ad.m_ago || "m ago"}`
     const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours}h ago`
+    if (hours < 24) return `${hours}${ad.h_ago || "h ago"}`
     const days = Math.floor(hours / 24)
-    if (days < 30) return `${days}d ago`
+    if (days < 30) return `${days}${ad.d_ago || "d ago"}`
     return d.toLocaleDateString()
 }
 
@@ -133,6 +151,10 @@ export default function AdminUsersPage() {
     const [actionReason, setActionReason] = React.useState("")
     const [actionLoading, setActionLoading] = React.useState(false)
 
+    const { t } = useLanguage()
+    const ad = ((t as { admin?: AdminCopy }).admin || {}) as AdminCopy
+    const up = ad.users_page || {}
+
     // Debounced search
     const searchTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
     const [debouncedSearch, setDebouncedSearch] = React.useState("")
@@ -163,11 +185,11 @@ export default function AdminUsersPage() {
             setUsers(data.users)
             setPagination(data.pagination)
         } catch {
-            toast.error("Failed to load users")
+            toast.error(up.failed_to_load || "Failed to load users")
         } finally {
             setLoading(false)
         }
-    }, [debouncedSearch, statusFilter, roleFilter, twoFaFilter, sortBy, sortDir])
+    }, [debouncedSearch, statusFilter, roleFilter, twoFaFilter, sortBy, sortDir, up.failed_to_load])
 
     React.useEffect(() => { fetchUsers(1) }, [fetchUsers])
 
@@ -198,12 +220,12 @@ export default function AdminUsersPage() {
                 const data = await res.json()
                 throw new Error(data.error || "Action failed")
             }
-            toast.success(`${actionDialog.title} completed`)
+            toast.success(`${actionDialog.title} ${up.completed || "completed"}`)
             setActionDialog(prev => ({ ...prev, open: false }))
             setActionReason("")
             fetchUsers(pagination.page)
         } catch (err: unknown) {
-            toast.error(err instanceof Error ? err.message : "Action failed")
+            toast.error(err instanceof Error ? err.message : (up.action_failed || "Action failed"))
         } finally {
             setActionLoading(false)
         }
@@ -215,20 +237,64 @@ export default function AdminUsersPage() {
         setActionReason("")
     }
 
-    // Sort indicator
-    const SortIcon = ({ field }: { field: string }) => (
-        <ArrowUpDown className={`ml-1 inline size-3 ${sortBy === field ? "text-blue-500" : "text-neutral-400"}`} />
+    const sortDirection = (field: string) => sortBy === field ? sortDir : undefined
+
+    const toolbar = (
+        <TableToolbar>
+            <TableToolbarGroup>
+                <TableSearchControl
+                    value={search}
+                    onValueChange={setSearch}
+                    placeholder={up.search_placeholder || "Search by name or email..."}
+                    width={300}
+                />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[135px]" size="sm">
+                        <Filter className="size-4" />
+                        <SelectValue placeholder={up.status || "Status"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{up.all_status || "All Status"}</SelectItem>
+                        <SelectItem value="active">{ad.active || "Active"}</SelectItem>
+                        <SelectItem value="suspended">{ad.suspended || "Suspended"}</SelectItem>
+                        <SelectItem value="banned">{ad.banned || "Banned"}</SelectItem>
+                        <SelectItem value="deleted">{ad.deleted || "Deleted"}</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="w-[125px]" size="sm">
+                        <SelectValue placeholder={up.role || "Role"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{up.all_roles || "All Roles"}</SelectItem>
+                        <SelectItem value="user">{up.user_role || "User"}</SelectItem>
+                        <SelectItem value="admin">{up.admin_role || "Admin"}</SelectItem>
+                        <SelectItem value="superadmin">{up.super_admin || "Superadmin"}</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={twoFaFilter} onValueChange={setTwoFaFilter}>
+                    <SelectTrigger className="w-[110px]" size="sm">
+                        <SelectValue placeholder={up.twofa || "2FA"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{up.all_twofa || "All 2FA"}</SelectItem>
+                        <SelectItem value="enabled">{ad.enabled || "2FA On"}</SelectItem>
+                        <SelectItem value="disabled">{ad.disabled || "2FA Off"}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </TableToolbarGroup>
+        </TableToolbar>
     )
 
     return (
         <>
             <AdminHeader
-                title="Users"
-                breadcrumbs={[{ label: "Users" }]}
+                title={ad.users || "Users"}
+                breadcrumbs={[{ label: ad.users || "Users" }]}
                 actions={
-                    <Button variant="outline" size="sm" onClick={() => fetchUsers(pagination.page)} disabled={loading}>
+                    <Button variant="glass" size="sm" onClick={() => fetchUsers(pagination.page)} disabled={loading}>
                         <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
-                        Refresh
+                        {ad.refresh || "Refresh"}
                     </Button>
                 }
             />
@@ -237,121 +303,98 @@ export default function AdminUsersPage() {
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-                            <Users className="size-4" /> Total Users
+                        <div className="flex items-center gap-2 text-sm text-neutral-400">
+                            <Users className="size-4" /> {up.total_users || "Total Users"}
                         </div>
                         <div className="mt-1 text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : pagination.total}</div>
                     </div>
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-                            <Shield className="size-4" /> Active
+                        <div className="flex items-center gap-2 text-sm text-neutral-400">
+                            <Shield className="size-4" /> {ad.active || "Active"}
                         </div>
                         <div className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                             {loading ? <Skeleton className="h-8 w-16" /> : users.filter(u => u.status === "active").length}
                         </div>
                     </div>
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-                            <Lock className="size-4" /> Suspended
+                        <div className="flex items-center gap-2 text-sm text-neutral-400">
+                            <Lock className="size-4" /> {ad.suspended || "Suspended"}
                         </div>
                         <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
                             {loading ? <Skeleton className="h-8 w-16" /> : users.filter(u => u.status === "suspended").length}
                         </div>
                     </div>
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-                            <Ban className="size-4" /> Banned
+                        <div className="flex items-center gap-2 text-sm text-neutral-400">
+                            <Ban className="size-4" /> {ad.banned || "Banned"}
                         </div>
-                        <div className="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
+                        <div className={`mt-1 text-2xl font-bold ${PRISM.destructiveText}`}>
                             {loading ? <Skeleton className="h-8 w-16" /> : users.filter(u => u.status === "banned").length}
                         </div>
                     </div>
                 </div>
 
-                {/* Filters Row */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative flex-1 min-w-[200px] max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
-                        <Input
-                            label="Search users"
-                            placeholder="Search by name or email..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="pl-9"
+                <UniversalTable
+                    toolbar={toolbar}
+                    maxHeight="calc(100vh - 21rem)"
+                    footer={!loading && pagination.totalPages > 1 ? (
+                        <TablePaginationBar
+                            page={pagination.page}
+                            totalPages={pagination.totalPages}
+                            pageSize={pagination.limit}
+                            total={pagination.total}
+                            label={up.showing || "Showing"}
+                            ofLabel={up.of || "of"}
+                            onFirst={() => fetchUsers(1)}
+                            onPrevious={() => fetchUsers(pagination.page - 1)}
+                            onNext={() => fetchUsers(pagination.page + 1)}
+                            onLast={() => fetchUsers(pagination.totalPages)}
                         />
-                    </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[130px]" size="sm">
-                            <Filter className="size-4" />
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="suspended">Suspended</SelectItem>
-                            <SelectItem value="banned">Banned</SelectItem>
-                            <SelectItem value="deleted">Deleted</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={roleFilter} onValueChange={setRoleFilter}>
-                        <SelectTrigger className="w-[120px]" size="sm">
-                            <SelectValue placeholder="Role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Roles</SelectItem>
-                            <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="superadmin">Superadmin</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={twoFaFilter} onValueChange={setTwoFaFilter}>
-                        <SelectTrigger className="w-[100px]" size="sm">
-                            <SelectValue placeholder="2FA" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All 2FA</SelectItem>
-                            <SelectItem value="enabled">2FA On</SelectItem>
-                            <SelectItem value="disabled">2FA Off</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Table */}
-                {loading ? (
-                    <TableSkeleton />
-                ) : users.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 dark:border-white/10 p-12 text-center">
-                        <UserX className="size-12 text-neutral-300 dark:text-neutral-600 mb-3" />
-                        <p className="text-lg font-medium text-neutral-600 dark:text-neutral-400">No users found</p>
-                        <p className="text-sm text-neutral-500">Try adjusting your search or filters.</p>
-                    </div>
-                ) : (
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+                    ) : undefined}
+                >
                         <Table>
-                            <TableHeader className="bg-black/3 dark:bg-white/3">
+                            <TableHeader>
                                 <TableRow>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("name")}>
-                                        User <SortIcon field="name" />
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("name")} onClick={() => toggleSort("name")}>
+                                            {up.col_name || "User"}
+                                        </TableSortHeader>
                                     </TableHead>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("role")}>
-                                        Role <SortIcon field="role" />
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("role")} onClick={() => toggleSort("role")}>
+                                            {up.col_role || "Role"}
+                                        </TableSortHeader>
                                     </TableHead>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("status")}>
-                                        Status <SortIcon field="status" />
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("status")} onClick={() => toggleSort("status")}>
+                                            {up.col_status || "Status"}
+                                        </TableSortHeader>
                                     </TableHead>
-                                    <TableHead className="hidden md:table-cell">2FA</TableHead>
-                                    <TableHead className="hidden lg:table-cell">Data</TableHead>
-                                    <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort("lastLoginAt")}>
-                                        Last Login <SortIcon field="lastLoginAt" />
+                                    <TableHead className="hidden md:table-cell">{up.col_twofa || "2FA"}</TableHead>
+                                    <TableHead className="hidden lg:table-cell">{up.col_data || "Data"}</TableHead>
+                                    <TableHead className="hidden md:table-cell">
+                                        <TableSortHeader direction={sortDirection("lastLoginAt")} onClick={() => toggleSort("lastLoginAt")}>
+                                            {up.col_last_login || "Last Login"}
+                                        </TableSortHeader>
                                     </TableHead>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("createdAt")}>
-                                        Joined <SortIcon field="createdAt" />
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("createdAt")} onClick={() => toggleSort("createdAt")}>
+                                            {up.col_created || "Joined"}
+                                        </TableSortHeader>
                                     </TableHead>
                                     <TableHead className="w-10" />
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {users.map(user => (
+                                {loading ? (
+                                    <TableSkeletonRows rows={10} columns={8} widths={[168, 84, 84, 52, 116, 104, 92, 40]} />
+                                ) : users.length === 0 ? (
+                                    <TableEmptyRow
+                                        colSpan={8}
+                                        title={up.no_users || "No users found"}
+                                        description={up.no_users_hint || "Try adjusting your search or filters."}
+                                    />
+                                ) : users.map(user => (
                                     <TableRow key={user.id} className="group">
                                         <TableCell>
                                             <div className="flex items-center gap-3 min-w-0">
@@ -365,87 +408,87 @@ export default function AdminUsersPage() {
                                                     >
                                                         {user.name}
                                                     </Link>
-                                                    <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                                                    <p className="text-xs text-neutral-400 truncate">{user.email}</p>
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell>{roleBadge(user.role)}</TableCell>
-                                        <TableCell>{statusBadge(user.status)}</TableCell>
+                                        <TableCell>{roleBadge(user.role, up)}</TableCell>
+                                        <TableCell>{statusBadge(user.status, ad)}</TableCell>
                                         <TableCell className="hidden md:table-cell">
                                             {user.twoFactorEnabled ? (
                                                 <ShieldCheck className="size-4 text-emerald-500" />
                                             ) : (
-                                                <span className="text-xs text-neutral-400">Off</span>
+                                                <span className="text-xs text-neutral-400">{ad.disabled || "Off"}</span>
                                             )}
                                         </TableCell>
                                         <TableCell className="hidden lg:table-cell">
-                                            <div className="flex items-center gap-2 text-xs text-neutral-500">
-                                                <span title="Transactions">{user._count.transactions} txns</span>
+                                            <div className="flex items-center gap-2 text-xs text-neutral-400">
+                                                <span title={up.col_transactions || "Transactions"}>{user._count.transactions} {up.txns_label || "txns"}</span>
                                                 <span>·</span>
-                                                <span title="Accounts">{user._count.bankAccounts} accts</span>
+                                                <span title={up.col_accounts || "Accounts"}>{user._count.bankAccounts} {up.accts_label || "accts"}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="hidden md:table-cell">
-                                            <span className="text-sm text-neutral-500">{timeAgo(user.lastLoginAt)}</span>
+                                            <span className="text-sm text-neutral-400">{timeAgo(user.lastLoginAt, ad)}</span>
                                         </TableCell>
                                         <TableCell>
-                                            <span className="text-sm text-neutral-500">{timeAgo(user.createdAt)}</span>
+                                            <span className="text-sm text-neutral-400">{timeAgo(user.createdAt, ad)}</span>
                                         </TableCell>
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <MoreHorizontal className="size-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/admin/users/${user.id}`}>
-                                                            <Eye className="size-4 mr-2" /> View Details
+                                                            <Eye className="size-4 mr-2" /> {up.view_details || "View Details"}
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {user.status === "active" && (
                                                         <DropdownMenuItem
-                                                            onClick={() => openAction(user, "suspend", "Suspend User", `Suspend ${user.name}? They will not be able to sign in.`, true)}
+                                                            onClick={() => openAction(user, "suspend", up.suspend_user || "Suspend User", `${up.suspend_confirm || "Suspend"} ${user.name}? ${up.suspend_warning || "They will not be able to sign in."}`, true)}
                                                         >
-                                                            <Lock className="size-4 mr-2" /> Suspend
+                                                            <Lock className="size-4 mr-2" /> {up.suspend_user || "Suspend"}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {user.status === "suspended" && (
                                                         <DropdownMenuItem
-                                                            onClick={() => openAction(user, "unsuspend", "Unsuspend User", `Reactivate ${user.name}'s account?`)}
+                                                            onClick={() => openAction(user, "unsuspend", up.unsuspend_user || "Unsuspend User", `${up.reactivate_confirm || "Reactivate"} ${user.name}${up.account_question || "'s account?"}`)}
                                                         >
-                                                            <Unlock className="size-4 mr-2" /> Unsuspend
+                                                            <Unlock className="size-4 mr-2" /> {up.unsuspend_user || "Unsuspend"}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {user.status !== "banned" && (
                                                         <DropdownMenuItem
-                                                            className="text-red-600 dark:text-red-400"
-                                                            onClick={() => openAction(user, "ban", "Ban User", `Permanently ban ${user.name}? This cannot be undone easily.`, true)}
+                                                            className={PRISM.destructiveText}
+                                                            onClick={() => openAction(user, "ban", up.ban_user || "Ban User", `${up.ban_confirm || "Permanently ban"} ${user.name}? ${up.ban_warning || "This cannot be undone easily."}`, true)}
                                                         >
-                                                            <Ban className="size-4 mr-2" /> Ban
+                                                            <Ban className="size-4 mr-2" /> {up.ban_user || "Ban"}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {user.status === "banned" && (
                                                         <DropdownMenuItem
-                                                            onClick={() => openAction(user, "activate", "Unban User", `Reactivate ${user.name}'s banned account?`)}
+                                                            onClick={() => openAction(user, "activate", up.unban_user || "Unban User", `${up.reactivate_confirm || "Reactivate"} ${user.name}${up.banned_account_question || "'s banned account?"}`)}
                                                         >
-                                                            <Unlock className="size-4 mr-2" /> Unban
+                                                            <Unlock className="size-4 mr-2" /> {up.unban_user || "Unban"}
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuSeparator />
                                                     {user.twoFactorEnabled && (
                                                         <DropdownMenuItem
-                                                            onClick={() => openAction(user, "reset_2fa", "Reset 2FA", `Remove 2FA from ${user.name}'s account? They'll need to set it up again.`)}
+                                                            onClick={() => openAction(user, "reset_2fa", up.reset_2fa || "Reset 2FA", `${up.reset_2fa_confirm || "Remove 2FA from"} ${user.name}${up.reset_2fa_warning || "'s account? They'll need to set it up again."}`)}
                                                         >
-                                                            <KeyRound className="size-4 mr-2" /> Reset 2FA
+                                                            <KeyRound className="size-4 mr-2" /> {up.reset_2fa || "Reset 2FA"}
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuItem
-                                                        onClick={() => openAction(user, "force_reset_password", "Force Password Reset", `Send a password reset link to ${user.name}?`)}
+                                                        onClick={() => openAction(user, "force_reset_password", up.force_reset_password || "Force Password Reset", `${up.force_reset_confirm || "Send a password reset link to"} ${user.name}?`)}
                                                     >
-                                                        <RefreshCw className="size-4 mr-2" /> Force Password Reset
+                                                        <RefreshCw className="size-4 mr-2" /> {up.force_reset_password || "Force Password Reset"}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -454,46 +497,7 @@ export default function AdminUsersPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {!loading && pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-neutral-500 hidden lg:block">
-                            Showing {(pagination.page - 1) * pagination.limit + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} users
-                        </p>
-                        <div className="flex items-center gap-1 ml-auto">
-                            <Button variant="outline" size="icon" className="size-8"
-                                disabled={pagination.page <= 1}
-                                onClick={() => fetchUsers(1)}
-                            >
-                                <ChevronsLeft className="size-4" />
-                            </Button>
-                            <Button variant="outline" size="icon" className="size-8"
-                                disabled={pagination.page <= 1}
-                                onClick={() => fetchUsers(pagination.page - 1)}
-                            >
-                                <ChevronLeft className="size-4" />
-                            </Button>
-                            <span className="px-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                {pagination.page} / {pagination.totalPages}
-                            </span>
-                            <Button variant="outline" size="icon" className="size-8"
-                                disabled={pagination.page >= pagination.totalPages}
-                                onClick={() => fetchUsers(pagination.page + 1)}
-                            >
-                                <ChevronRight className="size-4" />
-                            </Button>
-                            <Button variant="outline" size="icon" className="size-8"
-                                disabled={pagination.page >= pagination.totalPages}
-                                onClick={() => fetchUsers(pagination.totalPages)}
-                            >
-                                <ChevronsRight className="size-4" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                </UniversalTable>
             </div>
 
             {/* Action Confirmation Dialog */}
@@ -505,72 +509,31 @@ export default function AdminUsersPage() {
                     </DialogHeader>
                     {actionDialog.needsReason && (
                         <div className="space-y-2">
-                            <Label htmlFor="reason">Reason (optional)</Label>
+                            <Label htmlFor="reason">{up.reason_optional || "Reason (optional)"}</Label>
                             <Input
                                 id="reason"
-                                label="Reason"
-                                placeholder="Provide a reason..."
+                                label={up.reason_label || "Reason"}
+                                placeholder={up.reason_placeholder || "Provide a reason..."}
                                 value={actionReason}
                                 onChange={e => setActionReason(e.target.value)}
                             />
                         </div>
                     )}
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setActionDialog(prev => ({ ...prev, open: false }))}>
-                            Cancel
+                        <Button variant="glass" onClick={() => setActionDialog(prev => ({ ...prev, open: false }))}>
+                            {up.cancel || "Cancel"}
                         </Button>
                         <Button
-                            variant={actionDialog.action === "ban" ? "destructive" : "default"}
+                            variant={actionDialog.action === "ban" ? "solid-destructive" : "solid"}
                             onClick={executeAction}
                             disabled={actionLoading}
                         >
                             {actionLoading ? <RefreshCw className="size-4 animate-spin mr-2" /> : null}
-                            Confirm
+                            {up.confirm || "Confirm"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </>
-    )
-}
-
-// ---------------------------------------------------------------------------
-// Loading skeleton
-// ---------------------------------------------------------------------------
-function TableSkeleton() {
-    return (
-        <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
-            <Table>
-                <TableHeader className="bg-black/3 dark:bg-white/3">
-                    <TableRow>
-                        {["User", "Role", "Status", "2FA", "Data", "Last Login", "Joined", ""].map((h, i) => (
-                            <TableHead key={i}>{h}</TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {[...Array(10)].map((_, i) => (
-                        <TableRow key={i}>
-                            <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <Skeleton className="size-8 rounded-full" />
-                                    <div className="space-y-1">
-                                        <Skeleton className="h-4 w-28" />
-                                        <Skeleton className="h-3 w-36" />
-                                    </div>
-                                </div>
-                            </TableCell>
-                            <TableCell><Skeleton className="h-5 w-14 rounded-full" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                            <TableCell><Skeleton className="h-4 w-6" /></TableCell>
-                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-6" /></TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
     )
 }

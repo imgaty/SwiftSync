@@ -1,231 +1,99 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync, createHash } from 'crypto';
+/**
+ * Symmetric encryption for server-side secrets (e.g. TOTP secrets).
+ *
+ * AES-256-GCM authenticated encryption with:
+ *   - a per-record random salt fed through scrypt to derive a unique key,
+ *   - a per-record random IV,
+ *   - a 16-byte authentication tag.
+ *
+ * Format: "v1:saltB64:ivB64:authTagB64:ciphertextB64"
+ *
+ * The master key lives in ENCRYPTION_MASTER_KEY (32 bytes hex). Rotating the master
+ * key invalidates every previously encrypted blob — migrate by decrypt-then-re-encrypt
+ * before rotating, or accept that users will need to re-enroll affected secrets.
+ */
 
-const CURRENT_VERSION = 3;
+import "server-only"
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  scryptSync,
+} from "crypto"
 
-const VERSION_CONFIGS: Record<number, VersionConfig> = {
-  1: {
-    algorithm: 'aes-256-gcm',
-    keyLength: 32,
-    ivLength: 16,
-    saltLength: 32,
-    scryptN: 16384,
-    scryptR: 8,
-    scryptP: 1,
-    pepper: process.env.ENCRYPTION_PEPPER_V1 || '',
-  },
-  2: {
-    algorithm: 'aes-256-gcm',
-    keyLength: 32,
-    ivLength: 16,
-    saltLength: 64,
-    scryptN: 32768,
-    scryptR: 8,
-    scryptP: 1,
-    pepper: process.env.ENCRYPTION_PEPPER_V2 || '',
-  },
-  3: {
-    algorithm: 'aes-256-gcm',
-    keyLength: 32,
-    ivLength: 16,
-    saltLength: 64,
-    scryptN: 32768,
-    scryptR: 8,
-    scryptP: 1,
-    pepper: (process.env.ENCRYPTION_PEPPER_V3 || '') + getRotatingPepper(),
-  },
-};
-
-interface VersionConfig {
-  algorithm: string;
-  keyLength: number;
-  ivLength: number;
-  saltLength: number;
-  scryptN: number;
-  scryptR: number;
-  scryptP: number;
-  pepper: string;
-}
-
-function getRotatingPepper(): string {
-  const date = new Date();
-  const period = `${date.getFullYear()}-${Math.floor(date.getMonth() / 1)}`;
-  return createHash('sha256').update(period).digest('hex').substring(0, 16);
-}
+const ALGORITHM = "aes-256-gcm"
+const KEY_LEN = 32
+const IV_LEN = 16 // GCM spec recommends 12, but Node's createCipheriv accepts 16; stick with it for compat with existing blobs.
+const SALT_LEN = 32
+const AUTH_TAG_LEN = 16
+const SCRYPT_N = 32768
+const SCRYPT_R = 8
+const SCRYPT_P = 1
+const SCRYPT_MAXMEM = 128 * SCRYPT_N * SCRYPT_R * SCRYPT_P + 1024 * 1024
+const VERSION = "v1"
 
 function getMasterKey(): string {
-  const key = process.env.ENCRYPTION_MASTER_KEY;
-  if (!key) throw new Error('ENCRYPTION_MASTER_KEY is not set');
-  return key;
+  const key = process.env.ENCRYPTION_MASTER_KEY
+  if (key && key.length >= 32) return key
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ENCRYPTION_MASTER_KEY must be set to at least 32 characters in production.",
+    )
+  }
+  // Dev-only: a random per-process key. Anything encrypted last run won't decrypt.
+  return randomBytes(32).toString("hex")
 }
 
-function deriveKey(salt: Buffer, version: number): Buffer {
-  const config = VERSION_CONFIGS[version];
-  if (!config) throw new Error(`Unknown encryption version: ${version}`);
-
-  const masterKey = getMasterKey();
-  const keyMaterial = `${masterKey}:${config.pepper}`;
-
-  return scryptSync(keyMaterial, salt, config.keyLength, {
-    N: config.scryptN,
-    r: config.scryptR,
-    p: config.scryptP,
-    maxmem: 128 * config.scryptN * config.scryptR * config.scryptP + (1024 * 1024),
-  });
+function deriveKey(salt: Buffer): Buffer {
+  return scryptSync(getMasterKey(), salt, KEY_LEN, {
+    N: SCRYPT_N,
+    r: SCRYPT_R,
+    p: SCRYPT_P,
+    maxmem: SCRYPT_MAXMEM,
+  })
 }
 
 export function encrypt(plaintext: string): string {
-  const version = CURRENT_VERSION;
-  const config = VERSION_CONFIGS[version];
+  if (typeof plaintext !== "string") {
+    throw new Error("encrypt: plaintext must be a string")
+  }
+  const salt = randomBytes(SALT_LEN)
+  const iv = randomBytes(IV_LEN)
+  const key = deriveKey(salt)
 
-  const salt = randomBytes(config.saltLength);
-  const iv = randomBytes(config.ivLength);
-  const key = deriveKey(salt, version);
-
-  const cipher = createCipheriv(config.algorithm as 'aes-256-gcm', key, iv);
-
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, 'utf8'),
-    cipher.final(),
-  ]);
-
-  const authTag = cipher.getAuthTag();
+  const cipher = createCipheriv(ALGORITHM, key, iv)
+  const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
+  const authTag = cipher.getAuthTag()
 
   return [
-    version.toString(),
-    salt.toString('base64'),
-    iv.toString('base64'),
-    authTag.toString('base64'),
-    encrypted.toString('base64'),
-  ].join(':');
+    VERSION,
+    salt.toString("base64"),
+    iv.toString("base64"),
+    authTag.toString("base64"),
+    ciphertext.toString("base64"),
+  ].join(":")
 }
 
-export function decrypt(ciphertext: string): string {
-  const parts = ciphertext.split(':');
-  if (parts.length !== 5) {
-    throw new Error('Invalid encrypted data format');
+export function decrypt(blob: string): string {
+  if (typeof blob !== "string") {
+    throw new Error("decrypt: input must be a string")
   }
-
-  const [versionStr, saltB64, ivB64, authTagB64, encryptedB64] = parts;
-  const version = parseInt(versionStr, 10);
-
-  const config = VERSION_CONFIGS[version];
-  if (!config) throw new Error(`Unknown encryption version: ${version}`);
-
-  const salt = Buffer.from(saltB64, 'base64');
-  const iv = Buffer.from(ivB64, 'base64');
-  const authTag = Buffer.from(authTagB64, 'base64');
-  const encrypted = Buffer.from(encryptedB64, 'base64');
-
-  const key = deriveKey(salt, version);
-
-  const decipher = createDecipheriv(config.algorithm as 'aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
-
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final(),
-  ]);
-
-  return decrypted.toString('utf8');
-}
-
-export function needsUpgrade(ciphertext: string): boolean {
-  const version = parseInt(ciphertext.split(':')[0], 10);
-  return version < CURRENT_VERSION;
-}
-
-export function upgrade(ciphertext: string): string {
-  if (!needsUpgrade(ciphertext)) {
-    return ciphertext;
+  const parts = blob.split(":")
+  if (parts.length !== 5 || parts[0] !== VERSION) {
+    throw new Error("decrypt: unsupported ciphertext format")
   }
+  const salt = Buffer.from(parts[1], "base64")
+  const iv = Buffer.from(parts[2], "base64")
+  const authTag = Buffer.from(parts[3], "base64")
+  const ciphertext = Buffer.from(parts[4], "base64")
 
-  const plaintext = decrypt(ciphertext);
-  return encrypt(plaintext);
-}
+  if (salt.length !== SALT_LEN) throw new Error("decrypt: bad salt length")
+  if (iv.length !== IV_LEN) throw new Error("decrypt: bad IV length")
+  if (authTag.length !== AUTH_TAG_LEN) throw new Error("decrypt: bad auth tag length")
 
-export function getVersion(ciphertext: string): number {
-  return parseInt(ciphertext.split(':')[0], 10);
-}
-
-export function hashPassword(password: string): string {
-  const version = CURRENT_VERSION;
-  const config = VERSION_CONFIGS[version];
-
-  const salt = randomBytes(config.saltLength);
-  const pepperedPassword = `${password}:${config.pepper}`;
-
-  const hash = scryptSync(pepperedPassword, salt, 64, {
-    N: config.scryptN,
-    r: config.scryptR,
-    p: config.scryptP,
-  });
-
-  return [
-    version.toString(),
-    salt.toString('base64'),
-    hash.toString('base64'),
-  ].join(':');
-}
-
-export function verifyPassword(password: string, storedHash: string): boolean {
-  try {
-    const parts = storedHash.split(':');
-    if (parts.length !== 3) return false;
-
-    const [versionStr, saltB64, hashB64] = parts;
-    const version = parseInt(versionStr, 10);
-
-    const config = VERSION_CONFIGS[version];
-    if (!config) return false;
-
-    const salt = Buffer.from(saltB64, 'base64');
-    const storedHashBuffer = Buffer.from(hashB64, 'base64');
-
-    const pepperedPassword = `${password}:${config.pepper}`;
-
-    const computedHash = scryptSync(pepperedPassword, salt, 64, {
-      N: config.scryptN,
-      r: config.scryptR,
-      p: config.scryptP,
-    });
-
-    return timingSafeEqual(computedHash, storedHashBuffer);
-  } catch {
-    return false;
-  }
-}
-
-export function passwordNeedsUpgrade(storedHash: string): boolean {
-  const version = parseInt(storedHash.split(':')[0], 10);
-  return version < CURRENT_VERSION;
-}
-
-export function upgradePassword(password: string, storedHash: string): string | null {
-  if (!verifyPassword(password, storedHash)) {
-    return null;
-  }
-  return hashPassword(password);
-}
-
-function timingSafeEqual(a: Buffer, b: Buffer): boolean {
-  if (a.length !== b.length) return false;
-
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a[i] ^ b[i];
-  }
-  return result === 0;
-}
-
-export function isOldEncryption(data: string): boolean {
-  if (/^\d+:/.test(data)) return false;
-  return /^[QWERTYUIOPASDFGH]+$/.test(data);
-}
-
-export function migrateFromOldSystem(
-  oldCiphertext: string,
-  oldDecryptFn: (s: string) => string
-): string {
-  const plaintext = oldDecryptFn(oldCiphertext);
-  return encrypt(plaintext);
+  const key = deriveKey(salt)
+  const decipher = createDecipheriv(ALGORITHM, key, iv)
+  decipher.setAuthTag(authTag)
+  const out = Buffer.concat([decipher.update(ciphertext), decipher.final()])
+  return out.toString("utf8")
 }

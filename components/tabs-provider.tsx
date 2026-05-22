@@ -67,7 +67,7 @@ export function usePageTabs() {
 // STORAGE
 // ==============================================================================
 
-const STORAGE_KEY = "swiftsync_tabs"
+const STORAGE_KEY = "argent_tabs"
 
 function loadTabsFromStorage(): Tab[] {
     if (typeof window === "undefined") return []

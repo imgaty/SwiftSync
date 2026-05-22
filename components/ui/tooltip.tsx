@@ -4,12 +4,13 @@ import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils"
+import { PRISM } from "@/lib/PRISM"
 
 // Global tooltip delay - use this for consistent timing across all tooltips
 export const TOOLTIP_DELAY = 400
 
 // ==============================================================================
-// SMART TOOLTIP CONTEXT - Tracks sibling tooltips for consistency
+// SMART TOOLTIP REGISTRY - Module-level singleton for sibling coordination
 // ==============================================================================
 
 type Side = "top" | "right" | "bottom" | "left"
@@ -20,53 +21,31 @@ interface TooltipRegistryEntry {
     groupId?: string
 }
 
-const SmartTooltipContext = React.createContext<{
-    register: (id: string, side: Side, groupId?: string) => void
-    unregister: (id: string) => void
-    getSiblingPreference: (groupId?: string) => Side | null
-}>({
-    register: () => { },
-    unregister: () => { },
-    getSiblingPreference: () => null,
-})
+const tooltipRegistry = new Map<string, TooltipRegistryEntry>()
 
-export function SmartTooltipProvider({ children }: { children: React.ReactNode }) {
-    const registryRef = React.useRef<Map<string, TooltipRegistryEntry>>(new Map())
+function registerTooltip(id: string, side: Side, groupId?: string) {
+    tooltipRegistry.set(id, { id, side, groupId })
+}
 
-    const register = React.useCallback((id: string, side: Side, groupId?: string) => {
-        registryRef.current.set(id, { id, side, groupId })
-    }, [])
+function unregisterTooltip(id: string) {
+    tooltipRegistry.delete(id)
+}
 
-    const unregister = React.useCallback((id: string) => {
-        registryRef.current.delete(id)
-    }, [])
+function getSiblingPreference(groupId?: string): Side | null {
+    if (!groupId) return null
 
-    const getSiblingPreference = React.useCallback((groupId?: string): Side | null => {
-        if (!groupId) return null
-
-        // Find siblings in the same group and count their preferred sides
-        const siblings = Array.from(registryRef.current.values()).filter(
-            entry => entry.groupId === groupId
-        )
-
-        if (siblings.length === 0) return null
-
-        // Return the most common side among siblings
-        const sideCounts = siblings.reduce((acc, entry) => {
-            acc[entry.side] = (acc[entry.side] || 0) + 1
-            return acc
-        }, {} as Record<Side, number>)
-
-        return Object.entries(sideCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as Side || null
-    }, [])
-
-    return (
-        <SmartTooltipContext.Provider value={{ register, unregister, getSiblingPreference }}>
-            <TooltipProvider>
-                {children}
-            </TooltipProvider>
-        </SmartTooltipContext.Provider>
+    const siblings = Array.from(tooltipRegistry.values()).filter(
+        entry => entry.groupId === groupId
     )
+
+    if (siblings.length === 0) return null
+
+    const sideCounts = siblings.reduce((acc, entry) => {
+        acc[entry.side] = (acc[entry.side] || 0) + 1
+        return acc
+    }, {} as Record<Side, number>)
+
+    return Object.entries(sideCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as Side || null
 }
 
 // ==============================================================================
@@ -114,7 +93,6 @@ export function SmartTooltip({
     const [computedSide, setComputedSide] = React.useState<Side>("top")
     const [isDisabled, setIsDisabled] = React.useState(false)
     const tooltipId = React.useId()
-    const { register, unregister, getSiblingPreference } = React.useContext(SmartTooltipContext)
 
     // Detect if the child element is disabled
     React.useEffect(() => {
@@ -242,30 +220,31 @@ export function SmartTooltip({
             .sort((a, b) => b[1] - a[1])[0][0]
 
         return bestSide
-    }, [forceSide, text.length, getSiblingPreference, group])
+    }, [forceSide, text.length, group])
 
     // Recalculate on mount and when relevant props change
     React.useEffect(() => {
         const side = calculateBestSide()
         setComputedSide(side)
-        register(tooltipId, side, group)
+        registerTooltip(tooltipId, side, group)
 
-        return () => unregister(tooltipId)
-    }, [calculateBestSide, register, unregister, tooltipId, group])
+        return () => unregisterTooltip(tooltipId)
+    }, [calculateBestSide, tooltipId, group])
 
     // Recalculate on window resize
     React.useEffect(() => {
         const handleResize = () => {
             const side = calculateBestSide()
             setComputedSide(side)
-            register(tooltipId, side, group)
+            registerTooltip(tooltipId, side, group)
         }
 
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
-    }, [calculateBestSide, register, tooltipId, group])
+    }, [calculateBestSide, tooltipId, group])
 
     return (
+        <TooltipProvider>
         <TooltipPrimitive.Root delayDuration={delay}>
             <TooltipPrimitive.Trigger ref={triggerRef} asChild>
                 {children}
@@ -274,20 +253,19 @@ export function SmartTooltip({
                 <TooltipPrimitive.Content
                     side={computedSide}
                     sideOffset={6}
-                    collisionPadding={8}
+                    collisionPadding={16}
                     avoidCollisions={true}
                     className={cn(
-                        "data-[state=open]:animate-[apple-menu-in_0.15s_cubic-bezier(0.16,1,0.3,1)]",
-                        "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+                        PRISM.animateIn,
+                        PRISM.animateOut,
                         "data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1",
                         "data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1",
-                        "z-50 w-fit max-w-[200px] origin-(--radix-tooltip-content-transform-origin)",
-                        "rounded-xl px-3 py-1.5 text-[12px] font-medium text-balance",
-                        "shadow-sm backdrop-blur-xl",
-                        "border border-black/10 dark:border-white/10",
+                        "w-fit max-w-[220px] origin-(--radix-tooltip-content-transform-origin)",
+                        PRISM.container,
+                        "text-balance",
                         isDisabled
-                            ? "bg-black/3 dark:bg-white/3 text-neutral-400 dark:text-neutral-500"
-                            : "bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-300",
+                            ? "bg-white/3 text-neutral-400"
+                            : "",
                         className
                     )}
                 >
@@ -295,6 +273,7 @@ export function SmartTooltip({
                 </TooltipPrimitive.Content>
             </TooltipPrimitive.Portal>
         </TooltipPrimitive.Root>
+        </TooltipProvider>
     )
 }
 
@@ -341,7 +320,7 @@ function TooltipTrigger({
 function TooltipContent({
     className,
     sideOffset = 6,
-    collisionPadding = 8,
+    collisionPadding = 16,
     children,
     disabled,
     ...props
@@ -354,12 +333,15 @@ function TooltipContent({
                 collisionPadding={collisionPadding}
                 avoidCollisions={true}
                 className={cn(
-                    "data-[state=open]:animate-[apple-menu-in_0.15s_cubic-bezier(0.16,1,0.3,1)] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1 z-50 w-fit max-w-[calc(100vw-16px)] origin-(--radix-tooltip-content-transform-origin) rounded-xl px-3 py-1.5 text-[12px] font-medium text-balance",
-                    "shadow-sm backdrop-blur-xl",
-                    "border border-black/10 dark:border-white/10",
+                    PRISM.animateIn,
+                    PRISM.animateOut,
+                    "data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1",
+                    "w-fit max-w-[calc(100vw-2rem)] origin-(--radix-tooltip-content-transform-origin)",
+                    PRISM.container,
+                    "text-balance",
                     disabled
-                        ? "bg-black/3 dark:bg-white/3 text-neutral-400 dark:text-neutral-500"
-                        : "bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-300",
+                        ? "bg-white/3 text-neutral-400"
+                        : "",
                     className
                 )}
                 {...props}

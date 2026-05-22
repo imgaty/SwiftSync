@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 
 // GET /api/admin/announcements — List all announcements
 export async function GET(request: NextRequest) {
-    const { admin, error } = await requireAdmin()
+    const { error } = await requireAdmin()
     if (error) return error
 
     const url = request.nextUrl

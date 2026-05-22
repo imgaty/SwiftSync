@@ -1,8 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { SURFACE } from '@/lib/styles';
-import { SmartTooltip, SmartTooltipProvider } from '@/components/ui/tooltip';
+import { SmartTooltip } from '@/components/ui/tooltip';
 import { useLanguage } from '@/components/language-provider';
 
 // SVG Icons for OAuth providers
@@ -71,8 +70,7 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
   }
 
   return (
-    <SmartTooltipProvider>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {providers.map(({ name, key, icon: Icon }) => (
           <SmartTooltip
             key={name}
@@ -81,17 +79,16 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
             forceSide="bottom"
           >
             <Button
-              variant="outline"
+              variant="glass"
               type="button"
               onClick={() => handleOAuth(name)}
               aria-label={getOAuthLabel(key) ?? name}
-              className={`w-full h-11 ${SURFACE} hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20 text-neutral-600 dark:text-neutral-300 transition-all duration-200`}
+              className="w-full h-11 text-neutral-400"
             >
               <Icon />
             </Button>
           </SmartTooltip>
         ))}
       </div>
-    </SmartTooltipProvider>
   );
 }

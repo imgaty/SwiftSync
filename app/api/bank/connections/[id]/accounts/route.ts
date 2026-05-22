@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { listAccounts, listTransactions, getConnection, mapNatureToAccountType, getProviderColor } from "@/lib/salt-edge"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { listAccounts, listTransactions, getConnection, mapNatureToAccountType, getProviderColor, getOrCreateCustomerForScope } from "@/lib/salt-edge"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { requirePermission, scopeCreateData } from "@/lib/data-access"
+import { buildSaltEdgeCategorization, loadEnabledRules, loadAvailableTags } from "@/lib/PACE.server"
 import { prisma } from "@/lib/prisma"
 
 /**
@@ -11,18 +13,29 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
 
   const { id: connectionId } = await params
 
-  try {
-    // Fetch connection info
-    const connection = await getConnection(connectionId)
+  // Verify the caller actually owns this connection locally before hitting Salt Edge.
+  const owned = await prisma.saltEdgeConnection.findFirst({
+    where: {
+      connectionId,
+      userId: ctx.userId,
+    },
+    select: { id: true },
+  })
+  if (!owned) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
 
-    // Fetch accounts from Salt Edge
+  try {
+    const connection = await getConnection(connectionId)
     const accounts = await listAccounts(connectionId)
 
     return NextResponse.json({
@@ -50,23 +63,28 @@ export async function GET(
     })
   } catch (error) {
     console.error("Salt Edge accounts error:", error)
-    const message = error instanceof Error ? error.message : "Failed to fetch accounts"
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch accounts" }, { status: 500 })
   }
 }
 
 /**
  * POST /api/bank/connections/[id]/accounts — Import Salt Edge accounts into the local database
  * Body: { accounts: [{ saltEdgeAccountId, name, nature, balance, currencyCode }] }
+ *
+ * Accepts connections the caller has just linked (not yet persisted locally) OR connections
+ * they already own. Ownership is enforced by cross-checking the Salt Edge customer_id with
+ * the caller's customer record.
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "bank:connect")
+  if (permissionError) return permissionError
 
   const { id: connectionId } = await params
 
@@ -83,15 +101,51 @@ export async function POST(
       }>
     }
 
+    // Fetch connection info from Salt Edge
+    const connection = await getConnection(connectionId)
+    const providerName = connection.provider_name
+    const color = getProviderColor(connection.provider_code)
+
+    // Verify ownership. Either (a) we already have this connection row scoped to the caller,
+    // or (b) the Salt Edge customer_id on the connection matches a row the caller owns.
+    const existing = await prisma.saltEdgeConnection.findUnique({
+      where: { connectionId },
+      select: { userId: true, customerId: true },
+    })
+    if (existing) {
+      if (existing.userId !== ctx.userId) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 })
+      }
+    } else {
+      const scopedCustomerId = await getOrCreateCustomerForScope(ctx)
+      if (connection.customer_id !== scopedCustomerId) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 })
+      }
+    }
+
+    const dbConnection = await prisma.saltEdgeConnection.upsert({
+      where: { connectionId },
+      create: {
+        ...scopeCreateData(ctx),
+        customerId: connection.customer_id,
+        connectionId,
+        providerCode: connection.provider_code,
+        providerName,
+        countryCode: connection.country_code,
+        status: connection.status,
+        lastSyncAt: new Date(),
+      },
+      update: {
+        status: connection.status,
+        lastSyncAt: new Date(),
+      },
+    })
+
     // If no specific accounts provided, import all from connection
     let saltEdgeAccounts
     if (!accountsToImport || accountsToImport.length === 0) {
       saltEdgeAccounts = await listAccounts(connectionId)
     }
-
-    const connection = await getConnection(connectionId)
-    const providerName = connection.provider_name
-    const color = getProviderColor(connection.provider_code)
 
     // Upsert the bank
     const bank = await prisma.bank.upsert({
@@ -102,6 +156,7 @@ export async function POST(
 
     const accountsData = saltEdgeAccounts
       ? saltEdgeAccounts.map((a) => ({
+          saltEdgeAccountId: a.id,
           name: a.name,
           nature: a.nature,
           balance: a.balance,
@@ -111,19 +166,53 @@ export async function POST(
       : accountsToImport!
 
     const imported = []
+    const accountIdBySaltEdgeId = new Map<string, string>()
     for (const acc of accountsData) {
-      const account = await prisma.bankAccount.create({
-        data: {
-          userId,
-          bankId: bank.id,
-          accountType: mapNatureToAccountType(acc.nature),
-          cardName: acc.name || `${providerName} Account`,
-          balance: acc.balance || 0,
-          color,
-          isActive: true,
-        },
-        include: { bank: true },
-      })
+      // Upsert by saltEdgeAccountId to prevent duplicates across reconnects
+      const account = acc.saltEdgeAccountId
+        ? await prisma.bankAccount.upsert({
+            where: { saltEdgeAccountId: acc.saltEdgeAccountId },
+            create: {
+              ...scopeCreateData(ctx),
+              connectionId: dbConnection.id,
+              saltEdgeAccountId: acc.saltEdgeAccountId,
+              bankId: bank.id,
+              accountType: mapNatureToAccountType(acc.nature),
+              cardName: acc.name || `${providerName} Account`,
+              balance: acc.balance || 0,
+              currency: acc.currencyCode || "EUR",
+              iban: acc.iban || null,
+              color,
+              isActive: true,
+            },
+            update: {
+              balance: acc.balance || 0,
+              currency: acc.currencyCode || "EUR",
+              iban: acc.iban || null,
+              connectionId: dbConnection.id,
+              isActive: true,
+            },
+            include: { bank: true },
+          })
+        : await prisma.bankAccount.create({
+            data: {
+              ...scopeCreateData(ctx),
+              connectionId: dbConnection.id,
+              bankId: bank.id,
+              accountType: mapNatureToAccountType(acc.nature),
+              cardName: acc.name || `${providerName} Account`,
+              balance: acc.balance || 0,
+              currency: acc.currencyCode || "EUR",
+              iban: acc.iban || null,
+              color,
+              isActive: true,
+            },
+            include: { bank: true },
+          })
+
+      if (acc.saltEdgeAccountId) {
+        accountIdBySaltEdgeId.set(acc.saltEdgeAccountId, account.id)
+      }
 
       imported.push({
         id: account.id,
@@ -136,38 +225,80 @@ export async function POST(
     }
 
     // Also import transactions if available
+    let transactionsImported = 0
     try {
       const saltEdgeTxs = await listTransactions({ connectionId })
       if (saltEdgeTxs.length > 0) {
-        // We'll batch-create transactions
+        const [userRules, availableTags] = await Promise.all([
+          loadEnabledRules(ctx),
+          loadAvailableTags(ctx),
+        ])
         for (const tx of saltEdgeTxs.slice(0, 100)) {
-          // Limit to first 100 for initial import
-          await prisma.transaction.create({
-            data: {
-              userId,
-              date: new Date(tx.made_on),
-              type: tx.amount >= 0 ? "in" : "out",
-              amount: Math.abs(tx.amount),
-              description: tx.description || tx.category || "Transaction",
-              tags: tx.category ? [tx.category] : [],
-              accountId: imported[0]?.id || "",
-            },
+          const cat = await buildSaltEdgeCategorization(ctx, tx, {
+            rules: userRules,
+            availableTags,
           })
+          const accountId = accountIdBySaltEdgeId.get(tx.account_id)
+          if (!accountId) continue
+          const tags = cat.tags.length > 0 ? cat.tags : ["other"]
+          const description = tx.description || tx.category || "Transaction"
+          // Upsert by saltEdgeId to prevent duplicate transactions
+          if (tx.id) {
+            await prisma.transaction.upsert({
+              where: { saltEdgeId: tx.id },
+              create: {
+                ...scopeCreateData(ctx),
+                saltEdgeId: tx.id,
+                date: new Date(tx.made_on),
+                type: tx.amount >= 0 ? "in" : "out",
+                amount: Math.abs(tx.amount),
+                description,
+                tags,
+                accountId,
+                counterpartyId: cat.counterpartyId,
+                counterpartyRaw: cat.counterpartyRaw,
+              },
+              update: {
+                date: new Date(tx.made_on),
+                type: tx.amount >= 0 ? "in" : "out",
+                amount: Math.abs(tx.amount),
+                description,
+                tags,
+                accountId,
+                counterpartyId: cat.counterpartyId,
+                counterpartyRaw: cat.counterpartyRaw,
+              },
+            })
+          } else {
+            await prisma.transaction.create({
+              data: {
+                ...scopeCreateData(ctx),
+                date: new Date(tx.made_on),
+                type: tx.amount >= 0 ? "in" : "out",
+                amount: Math.abs(tx.amount),
+                description,
+                tags,
+                accountId,
+                counterpartyId: cat.counterpartyId,
+                counterpartyRaw: cat.counterpartyRaw,
+              },
+            })
+          }
+          transactionsImported++
         }
       }
     } catch (txError) {
       console.warn("Could not import transactions:", txError)
-      // Not fatal — account was still imported
     }
 
     return NextResponse.json({
       imported,
+      transactionsImported,
       connectionId,
       providerName,
     })
   } catch (error) {
     console.error("Salt Edge import error:", error)
-    const message = error instanceof Error ? error.message : "Failed to import accounts"
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: "Failed to import accounts" }, { status: 500 })
   }
 }

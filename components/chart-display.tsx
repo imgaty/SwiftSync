@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Settings, X, Calenda
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { OverflowScroll } from "@/components/ui/overflow-scroll"
 import { useChartContext } from "@/components/chart-context"
+import { useCurrency } from "@/components/currency-provider"
 import { DISPLAY_MODE_ICONS, HOVER_DELAY, DATE_FORMAT_OPTIONS } from "@/lib/chart-constants"
 import { 
     getOffsetDate, 
@@ -16,6 +17,7 @@ import {
 } from "@/lib/chart-utils"
 import type { ChartInstance, DailyData } from "@/lib/chart-types"
 import { AreaChartComponent, BarChartComponent, PieChartComponent } from "@/components/ui/chart"
+import { PRISM } from "@/lib/PRISM"
 
 // ==============================================================================
 // CHART DISPLAY COMPONENT
@@ -36,6 +38,7 @@ interface ChartDisplayProps {
     onMoveRight: () => void
     onOpenSettings: () => void
     onExpand: () => void
+    compact?: boolean
 }
 
 export const ChartDisplay = React.memo(function ChartDisplay({ 
@@ -52,9 +55,11 @@ export const ChartDisplay = React.memo(function ChartDisplay({
     onMoveLeft, 
     onMoveRight, 
     onOpenSettings,
-    onExpand
+    onExpand,
+    compact = false,
 }: ChartDisplayProps) {
-    const { chartConfig, labels, locale } = useChartContext()
+    const { chartConfig, labels, locale, currency } = useChartContext()
+    const { convertAmount } = useCurrency()
     const [hoverIndex, setHoverIndex] = React.useState<number | null>(null)
     const [isHovered, setIsHovered] = React.useState(false)
     const hoverTimerRef = React.useRef<NodeJS.Timeout | null>(null)
@@ -72,6 +77,18 @@ export const ChartDisplay = React.memo(function ChartDisplay({
         return getFilteredPeriodData(chartData, periodType, offsetDate)
     }, [chartData, periodType, offsetDate, customDateRange])
 
+    const convertedPeriodData = React.useMemo(() => {
+        return periodData.map((item) => {
+            const converted = { ...item } as DailyData
+            for (const [key, value] of Object.entries(item)) {
+                if (key !== "date" && typeof value === "number") {
+                    converted[key as keyof DailyData] = convertAmount(value) as never
+                }
+            }
+            return converted
+        })
+    }, [periodData, convertAmount])
+
     const chartKeys = React.useMemo(() => 
         showTotal ? [metricType] : (selectedCategories.length > 0 ? selectedCategories : [metricType]), 
         [showTotal, selectedCategories, metricType]
@@ -79,16 +96,16 @@ export const ChartDisplay = React.memo(function ChartDisplay({
 
     const pieData = React.useMemo(() => {
         if (showTotal) {
-            const total = periodData.reduce((acc, c) => acc + (c[metricType] as number), 0)
+            const total = convertedPeriodData.reduce((acc, c) => acc + (c[metricType] as number), 0)
             return [{ name: metricType, value: total, fill: `var(--color-${metricType})` }]
         }
         const categories = selectedCategories.length > 0 ? selectedCategories : [...categoryOptions]
         return categories.map(cat => ({
             name: cat,
-            value: periodData.reduce((acc, c) => acc + (c[cat] as number || 0), 0),
+            value: convertedPeriodData.reduce((acc, c) => acc + (c[cat] as number || 0), 0),
             fill: `var(--color-${cat})`
         })).filter(d => d.value > 0)
-    }, [periodData, metricType, showTotal, selectedCategories, categoryOptions])
+    }, [convertedPeriodData, metricType, showTotal, selectedCategories, categoryOptions])
 
     const lastTouchTimeRef = React.useRef(0)
     
@@ -182,7 +199,10 @@ export const ChartDisplay = React.memo(function ChartDisplay({
     return (
         <div 
             data-chart-display
-            className={`relative flex-1 min-w-0 rounded-xl p-4 select-none transition-all duration-200 border bg-card ${borderClass}`}
+            className={compact
+                ? "relative flex h-full min-h-0 flex-1 min-w-0 select-none flex-col"
+                : `relative flex-1 min-w-0 rounded-xl p-4 select-none transition-all duration-200 border bg-card ${borderClass}`
+            }
             style={{ WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -193,34 +213,34 @@ export const ChartDisplay = React.memo(function ChartDisplay({
             {/* Controls bubble - horizontal: top center, stacked: right border vertical */}
             {isHorizontal ? (
                 <div className={`absolute -top-3 left-1/2 -translate-x-1/2 z-10 transition-all duration-200 ease-out ${showBubbles ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
-                    <div className="flex items-center gap-0.5 bg-background/95 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-full px-1.5 py-1 shadow-lg">
+                    <div className="flex items-center gap-0.5 rounded-full px-1.5 py-1 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleMoveLeft} disabled={index === 0} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleMoveLeft} disabled={index === 0} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" disabled={index === 0}><p>{labels.move_left ?? "Move left"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleExpand} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors"><Maximize2 className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleExpand} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Maximize2 className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom"><p>{labels.expand ?? "Expand"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleSettings} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors"><Settings className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleSettings} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Settings className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom"><p>{labels.customize ?? "Customize"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleDelete} disabled={totalCharts <= 1} className="p-1.5 rounded-full hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><X className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleDelete} disabled={totalCharts <= 1} className={`p-1.5 rounded-full ${PRISM.destructiveHover} transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}><X className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" disabled={totalCharts <= 1}><p>{labels.remove ?? "Remove"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleMoveRight} disabled={index === totalCharts - 1} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleMoveRight} disabled={index === totalCharts - 1} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" disabled={index === totalCharts - 1}><p>{labels.move_right ?? "Move right"}</p></TooltipContent>
                         </Tooltip>
@@ -228,34 +248,34 @@ export const ChartDisplay = React.memo(function ChartDisplay({
                 </div>
             ) : (
                 <div className={`absolute -right-3 top-1/2 -translate-y-1/2 z-10 transition-all duration-200 ease-out ${showBubbles ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'}`}>
-                    <div className="flex flex-col items-center gap-0.5 bg-background/95 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-full px-1 py-1.5 shadow-lg">
+                    <div className="flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleMoveLeft} disabled={index === 0} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronUp className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleMoveLeft} disabled={index === 0} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronUp className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="left" disabled={index === 0}><p>{labels.move_up ?? "Move up"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleExpand} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors"><Maximize2 className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleExpand} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Maximize2 className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="left"><p>{labels.expand ?? "Expand"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleSettings} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors"><Settings className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleSettings} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Settings className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="left"><p>{labels.customize ?? "Customize"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleDelete} disabled={totalCharts <= 1} className="p-1.5 rounded-full hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><X className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleDelete} disabled={totalCharts <= 1} className={`p-1.5 rounded-full ${PRISM.destructiveHover} transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}><X className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="left" disabled={totalCharts <= 1}><p>{labels.remove ?? "Remove"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button onClick={handleMoveRight} disabled={index === totalCharts - 1} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronDown className="w-3.5 h-3.5" /></button>
+                                <button onClick={handleMoveRight} disabled={index === totalCharts - 1} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronDown className="w-3.5 h-3.5" /></button>
                             </TooltipTrigger>
                             <TooltipContent side="left" disabled={index === totalCharts - 1}><p>{labels.move_down ?? "Move down"}</p></TooltipContent>
                         </Tooltip>
@@ -263,20 +283,22 @@ export const ChartDisplay = React.memo(function ChartDisplay({
                 </div>
             )}
 
+
             {/* Info strip - subtle text display, appears on hover/select */}
+            {!compact && (
             <div className={`absolute bottom-0 left-0 right-0 z-10 pointer-events-none transition-all duration-200 ease-out ${showBubbles ? 'opacity-100' : 'opacity-0'}`}>
                 <OverflowScroll className={`py-1.5 ${isHorizontal ? 'px-4' : 'px-3'}`} speed={25} pauseDuration={2500} center>
-                    <span className="flex items-center gap-3 text-[10px] text-neutral-500 dark:text-neutral-400/70">
+                    <span className="flex items-center gap-3 text-[10px] text-neutral-400/70">
                         <span className="flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: metricColor }} />
                             <span>{chartConfig[metricType]?.label}</span>
                         </span>
-                        <span className="text-neutral-500 dark:text-neutral-400/30">·</span>
+                        <span className="text-neutral-400/30">·</span>
                         <span className="flex items-center gap-1">
                             {React.createElement(DISPLAY_MODE_ICONS[displayMode], { className: "w-2.5 h-2.5 shrink-0" })}
                             <span>{chartTypeLabel}</span>
                         </span>
-                        <span className="text-neutral-500 dark:text-neutral-400/30">·</span>
+                        <span className="text-neutral-400/30">·</span>
                         <span className="flex items-center gap-1">
                             <Calendar className="w-2.5 h-2.5 shrink-0" />
                             <span>{periodLabel}</span>
@@ -284,13 +306,16 @@ export const ChartDisplay = React.memo(function ChartDisplay({
                     </span>
                 </OverflowScroll>
             </div>
+            )}
+
 
             {/* Header row with metric info */}
+            {!compact && (
             <div className={`flex items-center justify-between ${isHorizontal ? 'mb-3' : 'mb-2'}`}>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400/80">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-400/80">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: metricColor }} />
                     <span>{chartConfig[metricType]?.label}</span>
-                    <span className="text-neutral-500 dark:text-neutral-400/40">•</span>
+                    <span className="text-neutral-400/40">•</span>
                     {selectedCategories.length > 1 ? (
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -326,15 +351,17 @@ export const ChartDisplay = React.memo(function ChartDisplay({
                     )}
                 </div>
             </div>
+            )}
 
-            <div className={`w-full overflow-visible ${isHorizontal ? 'h-[220px]' : 'h-[180px]'}`}>
+
+            <div className={`w-full overflow-hidden ${compact ? 'min-h-0 flex-1 [&_[data-slot=chart]]:aspect-auto! [&_[data-slot=chart]]:h-full [&_[data-slot=chart]]:min-h-0' : isHorizontal ? 'h-[220px]' : 'h-[180px]'}`}>
                 {isLoading ? (
-                    <div className="flex justify-center items-center h-full text-neutral-500 dark:text-neutral-400 text-sm">{loadingText}</div>
+                    <div className="flex justify-center items-center h-full text-neutral-400 text-sm">{loadingText}</div>
                 ) : (
                     <>
-                        {displayMode === "area" && <AreaChartComponent data={periodData} config={chartConfig} chartKeys={chartKeys} periodType={periodType} locale={locale} />}
-                        {displayMode === "bar" && <BarChartComponent data={periodData} config={chartConfig} chartKeys={chartKeys} periodType={periodType} locale={locale} />}
-                        {displayMode === "pie" && <PieChartComponent pieData={pieData} config={chartConfig} hoverIndex={hoverIndex} setHoverIndex={setHoverIndex} categoryKey={metricType} setCategoryKey={() => {}} locale={locale} />}
+                        {displayMode === "area" && <AreaChartComponent data={convertedPeriodData} config={chartConfig} chartKeys={chartKeys} periodType={periodType} locale={locale} currencyCode={currency} />}
+                        {displayMode === "bar" && <BarChartComponent data={convertedPeriodData} config={chartConfig} chartKeys={chartKeys} periodType={periodType} locale={locale} currencyCode={currency} />}
+                        {displayMode === "pie" && <PieChartComponent pieData={pieData} config={chartConfig} hoverIndex={hoverIndex} setHoverIndex={setHoverIndex} categoryKey={metricType} setCategoryKey={() => {}} locale={locale} currencyCode={currency} />}
                     </>
                 )}
             </div>

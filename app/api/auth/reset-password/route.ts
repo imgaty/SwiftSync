@@ -1,11 +1,27 @@
 import { NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
-import { hashPassword } from '@/lib/adaptive-encryption';
+import { hashPassword } from '@/lib/password';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 // POST /api/auth/reset-password — Validate token and set new password
 export async function POST(request: Request) {
   try {
+    const rl = rateLimit({
+      scope: 'reset-password',
+      identifier: clientIp(request),
+      max: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!rl.ok) {
+      const res = NextResponse.json(
+        { error: `Too many requests. Try again in ${rl.retryAfter} seconds.` },
+        { status: 429 },
+      );
+      res.headers.set('Retry-After', String(rl.retryAfter));
+      return res;
+    }
+
     const { token, password } = await request.json();
 
     if (!token || !password) {

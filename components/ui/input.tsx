@@ -10,9 +10,10 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     ref?: Ref<HTMLInputElement>;
     showPasswordLabel?: string;
     hidePasswordLabel?: string;
+    inputClassName?: string;
 }
 
-function Input({ className, type, label, value, onChange, disabled, ref, showPasswordLabel = 'Show password', hidePasswordLabel = 'Hide password', ...props }: InputProps) {
+function Input({ className, inputClassName, type, label, value, onChange, disabled, ref, showPasswordLabel = 'Show password', hidePasswordLabel = 'Hide password', ...props }: InputProps) {
     const [isFocused, setIsFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [autofilled, setAutofilled] = useState(false);
@@ -34,7 +35,9 @@ function Input({ className, type, label, value, onChange, disabled, ref, showPas
     }, []);
 
     const hasValue = value !== undefined && value !== null && String(value).length > 0;
-    const isFloating = isFocused || hasValue || autofilled;
+    const hasFloatingLabel = Boolean(label) && type !== 'search';
+    const isFloating = hasFloatingLabel && (isFocused || hasValue || autofilled);
+    const resolvedInputClassName = inputClassName ?? className;
 
     // Reset autofilled flag once the user interacts (types or clears)
     // The browser's onAutoFillCancel animation is unreliable across browsers, so
@@ -57,8 +60,7 @@ function Input({ className, type, label, value, onChange, disabled, ref, showPas
                 }}
                 type = {currentType}
                 value = {value}
-                
-                placeholder = {isFocused ? props.placeholder : undefined}
+                placeholder = {hasFloatingLabel ? (isFocused ? props.placeholder : undefined) : props.placeholder}
                 onChange = {handleChange}
                 disabled = {disabled}
                 onFocus = {(e) => {
@@ -69,33 +71,36 @@ function Input({ className, type, label, value, onChange, disabled, ref, showPas
                     setIsFocused(false);
                     props.onBlur?.(e);
                 }}
-
                 className = {cn(
-                    "w-full | h-14 px-4 pt-4",
-					"bg-black/5 dark:bg-white/5 | border border-black/10 dark:border-white/10 rounded-xl",
+                    "w-full",
+                    hasFloatingLabel ? "h-14 px-4 pt-4" : "h-11 px-4",
+                    "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl",
+                    "backdrop-blur-xl backdrop-saturate-150",
+                    "shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]",
                     "text-neutral-900 dark:text-white text-[15px] text-left",
-                    "placeholder:text-muted-foreground/50",
+                    "placeholder:text-neutral-400/60",
                     "focus:outline-none focus:ring-2 focus:ring-black/15 dark:focus:ring-white/20 focus:border-transparent",
                     "transition-all duration-200",
-                    
                     isPasswordType && "pr-12",
-                    disabled && "opacity-50 cursor-not-allowed"
+                    disabled && "opacity-50 cursor-not-allowed",
+                    resolvedInputClassName,
                 )}
             />
 
-            <label
-                className = {cn(
-                    "absolute left-4 top-4",
-                    "text-neutral-500 dark:text-neutral-400",
-                    "text-[15px] pointer-events-none",
-                    "transition-all duration-200",
-                    "transform origin-left",
-
-                    isFloating && "scale-[0.75] -translate-y-3"
-                )}
-            >
-                {label}
-            </label>
+            {hasFloatingLabel && (
+                <label
+                    className = {cn(
+                        "absolute left-4 top-4",
+                        "text-neutral-400",
+                        "text-[15px] pointer-events-none",
+                        "transition-all duration-200",
+                        "transform origin-left",
+                        isFloating && "scale-[0.75] -translate-y-3"
+                    )}
+                >
+                    {label}
+                </label>
+            )}
 
             {isPasswordType && (
                 <TooltipProvider>
@@ -107,13 +112,13 @@ function Input({ className, type, label, value, onChange, disabled, ref, showPas
                                 className = {cn(
                                     "absolute right-3 top-1/2 -translate-y-1/2",
                                     "p-1 | hover:bg-black/5 dark:hover:bg-white/5",
-                                    "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
+                                    "text-neutral-400 hover:text-neutral-400 dark:hover:text-neutral-400",
                                     "rounded-lg",
                                     "transition-colors"
                                 )}
                                     tabIndex = {-1}
                             >
-                                {showPassword ? <EyeOff className = "w-5 h-5" /> : <Eye className = "w-5 h-5" />}
+                                {showPassword ? <Eye className = "w-5 h-5" /> : <EyeOff className = "w-5 h-5" />}
                             </button>
                         </TooltipTrigger>
                         <TooltipContent side="right" className="text-xs">
@@ -222,7 +227,7 @@ function OTPInput({ length = 6, value, onChange, disabled, autoFocus, className,
                         "text-[#18181b] dark:text-white",
                         "focus:outline-none focus:ring-2 focus:ring-black/15 dark:focus:ring-white/20 focus:border-transparent",
                         "transition-all duration-200",
-                        "placeholder:text-neutral-300 dark:placeholder:text-neutral-600",
+                        "placeholder:text-neutral-400 dark:placeholder:text-neutral-400",
 
                         disabled && "opacity-50 cursor-not-allowed"
                     )}

@@ -3,19 +3,8 @@
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    EllipsisVertical,
-    Columns,
-    Plus,
-    Pencil,
-    Delete,
     AlertTriangle,
     CheckCircle,
-    TrendingUp,
 } from "lucide-react"
 
 import {
@@ -26,7 +15,6 @@ import {
     getFacetedRowModel,
     getFacetedUniqueValues,
     getFilteredRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
     SortingState,
     useReactTable,
@@ -36,36 +24,30 @@ import {
 import { z } from "zod"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-    Dropdown,
-    DropdownCheckboxItem,
-    DropdownShell,
-    DropdownItem,
-    DropdownSeparator,
-    DropdownTrigger,
-} from "@/components/ui/app-dropdown"
 
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-
-import {
+    TableShell,
+    TableScrollArea,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableRow,
+    TableActionsCell,
+    TableActionButton,
+    TableToolbar,
+    TableToolbarGroup,
+    TableSearchControl,
+    TableFilterSelect,
+    TableSortControl,
+    TableColumnsControl,
+    TableAddButton,
 } from "@/components/ui/table"
 import { EmptyStateInline } from "@/components/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { SmartTooltip } from "@/components/ui/tooltip"
+import { toast } from "sonner"
 
 import { useLanguage } from "@/components/language-provider"
 
@@ -115,7 +97,19 @@ const categoryColors: Record<string, string> = {
     Other: "bg-neutral-500",
 }
 
-export function BudgetTable({ data: initialData, isLoading = false }: { data: Budget[]; isLoading?: boolean }) {
+export function BudgetTable({
+    data: initialData,
+    isLoading = false,
+    onAddBudget,
+    onEditBudget,
+    onDeleteBudget,
+}: {
+    data: Budget[]
+    isLoading?: boolean
+    onAddBudget?: () => void
+    onEditBudget?: (budget: Budget) => void
+    onDeleteBudget?: (budget: Budget) => void
+}) {
     const { t, isLoading: isLangLoading } = useLanguage()
     const f = (t.finance || {}) as Record<string, unknown>
     const bt = (f.budget_table || {}) as Record<string, string>
@@ -280,22 +274,28 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
         },
         {
             id: "actions",
-            cell: () => (
-                <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                    <SmartTooltip text={fActions.edit || 'Edit'} group="table-actions">
-                        <Button variant="ghost" size="icon" className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white">
-                            <Pencil className="size-4" />
-                        </Button>
-                    </SmartTooltip>
-                    <SmartTooltip text={fActions.delete || 'Delete'} group="table-actions">
-                        <Button variant="ghost" size="icon" className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-red-500">
-                            <Delete className="size-4" />
-                        </Button>
-                    </SmartTooltip>
-                </div>
+            cell: ({ row }) => (
+                <TableActionsCell>
+                    <TableActionButton
+                        intent="edit"
+                        label={fActions.edit || "Edit"}
+                        onClick={() => {
+                            if (onEditBudget) onEditBudget(row.original)
+                            else toast.info(`${fActions.edit || "Edit"}: ${row.original.category}`)
+                        }}
+                    />
+                    <TableActionButton
+                        intent="delete"
+                        label={fActions.delete || "Delete"}
+                        onClick={() => {
+                            if (onDeleteBudget) onDeleteBudget(row.original)
+                            else toast.info(`${fActions.delete || "Delete"}: ${row.original.category}`)
+                        }}
+                    />
+                </TableActionsCell>
             ),
         },
-    ], [t, f, bt, cat, categoryLabels, statusLabels])
+    ], [t, f, bt, cat, categoryLabels, statusLabels, fActions, onEditBudget, onDeleteBudget])
 
     const [data] = React.useState(() => initialData)
     const [rowSelection, setRowSelection] = React.useState({})
@@ -323,7 +323,6 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
         onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
@@ -375,9 +374,9 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
                 </div>
 
                 {/* Table skeleton */}
-                <div className="border border-black/6 dark:border-white/6 rounded-xl overflow-hidden">
+                <TableShell>
                     <Table>
-                        <TableHeader className="bg-black/3 dark:bg-white/3">
+                        <TableHeader>
                             <TableRow>
                                 <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
                                 {[120, 80, 80, 80, 120, 80, 40].map((w, i) => (
@@ -410,7 +409,7 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
                             ))}
                         </TableBody>
                     </Table>
-                </div>
+                </TableShell>
 
                 {/* Pagination skeleton */}
                 <div className="flex items-center justify-between">
@@ -425,97 +424,52 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
 
     return (
         <div className="flex flex-col gap-4 w-full">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Select
-                        onValueChange={(value) => {
-                            if (value === "all") {
-                                table.getColumn("status")?.setFilterValue(undefined)
-                            } else {
-                                table.getColumn("status")?.setFilterValue(value)
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-[150px]" size="sm">
-                            <SelectValue placeholder={bt.status} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{fFilter.all_status || 'All Status'}</SelectItem>
-                            <SelectItem value="on_track">{bt.on_track}</SelectItem>
-                            <SelectItem value="warning">{bt.warning}</SelectItem>
-                            <SelectItem value="over_budget">{bt.over_budget}</SelectItem>
-                        </SelectContent>
-                    </Select>
+            <TableToolbar>
+                <TableToolbarGroup>
+                    <TableSearchControl table={table} placeholder={bt.search_budgets || "Search budgets…"} width={240} />
+                    <TableFilterSelect
+                        table={table}
+                        columnId="status"
+                        label={bt.status || "Status"}
+                        allLabel={fFilter.all_status || "All Status"}
+                        options={[
+                            { value: "on_track", label: bt.on_track },
+                            { value: "warning", label: bt.warning },
+                            { value: "over_budget", label: bt.over_budget },
+                        ]}
+                    />
+                    <TableFilterSelect
+                        table={table}
+                        columnId="category"
+                        label={bt.category || "Category"}
+                        allLabel={fFilter.all_categories || "All Categories"}
+                        options={[
+                            { value: "Food", label: cat.food },
+                            { value: "Transport", label: cat.transport },
+                            { value: "Bills", label: cat.bills },
+                            { value: "Entertainment", label: cat.entertainment },
+                            { value: "Shopping", label: cat.shopping },
+                            { value: "Health", label: cat.health },
+                            { value: "Education", label: cat.education },
+                            { value: "Savings", label: cat.savings },
+                            { value: "Other", label: cat.other },
+                        ]}
+                    />
+                </TableToolbarGroup>
 
-                    <Select
-                        onValueChange={(value) => {
-                            if (value === "all") {
-                                table.getColumn("category")?.setFilterValue(undefined)
-                            } else {
-                                table.getColumn("category")?.setFilterValue(value)
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-[150px]" size="sm">
-                            <SelectValue placeholder={bt.category} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{fFilter.all_categories || 'All Categories'}</SelectItem>
-                            <SelectItem value="Food">{cat.food}</SelectItem>
-                            <SelectItem value="Transport">{cat.transport}</SelectItem>
-                            <SelectItem value="Bills">{cat.bills}</SelectItem>
-                            <SelectItem value="Entertainment">{cat.entertainment}</SelectItem>
-                            <SelectItem value="Shopping">{cat.shopping}</SelectItem>
-                            <SelectItem value="Health">{cat.health}</SelectItem>
-                            <SelectItem value="Education">{cat.education}</SelectItem>
-                            <SelectItem value="Savings">{cat.savings}</SelectItem>
-                            <SelectItem value="Other">{cat.other}</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Dropdown>
-                        <SmartTooltip text={t.tooltips?.columns || 'Columns'} group="table-toolbar">
-                            <DropdownTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <Columns />
-                                    <span className="hidden lg:inline">{fTable.columns}</span>
-                                    <ChevronDown />
-                                </Button>
-                            </DropdownTrigger>
-                        </SmartTooltip>
-                        <DropdownShell align="end" className="w-56">
-                            {table
-                                .getAllColumns()
-                                .filter(
-                                    (column) =>
-                                        typeof column.accessorFn !== "undefined" &&
-                                        column.getCanHide()
-                                )
-                                .map((column) => (
-                                    <DropdownCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
-                                        }
-                                    >
-                                        {column.id}
-                                    </DropdownCheckboxItem>
-                                ))}
-                        </DropdownShell>
-                    </Dropdown>
-
-                    <SmartTooltip text={t.tooltips?.add_budget || 'Add Budget'} group="table-toolbar">
-                        <Button variant="outline" size="sm">
-                            <Plus />
-                            <span className="hidden lg:inline">{bt.add_budget}</span>
-                        </Button>
-                    </SmartTooltip>
-                </div>
-            </div>
+                <TableToolbarGroup>
+                    <TableSortControl
+                        table={table}
+                        options={[
+                            { id: "category", label: bt.category || "Category" },
+                            { id: "budget", label: bt.budget || "Budget" },
+                            { id: "spent", label: bt.spent || "Spent" },
+                        ]}
+                    />
+                    <TableColumnsControl table={table} label={fTable.columns || "Columns"} />
+                    <TableAddButton onClick={onAddBudget} label={bt.add_budget || "Add Budget"} />
+                </TableToolbarGroup>
+            </TableToolbar>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -546,9 +500,10 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
             </div>
 
             <div className="relative flex flex-col gap-4 overflow-auto">
-                <div className="border border-black/6 dark:border-white/6 rounded-xl overflow-hidden">
+                <TableShell>
+                    <TableScrollArea maxHeight="calc(100vh - 22rem)">
                     <Table>
-                        <TableHeader className="bg-black/3 dark:bg-white/3 sticky top-0 z-10">
+                        <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
@@ -578,7 +533,12 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
                                             delay: index * 0.02
                                         }}
                                         data-state={row.getIsSelected() && "selected"}
-                                        className="group/row border-b transition-colors hover:bg-black/3 dark:hover:bg-white/3 data-[state=selected]:bg-black/5 dark:bg-white/5"
+                                        onClick={(e) => {
+                                            const target = e.target as HTMLElement
+                                            if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
+                                            row.toggleSelected()
+                                        }}
+                                        className="group/row cursor-pointer transition-colors hover:bg-black/2.5 dark:hover:bg-white/4 data-[state=selected]:bg-primary/5 dark:data-[state=selected]:bg-primary/10"
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
@@ -599,63 +559,8 @@ export function BudgetTable({ data: initialData, isLoading = false }: { data: Bu
                             </AnimatePresence>
                         </TableBody>
                     </Table>
-                </div>
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between">
-                    <div className="hidden lg:flex flex-1 text-neutral-500 dark:text-neutral-400 text-sm">
-                        {(fTable.rows_selected || "%count of %total selected")
-                            .replace("%count", String(table.getFilteredSelectedRowModel().rows.length))
-                            .replace("%total", String(table.getFilteredRowModel().rows.length))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <SmartTooltip text={t.tooltips?.first_page || 'First Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.setPageIndex(0)}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <ChevronsLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.previous_page || 'Previous Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <ChevronLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <span className="text-sm">
-                            {(fTable.page_of || "Page %current of %total")
-                                .replace("%current", String(table.getState().pagination.pageIndex + 1))
-                                .replace("%total", String(table.getPageCount()))}
-                        </span>
-                        <SmartTooltip text={t.tooltips?.next_page || 'Next Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <ChevronRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.last_page || 'Last Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <ChevronsRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                    </div>
-                </div>
+                    </TableScrollArea>
+                </TableShell>
             </div>
         </div>
     )

@@ -49,7 +49,7 @@ export const PasswordStrength = memo(function PasswordStrength({ password, stren
             className={`text-[10px] font-mono w-5 h-4 flex items-center justify-center rounded transition-all duration-300 ${
               checkResults[i]
                 ? 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400'
-                : 'bg-black/5 dark:bg-white/5 text-neutral-400 dark:text-neutral-600'
+                : 'bg-black/5 dark:bg-white/5 text-neutral-400'
             }`}
           >
             {c.label}

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/verify');
 
@@ -53,13 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -72,9 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await checkAuth();
-  };
+  }, [checkAuth]);
 
-  const register = async (email: string, password: string) => {
+  const register = useCallback(async (email: string, password: string) => {
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,18 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await checkAuth();
-  };
+  }, [checkAuth]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setIsAuthenticated(false);
     setUserId(null);
     router.push('/login');
     router.refresh();
-  };
+  }, [router]);
+
+  const value = useMemo(() => ({
+    isAuthenticated, userId, loading, login, register, logout, checkAuth
+  }), [isAuthenticated, userId, loading, login, register, logout, checkAuth]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userId, loading, login, register, logout, checkAuth }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

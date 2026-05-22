@@ -9,10 +9,8 @@ import {
     Plus,
     Trash2,
     RefreshCw,
-    ExternalLink,
     Loader2,
     AlertCircle,
-    CheckCircle2,
     ChevronDown,
     Unplug,
 } from "lucide-react"
@@ -26,7 +24,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
+import { useLanguage } from "@/components/language-provider"
+import { PRISM } from "@/lib/PRISM"
 
 interface BankConnection {
     id: string
@@ -40,6 +40,9 @@ interface BankConnection {
 
 export function BankConnections() {
     const queryClient = useQueryClient()
+    const { t } = useLanguage()
+    const bk = (t as any).bank_connections || {} as Record<string, string>
+    const common = (t as any).common || {} as Record<string, string>
     const { data: connections = [], isLoading, error: fetchError } = useQuery({
         queryKey: queryKeys.bankConnections,
         queryFn: async () => {
@@ -56,7 +59,7 @@ export function BankConnections() {
     const [disconnectingId, setDisconnectingId] = React.useState<string | null>(null)
     const [confirmDisconnect, setConfirmDisconnect] = React.useState<BankConnection | null>(null)
     const [expanded, setExpanded] = React.useState(true)
-    const error = fetchError ? (fetchError instanceof Error ? fetchError.message : "Failed to load connections") : ""
+    const error = fetchError ? (fetchError instanceof Error ? fetchError.message : (bk.failed_load_connections || "Failed to load connections")) : ""
 
     const handleConnect = async () => {
         setIsConnecting(true)
@@ -69,12 +72,12 @@ export function BankConnections() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || "Failed to create connect session")
+                throw new Error(err.error || (bk.failed_connect_session || "Failed to create connect session"))
             }
             const { connectUrl } = await res.json()
             window.location.href = connectUrl
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Connection failed")
+            notify.error({ title: bk.connection_failed || "Connection failed", message: err instanceof Error ? err.message : "" })
             setIsConnecting(false)
         }
     }
@@ -87,14 +90,14 @@ export function BankConnections() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || "Failed to disconnect")
+                throw new Error(err.error || (bk.failed_disconnect || "Failed to disconnect"))
             }
             // Invalidate both bank connections and finance data caches
             queryClient.invalidateQueries({ queryKey: queryKeys.bankConnections })
             queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
-            toast.success(`Disconnected from ${connection.providerName}`)
+            notify.success({ title: (bk.disconnected_from || "Disconnected from %name").replace("%name", connection.providerName) })
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Failed to disconnect")
+            notify.error({ title: bk.failed_disconnect || "Failed to disconnect", message: err instanceof Error ? err.message : "" })
         } finally {
             setDisconnectingId(null)
             setConfirmDisconnect(null)
@@ -109,9 +112,9 @@ export function BankConnections() {
             })
             if (syncRes.ok) {
                 const result = await syncRes.json()
-                toast.success(
-                    `Synced ${result.accountsSynced} account(s) and ${result.newTransactions} new transaction(s)`
-                )
+                notify.success({
+                    title: (bk.synced_message || "Synced %accounts account(s) and %transactions new transaction(s)").replace("%accounts", result.accountsSynced).replace("%transactions", result.newTransactions),
+                })
                 queryClient.invalidateQueries({ queryKey: queryKeys.bankConnections })
                 queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
                 return
@@ -126,12 +129,12 @@ export function BankConnections() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || "Failed to create refresh session")
+                throw new Error(err.error || (bk.failed_refresh_session || "Failed to create refresh session"))
             }
             const { connectUrl } = await res.json()
             window.location.href = connectUrl
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Refresh failed")
+            notify.error({ title: bk.refresh_failed || "Refresh failed", message: err instanceof Error ? err.message : "" })
         }
     }
 
@@ -167,9 +170,11 @@ export function BankConnections() {
         <>
             <div className="rounded-xl border bg-white dark:bg-neutral-950">
                 {/* Header */}
-                <button
-                    type="button"
+                <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setExpanded(!expanded)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded) } }}
                     className="flex w-full items-center justify-between p-4 text-left hover:bg-black/5 dark:hover:bg-white/5/30 transition-colors rounded-xl cursor-pointer"
                 >
                     <div className="flex items-center gap-3">
@@ -177,19 +182,18 @@ export function BankConnections() {
                             <Building2 className="size-4 text-primary" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold">Bank Connections</h3>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                            <h3 className="text-sm font-semibold">{bk.title || "Bank Connections"}</h3>
+                            <p className="text-xs text-neutral-400">
                                 {connections.length === 0
-                                    ? "No banks connected yet"
-                                    : `${connections.length} bank${connections.length !== 1 ? "s" : ""} connected`}
+                                    ? (bk.no_banks || "No banks connected yet")
+                                    : (bk.banks_connected || "%count bank(s) connected").replace("%count", String(connections.length))}
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
                             size="sm"
-                            variant="outline"
-                            className="h-8 gap-1.5 text-xs"
+                            variant="glass"
                             disabled={isConnecting}
                             onClick={(e) => {
                                 e.stopPropagation()
@@ -201,15 +205,15 @@ export function BankConnections() {
                             ) : (
                                 <Plus className="size-3.5" />
                             )}
-                            Connect Bank
+                            {bk.connect_bank || "Connect Bank"}
                         </Button>
                         <ChevronDown
-                            className={`size-4 text-neutral-500 dark:text-neutral-400 transition-transform duration-200 ${
+                            className={`size-4 text-neutral-400 transition-transform duration-200 ${
                                 expanded ? "rotate-180" : ""
                             }`}
                         />
                     </div>
-                </button>
+                </div>
 
                 {/* Connections list */}
                 <AnimatePresence>
@@ -223,7 +227,7 @@ export function BankConnections() {
                         >
                             <div className="border-t px-4 pb-4">
                                 {error && (
-                                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+                                    <div className={`mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm ${PRISM.destructiveText}`}>
                                         <AlertCircle className="size-4 shrink-0" />
                                         <span>{error}</span>
                                     </div>
@@ -231,12 +235,12 @@ export function BankConnections() {
 
                                 {connections.length === 0 ? (
                                     <div className="py-8 text-center">
-                                        <Unplug className="mx-auto size-8 text-neutral-500 dark:text-neutral-400/40" />
-                                        <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                                            No bank connections yet
+                                        <Unplug className="mx-auto size-8 text-neutral-400/40" />
+                                        <p className="mt-2 text-sm text-neutral-400">
+                                            {bk.no_connections_yet || "No bank connections yet"}
                                         </p>
-                                        <p className="text-xs text-neutral-500 dark:text-neutral-400/70">
-                                            Connect your bank to automatically import accounts and transactions
+                                        <p className="text-xs text-neutral-400/70">
+                                            {bk.connect_desc || "Connect your bank to automatically import accounts and transactions"}
                                         </p>
                                     </div>
                                 ) : (
@@ -248,7 +252,7 @@ export function BankConnections() {
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex size-9 items-center justify-center rounded-lg bg-black/5 dark:bg-white/5">
-                                                        <Building2 className="size-4 text-neutral-500 dark:text-neutral-400" />
+                                                        <Building2 className="size-4 text-neutral-400" />
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-medium">{conn.providerName}</p>
@@ -259,10 +263,10 @@ export function BankConnections() {
                                                             >
                                                                 {conn.status}
                                                             </Badge>
-                                                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 uppercase">
+                                                            <span className="text-[10px] text-neutral-400 uppercase">
                                                                 {conn.countryCode}
                                                             </span>
-                                                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                                            <span className="text-[10px] text-neutral-400">
                                                                 Connected {new Date(conn.createdAt).toLocaleDateString()}
                                                             </span>
                                                         </div>
@@ -273,7 +277,7 @@ export function BankConnections() {
                                                         size="sm"
                                                         variant="ghost"
                                                         className="h-8 w-8 p-0"
-                                                        title="Refresh connection"
+                                                        title={bk.refresh_connection || "Refresh connection"}
                                                         onClick={() => handleRefresh(conn.id)}
                                                     >
                                                         <RefreshCw className="size-3.5" />
@@ -281,8 +285,8 @@ export function BankConnections() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                                                        title="Disconnect bank"
+                                                        className={`h-8 w-8 p-0 ${PRISM.destructiveHover}`}
+                                                        title={bk.disconnect_bank || "Disconnect bank"}
                                                         onClick={() => setConfirmDisconnect(conn)}
                                                     >
                                                         <Trash2 className="size-3.5" />
@@ -302,30 +306,29 @@ export function BankConnections() {
             <Dialog open={!!confirmDisconnect} onOpenChange={(open) => !open && setConfirmDisconnect(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Disconnect Bank</DialogTitle>
+                        <DialogTitle>{bk.disconnect_title || "Disconnect Bank"}</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to disconnect <strong>{confirmDisconnect?.providerName}</strong>?
-                            This will remove the connection to your bank. Your imported accounts and transactions will remain.
+                            {(bk.disconnect_confirm || "Are you sure you want to disconnect %name? This will remove the connection to your bank. Your imported accounts and transactions will remain.").replace("%name", confirmDisconnect?.providerName || "")}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setConfirmDisconnect(null)}>
-                            Cancel
+                        <Button variant="glass" onClick={() => setConfirmDisconnect(null)}>
+                            {common.cancel || "Cancel"}
                         </Button>
                         <Button
-                            variant="destructive"
+                            variant="solid-destructive"
                             disabled={!!disconnectingId}
                             onClick={() => confirmDisconnect && handleDisconnect(confirmDisconnect)}
                         >
                             {disconnectingId ? (
                                 <>
                                     <Loader2 className="mr-2 size-4 animate-spin" />
-                                    Disconnecting...
+                                    {bk.disconnecting || "Disconnecting..."}
                                 </>
                             ) : (
                                 <>
                                     <Unplug className="mr-2 size-4" />
-                                    Disconnect
+                                    {bk.disconnect || "Disconnect"}
                                 </>
                             )}
                         </Button>

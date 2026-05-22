@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
+import { useTheme } from "@/components/theme-provider"
 import {
     LayoutDashboard,
     ArrowLeftRight,
@@ -13,10 +13,7 @@ import {
     Moon,
     Sun,
     Monitor,
-    Settings,
-    Search,
     Target,
-    Download,
 } from "lucide-react"
 
 import {

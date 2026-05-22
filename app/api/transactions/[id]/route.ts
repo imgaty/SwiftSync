@@ -1,30 +1,48 @@
+/* Single-transaction endpoint (PUT to update, DELETE to remove).
+ *
+ * Both writes use scope-in-write — the caller's scope filter is merged into
+ * the where clause of `updateMany` / `deleteMany`, so a row outside the
+ * caller's scope is invisible and untouchable in the same statement.
+ *
+ * Learn more in `docs/Financial Features.md`
+ */
+
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeFilter, scopeRecordFilter, requirePermission } from "@/lib/data-access"
 
 // PUT /api/transactions/[id] — Update a transaction
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:write")
+  if (permissionError) return permissionError
 
   const { id } = await params
   const body = await request.json()
   const { date, type, amount, description, tags, accountId } = body
 
-  const existing = await prisma.transaction.findFirst({
-    where: { id, userId },
-  })
-  if (!existing) {
-    return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
+  // If the caller is reassigning the transaction to a different account, verify
+  // that target account is also in their scope — otherwise an attacker could
+  // repoint their own transaction at another scoped bank account.
+  if (accountId) {
+    const ownsAccount = await prisma.bankAccount.findFirst({
+      where: { ...scopeFilter(ctx), id: accountId },
+      select: { id: true },
+    })
+    if (!ownsAccount) {
+      return NextResponse.json({ error: "Account not found" }, { status: 400 })
+    }
   }
 
-  const updated = await prisma.transaction.update({
-    where: { id },
+  const { count } = await prisma.transaction.updateMany({
+    where: scopeRecordFilter(ctx, id),
     data: {
       ...(date && { date: new Date(date) }),
       ...(type && { type }),
@@ -34,6 +52,11 @@ export async function PUT(
       ...(accountId && { accountId }),
     },
   })
+  if (count === 0) {
+    return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
+  }
+
+  const updated = await prisma.transaction.findUniqueOrThrow({ where: { id } })
 
   return NextResponse.json({
     id: updated.id,
@@ -51,19 +74,20 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:delete")
+  if (permissionError) return permissionError
 
   const { id } = await params
-  const existing = await prisma.transaction.findFirst({
-    where: { id, userId },
+  const { count } = await prisma.transaction.deleteMany({
+    where: scopeRecordFilter(ctx, id),
   })
-  if (!existing) {
+  if (count === 0) {
     return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
   }
 
-  await prisma.transaction.delete({ where: { id } })
   return NextResponse.json({ success: true })
 }

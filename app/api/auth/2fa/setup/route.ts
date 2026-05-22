@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUserId } from "@/lib/auth-helpers"
 import * as OTPAuth from "otpauth"
 import * as QRCode from "qrcode"
-import { encrypt, decrypt } from "@/lib/encryption-v2"
+import { encrypt } from "@/lib/encryption-v2"
 
 // POST /api/auth/2fa/setup — Generate TOTP secret and QR code
 export async function POST() {
@@ -25,7 +25,7 @@ export async function POST() {
     // Generate new TOTP secret
     const secret = new OTPAuth.Secret({ size: 20 })
     const totp = new OTPAuth.TOTP({
-      issuer: "SwiftSync",
+      issuer: "Argent",
       label: user.name || user.email,
       algorithm: "SHA1",
       digits: 6,

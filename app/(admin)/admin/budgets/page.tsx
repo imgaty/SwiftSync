@@ -3,16 +3,28 @@
 import * as React from "react"
 import Link from "next/link"
 import {
-    Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    ArrowUpDown, RefreshCw, PiggyBank,
+    RefreshCw, PiggyBank,
 } from "lucide-react"
 
 import { AdminHeader } from "@/components/admin/admin-header"
+import { useLanguage } from "@/components/language-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableEmptyRow,
+    TableHead,
+    TableHeader,
+    TablePaginationBar,
+    TableRow,
+    TableSearchControl,
+    TableSkeletonRows,
+    TableSortHeader,
+    TableToolbar,
+    TableToolbarGroup,
+    UniversalTable,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
@@ -23,12 +35,19 @@ interface BudgetItem {
     user: { id: string; name: string; email: string }
 }
 interface Pagination { page: number; limit: number; total: number; totalPages: number }
+type AdminCopy = Record<string, string | undefined> & {
+    budgets_page?: Record<string, string>
+}
 
 function formatCurrency(v: number) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(v)
 }
 
 export default function AdminBudgetsPage() {
+    const { t } = useLanguage()
+    const ad = ((t as { admin?: AdminCopy }).admin || {}) as AdminCopy
+    const bp = ad.budgets_page || {}
+
     const [data, setData] = React.useState<BudgetItem[]>([])
     const [pagination, setPagination] = React.useState<Pagination>({ page: 1, limit: 20, total: 0, totalPages: 0 })
     const [totalLimit, setTotalLimit] = React.useState(0)
@@ -57,9 +76,9 @@ export default function AdminBudgetsPage() {
             const json = await res.json()
             setData(json.budgets); setPagination(json.pagination)
             setTotalLimit(Number(json.summary.totalBudgetLimit))
-        } catch { toast.error("Failed to load budgets") }
+        } catch { toast.error(bp.failed_load || "Failed to load budgets") }
         finally { setLoading(false) }
-    }, [debouncedSearch, sortBy, sortDir])
+    }, [debouncedSearch, sortBy, sortDir, bp.failed_load])
 
     React.useEffect(() => { fetchData(1) }, [fetchData])
 
@@ -67,53 +86,92 @@ export default function AdminBudgetsPage() {
         if (sortBy === f) setSortDir(d => d === "asc" ? "desc" : "asc")
         else { setSortBy(f); setSortDir("desc") }
     }
-    const SortIcon = ({ field }: { field: string }) => (
-        <ArrowUpDown className={`ml-1 inline size-3 ${sortBy === field ? "text-blue-500" : "text-neutral-400"}`} />
+    const sortDirection = (field: string) => sortBy === field ? sortDir : undefined
+
+    const toolbar = (
+        <TableToolbar>
+            <TableToolbarGroup>
+                <TableSearchControl
+                    value={search}
+                    onValueChange={setSearch}
+                    placeholder={bp.search_placeholder || "Search by category..."}
+                    width={280}
+                />
+            </TableToolbarGroup>
+        </TableToolbar>
     )
 
     return (
         <>
-            <AdminHeader title="Budgets" breadcrumbs={[{ label: "Budgets" }]}
-                actions={<Button variant="outline" size="sm" onClick={() => fetchData(pagination.page)} disabled={loading}><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>}
+            <AdminHeader title={ad.budgets || "Budgets"} breadcrumbs={[{ label: ad.budgets || "Budgets" }]}
+                actions={<Button variant="glass" size="sm" onClick={() => fetchData(pagination.page)} disabled={loading}><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> {ad.refresh || "Refresh"}</Button>}
             />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-500 flex items-center gap-1"><PiggyBank className="size-3" /> Total Budgets</p>
+                        <p className="text-xs text-neutral-400 flex items-center gap-1"><PiggyBank className="size-3" /> {bp.total_budgets || "Total Budgets"}</p>
                         <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : pagination.total}</p>
                     </div>
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-500">Combined Budget Limit</p>
+                        <p className="text-xs text-neutral-400">{bp.combined_limit || "Combined Budget Limit"}</p>
                         <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(totalLimit)}</p>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative flex-1 min-w-[200px] max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
-                        <Input label="Search" placeholder="Search by category..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-                    </div>
-                </div>
-
-                {loading ? <TableSkeleton /> : data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 dark:border-white/10 p-12 text-center">
-                        <p className="text-lg font-medium text-neutral-600 dark:text-neutral-400">No budgets found</p>
-                    </div>
-                ) : (
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+                <UniversalTable
+                    toolbar={toolbar}
+                    maxHeight="calc(100vh - 20rem)"
+                    footer={!loading && pagination.totalPages > 1 ? (
+                        <TablePaginationBar
+                            page={pagination.page}
+                            totalPages={pagination.totalPages}
+                            pageSize={pagination.limit}
+                            total={pagination.total}
+                            label={ad.showing_range || "Showing"}
+                            onFirst={() => fetchData(1)}
+                            onPrevious={() => fetchData(pagination.page - 1)}
+                            onNext={() => fetchData(pagination.page + 1)}
+                            onLast={() => fetchData(pagination.totalPages)}
+                        />
+                    ) : undefined}
+                >
                         <Table>
-                            <TableHeader className="bg-black/3 dark:bg-white/3">
+                            <TableHeader>
                                 <TableRow>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("category")}>Category <SortIcon field="category" /></TableHead>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("tag")}>Tag <SortIcon field="tag" /></TableHead>
-                                    <TableHead>Owner</TableHead>
-                                    <TableHead>Color</TableHead>
-                                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort("limit")}>Limit <SortIcon field="limit" /></TableHead>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("createdAt")}>Created <SortIcon field="createdAt" /></TableHead>
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("category")} onClick={() => toggleSort("category")}>
+                                            {bp.col_category || "Category"}
+                                        </TableSortHeader>
+                                    </TableHead>
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("tag")} onClick={() => toggleSort("tag")}>
+                                            {bp.col_tag || "Tag"}
+                                        </TableSortHeader>
+                                    </TableHead>
+                                    <TableHead>{bp.col_owner || "Owner"}</TableHead>
+                                    <TableHead>{bp.col_color || "Color"}</TableHead>
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("limit")} onClick={() => toggleSort("limit")} align="right">
+                                            {bp.col_limit || "Limit"}
+                                        </TableSortHeader>
+                                    </TableHead>
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("createdAt")} onClick={() => toggleSort("createdAt")}>
+                                            {bp.col_created || "Created"}
+                                        </TableSortHeader>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {data.map(b => (
+                                {loading ? (
+                                    <TableSkeletonRows rows={8} columns={6} widths={[128, 88, 128, 112, 104, 96]} />
+                                ) : data.length === 0 ? (
+                                    <TableEmptyRow
+                                        colSpan={6}
+                                        title={bp.no_budgets || "No budgets found"}
+                                        description={bp.no_budgets_hint || "Try changing the search filter."}
+                                    />
+                                ) : data.map(b => (
                                     <TableRow key={b.id}>
                                         <TableCell className="font-medium">{b.category}</TableCell>
                                         <TableCell><Badge variant="outline" className="capitalize text-xs">{b.tag}</Badge></TableCell>
@@ -123,50 +181,17 @@ export default function AdminBudgetsPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <div className="size-4 rounded-full border" style={{ backgroundColor: b.color }} />
-                                                <span className="text-xs text-neutral-500 font-mono">{b.color}</span>
+                                                <span className="text-xs text-neutral-400 font-mono">{b.color}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-sm">{formatCurrency(Number(b.limit))}</TableCell>
-                                        <TableCell className="text-sm text-neutral-500">{new Date(b.createdAt).toLocaleDateString()}</TableCell>
+                                        <TableCell className="text-sm text-neutral-400">{new Date(b.createdAt).toLocaleDateString()}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
-                    </div>
-                )}
-
-                {!loading && pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-neutral-500 hidden lg:block">Showing {(pagination.page - 1) * pagination.limit + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}</p>
-                        <div className="flex items-center gap-1 ml-auto">
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page <= 1} onClick={() => fetchData(1)}><ChevronsLeft className="size-4" /></Button>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page <= 1} onClick={() => fetchData(pagination.page - 1)}><ChevronLeft className="size-4" /></Button>
-                            <span className="px-3 text-sm text-neutral-600 dark:text-neutral-400">{pagination.page} / {pagination.totalPages}</span>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page >= pagination.totalPages} onClick={() => fetchData(pagination.page + 1)}><ChevronRight className="size-4" /></Button>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page >= pagination.totalPages} onClick={() => fetchData(pagination.totalPages)}><ChevronsRight className="size-4" /></Button>
-                        </div>
-                    </div>
-                )}
+                </UniversalTable>
             </div>
         </>
-    )
-}
-
-function TableSkeleton() {
-    return (
-        <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
-            <Table>
-                <TableHeader className="bg-black/3 dark:bg-white/3">
-                    <TableRow>{["Category","Tag","Owner","Color","Limit","Created"].map((h,i) => <TableHead key={i}>{h}</TableHead>)}</TableRow>
-                </TableHeader>
-                <TableBody>
-                    {[...Array(8)].map((_,i) => (
-                        <TableRow key={i}>
-                            {[28,16,24,20,20,20].map((w,j) => <TableCell key={j}><Skeleton className="h-4" style={{width: w*4}} /></TableCell>)}
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
     )
 }

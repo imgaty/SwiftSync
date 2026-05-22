@@ -24,7 +24,8 @@ function formatError(ctx: ErrorContext): string {
     if (stack) {
         // Find the first line in the stack that points to the project source (not node_modules)
         const lines = stack.split('\n').slice(1)
-        const projectLine = lines.find(l => l.includes('/SwiftSync/') && !l.includes('node_modules'))
+        const cwdSegment = `/${process.cwd().split('/').filter(Boolean).pop()}/`
+        const projectLine = lines.find(l => l.includes(cwdSegment) && !l.includes('node_modules'))
         if (projectLine) {
             const match = projectLine.match(/\((.+)\)/) || projectLine.match(/at\s+(.+)/)
             if (match) location += ` | ${match[1].trim()}`

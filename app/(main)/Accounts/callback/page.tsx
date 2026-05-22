@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Loader2, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { queryKeys } from "@/lib/query-keys"
+import { useLanguage } from "@/components/language-provider"
 
 /**
  * Callback page after Salt Edge Connect widget.
@@ -21,8 +22,10 @@ export default function BankCallbackPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLanguage()
+  const bc = (t as any).bank_callback || {} as Record<string, string>
   const [status, setStatus] = useState<"loading" | "importing" | "success" | "error">("loading")
-  const [message, setMessage] = useState("Connecting to your bank...")
+  const [message, setMessage] = useState(bc.connecting || "Connecting to your bank...")
   const [importedCount, setImportedCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -32,54 +35,66 @@ export default function BankCallbackPage() {
   const redirectTo = searchParams.get("redirect") || "/Accounts"
 
   useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+    let redirectTimer: ReturnType<typeof setTimeout> | null = null
+
+    const safeSetStatus = (s: typeof status) => { if (!cancelled) setStatus(s) }
+    const safeSetMessage = (m: string) => { if (!cancelled) setMessage(m) }
+    const safeSetError = (m: string) => { if (!cancelled) setErrorMessage(m) }
+    const safeSetImportedCount = (n: number) => { if (!cancelled) setImportedCount(n) }
+
     if (errorClass || errorMsg) {
-      setStatus("error")
-      setErrorMessage(errorMsg || errorClass || "Bank connection failed")
-      return
+      safeSetStatus("error")
+      safeSetError(errorMsg || errorClass || (bc.bank_connection_failed || "Bank connection failed"))
+      return () => { cancelled = true; controller.abort() }
     }
 
     if (!connectionId) {
-      setStatus("error")
-      setErrorMessage("No connection ID received from bank")
-      return
+      safeSetStatus("error")
+      safeSetError(bc.no_connection_id || "No connection ID received from bank")
+      return () => { cancelled = true; controller.abort() }
     }
 
     async function importAccounts() {
       try {
-        setStatus("loading")
-        setMessage("Fetching your accounts...")
+        safeSetStatus("loading")
+        safeSetMessage(bc.fetching_accounts || "Fetching your accounts...")
 
         // First, get the accounts from Salt Edge connection
-        const fetchRes = await fetch(`/api/bank/connections/${connectionId}/accounts`)
+        const fetchRes = await fetch(`/api/bank/connections/${connectionId}/accounts`, { signal: controller.signal })
         if (!fetchRes.ok) {
           const err = await fetchRes.json()
-          throw new Error(err.error || "Failed to fetch accounts")
+          throw new Error(err.error || (bc.failed_fetch_accounts || "Failed to fetch accounts"))
         }
 
         const { accounts, connection } = await fetchRes.json()
-        setMessage(`Found ${accounts.length} account(s) from ${connection.providerName}`)
+        if (cancelled) return
+        safeSetMessage((bc.found_accounts || "Found %count account(s) from %provider").replace("%count", accounts.length).replace("%provider", connection.providerName))
 
         // Import accounts into our database
-        setStatus("importing")
-        setMessage(`Importing ${accounts.length} account(s)...`)
+        safeSetStatus("importing")
+        safeSetMessage((bc.importing_accounts || "Importing %count account(s)...").replace("%count", accounts.length))
 
         const importRes = await fetch(`/api/bank/connections/${connectionId}/accounts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
+          signal: controller.signal,
         })
 
         if (!importRes.ok) {
           const err = await importRes.json()
-          throw new Error(err.error || "Failed to import accounts")
+          throw new Error(err.error || (bc.failed_import_accounts || "Failed to import accounts"))
         }
 
         const { imported, transactionsImported } = await importRes.json()
-        setImportedCount(imported.length)
-        setStatus("success")
-        setMessage(
-          `Successfully imported ${imported.length} account(s)` +
-          (transactionsImported ? ` and ${transactionsImported} transaction(s)` : "") +
+        if (cancelled) return
+        safeSetImportedCount(imported.length)
+        safeSetStatus("success")
+        safeSetMessage(
+          (bc.success_message || "Successfully imported %count account(s)").replace("%count", String(imported.length)) +
+          (transactionsImported ? ` ${(bc.and_transactions || "and %count transaction(s)").replace("%count", String(transactionsImported))}` : "") +
           `!`
         )
 
@@ -88,18 +103,26 @@ export default function BankCallbackPage() {
           queryClient.invalidateQueries({ queryKey: queryKeys.bankConnections }),
         ])
 
+        if (cancelled) return
         // Auto-redirect after 2s
-        setTimeout(() => {
+        redirectTimer = setTimeout(() => {
           router.refresh()
           router.push(redirectTo)
         }, 2000)
       } catch (err) {
-        setStatus("error")
-        setErrorMessage(err instanceof Error ? err.message : "Import failed")
+        if (cancelled || (err instanceof DOMException && err.name === "AbortError")) return
+        safeSetStatus("error")
+        safeSetError(err instanceof Error ? err.message : (bc.failed_import_accounts || "Import failed"))
       }
     }
 
     importAccounts()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+      if (redirectTimer) clearTimeout(redirectTimer)
+    }
   }, [connectionId, errorClass, errorMsg, router, redirectTo, queryClient])
 
   return (
@@ -109,29 +132,29 @@ export default function BankCallbackPage() {
           <div className="space-y-4">
             <Loader2 className="mx-auto size-12 animate-spin text-primary" />
             <h2 className="text-xl font-semibold">{message}</h2>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            <p className="text-sm text-neutral-400">
               {status === "loading"
-                ? "Connecting to your bank securely via Salt Edge..."
-                : "Saving your account data..."}
+                ? (bc.connecting_securely || "Connecting to your bank securely via Salt Edge...")
+                : (bc.saving_data || "Saving your account data...")}
             </p>
           </div>
         ) : status === "success" ? (
           <div className="space-y-4">
             <CheckCircle2 className="mx-auto size-12 text-green-500" />
             <h2 className="text-xl font-semibold">{message}</h2>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {importedCount} account{importedCount !== 1 ? "s" : ""} imported.
-              Redirecting to Accounts...
+            <p className="text-sm text-neutral-400">
+              {importedCount} account{importedCount !== 1 ? "s" : ""} {bc.accounts_imported || "imported."}
+              {bc.redirecting || "Redirecting to Accounts..."}
             </p>
           </div>
         ) : (
           <div className="space-y-4">
             <AlertCircle className="mx-auto size-12 text-red-500" />
-            <h2 className="text-xl font-semibold">Connection Failed</h2>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">{errorMessage}</p>
-            <Button onClick={() => router.push(redirectTo)} variant="outline">
+            <h2 className="text-xl font-semibold">{bc.connection_failed || "Connection Failed"}</h2>
+            <p className="text-sm text-neutral-400">{errorMessage}</p>
+            <Button onClick={() => router.push(redirectTo)} variant="glass">
               <ArrowLeft className="mr-2 size-4" />
-              Back to Accounts
+              {bc.back_to_accounts || "Back to Accounts"}
             </Button>
           </div>
         )}

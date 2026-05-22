@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/admin-auth"
 import { prisma } from "@/lib/prisma"
+import { parsePositiveInt } from "@/lib/query-utils"
 
 // GET /api/admin/audit-log — Full audit log with filters and pagination
 export async function GET(request: NextRequest) {
-    const { admin, error } = await requireAdmin()
+    const { error } = await requireAdmin()
     if (error) return error
 
     const url = request.nextUrl
-    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"))
-    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "30")))
+    const page = parsePositiveInt(url.searchParams.get("page"), 1)
+    const limit = Math.min(100, parsePositiveInt(url.searchParams.get("limit"), 30))
     const action = url.searchParams.get("action") || ""
     const entity = url.searchParams.get("entity") || ""
     const performerId = url.searchParams.get("performerId") || ""

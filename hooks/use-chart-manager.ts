@@ -3,7 +3,7 @@
 import * as React from "react"
 import { saveChartSettings, getChartSettings } from "@/app/actions/chart-settings"
 import { MAX_CHARTS } from "@/lib/chart-constants"
-import type { ChartInstance, MetricType, DisplayMode, CustomDateRange } from "@/lib/chart-types"
+import type { ChartInstance, CustomDateRange } from "@/lib/chart-types"
 import { generateChartId, getCategoryOptions } from "@/lib/chart-utils"
 
 // ==============================================================================

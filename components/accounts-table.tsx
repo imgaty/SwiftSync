@@ -5,13 +5,6 @@ import { useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/query-keys"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    Columns,
-    Plus,
     Pencil,
     Trash2,
     Eye,
@@ -25,7 +18,7 @@ import {
     CheckCircle2,
     AlertCircle,
     Link,
-    ExternalLink,
+    SquareArrowOutUpRight as ExternalLink,
 } from "lucide-react"
 
 import {
@@ -36,7 +29,6 @@ import {
     getFacetedRowModel,
     getFacetedUniqueValues,
     getFilteredRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
     SortingState,
     useReactTable,
@@ -57,12 +49,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import {
-    Dropdown,
-    DropdownCheckboxItem,
-    DropdownShell,
-    DropdownTrigger,
-} from "@/components/ui/app-dropdown"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -73,12 +59,21 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import {
+    TableShell,
+    TableScrollArea,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableRow,
+    TableToolbar,
+    TableToolbarGroup,
+    TableSearchControl,
+    TableFilterSelect,
+    TableSortControl,
+    TableColumnsControl,
+    TableAddButton,
 } from "@/components/ui/table"
 
 import { EmptyStateInline } from "@/components/empty-state"
@@ -86,6 +81,8 @@ import { MobileCard, MobileCardList, useIsMobileView } from "@/components/mobile
 import { Skeleton } from "@/components/ui/skeleton"
 import { SmartTooltip } from "@/components/ui/tooltip"
 import { useLanguage } from "@/components/language-provider"
+import { PRISM } from "@/lib/PRISM"
+import { useCurrency } from "@/components/currency-provider"
 
 export const accountSchema = z.object({
     id: z.string(),
@@ -132,6 +129,7 @@ const defaultFormData: AccountFormData = {
 
 export function AccountsTable({ data: initialData, isLoading = false }: { data: Account[]; isLoading?: boolean }) {
     const { t, isLoading: isLangLoading } = useLanguage()
+    const { formatCurrency } = useCurrency()
     const queryClient = useQueryClient()
     const f = (t.finance || {}) as TranslationObj
     const at = (f.accounts_table || {}) as Record<string, string>
@@ -317,7 +315,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         </div>
                         <div className="min-w-0 flex-1">
                             <div className="auto-scroll font-medium">{row.original.name}</div>
-                            <div className="auto-scroll text-xs text-neutral-500 dark:text-neutral-400">
+                            <div className="auto-scroll text-xs text-neutral-400">
                                 {row.original.institution}
                             </div>
                         </div>
@@ -344,14 +342,11 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
             header: () => <div className="text-right">{at.balance || "Balance"}</div>,
             cell: ({ row }) => {
                 const balance = row.original.balance
-                const formatted = new Intl.NumberFormat(t.config?.locale || "pt-PT", {
-                    style: "currency",
-                    currency: "EUR",
-                }).format(Math.abs(balance))
+                const formatted = formatCurrency(Math.abs(balance))
                 const isNegative = balance < 0 || row.original.type === "credit_card"
 
                 return (
-                    <div className={`text-right font-bold text-lg ${isNegative && balance !== 0 ? "text-red-600" : ""}`}>
+                    <div className={`text-right font-bold text-lg tabular-nums ${isNegative && balance !== 0 ? "text-negative" : ""}`}>
                         {isNegative && balance !== 0 ? "-" : ""}{formatted}
                     </div>
                 )
@@ -362,12 +357,9 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
             header: () => <div className="text-right">{at.monthly_change || "Total In"}</div>,
             cell: ({ row }) => {
                 const totalIn = row.original.totalIn
-                const formatted = new Intl.NumberFormat(t.config?.locale || "pt-PT", {
-                    style: "currency",
-                    currency: "EUR",
-                }).format(totalIn)
+                const formatted = formatCurrency(totalIn)
                 return (
-                    <div className="flex items-center justify-end gap-1 text-green-600">
+                    <div className="flex items-center justify-end gap-1 text-positive tabular-nums">
                         <TrendingUp className="size-4" />
                         +{formatted}
                     </div>
@@ -378,7 +370,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
             accessorKey: "transactionCount",
             header: () => <div className="text-right">{at.transactions || "Transactions"}</div>,
             cell: ({ row }) => (
-                <div className="text-right text-neutral-500 dark:text-neutral-400">
+                <div className="text-right text-neutral-400">
                     {row.original.transactionCount} {at.this_month || "total"}
                 </div>
             ),
@@ -391,7 +383,6 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                             onClick={() => openEditDialog(row.original)}
                         >
                             <Pencil className="size-4" />
@@ -404,7 +395,6 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                             onClick={() => toggleVisibility(row.original)}
                         >
                             {(row.original.isActive ?? true) ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -414,7 +404,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-red-500"
+                            className={PRISM.destructiveHover}
                             onClick={() => openDeleteDialog(row.original)}
                         >
                             <Trash2 className="size-4" />
@@ -424,7 +414,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
             ),
         },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    ], [t, at, fActions, accountTypeConfig])
+    ], [t, at, fActions, accountTypeConfig, formatCurrency])
 
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -445,7 +435,6 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
         onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
@@ -463,11 +452,6 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
         }
         return { assets, liabilities, netWorth: assets - liabilities, totalAccounts: data.length }
     }, [data])
-
-    const formatCurrency = React.useCallback(
-        (value: number) => new Intl.NumberFormat(t.config?.locale || "pt-PT", { style: "currency", currency: "EUR" }).format(value),
-        [t.config?.locale]
-    )
 
     const isMobile = useIsMobileView()
 
@@ -493,9 +477,9 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         </div>
                     ))}
                 </div>
-                <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+                <TableShell>
                     <Table>
-                        <TableHeader className="bg-black/3 dark:bg-white/3">
+                        <TableHeader>
                             <TableRow>
                                 <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
                                 {[180, 100, 100, 80, 80, 100, 40].map((w, i) => (
@@ -525,7 +509,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                             ))}
                         </TableBody>
                     </Table>
-                </div>
+                </TableShell>
             </div>
         )
     }
@@ -533,86 +517,56 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
     return (
         <div className="flex flex-col gap-4 w-full">
             {/* Toolbar */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Select
-                        onValueChange={(value) => {
-                            if (value === "all") {
-                                table.getColumn("type")?.setFilterValue(undefined)
-                            } else {
-                                table.getColumn("type")?.setFilterValue(value)
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-[150px]" size="sm">
-                            <SelectValue placeholder={at.type || "Type"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{fFilter.all_types || "All Types"}</SelectItem>
-                            <SelectItem value="checking">{at.checking || "Checking"}</SelectItem>
-                            <SelectItem value="savings">{at.savings || "Savings"}</SelectItem>
-                            <SelectItem value="credit_card">{at.credit_card || "Credit Card"}</SelectItem>
-                            <SelectItem value="digital_wallet">{at.digital_wallet || "Digital Wallet"}</SelectItem>
-                            <SelectItem value="loan">{at.loan || "Loan"}</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+            <TableToolbar>
+                <TableToolbarGroup>
+                    <TableSearchControl table={table} placeholder={at.search_accounts || "Search accounts…"} width={240} />
+                    <TableFilterSelect
+                        table={table}
+                        columnId="type"
+                        label={at.type || "Type"}
+                        allLabel={fFilter.all_types || "All Types"}
+                        options={[
+                            { value: "checking", label: at.checking || "Checking" },
+                            { value: "savings", label: at.savings || "Savings" },
+                            { value: "credit_card", label: at.credit_card || "Credit Card" },
+                            { value: "digital_wallet", label: at.digital_wallet || "Digital Wallet" },
+                            { value: "loan", label: at.loan || "Loan" },
+                        ]}
+                    />
+                </TableToolbarGroup>
 
-                <div className="flex items-center gap-2">
-                    <Dropdown>
-                        <SmartTooltip text={t.tooltips?.columns || "Columns"} group="table-toolbar">
-                            <DropdownTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <Columns />
-                                    <span className="hidden lg:inline">{fTable.columns || "Columns"}</span>
-                                    <ChevronDown />
-                                </Button>
-                            </DropdownTrigger>
-                        </SmartTooltip>
-                        <DropdownShell align="end" className="w-56">
-                            {table
-                                .getAllColumns()
-                                .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
-                                .map((column) => (
-                                    <DropdownCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                    >
-                                        {column.id}
-                                    </DropdownCheckboxItem>
-                                ))}
-                        </DropdownShell>
-                    </Dropdown>
-
-                    <SmartTooltip text={t.tooltips?.add_account || "Connect Bank"} group="table-toolbar">
-                        <Button variant="outline" size="sm" onClick={openAddDialog}>
-                            <Plus />
-                            <span className="hidden lg:inline">{at.add_account || "Connect Bank"}</span>
-                        </Button>
-                    </SmartTooltip>
-                </div>
-            </div>
+                <TableToolbarGroup>
+                    <TableSortControl
+                        table={table}
+                        options={[
+                            { id: "name", label: at.name || "Name" },
+                            { id: "balance", label: at.balance || "Balance" },
+                            { id: "type", label: at.type || "Type" },
+                        ]}
+                    />
+                    <TableColumnsControl table={table} label={fTable.columns || "Columns"} />
+                    <TableAddButton onClick={openAddDialog} label={at.add_account || "Connect Bank"} />
+                </TableToolbarGroup>
+            </TableToolbar>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{at.total_assets || "Total Assets"}</p>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_assets || "Total Assets"}</p>
                     <p className="text-lg font-bold mt-1 text-green-600">{formatCurrency(totals.assets)}</p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{at.total_liabilities || "Total Liabilities"}</p>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_liabilities || "Total Liabilities"}</p>
                     <p className="text-lg font-bold mt-1 text-red-600">-{formatCurrency(totals.liabilities)}</p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{at.net_worth || "Net Worth"}</p>
-                    <p className={`text-lg font-bold mt-1 ${totals.netWorth >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.net_worth || "Net Worth"}</p>
+                    <p className={`text-lg font-bold mt-1 ${totals.netWorth >= 0 ? "text-green-600" : PRISM.destructiveText}`}>
                         {formatCurrency(totals.netWorth)}
                     </p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{at.total_accounts || "Total Accounts"}</p>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_accounts || "Total Accounts"}</p>
                     <p className="text-lg font-bold mt-1">{totals.totalAccounts}</p>
                 </div>
             </div>
@@ -633,7 +587,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                         index={index}
                                         isSelected={row.getIsSelected()}
                                         onSelect={(checked) => row.toggleSelected(checked)}
-                                        icon={<TypeIcon className="size-5 text-neutral-500 dark:text-neutral-400" />}
+                                        icon={<TypeIcon className="size-5 text-neutral-400" />}
                                         title={account.name}
                                         subtitle={account.institution}
                                         badge={{
@@ -666,9 +620,10 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         )}
                     </MobileCardList>
                 ) : (
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+                    <TableShell>
+                        <TableScrollArea maxHeight="calc(100vh - 22rem)">
                         <Table>
-                            <TableHeader className="bg-black/3 dark:bg-white/3 sticky top-0 z-10">
+                            <TableHeader>
                                 {table.getHeaderGroups().map((headerGroup) => (
                                     <TableRow key={headerGroup.id}>
                                         {headerGroup.headers.map((header) => (
@@ -690,7 +645,12 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                                 exit={{ opacity: 0, y: 10 }}
                                                 transition={{ duration: 0.2, delay: index * 0.02 }}
                                                 data-state={row.getIsSelected() && "selected"}
-                                                className="group/row border-b transition-colors hover:bg-black/3 dark:hover:bg-white/3 data-[state=selected]:bg-black/5 dark:bg-white/5"
+                                                onClick={(e) => {
+                                                    const target = e.target as HTMLElement
+                                                    if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
+                                                    row.toggleSelected()
+                                                }}
+                                                className="group/row cursor-pointer border-b transition-colors hover:bg-black/3 dark:hover:bg-white/3 data-[state=selected]:bg-black/5 dark:bg-white/5"
                                             >
                                                 {row.getVisibleCells().map((cell) => (
                                                     <TableCell key={cell.id}>
@@ -709,44 +669,11 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                 </AnimatePresence>
                             </TableBody>
                         </Table>
-                    </div>
+                        </TableScrollArea>
+                    </TableShell>
                 )}
 
-                {/* Pagination */}
-                <div className="flex items-center justify-between">
-                    <div className="hidden lg:flex flex-1 text-neutral-500 dark:text-neutral-400 text-sm">
-                        {(fTable.rows_selected || "%count of %total selected")
-                            .replace("%count", String(table.getFilteredSelectedRowModel().rows.length))
-                            .replace("%total", String(table.getFilteredRowModel().rows.length))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <SmartTooltip text={t.tooltips?.first_page || "First Page"} group="table-pagination">
-                            <Button variant="outline" size="icon" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-                                <ChevronsLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.previous_page || "Previous Page"} group="table-pagination">
-                            <Button variant="outline" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                                <ChevronLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <span className="text-sm">
-                            {(fTable.page_of || "Page %current of %total")
-                                .replace("%current", String(table.getState().pagination.pageIndex + 1))
-                                .replace("%total", String(table.getPageCount()))}
-                        </span>
-                        <SmartTooltip text={t.tooltips?.next_page || "Next Page"} group="table-pagination">
-                            <Button variant="outline" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                                <ChevronRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.last_page || "Last Page"} group="table-pagination">
-                            <Button variant="outline" size="icon" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
-                                <ChevronsRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                    </div>
-                </div>
+                {/* Pagination removed; tables are scrollable */}
             </div>
 
             {/* Add / Edit Account Dialog */}
@@ -772,10 +699,10 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                         </div>
                                         <div className="text-sm">
                                             <p className="font-medium">How it works:</p>
-                                            <ol className="mt-1.5 list-inside list-decimal space-y-1 text-neutral-500 dark:text-neutral-400">
+                                            <ol className="mt-1.5 list-inside list-decimal space-y-1 text-neutral-400">
                                                 <li>You&apos;ll be redirected to Salt Edge Connect</li>
                                                 <li>Choose your bank and log in securely</li>
-                                                <li>Authorize SwiftSync to read your data</li>
+                                                <li>Authorize Argent to read your data</li>
                                                 <li>Accounts &amp; transactions are imported automatically</li>
                                             </ol>
                                         </div>
@@ -793,13 +720,13 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                     </motion.div>
                                 )}
 
-                                <div className="rounded-xl border border-dashed border-black/10 dark:border-white/10 p-3 text-center text-xs text-neutral-500 dark:text-neutral-400">
+                                <div className="rounded-xl border border-dashed border-black/10 dark:border-white/10 p-3 text-center text-xs text-neutral-400">
                                     <p>Your banking credentials are handled directly by your bank.</p>
-                                    <p className="mt-1">SwiftSync never sees or stores your login details.</p>
+                                    <p className="mt-1">Argent never sees or stores your login details.</p>
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                                <Button variant="glass" onClick={() => setDialogOpen(false)}>
                                     {fActions.cancel || "Cancel"}
                                 </Button>
                                 <Button
@@ -890,10 +817,10 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                             </div>
 
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                                <Button variant="glass" onClick={() => setDialogOpen(false)}>
                                     {fActions.cancel || "Cancel"}
                                 </Button>
-                                <Button onClick={handleSave} disabled={isSaving}>
+                                <Button variant="solid" onClick={handleSave} disabled={isSaving}>
                                     {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
                                     {fActions.save || "Save"}
                                 </Button>
@@ -913,10 +840,10 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                        <Button variant="glass" onClick={() => setDeleteDialogOpen(false)}>
                             {fActions.cancel || "Cancel"}
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                        <Button variant="solid-destructive" onClick={handleDelete} disabled={isDeleting}>
                             {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
                             {fActions.delete || "Delete"}
                         </Button>

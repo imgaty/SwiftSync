@@ -238,7 +238,7 @@ export type FinancialGoalGroupByOutputType = {
   _max: FinancialGoalMaxAggregateOutputType | null
 }
 
-type GetFinancialGoalGroupByPayload<T extends FinancialGoalGroupByArgs> = Prisma.PrismaPromise<
+export type GetFinancialGoalGroupByPayload<T extends FinancialGoalGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<FinancialGoalGroupByOutputType, T['by']> &
       {

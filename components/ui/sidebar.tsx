@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, useCursorTooltip, SmartTooltip } from "@/components/ui/tooltip"
+import { TooltipProvider, SmartTooltip } from "@/components/ui/tooltip"
 import { useLanguage } from "@/components/language-provider"
 
 
 const SIDEBAR = {
-    COOKIE_NAME: "sidebarState",
+    COOKIE_NAME: "sidebar_state",
     COOKIE_MAX_AGE: 60 * 60 * 24 * 7 * 52,                                          // 60 seconds * 60 minutes * 24 hours * 7 days * 52 weeks = 1 year
     WIDTH: { DEFAULT: 240, MIN: 200, MAX: 400, MOBILE: 288, COLLAPSED: 48 },        // Values in pixels
     KEYBOARD_SHORTCUT: "b",                                                         // Toggle sidebar shortcut (Ctrl B or ⌘ B)
@@ -140,8 +140,12 @@ const SidebarProvider = React.forwardRef<
         const setOpen = React.useCallback(
             (value: boolean | ((value: boolean) => boolean)) => {
                 const openState = typeof value === "function" ? value(openRef.current) : value
-                setOpenProp ? setOpenProp(openState) : _setOpen(openState)
-                
+                if (setOpenProp) {
+                    setOpenProp(openState)
+                } else {
+                    _setOpen(openState)
+                }
+
                 setCookie(SIDEBAR.COOKIE_NAME, String(openState))                   // Save openState to cookie to survive page refresh
             },
             [setOpenProp]
@@ -328,7 +332,7 @@ const SidebarTrigger = React.forwardRef<
                 data-sidebar = "trigger"
                 variant = "ghost"
                 size = "icon"
-                className = {cn("size-7", className)}
+                className = {cn(className)}
                 onClick = {handleClick}
                 {...props}
             >
@@ -349,10 +353,10 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
     const { side, width, setWidth, open, setOpen, isResizing, setIsResizing } = useSidebar()
     const { modKey } = useOS()
     const { t } = useLanguage()
-    const tooltip = useCursorTooltip({ disabled: isResizing })
     
     const dragState = React.useRef({ startX: 0, startWidth: 0, isDragging: false, wasCollapsed: false })
     const refs = React.useRef({ side, open, width })
+    const handleMouseUpRef = React.useRef<(() => void) | null>(null)
     React.useEffect(() => { refs.current = { side, open, width } }, [side, open, width])
     
 
@@ -374,7 +378,9 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
     const handleMouseUp = React.useCallback(() => {
         setIsResizing(false)
         document.removeEventListener("mousemove", handleSidebarDrag)
-        document.removeEventListener("mouseup", handleMouseUp)
+        if (handleMouseUpRef.current) {
+            document.removeEventListener("mouseup", handleMouseUpRef.current)
+        }
         document.body.style.userSelect = ""
         document.body.style.cursor = ""
         
@@ -385,6 +391,10 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
 
         dragState.current.isDragging = false
     }, [handleSidebarDrag, setOpen, setWidth, setIsResizing])
+
+    React.useEffect(() => {
+        handleMouseUpRef.current = handleMouseUp
+    }, [handleMouseUp])
     
 
     const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
@@ -397,13 +407,12 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
         }
         
         setIsResizing(true)
-        tooltip.hide()
 
         document.addEventListener("mousemove", handleSidebarDrag)
         document.addEventListener("mouseup", handleMouseUp)
         document.body.style.userSelect = "none"
         document.body.style.cursor = "grabbing"
-    }, [handleSidebarDrag, handleMouseUp, setIsResizing, tooltip])
+    }, [handleSidebarDrag, handleMouseUp, setIsResizing])
 
     // Cleanup event listeners on unmount
     React.useEffect(() => {
@@ -420,22 +429,19 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
             : { right: `${railPosition}px` }
     , [side, railPosition])
 
-    const tooltipStyle = React.useMemo(() => ({
-        left: tooltip.position.x,
-        top: tooltip.position.y
-    }), [tooltip.position.x, tooltip.position.y])
+    const railTooltipText = open
+        ? (t.sidebar?.resize_tooltip_collapse || "Collapse sidebar (%shortcut)").replace("%shortcut", `${modKey} B`)
+        : (t.sidebar?.resize_tooltip_expand || "Expand sidebar (%shortcut)").replace("%shortcut", `${modKey} B`)
 
 
     return (
-        <>
+        <SmartTooltip text={railTooltipText} group="sidebar" forceSide={side === "left" ? "right" : "left"}>
             <button
                 data-sidebar = "rail"
                 aria-label = "Toggle Sidebar"
                 tabIndex = {-1}
 
                 onMouseDown = {handleMouseDown}
-                onMouseEnter = {tooltip.onMouseEnter}
-                onMouseLeave = {tooltip.onMouseLeave}
 
                 className = {cn(
                     "absolute top-0 bottom-0 | cursor-grab | z-50",
@@ -454,24 +460,7 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
 
                 style = {finalRailPosition}
             />
-            {tooltip.isVisible && (
-                <div
-                    ref = {tooltip.ref}
-                    className = {cn(
-                        "fixed | px-3 py-1.5",
-                        "bg-foreground rounded-md | text-white text-xs whitespace-nowrap pointer-events-none",
-                        "z-1000"
-                    )}
-
-                    style = {tooltipStyle}
-                >
-                    {open 
-                        ? t.sidebar.resize_tooltip_collapse.replace("%shortcut", `${modKey} B`)
-                        : t.sidebar.resize_tooltip_expand.replace("%shortcut", `${modKey} B`)
-                    }
-                </div>
-            )}
-        </>
+        </SmartTooltip>
     )
 }
 
@@ -489,9 +478,12 @@ function componentFactory<T extends React.ElementType>(
     dataSidebar: string                                                 // Value for data-sidebar attribute
 
 ) {
-    const Component = React.forwardRef<any, any>(
+    type FactoryProps = React.ComponentPropsWithoutRef<T> & { asChild?: boolean; className?: string }
+    type FactoryRef = React.ComponentRef<T>
+
+    const Component = React.forwardRef<FactoryRef, FactoryProps>(
         ({ className, asChild = false, ...props }, ref) => {
-            const Comp = asChild ? Slot : Tag
+            const Comp = (asChild ? Slot : Tag) as React.ElementType
             
             return (
                 <Comp
@@ -507,7 +499,7 @@ function componentFactory<T extends React.ElementType>(
     Component.displayName = `Sidebar${dataSidebar.charAt(0).toUpperCase() + dataSidebar.slice(1)}` // Generate display name such as "SidebarHeader", "SidebarContent", etc.
     
     return Component as React.ForwardRefExoticComponent<
-        React.ComponentPropsWithoutRef<T> & React.RefAttributes<any> & { asChild?: boolean }
+        FactoryProps & React.RefAttributes<FactoryRef>
     >
 }
 
@@ -571,7 +563,7 @@ const SidebarGroupLabel = componentFactory("div", [
 
 const SidebarGroupAction = componentFactory("button", [                                                         // Action button in group header (e.g., "Add new")
     "absolute top-3.5 right-3 | flex items-center justify-center aspect-square | p-0 | w-5",
-    "rounded-md ring-sidebar-ring focus-visible:ring-2 outline-hidden hover:bg-sidebar-accent | text-sidebar-foreground hover:text-sidebar-accent-foreground",
+    "rounded-md ring-sidebar-ring focus-visible:ring-2 outline-hidden hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] | text-sidebar-foreground hover:text-sidebar-accent-foreground",
     "transition-transform",
     "after:absolute after:-inset-2 md:after:hidden",
 
@@ -589,13 +581,17 @@ const SidebarGroupAction = componentFactory("button", [                         
 const sidebarMenuButtonVariants = cva(
     [
         "peer/menu-button | flex items-center gap-2 | p-2 | w-full",
-        "rounded-md ring-sidebar-ring outline-hidden focus-visible:ring-2 hover:bg-sidebar-accent active:bg-sidebar-accent | text-sm text-left hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground disabled:pointer-events-none",
+        "rounded-md ring-sidebar-ring outline-hidden focus-visible:ring-2",
+        "hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+        "active:bg-black/[0.06] dark:active:bg-white/[0.12] active:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+        "text-sm text-left hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground disabled:pointer-events-none",
         "transition-all duration-150 | disabled:opacity-50 | overflow-hidden",
 
         "[&>span:last-child]:auto-scroll [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:duration-150",
-        "data-[active=true]:bg-sidebar-accent | data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
+        "data-[active=true]:bg-black/[0.06] dark:data-[active=true]:bg-white/[0.12] data-[active=true]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+        "data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
         "group-data-[collapsible=icon]:size-8! | group-data-[collapsible=icon]:p-2! group-has-data-[sidebar=menu-action]/menu-item:pr-8",
-        "data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground",
+        "data-[state=open]:hover:bg-black/[0.06] dark:data-[state=open]:hover:bg-white/[0.12] data-[state=open]:hover:text-sidebar-accent-foreground",
         "hover:[&>svg]:scale-110"
     ],
     
@@ -603,7 +599,7 @@ const sidebarMenuButtonVariants = cva(
         variants: {
             variant: {
                 default: "",
-                outline: "bg-background | shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+                outline: "bg-background | shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent)),inset_0_0.5px_0_rgba(255,255,255,0.15)]",
             },
 
             size: {
@@ -628,7 +624,7 @@ const CollapsedTooltip = React.forwardRef<
     React.ComponentProps<"button"> & {
         asChild?: boolean                                                       // Render child element instead of button 
         isActive?: boolean                                                      // Highlight as active/selected
-        tooltip?: string | React.ComponentProps<typeof TooltipContent>          // Tooltip content
+        tooltip?: string                                                        // Tooltip content
     } & VariantProps<typeof sidebarMenuButtonVariants>                          // Accept variant props
 >(
     ({ asChild = false, isActive = false, variant = "default", size = "default", tooltip, className, ...props }, ref) => {
@@ -646,18 +642,12 @@ const CollapsedTooltip = React.forwardRef<
             />
         )
 
-        const tooltipProps = React.useMemo(() => 
-            typeof tooltip === "string" ? { children: tooltip } : tooltip
-        , [tooltip])
-
         if (!tooltip || state !== "collapsed" || isMobile) return button        // Only show tooltip when collapsed, has tooltip content, and is not on mobile
 
-        // Wrap button in Tooltip when collapsed
         return (
-            <Tooltip>
-                <TooltipTrigger asChild>{button}</TooltipTrigger>
-                <TooltipContent side = "right" align = "center" {...tooltipProps} />
-            </Tooltip>
+            <SmartTooltip text={tooltip} group="sidebar" forceSide="right">
+                {button}
+            </SmartTooltip>
         )
     }
 )
@@ -684,7 +674,7 @@ const SidebarActionDropdown = React.forwardRef<
                 data-sidebar = "menu-action"
                 className = {cn(
                     "absolute top-1.5 right-1 | flex items-center justify-center aspect-square | p-0 | w-5",
-                    "rounded-md outline-hidden ring-sidebar-ring hover:bg-sidebar-accent focus-visible:ring-2 | text-sidebar-foreground hover:text-sidebar-accent-foreground",
+                    "rounded-md outline-hidden ring-sidebar-ring hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] focus-visible:ring-2 | text-sidebar-foreground hover:text-sidebar-accent-foreground",
                     "transition-transform",
                     "after:absolute md:after:hidden after:-inset-2",            // Larger touch target on mobile
                     
@@ -728,11 +718,14 @@ const SidebarMenuSubButton = React.forwardRef<
                 data-active = {isActive}
                 className = {cn(
                     "flex items-center gap-2 | px-2 | min-w-0 h-7",
-                    "rounded-md ring-sidebar-ring focus-visible:ring-2 outline-hidden hover:bg-sidebar-accent active:bg-sidebar-accent disabled:opacity-50 | text-sidebar-foreground hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground aria-disabled:opacity-50 disabled:pointer-events-none aria-disabled:pointer-events-none",
+                    "rounded-md ring-sidebar-ring focus-visible:ring-2 outline-hidden",
+                    "hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+                    "active:bg-black/[0.06] dark:active:bg-white/[0.12] active:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+                    "disabled:opacity-50 | text-sidebar-foreground hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground aria-disabled:opacity-50 disabled:pointer-events-none aria-disabled:pointer-events-none",
                     "-translate-x-px | overflow-hidden",
 
                     "[&>span:last-child]:auto-scroll [&>svg]:shrink-0 [&>svg]:size-4 [&>svg]:text-sidebar-accent-foreground",
-                    "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+                    "data-[active=true]:bg-black/[0.06] dark:data-[active=true]:bg-white/[0.12] data-[active=true]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] data-[active=true]:text-sidebar-accent-foreground",
                     "group-data-[collapsible=icon]:hidden",                     // Hide when sidebar is collapsed to icons
 
                     size === "sm" ? "text-xs" : "text-sm",

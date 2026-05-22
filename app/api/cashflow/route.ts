@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { requirePermission, scopeFilter } from "@/lib/data-access"
 import { analyzeCashFlow } from "@/lib/cash-flow"
 import { prisma } from "@/lib/prisma"
+import { parseIntInRange } from "@/lib/query-utils"
 
 // GET /api/cashflow — Get cash flow projection
 export async function GET(request: Request) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
 
   const { searchParams } = new URL(request.url)
-  const months = parseInt(searchParams.get("months") || "6")
+  const months = parseIntInRange(searchParams.get("months"), 6, 1, 60)
   const accountIdsParam = searchParams.get("accountIds") // comma-separated
 
   try {
@@ -20,20 +24,22 @@ export async function GET(request: Request) {
       ? { id: { in: accountIdsParam.split(",") } }
       : {}
 
+    const baseFilter = scopeFilter(ctx)
+
     // Fetch accounts, transactions, and bills from database
     const [accounts, transactions, bills] = await Promise.all([
       prisma.bankAccount.findMany({
-        where: { userId, ...accountFilter },
+        where: { ...baseFilter, ...accountFilter },
       }),
       prisma.transaction.findMany({
         where: {
-          userId,
+          ...baseFilter,
           ...(accountIdsParam ? { accountId: { in: accountIdsParam.split(",") } } : {}),
         },
       }),
       prisma.bill.findMany({
         where: {
-          userId,
+          ...baseFilter,
           ...(accountIdsParam ? { accountId: { in: accountIdsParam.split(",") } } : {}),
         },
       }),

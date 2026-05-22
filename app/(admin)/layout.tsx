@@ -27,7 +27,7 @@ export default async function AdminLayout({
 
     const user = await prisma.user.findUnique({
         where: { id: session.uid },
-        select: { id: true, name: true, email: true, role: true, status: true },
+        select: { id: true, name: true, email: true, avatar: true, role: true, status: true },
     })
 
     if (!user || user.status !== "active") {
@@ -40,7 +40,7 @@ export default async function AdminLayout({
 
     return (
         <>
-            <Toaster richColors closeButton position="top-center" />
+            <Toaster richColors closeButton position="bottom-right" />
             <SidebarProvider defaultOpen={true}>
                 <AdminSidebar user={user} />
                 <SidebarInset>

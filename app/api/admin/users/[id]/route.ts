@@ -1,6 +1,17 @@
+/* Admin actions on a single user.
+ *
+ * GET returns the admin detail view; PATCH performs a privileged action
+ * (suspend / unsuspend / ban / activate / change_role / reset_2fa /
+ * force_reset_password / delete). Every action is audit-logged.
+ *
+ * Learn more in `docs/Admin System.md`
+ */
+
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, getClientIp } from "@/lib/admin-auth"
+import { randomBytes, createHash } from "crypto"
+import { requireAdmin } from "@/lib/admin-auth"
 import { logAdminAction, ADMIN_ACTIONS } from "@/lib/admin-audit"
+import { sendPasswordResetEmail } from "@/lib/email"
 import { prisma } from "@/lib/prisma"
 
 interface RouteParams {
@@ -39,7 +50,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
                     budgets: true,
                     financialGoals: true,
                     notifications: true,
-                    categorizationRules: true,
+                    PACERules: true,
                     oauthAccounts: true,
                     trustedDevices: true,
                     saltEdgeConnections: true,
@@ -164,7 +175,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const targetUser = await prisma.user.findUnique({
         where: { id },
-        select: { id: true, role: true, status: true },
+        select: { id: true, email: true, role: true, status: true },
     })
 
     if (!targetUser) {
@@ -308,26 +319,44 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         }
 
         case "force_reset_password": {
-            // Generate a reset token and send an email (or just invalidate password)
-            const crypto = await import("crypto")
-            const resetToken = crypto.randomBytes(32).toString("hex")
+            // Match the self-service flow: store a sha256 of the token, email the raw one
+            // directly to the user. We do NOT return the raw token to the admin — that would
+            // let an admin take over any non-superadmin account silently.
+            const rawToken = randomBytes(32).toString("hex")
+            const hashedToken = createHash("sha256").update(rawToken).digest("hex")
             const resetExpiry = new Date(Date.now() + 3600000) // 1 hour
 
             await prisma.user.update({
                 where: { id },
                 data: {
-                    resetToken,
+                    resetToken: hashedToken,
                     resetTokenExpiry: resetExpiry,
                 },
             })
+
+            try {
+                await sendPasswordResetEmail(targetUser.email, rawToken)
+            } catch (e) {
+                console.error("Failed to send admin-triggered password reset email:", e)
+                return NextResponse.json(
+                    { error: "Failed to send reset email. Please try again." },
+                    { status: 500 },
+                )
+            }
+
             await logAdminAction({
                 performerId: admin!.id,
                 targetUserId: id,
                 action: ADMIN_ACTIONS.USER_FORCE_RESET_PASSWORD,
                 entity: "user",
                 entityId: id,
+                details: { emailedTo: targetUser.email },
             })
-            break
+            return NextResponse.json({
+                action,
+                message: "Password reset email sent to user.",
+                resetTokenExpiry: resetExpiry.toISOString(),
+            })
         }
 
         case "delete": {

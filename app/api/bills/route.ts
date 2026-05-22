@@ -1,16 +1,27 @@
+/* Bills collection endpoint.
+ *
+ * GET lists bills in the caller's scope; POST creates one. The target
+ * `accountId` on POST is verified to belong to the same scope.
+ *
+ * Learn more in `docs/Financial Features.md`
+ */
+
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeFilter, scopeCreateData, requirePermission } from "@/lib/data-access"
 
 // GET /api/bills — List all bills
 export async function GET() {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
 
   const bills = await prisma.bill.findMany({
-    where: { userId },
+    where: scopeFilter(ctx),
     orderBy: { dueDay: "asc" },
   })
 
@@ -32,10 +43,12 @@ export async function GET() {
 
 // POST /api/bills — Create a new bill
 export async function POST(request: Request) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:write")
+  if (permissionError) return permissionError
 
   const body = await request.json()
   const { name, amount, tags, dueDay, frequency, accountId, category, autopay } = body
@@ -44,9 +57,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
+  // Verify the target account belongs to the caller's scope before binding to it.
+  const ownsAccount = await prisma.bankAccount.findFirst({
+    where: { ...scopeFilter(ctx), id: accountId },
+    select: { id: true },
+  })
+  if (!ownsAccount) {
+    return NextResponse.json({ error: "Account not found" }, { status: 400 })
+  }
+
   const bill = await prisma.bill.create({
     data: {
-      userId,
+      ...scopeCreateData(ctx),
       name,
       amount,
       tags: tags || [],

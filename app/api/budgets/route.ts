@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeFilter, scopeCreateData, requirePermission } from "@/lib/data-access"
 
 // GET /api/budgets — List all budgets
 export async function GET() {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
 
   const budgets = await prisma.budget.findMany({
-    where: { userId },
+    where: scopeFilter(ctx),
     orderBy: { category: "asc" },
   })
 
@@ -28,10 +31,12 @@ export async function GET() {
 
 // POST /api/budgets — Create a new budget
 export async function POST(request: Request) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:write")
+  if (permissionError) return permissionError
 
   const body = await request.json()
   const { tag, category, limit, color } = body
@@ -42,7 +47,7 @@ export async function POST(request: Request) {
 
   const budget = await prisma.budget.create({
     data: {
-      userId,
+      ...scopeCreateData(ctx),
       tag,
       category,
       limit,

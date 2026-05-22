@@ -49,23 +49,35 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
       return { ox: 0, oy: 0 }
     }
 
-    // ── Resize ──
-    const resize = () => {
+    // ── Keep the canvas locked to the viewport ──
+    const syncCanvasBounds = () => {
       const dpr = window.devicePixelRatio || 1
       const { w, h } = getSize()
+
+      if (inset && container) {
+        const rect = container.getBoundingClientRect()
+        canvas.style.left = `${rect.left}px`
+        canvas.style.top = `${rect.top}px`
+      } else {
+        canvas.style.left = "0px"
+        canvas.style.top = "0px"
+      }
+
       canvas.width = w * dpr
       canvas.height = h * dpr
       canvas.style.width = `${w}px`
       canvas.style.height = `${h}px`
     }
-    resize()
+    syncCanvasBounds()
 
     let ro: ResizeObserver | null = null
     if (inset && container) {
-      ro = new ResizeObserver(resize)
+      ro = new ResizeObserver(syncCanvasBounds)
       ro.observe(container)
+      window.addEventListener("resize", syncCanvasBounds)
+      window.addEventListener("scroll", syncCanvasBounds, { passive: true })
     } else {
-      window.addEventListener("resize", resize)
+      window.addEventListener("resize", syncCanvasBounds)
     }
 
     // ── Cache dark mode via MutationObserver ──
@@ -280,7 +292,8 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
       cancelAnimationFrame(rafId)
       mo.disconnect()
       if (ro) ro.disconnect()
-      if (!inset) window.removeEventListener("resize", resize)
+      window.removeEventListener("resize", syncCanvasBounds)
+      if (inset) window.removeEventListener("scroll", syncCanvasBounds)
       window.removeEventListener("mousemove", onMove)
       document.removeEventListener("mouseleave", onLeave)
       window.removeEventListener("click", onClick)
@@ -291,7 +304,7 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
     <canvas
       ref={canvasRef}
       className={inset
-        ? "absolute inset-0 z-0 pointer-events-none"
+        ? "fixed z-0 pointer-events-none"
         : "fixed inset-0 z-0 pointer-events-none"
       }
     />

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 
 // GET /api/admin/stats — Returns all admin dashboard statistics
 export async function GET() {
-    const { admin, error } = await requireAdmin()
+    const { error } = await requireAdmin()
     if (error) return error
 
     const now = new Date()

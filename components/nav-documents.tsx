@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   Folder,
   Forward,
@@ -11,11 +12,11 @@ import Link from "next/link"
 
 import {
   Dropdown,
-  DropdownShell,
+  DropdownContent,
   DropdownItem,
   DropdownSeparator,
   DropdownTrigger,
-} from "@/components/ui/app-dropdown"
+} from "@/components/ui/dropdown"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -25,6 +26,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useLanguage } from "@/components/language-provider"
 
 export function NavDocuments({
   items,
@@ -35,16 +37,21 @@ export function NavDocuments({
     icon: LucideIcon
   }[]
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
+  const { t } = useLanguage()
+  const nav = (t as any).nav || {} as Record<string, string>
+  const handleNavClick = React.useCallback(() => {
+    if (isMobile) setOpenMobile(false)
+  }, [isMobile, setOpenMobile])
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+      <SidebarGroupLabel>{nav.documents || "Documents"}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <CollapsedTooltip asChild>
-              <Link href={item.url}>
+              <Link href={item.url} onClick={handleNavClick}>
                 <item.icon />
                 <span>{item.name}</span>
               </Link>
@@ -56,34 +63,28 @@ export function NavDocuments({
                   <span className="sr-only">More</span>
                 </SidebarActionDropdown>
               </DropdownTrigger>
-              <DropdownShell
+              <DropdownContent
                 className="w-48 rounded-lg"
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
                 <DropdownItem>
-                  <Folder className="text-neutral-500 dark:text-neutral-400" />
-                  <span>View Document</span>
+                  <Folder className="text-neutral-400" />
+                  <span>{nav.view_document || "View Document"}</span>
                 </DropdownItem>
                 <DropdownItem>
-                  <Forward className="text-neutral-500 dark:text-neutral-400" />
-                  <span>Share Document</span>
+                  <Forward className="text-neutral-400" />
+                  <span>{nav.share_document || "Share Document"}</span>
                 </DropdownItem>
                 <DropdownSeparator />
                 <DropdownItem>
-                  <Trash2 className="text-neutral-500 dark:text-neutral-400" />
-                  <span>Delete Document</span>
+                  <Trash2 className="text-neutral-400" />
+                  <span>{nav.delete_document || "Delete Document"}</span>
                 </DropdownItem>
-              </DropdownShell>
+              </DropdownContent>
             </Dropdown>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <CollapsedTooltip className="text-sidebar-foreground/70">
-            <MoreHorizontal className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </CollapsedTooltip>
-        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )

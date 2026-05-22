@@ -1,0 +1,72 @@
+<svg width="624" height="500" viewBox="-27 -18 624 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Argent symbol construction grid</title>
+  <desc>Standalone construction-grid asset for the Argent symbol, using a 15:13 proportional field.</desc>
+  <defs>
+    <pattern id="minor-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" stroke="#232323" stroke-width="1"/>
+    </pattern>
+    <style>
+      .grid { fill: url(#minor-grid); }
+      .field { fill: none; stroke: #9a9a9a; stroke-width: 1.6; stroke-dasharray: 7 7; }
+      .axis { stroke: #383838; stroke-width: 1.2; }
+      .measure-line { stroke: #e1e1e1; stroke-width: 1.6; stroke-linecap: butt; stroke-linejoin: miter; }
+      .angle-line { fill: none; stroke: #42bfff; stroke-width: 1.15; stroke-dasharray: 5 7; stroke-linecap: butt; stroke-linejoin: miter; opacity: .72; }
+      .triangle-line { fill: none; stroke: #a8a8a8; stroke-width: 1.2; stroke-linecap: butt; stroke-linejoin: miter; opacity: .95; }
+      .angle-arc { fill: none; stroke: #ededed; stroke-width: 1.35; stroke-linecap: butt; stroke-linejoin: miter; opacity: .95; }
+      .angle-arc-dark { fill: none; stroke: #111111; stroke-width: 1.35; stroke-linecap: butt; stroke-linejoin: miter; opacity: .78; }
+      .angle-label { fill: #111111; font: 800 11px 'Akt', Arial, Helvetica, sans-serif; letter-spacing: .04em; }
+      .sector-label { fill: #f7f7f7; font: 800 11px 'Akt', Arial, Helvetica, sans-serif; letter-spacing: .04em; }
+      .data-label { fill: #f7f7f7; font: 800 11px 'Akt', Arial, Helvetica, sans-serif; letter-spacing: .04em; }
+      .mark { fill: #fff; }
+    </style>
+  </defs>
+
+  <g>
+    <rect class="grid" width="480" height="416"/>
+    <rect class="field" width="480" height="416"/>
+
+    <g class="axis">
+      <path d="M0 208H480"/>
+      <path d="M240 0V416"/>
+    </g>
+
+    <g transform="translate(0 0) scale(3.1788)">
+      <mask id="symbol-cut" maskUnits="userSpaceOnUse" x="-5" y="-4" width="161" height="142">
+        <path d="M151 0.273399H0V130.273H151V0.273399Z" fill="#fff"/>
+        <path d="M0 130.273L151 2.2734" stroke="#000" stroke-width="15"/>
+        <path d="M0 130.273L151 78.2734" stroke="#000" stroke-width="15"/>
+      </mask>
+      <g mask="url(#symbol-cut)">
+        <path class="mark" d="M0 130.273L75.214 0L150.428 130.273H0Z"/>
+      </g>
+    </g>
+
+    <g>
+      <path class="triangle-line" d="M0 414.1L239 0L478.2 414.1H0"/>
+      <path class="angle-line" d="M0 414.1L480 7.2"/>
+      <path class="angle-line" d="M0 414.1L480 248.8"/>
+
+      <path class="angle-arc" d="M44 414.1A44 44 0 0 0 41.3 399.1"/>
+      <path class="angle-arc" d="M63.9 392.2A68 68 0 0 0 52.1 370.4"/>
+      <path class="angle-arc" d="M70.7 354.8A92 92 0 0 0 46 334.4"/>
+      <path class="angle-arc-dark" d="M217 38.1A44 44 0 0 0 261 38.1"/>
+      <path class="angle-arc-dark" d="M438.2 414.1A40 40 0 0 1 458.2 379.5"/>
+
+      <text class="sector-label" x="66" y="379" text-anchor="middle" transform="rotate(-30 66 379)">20°</text>
+      <text class="angle-label" x="239" y="57" text-anchor="middle">60°</text>
+      <text class="angle-label" x="449" y="395">60°</text>
+    </g>
+
+    <g>
+      <line class="measure-line" x1="-18" y1="402" x2="221" y2="-12"/>
+      <path class="measure-line" d="M213 -17L229 -7M-26 397L-10 407"/>
+      <text class="data-label" x="96" y="195" text-anchor="middle" transform="rotate(-60 96 195)">Lado 15</text>
+
+      <line class="measure-line" x1="0" y1="452" x2="480" y2="452"/>
+      <line class="measure-line" x1="516" y1="0" x2="516" y2="416"/>
+      <path class="measure-line" d="M0 440V464M480 440V464M504 0H528M504 416H528"/>
+      <text class="data-label" x="240" y="478" text-anchor="middle">Largura 15</text>
+      <text class="data-label" x="538" y="211">Altura 13</text>
+    </g>
+  </g>
+</svg>

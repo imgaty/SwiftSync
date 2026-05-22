@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { Prisma } from "@/lib/generated/prisma/client"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeRecordFilter, requirePermission } from "@/lib/data-access"
 
 // GET /api/accounts/[id] — Get a single bank account
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
 
   const { id } = await params
 
   const account = await prisma.bankAccount.findFirst({
-    where: { id, userId },
+    where: scopeRecordFilter(ctx, id),
     include: { bank: true },
   })
 
@@ -43,31 +47,32 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:write")
+  if (permissionError) return permissionError
 
   const { id } = await params
-
-  // Verify ownership
-  const existing = await prisma.bankAccount.findFirst({
-    where: { id, userId },
-  })
-  if (!existing) {
-    return NextResponse.json({ error: "Account not found" }, { status: 404 })
-  }
 
   const body = await request.json()
   const { name, color, isActive } = body
 
-  const updated = await prisma.bankAccount.update({
-    where: { id },
+  const { count } = await prisma.bankAccount.updateMany({
+    where: scopeRecordFilter(ctx, id),
     data: {
       ...(name !== undefined && { cardName: name }),
       ...(color !== undefined && { color }),
       ...(isActive !== undefined && { isActive }),
     },
+  })
+  if (count === 0) {
+    return NextResponse.json({ error: "Account not found" }, { status: 404 })
+  }
+
+  const updated = await prisma.bankAccount.findUniqueOrThrow({
+    where: { id },
     include: { bank: true },
   })
 
@@ -87,22 +92,32 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:delete")
+  if (permissionError) return permissionError
 
   const { id } = await params
 
-  // Verify ownership
-  const existing = await prisma.bankAccount.findFirst({
-    where: { id, userId },
-  })
-  if (!existing) {
-    return NextResponse.json({ error: "Account not found" }, { status: 404 })
+  try {
+    const { count } = await prisma.bankAccount.deleteMany({
+      where: scopeRecordFilter(ctx, id),
+    })
+    if (count === 0) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, message: "Account deleted" })
+  } catch (e) {
+    // P2003 = foreign-key constraint violation (bills link to this account with onDelete: Restrict).
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+      return NextResponse.json(
+        { error: "Cannot delete account — remove or reassign its bills first." },
+        { status: 409 }
+      )
+    }
+    throw e
   }
-
-  await prisma.bankAccount.delete({ where: { id } })
-
-  return NextResponse.json({ success: true, message: "Account deleted" })
 }

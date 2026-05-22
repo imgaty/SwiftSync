@@ -2,6 +2,7 @@
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useLanguage } from "@/components/language-provider"
 
 interface GrowthData {
     date: string
@@ -13,22 +14,29 @@ interface UserGrowthChartProps {
     data: GrowthData[]
 }
 
-const chartConfig = {
-    total: {
-        label: "Total users",
-        color: "hsl(var(--primary))",
-    },
-    signups: {
-        label: "New signups",
-        color: "hsl(var(--chart-2))",
-    },
-} satisfies ChartConfig
+function getChartConfig(ac: Record<string, string>): ChartConfig {
+    return {
+        total: {
+            label: ac.total_users || "Total users",
+            color: "hsl(var(--primary))",
+        },
+        signups: {
+            label: ac.new_signups || "New signups",
+            color: "hsl(var(--chart-2))",
+        },
+    }
+}
 
 export function UserGrowthChart({ data }: UserGrowthChartProps) {
+    const { t } = useLanguage()
+    const a = (t as any).admin || {} as Record<string, any>
+    const ac = a.chart || {} as Record<string, string>
+    const chartConfig = getChartConfig(ac)
+
     if (data.length === 0) {
         return (
-            <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
-                No data available
+            <div className="flex items-center justify-center h-[200px] text-sm text-neutral-400">
+                {a.no_data || "No data available"}
             </div>
         )
     }
@@ -54,7 +62,7 @@ export function UserGrowthChart({ data }: UserGrowthChartProps) {
                         return `${d.getDate()}/${d.getMonth() + 1}`
                     }}
                     tick={{ fontSize: 11 }}
-                    className="text-muted-foreground"
+                    className="text-neutral-400"
                     interval="preserveStartEnd"
                     tickLine={false}
                     axisLine={false}
@@ -62,7 +70,7 @@ export function UserGrowthChart({ data }: UserGrowthChartProps) {
                 />
                 <YAxis
                     tick={{ fontSize: 11 }}
-                    className="text-muted-foreground"
+                    className="text-neutral-400"
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}

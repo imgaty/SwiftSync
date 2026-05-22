@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getConnection, removeConnection, getOrCreateCustomer, listConnections } from "@/lib/salt-edge"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getConnection, removeConnection } from "@/lib/salt-edge"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { requirePermission, scopeFilter } from "@/lib/data-access"
+import { prisma } from "@/lib/prisma"
 
 /**
  * GET /api/bank/connections/[id] — Get a single Salt Edge connection
@@ -9,20 +11,22 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
 
   const { id: connectionId } = await params
 
   try {
-    // Verify the connection belongs to this user's customer
-    const customerId = await getOrCreateCustomer(userId)
-    const connections = await listConnections(customerId)
-    const belongs = connections.some((c) => c.id === connectionId)
-
-    if (!belongs) {
+    // Ownership check against the local DB (cheap, avoids round-tripping Salt Edge).
+    const owned = await prisma.saltEdgeConnection.findFirst({
+      where: { ...scopeFilter(ctx), connectionId },
+      select: { id: true },
+    })
+    if (!owned) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 })
     }
 
@@ -54,20 +58,21 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "bank:connect")
+  if (permissionError) return permissionError
 
   const { id: connectionId } = await params
 
   try {
-    // Verify the connection belongs to this user's customer
-    const customerId = await getOrCreateCustomer(userId)
-    const connections = await listConnections(customerId)
-    const belongs = connections.some((c) => c.id === connectionId)
-
-    if (!belongs) {
+    const owned = await prisma.saltEdgeConnection.findFirst({
+      where: { ...scopeFilter(ctx), connectionId },
+      select: { id: true },
+    })
+    if (!owned) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 })
     }
 

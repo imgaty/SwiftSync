@@ -6,10 +6,12 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode
 }) {
+  // AuthShell handles the vertical layout (card + footer) so the footer can
+  // sit in normal flow beneath the card instead of overlapping it on mobile.
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-white p-8 dark:bg-black transition-colors duration-300">
+    <div className="relative min-h-screen w-full bg-white dark:bg-black transition-colors duration-300">
       <CanvasBackground />
-      <Toaster richColors closeButton position="top-center" />
+      <Toaster richColors closeButton position="bottom-right" />
       {children}
     </div>
   )

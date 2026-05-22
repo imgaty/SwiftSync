@@ -248,7 +248,7 @@ export type BillGroupByOutputType = {
   _max: BillMaxAggregateOutputType | null
 }
 
-type GetBillGroupByPayload<T extends BillGroupByArgs> = Prisma.PrismaPromise<
+export type GetBillGroupByPayload<T extends BillGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<BillGroupByOutputType, T['by']> &
       {
@@ -280,6 +280,7 @@ export type BillWhereInput = {
   status?: Prisma.StringFilter<"Bill"> | string
   createdAt?: Prisma.DateTimeFilter<"Bill"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Bill"> | Date | string
+  account?: Prisma.XOR<Prisma.BankAccountScalarRelationFilter, Prisma.BankAccountWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
@@ -297,6 +298,7 @@ export type BillOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  account?: Prisma.BankAccountOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -317,6 +319,7 @@ export type BillWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.StringFilter<"Bill"> | string
   createdAt?: Prisma.DateTimeFilter<"Bill"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Bill"> | Date | string
+  account?: Prisma.XOR<Prisma.BankAccountScalarRelationFilter, Prisma.BankAccountWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
@@ -367,12 +370,12 @@ export type BillCreateInput = {
   tags?: Prisma.BillCreatetagsInput | string[]
   dueDay: number
   frequency: string
-  accountId: string
   category: string
   autopay?: boolean
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  account: Prisma.BankAccountCreateNestedOneWithoutBillsInput
   user: Prisma.UserCreateNestedOneWithoutBillsInput
 }
 
@@ -399,12 +402,12 @@ export type BillUpdateInput = {
   tags?: Prisma.BillUpdatetagsInput | string[]
   dueDay?: Prisma.IntFieldUpdateOperationsInput | number
   frequency?: Prisma.StringFieldUpdateOperationsInput | string
-  accountId?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   autopay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  account?: Prisma.BankAccountUpdateOneRequiredWithoutBillsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutBillsNestedInput
 }
 
@@ -447,7 +450,6 @@ export type BillUpdateManyMutationInput = {
   tags?: Prisma.BillUpdatetagsInput | string[]
   dueDay?: Prisma.IntFieldUpdateOperationsInput | number
   frequency?: Prisma.StringFieldUpdateOperationsInput | string
-  accountId?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   autopay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -579,6 +581,48 @@ export type BillUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.BillScalarWhereInput | Prisma.BillScalarWhereInput[]
 }
 
+export type BillCreateNestedManyWithoutAccountInput = {
+  create?: Prisma.XOR<Prisma.BillCreateWithoutAccountInput, Prisma.BillUncheckedCreateWithoutAccountInput> | Prisma.BillCreateWithoutAccountInput[] | Prisma.BillUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.BillCreateOrConnectWithoutAccountInput | Prisma.BillCreateOrConnectWithoutAccountInput[]
+  createMany?: Prisma.BillCreateManyAccountInputEnvelope
+  connect?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+}
+
+export type BillUncheckedCreateNestedManyWithoutAccountInput = {
+  create?: Prisma.XOR<Prisma.BillCreateWithoutAccountInput, Prisma.BillUncheckedCreateWithoutAccountInput> | Prisma.BillCreateWithoutAccountInput[] | Prisma.BillUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.BillCreateOrConnectWithoutAccountInput | Prisma.BillCreateOrConnectWithoutAccountInput[]
+  createMany?: Prisma.BillCreateManyAccountInputEnvelope
+  connect?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+}
+
+export type BillUpdateManyWithoutAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.BillCreateWithoutAccountInput, Prisma.BillUncheckedCreateWithoutAccountInput> | Prisma.BillCreateWithoutAccountInput[] | Prisma.BillUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.BillCreateOrConnectWithoutAccountInput | Prisma.BillCreateOrConnectWithoutAccountInput[]
+  upsert?: Prisma.BillUpsertWithWhereUniqueWithoutAccountInput | Prisma.BillUpsertWithWhereUniqueWithoutAccountInput[]
+  createMany?: Prisma.BillCreateManyAccountInputEnvelope
+  set?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  disconnect?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  delete?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  connect?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  update?: Prisma.BillUpdateWithWhereUniqueWithoutAccountInput | Prisma.BillUpdateWithWhereUniqueWithoutAccountInput[]
+  updateMany?: Prisma.BillUpdateManyWithWhereWithoutAccountInput | Prisma.BillUpdateManyWithWhereWithoutAccountInput[]
+  deleteMany?: Prisma.BillScalarWhereInput | Prisma.BillScalarWhereInput[]
+}
+
+export type BillUncheckedUpdateManyWithoutAccountNestedInput = {
+  create?: Prisma.XOR<Prisma.BillCreateWithoutAccountInput, Prisma.BillUncheckedCreateWithoutAccountInput> | Prisma.BillCreateWithoutAccountInput[] | Prisma.BillUncheckedCreateWithoutAccountInput[]
+  connectOrCreate?: Prisma.BillCreateOrConnectWithoutAccountInput | Prisma.BillCreateOrConnectWithoutAccountInput[]
+  upsert?: Prisma.BillUpsertWithWhereUniqueWithoutAccountInput | Prisma.BillUpsertWithWhereUniqueWithoutAccountInput[]
+  createMany?: Prisma.BillCreateManyAccountInputEnvelope
+  set?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  disconnect?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  delete?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  connect?: Prisma.BillWhereUniqueInput | Prisma.BillWhereUniqueInput[]
+  update?: Prisma.BillUpdateWithWhereUniqueWithoutAccountInput | Prisma.BillUpdateWithWhereUniqueWithoutAccountInput[]
+  updateMany?: Prisma.BillUpdateManyWithWhereWithoutAccountInput | Prisma.BillUpdateManyWithWhereWithoutAccountInput[]
+  deleteMany?: Prisma.BillScalarWhereInput | Prisma.BillScalarWhereInput[]
+}
+
 export type BillCreatetagsInput = {
   set: string[]
 }
@@ -603,12 +647,12 @@ export type BillCreateWithoutUserInput = {
   tags?: Prisma.BillCreatetagsInput | string[]
   dueDay: number
   frequency: string
-  accountId: string
   category: string
   autopay?: boolean
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  account: Prisma.BankAccountCreateNestedOneWithoutBillsInput
 }
 
 export type BillUncheckedCreateWithoutUserInput = {
@@ -671,6 +715,62 @@ export type BillScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Bill"> | Date | string
 }
 
+export type BillCreateWithoutAccountInput = {
+  id?: string
+  name: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  tags?: Prisma.BillCreatetagsInput | string[]
+  dueDay: number
+  frequency: string
+  category: string
+  autopay?: boolean
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutBillsInput
+}
+
+export type BillUncheckedCreateWithoutAccountInput = {
+  id?: string
+  userId: string
+  name: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  tags?: Prisma.BillCreatetagsInput | string[]
+  dueDay: number
+  frequency: string
+  category: string
+  autopay?: boolean
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type BillCreateOrConnectWithoutAccountInput = {
+  where: Prisma.BillWhereUniqueInput
+  create: Prisma.XOR<Prisma.BillCreateWithoutAccountInput, Prisma.BillUncheckedCreateWithoutAccountInput>
+}
+
+export type BillCreateManyAccountInputEnvelope = {
+  data: Prisma.BillCreateManyAccountInput | Prisma.BillCreateManyAccountInput[]
+  skipDuplicates?: boolean
+}
+
+export type BillUpsertWithWhereUniqueWithoutAccountInput = {
+  where: Prisma.BillWhereUniqueInput
+  update: Prisma.XOR<Prisma.BillUpdateWithoutAccountInput, Prisma.BillUncheckedUpdateWithoutAccountInput>
+  create: Prisma.XOR<Prisma.BillCreateWithoutAccountInput, Prisma.BillUncheckedCreateWithoutAccountInput>
+}
+
+export type BillUpdateWithWhereUniqueWithoutAccountInput = {
+  where: Prisma.BillWhereUniqueInput
+  data: Prisma.XOR<Prisma.BillUpdateWithoutAccountInput, Prisma.BillUncheckedUpdateWithoutAccountInput>
+}
+
+export type BillUpdateManyWithWhereWithoutAccountInput = {
+  where: Prisma.BillScalarWhereInput
+  data: Prisma.XOR<Prisma.BillUpdateManyMutationInput, Prisma.BillUncheckedUpdateManyWithoutAccountInput>
+}
+
 export type BillCreateManyUserInput = {
   id?: string
   name: string
@@ -693,12 +793,12 @@ export type BillUpdateWithoutUserInput = {
   tags?: Prisma.BillUpdatetagsInput | string[]
   dueDay?: Prisma.IntFieldUpdateOperationsInput | number
   frequency?: Prisma.StringFieldUpdateOperationsInput | string
-  accountId?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   autopay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  account?: Prisma.BankAccountUpdateOneRequiredWithoutBillsNestedInput
 }
 
 export type BillUncheckedUpdateWithoutUserInput = {
@@ -731,6 +831,66 @@ export type BillUncheckedUpdateManyWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type BillCreateManyAccountInput = {
+  id?: string
+  userId: string
+  name: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  tags?: Prisma.BillCreatetagsInput | string[]
+  dueDay: number
+  frequency: string
+  category: string
+  autopay?: boolean
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type BillUpdateWithoutAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  tags?: Prisma.BillUpdatetagsInput | string[]
+  dueDay?: Prisma.IntFieldUpdateOperationsInput | number
+  frequency?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  autopay?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutBillsNestedInput
+}
+
+export type BillUncheckedUpdateWithoutAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  tags?: Prisma.BillUpdatetagsInput | string[]
+  dueDay?: Prisma.IntFieldUpdateOperationsInput | number
+  frequency?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  autopay?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BillUncheckedUpdateManyWithoutAccountInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  tags?: Prisma.BillUpdatetagsInput | string[]
+  dueDay?: Prisma.IntFieldUpdateOperationsInput | number
+  frequency?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  autopay?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type BillSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -747,6 +907,7 @@ export type BillSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  account?: boolean | Prisma.BankAccountDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["bill"]>
 
@@ -764,6 +925,7 @@ export type BillSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  account?: boolean | Prisma.BankAccountDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["bill"]>
 
@@ -781,6 +943,7 @@ export type BillSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  account?: boolean | Prisma.BankAccountDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["bill"]>
 
@@ -802,18 +965,22 @@ export type BillSelectScalar = {
 
 export type BillOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "amount" | "tags" | "dueDay" | "frequency" | "accountId" | "category" | "autopay" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["bill"]>
 export type BillInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  account?: boolean | Prisma.BankAccountDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type BillIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  account?: boolean | Prisma.BankAccountDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type BillIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  account?: boolean | Prisma.BankAccountDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $BillPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Bill"
   objects: {
+    account: Prisma.$BankAccountPayload<ExtArgs>
     user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1224,6 +1391,7 @@ readonly fields: BillFieldRefs;
  */
 export interface Prisma__BillClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  account<T extends Prisma.BankAccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BankAccountDefaultArgs<ExtArgs>>): Prisma.Prisma__BankAccountClient<runtime.Types.Result.GetResult<Prisma.$BankAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.

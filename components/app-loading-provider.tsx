@@ -19,8 +19,10 @@ export function AppLoadingProvider({ children }: { children: React.ReactNode }) 
         return () => clearTimeout(timer)
     }, [])
 
+    const value = React.useMemo(() => ({ isLoading, setIsLoading }), [isLoading])
+
     return (
-        <AppLoadingContext.Provider value={{ isLoading, setIsLoading }}>
+        <AppLoadingContext.Provider value={value}>
             {children}
         </AppLoadingContext.Provider>
     )

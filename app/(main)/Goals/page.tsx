@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { queryKeys, apiFetch } from "@/lib/query-keys"
-import { PageShell, PageHeader, PageTitle, StatCards, PageSection } from "@/components/page-framework"
+import { PageShell, PageHeader, StatCards, PageSection } from "@/components/page-framework"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,11 +34,10 @@ import {
     Plane,
     Shield,
     ShoppingBag,
-    Briefcase,
-    MoreHorizontal,
     Check,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
+import { useCurrency } from "@/components/currency-provider"
 import { toast } from "sonner"
 
 interface FinancialGoal {
@@ -73,7 +72,9 @@ const categoryColors: Record<string, string> = {
 }
 
 export default function GoalsPage() {
-    const { t, language } = useLanguage()
+    const { t } = useLanguage()
+    const { formatCurrency } = useCurrency()
+    const g = (t as any).goals_page || {} as Record<string, string>
     const queryClient = useQueryClient()
     const { data: goals = [], isLoading } = useQuery({
         queryKey: queryKeys.goals,
@@ -81,6 +82,7 @@ export default function GoalsPage() {
     })
     const [showDialog, setShowDialog] = React.useState(false)
     const [editingGoal, setEditingGoal] = React.useState<FinancialGoal | null>(null)
+    const [isSaving, setIsSaving] = React.useState(false)
     const [formData, setFormData] = React.useState({
         name: "",
         targetAmount: "",
@@ -91,6 +93,7 @@ export default function GoalsPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (isSaving) return
         const body = {
             name: formData.name,
             targetAmount: parseFloat(formData.targetAmount),
@@ -100,6 +103,7 @@ export default function GoalsPage() {
             color: categoryColors[formData.category] || "#6366f1",
         }
 
+        setIsSaving(true)
         try {
             const url = editingGoal ? `/api/goals/${editingGoal.id}` : "/api/goals"
             const method = editingGoal ? "PUT" : "POST"
@@ -107,8 +111,8 @@ export default function GoalsPage() {
 
             if (res.ok) {
                 toast.success(editingGoal
-                    ? (language === "pt" ? "Meta atualizada" : "Goal updated")
-                    : (language === "pt" ? "Meta criada" : "Goal created")
+                    ? (g.goal_updated || "Goal updated")
+                    : (g.goal_created || "Goal created")
                 )
                 setShowDialog(false)
                 setEditingGoal(null)
@@ -119,7 +123,9 @@ export default function GoalsPage() {
                 toast.error(err.error)
             }
         } catch {
-            toast.error(language === "pt" ? "Erro ao guardar meta" : "Error saving goal")
+            toast.error(g.error_saving || "Error saving goal")
+        } finally {
+            setIsSaving(false)
         }
     }
 
@@ -127,11 +133,11 @@ export default function GoalsPage() {
         try {
             const res = await fetch(`/api/goals/${id}`, { method: "DELETE" })
             if (res.ok) {
-                toast.success(language === "pt" ? "Meta eliminada" : "Goal deleted")
+                toast.success(g.goal_deleted || "Goal deleted")
                 queryClient.invalidateQueries({ queryKey: queryKeys.goals })
             }
         } catch {
-            toast.error(language === "pt" ? "Erro ao eliminar" : "Error deleting")
+            toast.error(g.error_deleting || "Error deleting")
         }
     }
 
@@ -143,11 +149,11 @@ export default function GoalsPage() {
                 body: JSON.stringify({ currentAmount: amount }),
             })
             if (res.ok) {
-                toast.success(language === "pt" ? "Valor atualizado" : "Amount updated")
+                toast.success(g.amount_updated || "Amount updated")
                 queryClient.invalidateQueries({ queryKey: queryKeys.goals })
             }
         } catch {
-            toast.error(language === "pt" ? "Erro" : "Error")
+            toast.error(g.error_deleting || "Error")
         }
     }
 
@@ -169,42 +175,42 @@ export default function GoalsPage() {
         setShowDialog(true)
     }
 
-    // Stats
-    const activeGoals = goals.filter((g) => g.status === "active")
-    const completedGoals = goals.filter((g) => g.status === "completed")
-    const totalTarget = activeGoals.reduce((s, g) => s + g.targetAmount, 0)
-    const totalSaved = activeGoals.reduce((s, g) => s + g.currentAmount, 0)
-    const overallProgress = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
+    // Stats (memoized to avoid recalculation on dialog interactions)
+    const { activeGoals, totalTarget, totalSaved, overallProgress } = React.useMemo(() => {
+        const active = goals.filter((g) => g.status === "active")
+        let target = 0, saved = 0
+        for (const g of active) { target += g.targetAmount; saved += g.currentAmount }
+        return {
+            activeGoals: active,
+            totalTarget: target,
+            totalSaved: saved,
+            overallProgress: target > 0 ? Math.round((saved / target) * 100) : 0,
+        }
+    }, [goals])
 
     return (
         <PageShell>
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
-                    { label: language === "pt" ? "Metas Financeiras" : "Financial Goals", href: "/Goals" },
+                    { label: g.title || "Financial Goals", href: "/Goals" },
                 ]}
                 isLoading={isLoading}
                 actions={
-                    <Button onClick={openNew} size="sm" className="rounded-xl">
-                        <Plus className="h-4 w-4 mr-1" />
-                        {language === "pt" ? "Nova Meta" : "New Goal"}
+                    <Button onClick={openNew} title={g.new_goal || "New Goal"}>
+                        <Plus />
                     </Button>
                 }
             />
 
-            <PageTitle
-                title={language === "pt" ? "Metas Financeiras" : "Financial Goals"}
-                description={language === "pt" ? "Defina e acompanhe os seus objetivos de poupança" : "Set and track your savings goals"}
-                isLoading={isLoading}
-                icon={<Target className="h-5 w-5" />}
-            />
+
 
             <StatCards
                 stats={[
-                    { label: language === "pt" ? "Metas Ativas" : "Active Goals", value: String(activeGoals.length), icon: <Target className="h-4 w-4" /> },
-                    { label: language === "pt" ? "Total Alvo" : "Total Target", value: `€${totalTarget.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}`, icon: <TrendingUp className="h-4 w-4" /> },
-                    { label: language === "pt" ? "Total Poupado" : "Total Saved", value: `€${totalSaved.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}`, trend: "up" as const, icon: <PiggyBank className="h-4 w-4" /> },
-                    { label: language === "pt" ? "Progresso Global" : "Overall Progress", value: `${overallProgress}%`, icon: <Check className="h-4 w-4" /> },
+                    { label: g.active_goals || "Active Goals", value: String(activeGoals.length), icon: <Target className="h-4 w-4" /> },
+                    { label: g.total_target || "Total Target", value: formatCurrency(totalTarget), icon: <TrendingUp className="h-4 w-4" /> },
+                    { label: g.total_saved || "Total Saved", value: formatCurrency(totalSaved), trend: "up" as const, icon: <PiggyBank className="h-4 w-4" /> },
+                    { label: g.overall_progress || "Overall Progress", value: `${overallProgress}%`, icon: <Check className="h-4 w-4" /> },
                 ]}
                 isLoading={isLoading}
             />
@@ -220,16 +226,16 @@ export default function GoalsPage() {
             ) : goals.length === 0 ? (
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
-                        <Target className="h-12 w-12 text-neutral-500 dark:text-neutral-400 mb-4" />
+                        <Target className="h-12 w-12 text-neutral-400 mb-4" />
                         <h3 className="text-lg font-medium">
-                            {language === "pt" ? "Sem metas financeiras" : "No financial goals"}
+                            {g.no_goals || "No financial goals"}
                         </h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-                            {language === "pt" ? "Crie a sua primeira meta para começar" : "Create your first goal to get started"}
+                        <p className="text-sm text-neutral-400 mb-4">
+                            {g.no_goals_desc || "Create your first goal to get started"}
                         </p>
                         <Button onClick={openNew}>
                             <Plus className="h-4 w-4 mr-1" />
-                            {language === "pt" ? "Criar Meta" : "Create Goal"}
+                            {g.create_goal || "Create Goal"}
                         </Button>
                     </CardContent>
                 </Card>
@@ -250,17 +256,17 @@ export default function GoalsPage() {
                                                 <CardTitle className="text-base">{goal.name}</CardTitle>
                                                 <CardDescription className="text-xs">
                                                     {goal.deadline
-                                                        ? `${language === "pt" ? "Prazo:" : "Deadline:"} ${new Date(goal.deadline).toLocaleDateString(language === "pt" ? "pt-PT" : "en-US")}`
-                                                        : (language === "pt" ? "Sem prazo" : "No deadline")}
+                                                        ? `${g.deadline || "Deadline"}: ${new Date(goal.deadline).toLocaleDateString(t.config?.locale || "en-US")}`
+                                                        : (g.no_deadline || "No deadline")}
                                                 </CardDescription>
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
-                                            {isCompleted && <Badge variant="secondary" className="text-green-600"><Check className="h-3 w-3 mr-1" />{language === "pt" ? "Concluída" : "Done"}</Badge>}
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(goal)}>
+                                            {isCompleted && <Badge variant="secondary" className="text-green-600"><Check className="h-3 w-3 mr-1" />{g.done || "Done"}</Badge>}
+                                            <Button variant="ghost" size="icon" onClick={() => openEdit(goal)}>
                                                 <Pencil className="h-3 w-3" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => deleteGoal(goal.id)}>
+                                            <Button variant="ghost-destructive" size="icon" onClick={() => deleteGoal(goal.id)}>
                                                 <Trash2 className="h-3 w-3" />
                                             </Button>
                                         </div>
@@ -268,11 +274,11 @@ export default function GoalsPage() {
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-neutral-500 dark:text-neutral-400">
-                                            €{goal.currentAmount.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}
+                                        <span className="text-neutral-400">
+                                            {formatCurrency(goal.currentAmount)}
                                         </span>
                                         <span className="font-medium">
-                                            €{goal.targetAmount.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}
+                                            {formatCurrency(goal.targetAmount)}
                                         </span>
                                     </div>
                                     <div className="h-3 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
@@ -294,12 +300,12 @@ export default function GoalsPage() {
                                             {[10, 50, 100].map((amt) => (
                                                 <Button
                                                     key={amt}
-                                                    variant="outline"
+                                                    variant="glass"
                                                     size="sm"
                                                     className="flex-1 text-xs"
                                                     onClick={() => updateAmount(goal, goal.currentAmount + amt)}
                                                 >
-                                                    +€{amt}
+                                                    +{formatCurrency(amt)}
                                                 </Button>
                                             ))}
                                         </div>
@@ -319,29 +325,27 @@ export default function GoalsPage() {
                     <DialogHeader>
                         <DialogTitle>
                             {editingGoal
-                                ? (language === "pt" ? "Editar Meta" : "Edit Goal")
-                                : (language === "pt" ? "Nova Meta Financeira" : "New Financial Goal")}
+                                ? (g.edit_goal || "Edit Goal")
+                                : (g.new_financial_goal || "New Financial Goal")}
                         </DialogTitle>
                         <DialogDescription>
-                            {language === "pt"
-                                ? "Defina o seu objetivo de poupança"
-                                : "Set your savings target"}
+                            {g.set_savings_target || "Set your savings target"}
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <Input
-                                label={language === "pt" ? "Nome" : "Name"}
+                                label={(t as any).settings?.name || "Name"}
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder={language === "pt" ? "Ex: Férias 2027" : "E.g. Holiday 2027"}
+                                placeholder={g.goal_name_placeholder || "E.g. Holiday 2027"}
                                 required
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Input
-                                    label={language === "pt" ? "Valor Alvo (€)" : "Target (€)"}
+                                    label={g.target_amount || "Target (€)"}
                                     type="number"
                                     min="0"
                                     step="0.01"
@@ -352,7 +356,7 @@ export default function GoalsPage() {
                             </div>
                             <div>
                                 <Input
-                                    label={language === "pt" ? "Valor Atual (€)" : "Current (€)"}
+                                    label={g.current_amount || "Current (€)"}
                                     type="number"
                                     min="0"
                                     step="0.01"
@@ -363,36 +367,38 @@ export default function GoalsPage() {
                         </div>
                         <div>
                             <Input
-                                label={language === "pt" ? "Prazo" : "Deadline"}
+                                label={g.deadline || "Deadline"}
                                 type="date"
                                 value={formData.deadline}
                                 onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                             />
                         </div>
                         <div>
-                            <Label>{language === "pt" ? "Categoria" : "Category"}</Label>
+                            <Label>{g.category || "Category"}</Label>
                             <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="savings">{language === "pt" ? "Poupança" : "Savings"}</SelectItem>
-                                    <SelectItem value="emergency">{language === "pt" ? "Emergência" : "Emergency"}</SelectItem>
-                                    <SelectItem value="investment">{language === "pt" ? "Investimento" : "Investment"}</SelectItem>
-                                    <SelectItem value="purchase">{language === "pt" ? "Compra" : "Purchase"}</SelectItem>
-                                    <SelectItem value="travel">{language === "pt" ? "Viagem" : "Travel"}</SelectItem>
-                                    <SelectItem value="other">{language === "pt" ? "Outro" : "Other"}</SelectItem>
+                                    <SelectItem value="savings">{g.cat_savings || "Savings"}</SelectItem>
+                                    <SelectItem value="emergency">{g.cat_emergency || "Emergency"}</SelectItem>
+                                    <SelectItem value="investment">{g.cat_investment || "Investment"}</SelectItem>
+                                    <SelectItem value="purchase">{g.cat_purchase || "Purchase"}</SelectItem>
+                                    <SelectItem value="travel">{g.cat_travel || "Travel"}</SelectItem>
+                                    <SelectItem value="other">{g.cat_other || "Other"}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex justify-end gap-2 pt-2">
-                            <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
-                                {language === "pt" ? "Cancelar" : "Cancel"}
+                            <Button type="button" variant="glass" onClick={() => setShowDialog(false)}>
+                                {(t as any).common?.cancel || "Cancel"}
                             </Button>
-                            <Button type="submit">
-                                {editingGoal
-                                    ? (language === "pt" ? "Guardar" : "Save")
-                                    : (language === "pt" ? "Criar" : "Create")}
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving
+                                    ? ((t as any).common?.saving || "Saving...")
+                                    : editingGoal
+                                        ? ((t as any).common?.save || "Save")
+                                        : ((t as any).common?.create || "Create")}
                             </Button>
                         </div>
                     </form>

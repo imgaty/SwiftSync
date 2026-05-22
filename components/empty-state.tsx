@@ -1,9 +1,9 @@
 "use client"
 
+import Link from "next/link"
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import {
-    FileQuestion,
     Search,
     Inbox,
     Database,
@@ -28,16 +28,23 @@ type EmptyStateVariant =
     | "no-events"
     | "filtered"
 
+interface EmptyStateAction {
+    label: string
+    onClick?: () => void
+    href?: string
+    icon?: React.ReactNode
+    variant?: "solid" | "solid-destructive" | "glass" | "glass-destructive" | "ghost" | "ghost-destructive"
+}
+
 interface EmptyStateProps {
     variant?: EmptyStateVariant
     title?: string
     description?: string
     icon?: React.ReactNode
-    action?: {
-        label: string
-        onClick: () => void
-    }
+    action?: EmptyStateAction
+    secondaryAction?: EmptyStateAction
     className?: string
+    fullPage?: boolean
 }
 
 const variantConfig: Record<EmptyStateVariant, {
@@ -118,7 +125,9 @@ export function EmptyState({
     description,
     icon,
     action,
-    className
+    secondaryAction,
+    className,
+    fullPage = false,
 }: EmptyStateProps) {
     const { t } = useLanguage()
     const config = variantConfig[variant]
@@ -139,50 +148,58 @@ export function EmptyState({
     const displayTitle = title || getNestedTranslation(config.titleKey, config.defaultTitle)
     const displayDescription = description || getNestedTranslation(config.descriptionKey, config.defaultDescription)
 
+    const renderActionButton = (item: EmptyStateAction | undefined, isPrimary = false) => {
+        if (!item) return null
+
+        const variant = item.variant || (isPrimary && fullPage ? "solid" : "glass")
+        const className = isPrimary
+            ? "rounded-xl px-5 h-9 text-[13px] font-medium"
+            : "rounded-xl px-5 h-9 text-[13px] font-medium"
+
+        if (item.href) {
+            return (
+                <Button asChild variant={variant} className={className}>
+                    <Link href={item.href}>
+                        {item.icon}
+                        {item.label}
+                    </Link>
+                </Button>
+            )
+        }
+
+        return (
+            <Button onClick={item.onClick} variant={variant} className={className}>
+                {item.icon}
+                {item.label}
+            </Button>
+        )
+    }
+
     return (
         <div className={cn(
-            "flex flex-col items-center justify-center py-12 px-4 text-center animate-fade-in",
+            "flex flex-col items-center justify-center text-center animate-fade-in px-4",
+            fullPage ? "min-h-[56vh]" : "py-16",
             className
         )}>
-            {/* Illustration container with animated icon */}
-            <div className="relative mb-6 animate-fade-in-scale">
-                {/* Background decoration */}
-                <div className="absolute inset-0 rounded-full bg-muted/50 dark:bg-muted/30 blur-xl scale-150" />
-                
-                {/* Icon container */}
-                <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-muted/80 dark:bg-muted/50 transition-transform duration-300 hover:scale-105">
-                    {icon || (
-                        <Icon 
-                            className="w-12 h-12 text-muted-foreground/70 dark:text-muted-foreground/50" 
-                            strokeWidth={1.5}
-                        />
-                    )}
+            <div className="w-full max-w-md">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-neutral-400 animate-fade-in-scale">
+                    {icon || <Icon className="h-7 w-7" strokeWidth={1.5} />}
                 </div>
 
-                {/* Decorative dots */}
-                <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full bg-primary/20 animate-pulse" />
-                <div className="absolute -bottom-1 -left-3 w-2 h-2 rounded-full bg-primary/30 animate-pulse" style={{ animationDelay: '0.5s' }} />
-                <div className="absolute top-1/2 -right-4 w-1.5 h-1.5 rounded-full bg-primary/25 animate-pulse" style={{ animationDelay: '1s' }} />
+                <h3 className="text-lg font-semibold text-foreground mb-1.5 animate-fade-in-up stagger-1">
+                    {displayTitle}
+                </h3>
+                <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-neutral-400 animate-fade-in-up stagger-2">
+                    {displayDescription}
+                </p>
+
+                {(action || secondaryAction) && (
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2 animate-fade-in-up stagger-3">
+                        {renderActionButton(action, true)}
+                        {renderActionButton(secondaryAction)}
+                    </div>
+                )}
             </div>
-
-            {/* Text content */}
-            <h3 className="text-lg font-semibold text-foreground mb-2 animate-fade-in-up stagger-1">
-                {displayTitle}
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-sm mb-6 animate-fade-in-up stagger-2">
-                {displayDescription}
-            </p>
-
-            {/* Action button */}
-            {action && (
-                <Button
-                    variant="outline"
-                    onClick={action.onClick}
-                    className="gap-2 animate-fade-in-up stagger-3"
-                >
-                    {action.label}
-                </Button>
-            )}
         </div>
     )
 }
@@ -214,14 +231,14 @@ export function EmptyStateInline({
 
     return (
         <div className={cn(
-            "flex items-center justify-center gap-3 py-8 px-4 text-muted-foreground animate-fade-in",
+            "flex items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/20 py-8 px-4 text-neutral-400 animate-fade-in",
             className
         )}>
-            <Icon className="w-5 h-5 shrink-0 animate-pulse" strokeWidth={1.5} />
+            <Icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
             <div className="text-left min-w-0">
                 <p className="auto-scroll text-sm font-medium">{displayTitle}</p>
                 {description !== "" && (
-                    <p className="auto-scroll text-xs text-muted-foreground/70">{displayDescription}</p>
+                    <p className="auto-scroll text-xs text-neutral-400/70">{displayDescription}</p>
                 )}
             </div>
         </div>

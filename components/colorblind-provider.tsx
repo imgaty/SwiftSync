@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-type ColorBlindMode = "none" | "deuteranopia" | "protanopia" | "tritanopia"
+export type ColorBlindMode = "none" | "deuteranopia" | "protanopia" | "tritanopia"
 
 interface ColorBlindContextValue {
     mode: ColorBlindMode
@@ -256,8 +256,10 @@ export function ColorBlindProvider({
         return () => observer.disconnect()
     }, [mode])
 
+    const value = React.useMemo(() => ({ mode, setMode }), [mode, setMode])
+
     return (
-        <ColorBlindContext.Provider value={{ mode, setMode }}>
+        <ColorBlindContext.Provider value={value}>
             {children}
         </ColorBlindContext.Provider>
     )

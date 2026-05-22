@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAdmin } from "@/lib/admin-auth"
-import { logAdminAction } from "@/lib/admin-audit"
 
 // GET /api/admin/settings — Retrieve admin profile + app stats overview
 export async function GET() {

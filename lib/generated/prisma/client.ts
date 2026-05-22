@@ -97,10 +97,35 @@ export type FinancialGoal = Prisma.FinancialGoalModel
  */
 export type Notification = Prisma.NotificationModel
 /**
- * Model CategorizationRule
+ * Model Tag
  * 
  */
-export type CategorizationRule = Prisma.CategorizationRuleModel
+export type Tag = Prisma.TagModel
+/**
+ * Model Counterparty
+ * 
+ */
+export type Counterparty = Prisma.CounterpartyModel
+/**
+ * Model Rule
+ * 
+ */
+export type Rule = Prisma.RuleModel
+/**
+ * Model PACERule
+ * 
+ */
+export type PACERule = Prisma.PACERuleModel
+/**
+ * Model SpreadsheetDocument
+ * 
+ */
+export type SpreadsheetDocument = Prisma.SpreadsheetDocumentModel
+/**
+ * Model SpreadsheetLog
+ * 
+ */
+export type SpreadsheetLog = Prisma.SpreadsheetLogModel
 /**
  * Model AuditLog
  * 

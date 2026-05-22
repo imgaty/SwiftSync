@@ -25,7 +25,7 @@ interface ErrorStateProps {
     fileName?: string
 }
 
-export function ErrorState({ type, className, details, fileName }: ErrorStateProps) {
+export function ErrorState({ type, className, details: _details, fileName }: ErrorStateProps) {
     const { t } = useLanguage()
     
     // Determine configuration based on type or default to UNKNOWN
@@ -37,7 +37,7 @@ export function ErrorState({ type, className, details, fileName }: ErrorStatePro
     const messageParts = errorTranslation.message.split('%fileName')
 
     return (
-        <Card className = {cn("justify-center items-center gap-3 | text-muted-foreground text-center animate-fade-in", className)}>
+        <Card className = {cn("justify-center items-center gap-3 | text-neutral-400 text-center animate-fade-in", className)}>
             <Icon className = "w-10 h-10 opacity-25 animate-pulse"/>
             <div className="animate-fade-in-up stagger-1"> 
                 <h3 className = "text-foreground">{errorTranslation.title}</h3>

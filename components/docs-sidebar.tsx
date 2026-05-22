@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRight, FileText, Folder, PenTool, Rocket, Settings, Upload } from "lucide-react"
+import { ChevronRight, FileText, PenTool, Rocket, Settings, Upload } from "lucide-react"
 
 import {
     Sidebar,
@@ -149,8 +149,7 @@ function SidebarMenuSubItem({ children }: { children: React.ReactNode }) {
     return <li>{children}</li>
 }
 
-function SidebarMenuSubButton({ asChild, className, children, ...props }: any) {
-    const Comp = asChild ? React.Fragment : "button"
+function SidebarMenuSubButton({ asChild: _asChild, className, children, ...props }: any) {
     return (
         <SidebarMenuButton asChild className={className} {...props}>
             {children}

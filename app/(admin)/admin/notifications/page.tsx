@@ -2,14 +2,30 @@
 
 import * as React from "react"
 import {
-    Bell, Search, Send, Mail, MailOpen, Filter, ChevronLeft, ChevronRight,
-    Users as UsersIcon, X,
+    Bell, Search, Send, Mail, MailOpen, Filter,
+    X,
 } from "lucide-react"
 import { AdminHeader } from "@/components/admin/admin-header"
+import { useLanguage } from "@/components/language-provider"
+import { PRISM } from "@/lib/PRISM"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableEmptyRow,
+    TableHead,
+    TableHeader,
+    TablePaginationBar,
+    TableRow,
+    TableSearchControl,
+    TableSkeletonRows,
+    TableToolbar,
+    TableToolbarGroup,
+    UniversalTable,
+} from "@/components/ui/table"
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
@@ -34,16 +50,22 @@ interface Notification {
 interface Pagination {
     page: number; limit: number; total: number; totalPages: number
 }
+type AdminCopy = Record<string, string | undefined> & {
+    notifications_page?: Record<string, string>
+}
 
 const typeColors: Record<string, string> = {
     general: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
     bill_due: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    budget_exceeded: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+    budget_exceeded: `${PRISM.destructiveBadge} border-red-500/20`,
     goal_reached: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     admin: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
 }
 
 export default function AdminNotificationsPage() {
+    const { t } = useLanguage()
+    const ad = ((t as { admin?: AdminCopy }).admin || {}) as AdminCopy
+    const np = ad.notifications_page || {}
     const [notifications, setNotifications] = React.useState<Notification[]>([])
     const [pagination, setPagination] = React.useState<Pagination | null>(null)
     const [loading, setLoading] = React.useState(true)
@@ -65,18 +87,58 @@ export default function AdminNotificationsPage() {
             const data = await res.json()
             setNotifications(data.notifications)
             setPagination(data.pagination)
-        } catch { toast.error("Failed to load notifications") }
+        } catch { toast.error(np.failed_load || "Failed to load notifications") }
         finally { setLoading(false) }
-    }, [page, search, typeFilter, readFilter])
+    }, [page, search, typeFilter, readFilter, np.failed_load])
 
     React.useEffect(() => { fetchData() }, [fetchData])
 
+    const toolbar = (
+        <TableToolbar>
+            <TableToolbarGroup>
+                <TableSearchControl
+                    value={search}
+                    onValueChange={(value) => {
+                        setSearch(value)
+                        setPage(1)
+                    }}
+                    placeholder={np.search_placeholder || "Search..."}
+                    width={280}
+                />
+                <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1) }}>
+                    <SelectTrigger className="w-40" size="sm">
+                        <Filter className="size-4" />
+                        <SelectValue placeholder={np.col_type || "Type"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{np.all_types || "All Types"}</SelectItem>
+                        <SelectItem value="general">{np.general || "General"}</SelectItem>
+                        <SelectItem value="bill_due">{np.bill_due || "Bill Due"}</SelectItem>
+                        <SelectItem value="budget_exceeded">{np.budget_exceeded || "Budget Exceeded"}</SelectItem>
+                        <SelectItem value="goal_reached">{np.goal_reached || "Goal Reached"}</SelectItem>
+                        <SelectItem value="admin">{np.admin_type || "Admin"}</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={readFilter} onValueChange={(v) => { setReadFilter(v); setPage(1) }}>
+                    <SelectTrigger className="w-[130px]" size="sm">
+                        <SelectValue placeholder={np.col_status || "Read"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{np.all_read || "All"}</SelectItem>
+                        <SelectItem value="false">{np.unread_filter || "Unread"}</SelectItem>
+                        <SelectItem value="true">{np.read_filter || "Read"}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </TableToolbarGroup>
+        </TableToolbar>
+    )
+
     return (
         <>
-            <AdminHeader title="Notifications" breadcrumbs={[{ label: "Notifications" }]}
+            <AdminHeader title={ad.notifications || "Notifications"} breadcrumbs={[{ label: ad.notifications || "Notifications" }]}
                 actions={
                     <Button size="sm" onClick={() => setShowSend(true)}>
-                        <Send className="size-4" /> Send Notification
+                        <Send className="size-4" /> {np.send || "Send Notification"}
                     </Button>
                 }
             />
@@ -84,112 +146,86 @@ export default function AdminNotificationsPage() {
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {/* Summary */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <SummaryCard label="Total" value={pagination?.total ?? 0} icon={<Bell className="size-5" />} />
-                    <SummaryCard label="Unread" value={notifications.filter(n => !n.read).length} icon={<Mail className="size-5 text-blue-500" />} />
-                    <SummaryCard label="Read" value={notifications.filter(n => n.read).length} icon={<MailOpen className="size-5 text-emerald-500" />} />
-                    <SummaryCard label="Types" value={new Set(notifications.map(n => n.type)).size} icon={<Filter className="size-5 text-purple-500" />} />
+                    <SummaryCard label={np.total || "Total"} value={pagination?.total ?? 0} icon={<Bell className="size-5" />} />
+                    <SummaryCard label={np.unread || "Unread"} value={notifications.filter(n => !n.read).length} icon={<Mail className="size-5 text-blue-500" />} />
+                    <SummaryCard label={np.read || "Read"} value={notifications.filter(n => n.read).length} icon={<MailOpen className="size-5 text-emerald-500" />} />
+                    <SummaryCard label={np.types || "Types"} value={new Set(notifications.map(n => n.type)).size} icon={<Filter className="size-5 text-purple-500" />} />
                 </div>
 
-                {/* Filters */}
-                <div className="flex flex-wrap gap-3 items-center">
-                    <div className="relative flex-1 min-w-[200px] max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
-                        <Input label="Search" placeholder="Search..." className="pl-9"
-                            value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
-                    </div>
-                    <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1) }}>
-                        <SelectTrigger className="w-[160px]"><SelectValue placeholder="Type" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Types</SelectItem>
-                            <SelectItem value="general">General</SelectItem>
-                            <SelectItem value="bill_due">Bill Due</SelectItem>
-                            <SelectItem value="budget_exceeded">Budget Exceeded</SelectItem>
-                            <SelectItem value="goal_reached">Goal Reached</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={readFilter} onValueChange={(v) => { setReadFilter(v); setPage(1) }}>
-                        <SelectTrigger className="w-[130px]"><SelectValue placeholder="Read" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="false">Unread</SelectItem>
-                            <SelectItem value="true">Read</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Table */}
-                {loading ? <TableSkeleton /> : (
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-black/5 dark:border-white/5 text-left text-xs text-neutral-500 uppercase">
-                                    <th className="px-4 py-3">Title</th>
-                                    <th className="px-4 py-3">User</th>
-                                    <th className="px-4 py-3">Type</th>
-                                    <th className="px-4 py-3">Status</th>
-                                    <th className="px-4 py-3">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {notifications.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center py-8 text-neutral-500">No notifications found</td></tr>
-                                ) : notifications.map((n) => (
-                                    <tr key={n.id} className="border-b border-black/5 dark:border-white/5 hover:bg-black/2 dark:hover:bg-white/2">
-                                        <td className="px-4 py-3">
+                <UniversalTable
+                    toolbar={toolbar}
+                    maxHeight="calc(100vh - 20rem)"
+                    footer={pagination && pagination.totalPages > 1 ? (
+                        <TablePaginationBar
+                            page={pagination.page}
+                            totalPages={pagination.totalPages}
+                            pageSize={pagination.limit}
+                            total={pagination.total}
+                            label={ad.showing_range || "Showing"}
+                            onFirst={() => setPage(1)}
+                            onPrevious={() => setPage((p) => p - 1)}
+                            onNext={() => setPage((p) => p + 1)}
+                            onLast={() => setPage(pagination.totalPages)}
+                        />
+                    ) : undefined}
+                >
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{np.col_title || "Title"}</TableHead>
+                                <TableHead>{np.col_user || "User"}</TableHead>
+                                <TableHead>{np.col_type || "Type"}</TableHead>
+                                <TableHead>{np.col_status || "Status"}</TableHead>
+                                <TableHead>{np.col_date || "Date"}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableSkeletonRows rows={6} columns={5} widths={[188, 144, 116, 92, 96]} />
+                            ) : notifications.length === 0 ? (
+                                <TableEmptyRow
+                                    colSpan={5}
+                                    title={np.no_notifications || "No notifications found"}
+                                    description={np.no_notifications_hint || "Try changing the search or filters."}
+                                />
+                            ) : notifications.map((n) => (
+                                <TableRow key={n.id}>
+                                    <TableCell>
                                             <p className="font-medium">{n.title}</p>
-                                            <p className="text-xs text-neutral-500 mt-0.5 line-clamp-1">{n.message}</p>
-                                        </td>
-                                        <td className="px-4 py-3">
+                                            <p className="text-xs text-neutral-400 mt-0.5 line-clamp-1">{n.message}</p>
+                                    </TableCell>
+                                    <TableCell>
                                             <p className="font-medium">{n.user.name}</p>
-                                            <p className="text-xs text-neutral-500">{n.user.email}</p>
-                                        </td>
-                                        <td className="px-4 py-3">
+                                            <p className="text-xs text-neutral-400">{n.user.email}</p>
+                                    </TableCell>
+                                    <TableCell>
                                             <Badge variant="outline" className={typeColors[n.type] || typeColors.general}>
                                                 {n.type.replace(/_/g, " ")}
                                             </Badge>
-                                        </td>
-                                        <td className="px-4 py-3">
+                                    </TableCell>
+                                    <TableCell>
                                             {n.read
-                                                ? <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">Read</Badge>
-                                                : <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">Unread</Badge>}
-                                        </td>
-                                        <td className="px-4 py-3 text-neutral-500">
+                                                ? <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">{np.read || "Read"}</Badge>
+                                                : <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">{np.unread || "Unread"}</Badge>}
+                                    </TableCell>
+                                    <TableCell className="text-neutral-400">
                                             {new Date(n.createdAt).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {pagination && pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-neutral-500">
-                            Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
-                        </p>
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>
-                                <ChevronLeft className="size-4" /> Previous
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= pagination.totalPages}>
-                                Next <ChevronRight className="size-4" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </UniversalTable>
             </div>
 
-            <SendNotificationDialog open={showSend} onClose={() => setShowSend(false)} onSent={fetchData} />
+            <SendNotificationDialog open={showSend} onClose={() => setShowSend(false)} onSent={fetchData} np={np} />
         </>
     )
 }
 
 // ----- Send dialog -----
 
-function SendNotificationDialog({ open, onClose, onSent }: { open: boolean; onClose: () => void; onSent: () => void }) {
+function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; onClose: () => void; onSent: () => void; np: Record<string, string> }) {
     const [title, setTitle] = React.useState("")
     const [message, setMessage] = React.useState("")
     const [type, setType] = React.useState("admin")
@@ -197,7 +233,7 @@ function SendNotificationDialog({ open, onClose, onSent }: { open: boolean; onCl
     const [userSearch, setUserSearch] = React.useState("")
     const [foundUsers, setFoundUsers] = React.useState<{ id: string; name: string; email: string }[]>([])
     const [selectedUsers, setSelectedUsers] = React.useState<{ id: string; name: string; email: string }[]>([])
-    const [searching, setSearching] = React.useState(false)
+    const [, setSearching] = React.useState(false)
     const [sending, setSending] = React.useState(false)
 
     const searchUsers = React.useCallback(async (q: string) => {
@@ -246,7 +282,7 @@ function SendNotificationDialog({ open, onClose, onSent }: { open: boolean; onCl
             toast.success(`Notification sent to ${data.sent} user(s)`)
             setTitle(""); setMessage(""); setSelectedUsers([]); setUserSearch("")
             onClose(); onSent()
-        } catch { toast.error("Failed to send notification") }
+        } catch { toast.error(np.failed_send || "Failed to send notification") }
         finally { setSending(false) }
     }
 
@@ -254,35 +290,35 @@ function SendNotificationDialog({ open, onClose, onSent }: { open: boolean; onCl
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>Send Notification</DialogTitle>
-                    <DialogDescription>Send a notification to all users or specific users.</DialogDescription>
+                    <DialogTitle>{np.send || "Send Notification"}</DialogTitle>
+                    <DialogDescription>{np.send_description || "Send a notification to all users or specific users."}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-2">
                     <div className="space-y-1.5">
-                        <Label>Title</Label>
+                        <Label>{np.title_label || "Title"}</Label>
                         <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Notification title" />
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Message</Label>
+                        <Label>{np.message_label || "Message"}</Label>
                         <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Notification message" rows={3} />
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Type</Label>
+                        <Label>{np.type_label || "Type"}</Label>
                         <Select value={type} onValueChange={setType}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="admin">{np.admin_type || "Admin"}</SelectItem>
+                                <SelectItem value="general">{np.general || "General"}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Recipients</Label>
+                        <Label>{np.target_users || "Recipients"}</Label>
                         <Select value={target} onValueChange={(v) => setTarget(v as "all" | "specific")}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Users</SelectItem>
-                                <SelectItem value="specific">Specific Users</SelectItem>
+                                <SelectItem value="all">{np.all_users || "All Users"}</SelectItem>
+                                <SelectItem value="specific">{np.specific_users || "Specific Users"}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -299,7 +335,7 @@ function SendNotificationDialog({ open, onClose, onSent }: { open: boolean; onCl
                                         <button key={u.id} className="w-full text-left px-3 py-2 text-sm hover:bg-black/3 dark:hover:bg-white/3"
                                             onClick={() => { setSelectedUsers(prev => [...prev, u]); setFoundUsers([]); setUserSearch("") }}>
                                             <span className="font-medium">{u.name}</span>{" "}
-                                            <span className="text-neutral-500">{u.email}</span>
+                                            <span className="text-neutral-400">{u.email}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -320,9 +356,9 @@ function SendNotificationDialog({ open, onClose, onSent }: { open: boolean; onCl
                     )}
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button variant="glass" onClick={onClose}>Cancel</Button>
                     <Button onClick={handleSend} disabled={sending}>
-                        {sending ? "Sending..." : "Send Notification"}
+                        {sending ? "Sending..." : (np.send || "Send Notification")}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -334,16 +370,8 @@ function SendNotificationDialog({ open, onClose, onSent }: { open: boolean; onCl
 function SummaryCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
     return (
         <div className="rounded-xl border border-black/10 dark:border-white/10 p-4">
-            <div className="flex items-center gap-2 text-neutral-500 text-xs mb-1">{icon}{label}</div>
+            <div className="flex items-center gap-2 text-neutral-400 text-xs mb-1">{icon}{label}</div>
             <p className="text-2xl font-bold">{value.toLocaleString()}</p>
-        </div>
-    )
-}
-
-function TableSkeleton() {
-    return (
-        <div className="space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
         </div>
     )
 }

@@ -1,27 +1,44 @@
+/* Single-bill endpoint (PUT to update, DELETE to remove).
+ *
+ * Both writes use scope-in-write — the caller's scope filter is merged into
+ * `updateMany` / `deleteMany`, so a row outside scope is untouchable.
+ *
+ * Learn more in `docs/Financial Features.md`
+ */
+
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthUserId } from "@/lib/auth-helpers"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeFilter, scopeRecordFilter, requirePermission } from "@/lib/data-access"
 
 // PUT /api/bills/[id]
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:write")
+  if (permissionError) return permissionError
 
   const { id } = await params
   const body = await request.json()
 
-  const existing = await prisma.bill.findFirst({ where: { id, userId } })
-  if (!existing) {
-    return NextResponse.json({ error: "Bill not found" }, { status: 404 })
+  // If reassigning to a new account, verify that account is also in the caller's scope.
+  if (body.accountId) {
+    const ownsAccount = await prisma.bankAccount.findFirst({
+      where: { ...scopeFilter(ctx), id: body.accountId },
+      select: { id: true },
+    })
+    if (!ownsAccount) {
+      return NextResponse.json({ error: "Account not found" }, { status: 400 })
+    }
   }
 
-  const updated = await prisma.bill.update({
-    where: { id },
+  const { count } = await prisma.bill.updateMany({
+    where: scopeRecordFilter(ctx, id),
     data: {
       ...(body.name && { name: body.name }),
       ...(body.amount !== undefined && { amount: body.amount }),
@@ -34,6 +51,11 @@ export async function PUT(
       ...(body.status && { status: body.status }),
     },
   })
+  if (count === 0) {
+    return NextResponse.json({ error: "Bill not found" }, { status: 404 })
+  }
+
+  const updated = await prisma.bill.findUniqueOrThrow({ where: { id } })
 
   return NextResponse.json({
     id: updated.id,
@@ -54,17 +76,18 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:delete")
+  if (permissionError) return permissionError
 
   const { id } = await params
-  const existing = await prisma.bill.findFirst({ where: { id, userId } })
-  if (!existing) {
+  const { count } = await prisma.bill.deleteMany({ where: scopeRecordFilter(ctx, id) })
+  if (count === 0) {
     return NextResponse.json({ error: "Bill not found" }, { status: 404 })
   }
 
-  await prisma.bill.delete({ where: { id } })
   return NextResponse.json({ success: true })
 }

@@ -1,25 +1,27 @@
 "use client"
 
+import * as React from "react"
 import {
-    Folder,
-    Forward,
+    ArrowDown,
+    ArrowUp,
+    EyeOff,
+    ListTree,
     MoreHorizontal,
-    Trash2,
-    type LucideIcon,
 } from "lucide-react"
 import Link from "next/link"
+import { useSettings } from "@/hooks/use-settings"
+import type { SidebarPageDefinition, SidebarPageId } from "@/lib/sidebar-pages"
 
 import {
     Dropdown,
-    DropdownShell,
+    DropdownContent,
     DropdownItem,
     DropdownSeparator,
     DropdownTrigger,
-} from "@/components/ui/app-dropdown"
+} from "@/components/ui/dropdown"
 
 import {
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarActionDropdown,
     CollapsedTooltip,
@@ -27,24 +29,32 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useLanguage } from "@/components/language-provider"
 
 export function NavPages({
     pages,
+    allPages,
+    onMovePage,
+    onTogglePageHidden,
     isLoading = false,
 }: {
-    pages: {
-        name: string
-        url: string
-        icon: LucideIcon
-    }[]
+    pages: SidebarPageDefinition[]
+    allPages: SidebarPageDefinition[]
+    onMovePage: (id: SidebarPageId, direction: "up" | "down") => void
+    onTogglePageHidden: (id: SidebarPageId, hidden: boolean) => void
     isLoading?: boolean
 }) {
-    const { isMobile, side } = useSidebar()
+    const { isMobile, side, setOpenMobile } = useSidebar()
+    const { open } = useSettings()
+    const { t } = useLanguage()
+    const nav = (t as { nav?: Record<string, string> }).nav || {}
+    const handleNavClick = React.useCallback(() => {
+        if (isMobile) setOpenMobile(false)
+    }, [isMobile, setOpenMobile])
 
     if (isLoading) {
         return (
-            <SidebarGroup>
-                <Skeleton className="h-4 w-16 mb-2 ml-2" />
+            <SidebarGroup className="px-2 pt-1 pb-2">
                 <SidebarMenu>
                     {[0, 1, 2, 3, 4, 5].map(i => (
                         <SidebarMenuItem key={i}>
@@ -60,13 +70,12 @@ export function NavPages({
     }
 
     return (
-        <SidebarGroup className="">
-            <SidebarGroupLabel>Pages</SidebarGroupLabel>
+        <SidebarGroup className="px-2 pt-1 pb-2">
             <SidebarMenu>
                 {pages.map((item) => (
                     <SidebarMenuItem key={item.url}>
                         <CollapsedTooltip asChild tooltip={item.name}>
-                            <Link href={item.url}>
+                            <Link href={item.url} onClick={handleNavClick}>
                                 <item.icon />
                                 <span>{item.name}</span>
                             </Link>
@@ -80,33 +89,40 @@ export function NavPages({
                                 </SidebarActionDropdown>
                             </DropdownTrigger>
 
-                            <DropdownShell className="w-48 rounded-lg" side={isMobile ? "bottom" : side === "left" ? "right" : "left"} align={isMobile ? "end" : "start"}>
-                                <DropdownItem>
-                                    <Folder className="text-neutral-500 dark:text-neutral-400" />
-                                    <span>View Page</span>
+                            <DropdownContent className="w-48" side={isMobile ? "bottom" : side === "left" ? "right" : "left"} align={isMobile ? "end" : "start"}>
+                                <DropdownItem
+                                    onSelect={() => onMovePage(item.id, "up")}
+                                    disabled={allPages.findIndex((p) => p.id === item.id) === 0}
+                                >
+                                    <ArrowUp className="text-neutral-400" />
+                                    <span>{nav.move_up || "Move up"}</span>
                                 </DropdownItem>
-                                <DropdownItem>
-                                    <Forward className="text-neutral-500 dark:text-neutral-400" />
-                                    <span>Share Page</span>
+                                <DropdownItem
+                                    onSelect={() => onMovePage(item.id, "down")}
+                                    disabled={allPages.findIndex((p) => p.id === item.id) === allPages.length - 1}
+                                >
+                                    <ArrowDown className="text-neutral-400" />
+                                    <span>{nav.move_down || "Move down"}</span>
                                 </DropdownItem>
 
                                 <DropdownSeparator />
 
-                                <DropdownItem>
-                                    <Trash2 className="text-neutral-500 dark:text-neutral-400" />
-                                    <span>Delete Page</span>
+                                <DropdownItem onSelect={() => onTogglePageHidden(item.id, true)}>
+                                    <EyeOff className="text-neutral-400" />
+                                    <span>{nav.hide_page || "Hide page"}</span>
                                 </DropdownItem>
-                            </DropdownShell>
+
+                                <DropdownSeparator />
+
+                                <DropdownItem onSelect={() => open("customization")}>
+                                    <ListTree className="text-neutral-400" />
+                                    <span>{nav.manage_pages || "Manage pages"}</span>
+                                </DropdownItem>
+                            </DropdownContent>
                         </Dropdown>
                     </SidebarMenuItem>
                 ))}
 
-                <SidebarMenuItem>
-                    <CollapsedTooltip className="text-sidebar-foreground/70" tooltip="More">
-                        <MoreHorizontal className="text-sidebar-foreground/70" />
-                        <span>More</span>
-                    </CollapsedTooltip>
-                </SidebarMenuItem>
             </SidebarMenu>
         </SidebarGroup>
     )

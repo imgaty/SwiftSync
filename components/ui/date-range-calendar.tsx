@@ -77,8 +77,10 @@ interface DateRangeCalendarProps {
     locale?: string
     /** UI labels for i18n */
     labels?: DateRangeCalendarLabels
-    /** Show the start/end date input panel on the left. @default false */
+    /** Show the start/end date input panel. @default false */
     showInputs?: boolean
+    /** Position of the inputs panel relative to the calendar. @default 'left' */
+    panelPosition?: 'top' | 'bottom' | 'left' | 'right'
     /** Additional class name for the root wrapper */
     className?: string
 }
@@ -87,7 +89,7 @@ interface DateRangeCalendarProps {
 // UTILITIES
 // ==============================================================================
 
-function parseNaturalDate(input: string, locale: string): Date | null {
+function parseNaturalDate(input: string, _locale: string): Date | null {
     const trimmed = input.trim().toLowerCase()
     if (!trimmed) return null
 
@@ -163,6 +165,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
             locale = "en",
             labels = {},
             showInputs = false,
+            panelPosition = 'left',
             className,
         },
         ref
@@ -484,124 +487,163 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
             return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
         }, [startDate, endDate])
 
+        const isHorizontalPanel = panelPosition === 'left' || panelPosition === 'right'
+        const panelBefore = panelPosition === 'left' || panelPosition === 'top'
+
+        // Inputs panel — positioned relative to the calendar
+        const inputsPanel = showInputs ? (
+            <div className={cn(
+                "flex flex-col",
+                isHorizontalPanel
+                    ? cn("w-[200px] shrink-0", panelPosition === 'left' ? "border-r" : "border-l")
+                    : cn(panelPosition === 'top' ? "border-b" : "border-t"),
+                "border-black/8 dark:border-white/8"
+            )}>
+                <div className={cn("p-3", isHorizontalPanel && "flex-1")}>
+                    <div className={cn(!isHorizontalPanel && "flex gap-2")}>
+                        {/* Start input */}
+                        <div className={cn(!isHorizontalPanel && "flex-1")}>
+                            <div
+                                onClick={() => setSelectingEnd(false)}
+                                className={cn(
+                                    "group px-3 py-2 rounded-xl transition-all duration-200",
+                                    isHorizontalPanel && "mb-2",
+                                    !selectingEnd
+                                        ? "bg-black/5 dark:bg-white/5 ring-2 ring-blue-500/50 dark:ring-blue-500/30 shadow-sm"
+                                        : "bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 ring-1 ring-black/10 dark:ring-white/10"
+                                )}
+                            >
+                                <div className={cn(
+                                    "text-[10px] uppercase tracking-wider font-semibold mb-1 transition-colors",
+                                    !selectingEnd ? "text-neutral-900 dark:text-white" : "text-neutral-400 group-hover:text-neutral-400 dark:group-hover:text-neutral-400"
+                                )}>
+                                    {labels.start_date ?? "Start"}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={startInputValue}
+                                    onChange={(e) => handleStartInputChange(e.target.value)}
+                                    onFocus={() => setSelectingEnd(false)}
+                                    onBlur={() => {
+                                        if (startDate) setStartInputValue(startDate.toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT))
+                                    }}
+                                    placeholder="e.g. Dec 25, 2024"
+                                    className={cn(
+                                        "w-full bg-transparent text-sm font-medium outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-400",
+                                        startDate ? "text-neutral-900 dark:text-white" : "text-neutral-400"
+                                    )}
+                                />
+                            </div>
+                        </div>
+
+                        {/* End input */}
+                        <div className={cn(!isHorizontalPanel && "flex-1")}>
+                            <div
+                                onClick={() => startDate && setSelectingEnd(true)}
+                                className={cn(
+                                    "group px-3 py-2 rounded-xl transition-all duration-200",
+                                    !startDate && "opacity-40 cursor-not-allowed",
+                                    selectingEnd
+                                        ? "bg-black/5 dark:bg-white/5 ring-2 ring-blue-500/50 dark:ring-blue-500/30 shadow-sm"
+                                        : "bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 ring-1 ring-black/10 dark:ring-white/10"
+                                )}
+                            >
+                                <div className={cn(
+                                    "text-[10px] uppercase tracking-wider font-semibold mb-1 transition-colors",
+                                    selectingEnd ? "text-neutral-900 dark:text-white" : "text-neutral-400 group-hover:text-neutral-400 dark:group-hover:text-neutral-400"
+                                )}>
+                                    {labels.end_date ?? "End"}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={endInputValue}
+                                    onChange={(e) => handleEndInputChange(e.target.value)}
+                                    onFocus={() => setSelectingEnd(true)}
+                                    onBlur={() => {
+                                        if (endDate) setEndInputValue(endDate.toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT))
+                                    }}
+                                    disabled={!startDate}
+                                    placeholder="e.g. Jan 15, 2025"
+                                    className={cn(
+                                        "w-full bg-transparent text-sm font-medium outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-400 disabled:cursor-not-allowed",
+                                        endDate ? "text-neutral-900 dark:text-white" : "text-neutral-400"
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Duration indicator — horizontal panel only */}
+                    {isHorizontalPanel && daysDiff && (
+                        <div className="mt-3 flex items-center justify-center">
+                            <span className="text-xs text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
+                                {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Actions */}
+                {isHorizontalPanel ? (
+                    <div className="flex flex-col gap-2 p-3 border-t border-black/8 dark:border-white/8 mt-auto">
+                        <button
+                            onClick={handleApply}
+                            disabled={!startDate || !endDate}
+                            className="h-8 w-full text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-xl shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {labels.apply ?? "Apply Range"}
+                        </button>
+                        <button
+                            onClick={handleClear}
+                            disabled={!value && !startDate}
+                            className="h-8 w-full text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                            {labels.clear_range ?? "Clear"}
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 px-3 pb-3">
+                        {daysDiff && (
+                            <span className="text-xs text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full shrink-0">
+                                {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
+                            </span>
+                        )}
+                        <div className="flex-1" />
+                        <button
+                            onClick={handleClear}
+                            disabled={!value && !startDate}
+                            className="h-8 px-3 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                            {labels.clear_range ?? "Clear"}
+                        </button>
+                        <button
+                            onClick={handleApply}
+                            disabled={!startDate || !endDate}
+                            className="h-8 px-4 text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-lg shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                        >
+                            {labels.apply ?? "Apply"}
+                        </button>
+                    </div>
+                )}
+            </div>
+        ) : null
+
         // ---- Render ----
         return (
             <div
                 ref={ref}
                 className={cn(
-                    "bg-background rounded-xl overflow-hidden",
-                    showInputs ? "w-[560px]" : "w-[360px]",
+                    "rounded-xl overflow-hidden w-full",
                     className
                 )}
             >
-                <div className="flex">
-                    {/* Left panel — start / end inputs (optional) */}
-                    {showInputs && (
-                        <div className="w-[200px] flex flex-col border-r border-black/8 dark:border-white/8">
-                            <div className="p-3 flex-1">
-                                {/* Start input */}
-                                <div
-                                    onClick={() => setSelectingEnd(false)}
-                                    className={cn(
-                                        "group px-3 py-2 rounded-xl transition-all duration-200 mb-2",
-                                        !selectingEnd
-                                            ? "bg-black/5 dark:bg-white/5 ring-2 ring-blue-500/50 dark:ring-blue-500/30 shadow-sm"
-                                            : "bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 ring-1 ring-black/10 dark:ring-white/10"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "text-[10px] uppercase tracking-wider font-semibold mb-1 transition-colors",
-                                        !selectingEnd ? "text-neutral-900 dark:text-white" : "text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-300"
-                                    )}>
-                                        {labels.start_date ?? "Start"}
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={startInputValue}
-                                        onChange={(e) => handleStartInputChange(e.target.value)}
-                                        onFocus={() => setSelectingEnd(false)}
-                                        onBlur={() => {
-                                            if (startDate) setStartInputValue(startDate.toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT))
-                                        }}
-                                        placeholder="e.g. Dec 25, 2024"
-                                        className={cn(
-                                            "w-full bg-transparent text-sm font-medium outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-600",
-                                            startDate
-                                                ? (!selectingEnd ? "text-neutral-900 dark:text-white" : "text-neutral-900 dark:text-white")
-                                                : "text-neutral-500 dark:text-neutral-400"
-                                        )}
-                                    />
-                                </div>
-
-                                {/* End input */}
-                                <div
-                                    onClick={() => startDate && setSelectingEnd(true)}
-                                    className={cn(
-                                        "group px-3 py-2 rounded-xl transition-all duration-200",
-                                        !startDate && "opacity-40 cursor-not-allowed",
-                                        selectingEnd
-                                            ? "bg-black/5 dark:bg-white/5 ring-2 ring-blue-500/50 dark:ring-blue-500/30 shadow-sm"
-                                            : "bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 ring-1 ring-black/10 dark:ring-white/10"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "text-[10px] uppercase tracking-wider font-semibold mb-1 transition-colors",
-                                        selectingEnd ? "text-neutral-900 dark:text-white" : "text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-300"
-                                    )}>
-                                        {labels.end_date ?? "End"}
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={endInputValue}
-                                        onChange={(e) => handleEndInputChange(e.target.value)}
-                                        onFocus={() => setSelectingEnd(true)}
-                                        onBlur={() => {
-                                            if (endDate) setEndInputValue(endDate.toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT))
-                                        }}
-                                        disabled={!startDate}
-                                        placeholder="e.g. Jan 15, 2025"
-                                        className={cn(
-                                            "w-full bg-transparent text-sm font-medium outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-600 disabled:cursor-not-allowed",
-                                            endDate
-                                                ? (selectingEnd ? "text-neutral-900 dark:text-white" : "text-neutral-900 dark:text-white")
-                                                : "text-neutral-500 dark:text-neutral-400"
-                                        )}
-                                    />
-                                </div>
-
-                                {/* Duration indicator */}
-                                {daysDiff && (
-                                    <div className="mt-3 flex items-center justify-center">
-                                        <span className="text-xs text-neutral-500 dark:text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
-                                            {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Footer actions */}
-                            <div className="flex flex-col gap-2 p-3 border-t border-black/8 dark:border-white/8 mt-auto">
-                                <button
-                                    onClick={handleApply}
-                                    disabled={!startDate || !endDate}
-                                    className="h-8 w-full text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-xl shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {labels.apply ?? "Apply Range"}
-                                </button>
-                                <button
-                                    onClick={handleClear}
-                                    disabled={!value && !startDate}
-                                    className="h-8 w-full text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <X className="w-3.5 h-3.5" />
-                                    {labels.clear_range ?? "Clear"}
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                <div className={cn("flex", showInputs && isHorizontalPanel ? "flex-row" : showInputs ? "flex-col" : "")}>
+                    {showInputs && panelBefore && inputsPanel}
 
                     {/* Calendar panel — always visible */}
-                    <div className="flex-1 p-3">
+                    <div className={cn("p-3", showInputs && isHorizontalPanel && "flex-1")}>
                         {/* Navigation header */}
                         <div className="flex items-center justify-between mb-3">
                             <button
@@ -610,7 +652,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                     else if (viewMode === 'months') setViewDate(new Date(viewDate.getFullYear() - 1, viewDate.getMonth(), 1))
                                     else setViewDate(new Date(viewDate.getFullYear() - 12, viewDate.getMonth(), 1))
                                 }}
-                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
@@ -646,7 +688,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                     (viewMode === 'months' && viewDate.getFullYear() >= CURRENT_YEAR) ||
                                     (viewMode === 'years' && years[years.length - 1] >= CURRENT_YEAR)
                                 }
-                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
@@ -658,7 +700,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                 onClick={() => setViewMode('days')}
                                 className={cn(
                                     "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                                    viewMode === 'days' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-500 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
+                                    viewMode === 'days' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
                                 )}
                             >
                                 {labels.day_view ?? 'Day'}
@@ -667,7 +709,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                 onClick={() => setViewMode('months')}
                                 className={cn(
                                     "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                                    viewMode === 'months' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-500 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
+                                    viewMode === 'months' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
                                 )}
                             >
                                 {labels.month_view ?? 'Month'}
@@ -676,7 +718,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                 onClick={() => setViewMode('years')}
                                 className={cn(
                                     "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                                    viewMode === 'years' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-500 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
+                                    viewMode === 'years' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
                                 )}
                             >
                                 {labels.year_view ?? 'Year'}
@@ -688,7 +730,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                             <>
                                 <div className="grid grid-cols-7 mb-1">
                                     {weekDays.map((day, i) => (
-                                        <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                                        <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-neutral-400 uppercase tracking-wider">
                                             {day}
                                         </div>
                                     ))}
@@ -729,8 +771,8 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                     disabled={disabled && !dragging}
                                                     className={cn(
                                                         "relative z-10 inline-flex items-center justify-center size-8 rounded-lg text-sm font-medium transition-all duration-200",
-                                                        disabled && !dragging && "text-neutral-300 dark:text-neutral-700 cursor-not-allowed",
-                                                        outside && !disabled && "text-neutral-400 dark:text-neutral-600",
+                                                        disabled && !dragging && "text-neutral-400 cursor-not-allowed",
+                                                        outside && !disabled && "text-neutral-400",
                                                         (start || end) && !isDragOver && "bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200",
                                                         (start || end) && dragging && "cursor-grab active:cursor-grabbing",
                                                         !start && !end && !disabled && !outside && !isDragOver && "hover:bg-black/5 dark:hover:bg-white/10 text-neutral-900 dark:text-white",
@@ -773,7 +815,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                 disabled={disabled}
                                                 className={cn(
                                                     "relative z-10 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200",
-                                                    disabled && "text-neutral-300 dark:text-neutral-700 cursor-not-allowed",
+                                                    disabled && "text-neutral-400 cursor-not-allowed",
                                                     (isStart || isEnd) && "bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200",
                                                     !isStart && !isEnd && !disabled && "hover:bg-black/5 dark:hover:bg-white/10 text-neutral-900 dark:text-white"
                                                 )}
@@ -811,7 +853,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                 disabled={disabled}
                                                 className={cn(
                                                     "relative z-10 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200",
-                                                    disabled && "text-neutral-300 dark:text-neutral-700 cursor-not-allowed",
+                                                    disabled && "text-neutral-400 cursor-not-allowed",
                                                     (isStart || isEnd) && "bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200",
                                                     !isStart && !isEnd && !disabled && "hover:bg-black/5 dark:hover:bg-white/10 text-neutral-900 dark:text-white"
                                                 )}
@@ -827,14 +869,14 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                         {/* Year jump — years view */}
                         {viewMode === 'years' && (
                             <div className="mt-3 flex items-center justify-center gap-2">
-                                <span className="text-xs text-neutral-500 dark:text-neutral-400">{labels.jump_to_year ?? "Jump to:"}</span>
+                                <span className="text-xs text-neutral-400">{labels.jump_to_year ?? "Jump to:"}</span>
                                 <input
                                     type="text"
                                     value={yearJumpInput}
                                     onChange={(e) => setYearJumpInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
                                     onKeyDown={(e) => { if (e.key === 'Enter') handleYearJump(yearJumpInput) }}
                                     placeholder="2013"
-                                    className="w-16 px-2 py-1 text-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg outline-none focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-blue-500/30 text-center text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+                                    className="w-16 px-2 py-1 text-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg outline-none focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-blue-500/30 text-center text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-400"
                                 />
                                 <button
                                     onClick={() => handleYearJump(yearJumpInput)}
@@ -852,13 +894,13 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                 <button
                                     onClick={handleClear}
                                     disabled={!value && !startDate}
-                                    className="h-8 text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg px-2.5 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="h-8 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg px-2.5 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <X className="w-3.5 h-3.5" />
                                     {labels.clear_range ?? "Clear"}
                                 </button>
                                 {daysDiff && (
-                                    <span className="text-xs text-neutral-500 dark:text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
+                                    <span className="text-xs text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
                                         {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
                                     </span>
                                 )}
@@ -872,6 +914,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                             </div>
                         )}
                     </div>
+                    {showInputs && !panelBefore && inputsPanel}
                 </div>
             </div>
         )

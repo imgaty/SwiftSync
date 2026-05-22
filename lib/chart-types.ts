@@ -55,4 +55,5 @@ export interface ChartContextValue {
     chartConfig: ChartConfig
     labels: Record<string, string>
     locale: string
+    currency: string
 }

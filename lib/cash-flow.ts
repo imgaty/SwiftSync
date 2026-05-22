@@ -3,12 +3,6 @@
  * Projects future balance based on recurring transactions, bills, and historical patterns.
  */
 
-interface RecurringItem {
-  amount: number
-  frequency: "weekly" | "monthly" | "yearly"
-  type: "in" | "out"
-}
-
 interface CashFlowProjection {
   date: string        // YYYY-MM-DD
   projected: number   // Projected balance

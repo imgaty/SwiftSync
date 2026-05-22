@@ -1,15 +1,24 @@
 import { NextResponse } from "next/server"
-import { getAuthUserId } from "@/lib/auth-helpers"
-import type { FinanceData } from "@/lib/types"
-import { readFile } from "fs/promises"
-import { join } from "path"
+import { getAuthContext } from "@/lib/auth-helpers"
+import { scopeFilter, requirePermission } from "@/lib/data-access"
+import { prisma } from "@/lib/prisma"
 
-// GET /api/export?type=csv|json&entity=transactions|bills|budgets|accounts|all
+function csvCell(value: unknown): string {
+  const val = String(value ?? "")
+  const safe = /^[=+\-@]/.test(val) ? `'${val}` : val
+  return safe.includes(",") || safe.includes('"') || safe.includes("\n")
+    ? `"${safe.replace(/"/g, '""')}"`
+    : safe
+}
+
+// GET /api/export?format=csv|json&entity=transactions|bills|budgets|accounts|all
 export async function GET(request: Request) {
-  const userId = await getAuthUserId()
-  if (!userId) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const permissionError = await requirePermission(ctx, "data:export")
+  if (permissionError) return permissionError
 
   const { searchParams } = new URL(request.url)
   const format = searchParams.get("format") || "csv"
@@ -18,23 +27,29 @@ export async function GET(request: Request) {
   const endDate = searchParams.get("end")
 
   try {
-    const dataPath = join(process.cwd(), "public", "data.json")
-    const raw = await readFile(dataPath, "utf-8")
-    const data: FinanceData = JSON.parse(raw)
+    const where = scopeFilter(ctx)
 
     let exportData: Record<string, unknown>[]
     let filename: string
 
     switch (entity) {
       case "transactions": {
-        let txns = data.transactions
-        if (startDate) txns = txns.filter((t) => t.date >= startDate)
-        if (endDate) txns = txns.filter((t) => t.date <= endDate)
+        const dateFilter: { gte?: Date; lte?: Date } = {}
+        if (startDate) dateFilter.gte = new Date(startDate)
+        if (endDate) dateFilter.lte = new Date(endDate)
+
+        const txns = await prisma.transaction.findMany({
+          where: {
+            ...where,
+            ...(startDate || endDate ? { date: dateFilter } : {}),
+          },
+          orderBy: { date: "desc" },
+        })
         exportData = txns.map((t) => ({
-          Date: t.date,
+          Date: t.date.toISOString().slice(0, 10),
           Description: t.description,
           Type: t.type === "in" ? "Income" : "Expense",
-          Amount: t.amount.toFixed(2),
+          Amount: Number(t.amount).toFixed(2),
           Tags: t.tags.join(", "),
           Account: t.accountId,
         }))
@@ -42,9 +57,10 @@ export async function GET(request: Request) {
         break
       }
       case "bills": {
-        exportData = data.bills.map((b) => ({
+        const bills = await prisma.bill.findMany({ where })
+        exportData = bills.map((b) => ({
           Name: b.name,
-          Amount: b.amount.toFixed(2),
+          Amount: Number(b.amount).toFixed(2),
           "Due Day": b.dueDay,
           Frequency: b.frequency,
           Category: b.category,
@@ -54,43 +70,71 @@ export async function GET(request: Request) {
         break
       }
       case "budgets": {
-        exportData = data.budgets.map((b) => ({
-          Category: b.category,
-          Tag: b.tag,
-          "Budget Limit": b.limit.toFixed(2),
-          "Spent Amount": b.spentAmount.toFixed(2),
-          Remaining: (b.limit - b.spentAmount).toFixed(2),
-          "% Used": ((b.spentAmount / b.limit) * 100).toFixed(1) + "%",
-        }))
+        const [budgets, txns] = await Promise.all([
+          prisma.budget.findMany({ where }),
+          prisma.transaction.findMany({ where, select: { tags: true, amount: true, type: true } }),
+        ])
+        exportData = budgets.map((b) => {
+          const spent = txns
+            .filter((t) => t.type === "out" && t.tags.includes(b.tag))
+            .reduce((s, t) => s + Number(t.amount), 0)
+          const limit = Number(b.limit)
+          return {
+            Category: b.category,
+            Tag: b.tag,
+            "Budget Limit": limit.toFixed(2),
+            "Spent Amount": spent.toFixed(2),
+            Remaining: (limit - spent).toFixed(2),
+            "% Used": limit > 0 ? ((spent / limit) * 100).toFixed(1) + "%" : "0%",
+          }
+        })
         filename = `swift_budgets_${new Date().toISOString().slice(0, 10)}`
         break
       }
       case "accounts": {
-        exportData = data.accounts.map((a) => ({
-          Name: a.name,
-          Type: a.type,
-          Institution: a.institution,
-          Balance: a.balance.toFixed(2),
-          "Total In": a.totalIn.toFixed(2),
-          "Total Out": a.totalOut.toFixed(2),
-          Transactions: a.transactionCount,
-        }))
+        const accounts = await prisma.bankAccount.findMany({
+          where,
+          include: { bank: true },
+        })
+        const txns = await prisma.transaction.findMany({
+          where,
+          select: { accountId: true, amount: true, type: true },
+        })
+        exportData = accounts.map((a) => {
+          const accTxns = txns.filter((t) => t.accountId === a.id)
+          const totalIn = accTxns.filter((t) => t.type === "in").reduce((s, t) => s + Number(t.amount), 0)
+          const totalOut = accTxns.filter((t) => t.type === "out").reduce((s, t) => s + Number(t.amount), 0)
+          return {
+            Name: a.cardName,
+            Type: a.accountType,
+            Institution: a.bank.name,
+            Balance: Number(a.balance).toFixed(2),
+            "Total In": totalIn.toFixed(2),
+            "Total Out": totalOut.toFixed(2),
+            Transactions: accTxns.length,
+          }
+        })
         filename = `swift_accounts_${new Date().toISOString().slice(0, 10)}`
         break
       }
       default: {
         // Export all — summary report
-        const totalBalance = data.accounts.reduce((s, a) => s + a.balance, 0)
-        const totalIncome = data.transactions.filter((t) => t.type === "in").reduce((s, t) => s + t.amount, 0)
-        const totalExpenses = data.transactions.filter((t) => t.type === "out").reduce((s, t) => s + t.amount, 0)
+        const [accounts, txns, bills] = await Promise.all([
+          prisma.bankAccount.findMany({ where, select: { balance: true } }),
+          prisma.transaction.findMany({ where, select: { type: true, amount: true } }),
+          prisma.bill.count({ where }),
+        ])
+        const totalBalance = accounts.reduce((s, a) => s + Number(a.balance), 0)
+        const totalIncome = txns.filter((t) => t.type === "in").reduce((s, t) => s + Number(t.amount), 0)
+        const totalExpenses = txns.filter((t) => t.type === "out").reduce((s, t) => s + Number(t.amount), 0)
         exportData = [
           { Metric: "Total Balance", Value: totalBalance.toFixed(2) },
           { Metric: "Total Income", Value: totalIncome.toFixed(2) },
           { Metric: "Total Expenses", Value: totalExpenses.toFixed(2) },
           { Metric: "Net", Value: (totalIncome - totalExpenses).toFixed(2) },
-          { Metric: "Total Accounts", Value: String(data.accounts.length) },
-          { Metric: "Total Transactions", Value: String(data.transactions.length) },
-          { Metric: "Total Bills", Value: String(data.bills.length) },
+          { Metric: "Total Accounts", Value: String(accounts.length) },
+          { Metric: "Total Transactions", Value: String(txns.length) },
+          { Metric: "Total Bills", Value: String(bills) },
           { Metric: "Report Date", Value: new Date().toISOString().slice(0, 10) },
         ]
         filename = `swift_report_${new Date().toISOString().slice(0, 10)}`
@@ -117,13 +161,7 @@ export async function GET(request: Request) {
       headers.join(","),
       ...exportData.map((row) =>
         headers
-          .map((h) => {
-            const val = String(row[h] ?? "")
-            // Escape commas and quotes in CSV
-            return val.includes(",") || val.includes('"')
-              ? `"${val.replace(/"/g, '""')}"`
-              : val
-          })
+          .map((h) => csvCell(row[h]))
           .join(",")
       ),
     ]

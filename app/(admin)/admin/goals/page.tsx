@@ -3,19 +3,31 @@
 import * as React from "react"
 import Link from "next/link"
 import {
-    Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    ArrowUpDown, RefreshCw, Filter, Target, CheckCircle, XCircle,
+    RefreshCw, Filter, Target, CheckCircle, XCircle,
 } from "lucide-react"
 
 import { AdminHeader } from "@/components/admin/admin-header"
+import { useLanguage } from "@/components/language-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableEmptyRow,
+    TableHead,
+    TableHeader,
+    TablePaginationBar,
+    TableRow,
+    TableSearchControl,
+    TableSkeletonRows,
+    TableSortHeader,
+    TableToolbar,
+    TableToolbarGroup,
+    UniversalTable,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
@@ -27,21 +39,28 @@ interface Goal {
     user: { id: string; name: string; email: string }
 }
 interface Pagination { page: number; limit: number; total: number; totalPages: number }
+type AdminCopy = Record<string, string | undefined> & {
+    goals_page?: Record<string, string>
+}
 
 function formatCurrency(v: number) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(v)
 }
 
-function goalStatusBadge(status: string) {
+function goalStatusBadge(status: string, labels: Record<string, string>) {
     switch (status) {
-        case "active": return <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs"><Target className="size-3" />Active</Badge>
-        case "completed": return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs"><CheckCircle className="size-3" />Done</Badge>
-        case "cancelled": return <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-500 text-xs"><XCircle className="size-3" />Cancelled</Badge>
+        case "active": return <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs"><Target className="size-3" />{labels.active || "Active"}</Badge>
+        case "completed": return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs"><CheckCircle className="size-3" />{labels.done || "Done"}</Badge>
+        case "cancelled": return <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-400 text-xs"><XCircle className="size-3" />{labels.cancelled || "Cancelled"}</Badge>
         default: return <Badge variant="outline" className="text-xs capitalize">{status}</Badge>
     }
 }
 
 export default function AdminGoalsPage() {
+    const { t } = useLanguage()
+    const ad = ((t as { admin?: AdminCopy }).admin || {}) as AdminCopy
+    const gp = ad.goals_page || {}
+
     const [data, setData] = React.useState<Goal[]>([])
     const [pagination, setPagination] = React.useState<Pagination>({ page: 1, limit: 20, total: 0, totalPages: 0 })
     const [summary, setSummary] = React.useState({ totalTarget: 0, totalCurrent: 0 })
@@ -72,9 +91,9 @@ export default function AdminGoalsPage() {
             const json = await res.json()
             setData(json.goals); setPagination(json.pagination)
             setSummary({ totalTarget: Number(json.summary.totalTarget), totalCurrent: Number(json.summary.totalCurrent) })
-        } catch { toast.error("Failed to load goals") }
+        } catch { toast.error(gp.failed_load || "Failed to load goals") }
         finally { setLoading(false) }
-    }, [debouncedSearch, statusFilter, sortBy, sortDir])
+    }, [debouncedSearch, statusFilter, sortBy, sortDir, gp.failed_load])
 
     React.useEffect(() => { fetchData(1) }, [fetchData])
 
@@ -82,67 +101,105 @@ export default function AdminGoalsPage() {
         if (sortBy === f) setSortDir(d => d === "asc" ? "desc" : "asc")
         else { setSortBy(f); setSortDir("desc") }
     }
-    const SortIcon = ({ field }: { field: string }) => (
-        <ArrowUpDown className={`ml-1 inline size-3 ${sortBy === field ? "text-blue-500" : "text-neutral-400"}`} />
+    const sortDirection = (field: string) => sortBy === field ? sortDir : undefined
+
+    const toolbar = (
+        <TableToolbar>
+            <TableToolbarGroup>
+                <TableSearchControl
+                    value={search}
+                    onValueChange={setSearch}
+                    placeholder={gp.search_placeholder || "Search goals..."}
+                    width={280}
+                />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[140px]" size="sm">
+                        <Filter className="size-4" />
+                        <SelectValue placeholder={gp.status || "Status"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{gp.all_status || "All Status"}</SelectItem>
+                        <SelectItem value="active">{gp.active || "Active"}</SelectItem>
+                        <SelectItem value="completed">{gp.completed || "Completed"}</SelectItem>
+                        <SelectItem value="cancelled">{gp.cancelled || "Cancelled"}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </TableToolbarGroup>
+        </TableToolbar>
     )
 
     return (
         <>
-            <AdminHeader title="Goals" breadcrumbs={[{ label: "Goals" }]}
-                actions={<Button variant="outline" size="sm" onClick={() => fetchData(pagination.page)} disabled={loading}><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>}
+            <AdminHeader title={ad.goals || "Goals"} breadcrumbs={[{ label: ad.goals || "Goals" }]}
+                actions={<Button variant="glass" size="sm" onClick={() => fetchData(pagination.page)} disabled={loading}><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> {ad.refresh || "Refresh"}</Button>}
             />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="grid grid-cols-3 gap-3">
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-500 flex items-center gap-1"><Target className="size-3" /> Total Goals</p>
+                        <p className="text-xs text-neutral-400 flex items-center gap-1"><Target className="size-3" /> {gp.total_goals || "Total Goals"}</p>
                         <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : pagination.total}</p>
                     </div>
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-500">Target Total</p>
+                        <p className="text-xs text-neutral-400">{gp.target_total || "Target Total"}</p>
                         <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(summary.totalTarget)}</p>
                     </div>
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-500">Saved So Far</p>
+                        <p className="text-xs text-neutral-400">{gp.saved_so_far || "Saved So Far"}</p>
                         <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(summary.totalCurrent)}</p>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative flex-1 min-w-[200px] max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
-                        <Input label="Search" placeholder="Search goals..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-                    </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[130px]" size="sm"><Filter className="size-4" /><SelectValue placeholder="Status" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {loading ? <TableSkeleton /> : data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 dark:border-white/10 p-12 text-center">
-                        <p className="text-lg font-medium text-neutral-600 dark:text-neutral-400">No goals found</p>
-                    </div>
-                ) : (
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+                <UniversalTable
+                    toolbar={toolbar}
+                    maxHeight="calc(100vh - 20rem)"
+                    footer={!loading && pagination.totalPages > 1 ? (
+                        <TablePaginationBar
+                            page={pagination.page}
+                            totalPages={pagination.totalPages}
+                            pageSize={pagination.limit}
+                            total={pagination.total}
+                            label={ad.showing_range || "Showing"}
+                            onFirst={() => fetchData(1)}
+                            onPrevious={() => fetchData(pagination.page - 1)}
+                            onNext={() => fetchData(pagination.page + 1)}
+                            onLast={() => fetchData(pagination.totalPages)}
+                        />
+                    ) : undefined}
+                >
                         <Table>
-                            <TableHeader className="bg-black/3 dark:bg-white/3">
+                            <TableHeader>
                                 <TableRow>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("name")}>Name <SortIcon field="name" /></TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Owner</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Progress</TableHead>
-                                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort("targetAmount")}>Target <SortIcon field="targetAmount" /></TableHead>
-                                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("deadline")}>Deadline <SortIcon field="deadline" /></TableHead>
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("name")} onClick={() => toggleSort("name")}>
+                                            {gp.col_name || "Name"}
+                                        </TableSortHeader>
+                                    </TableHead>
+                                    <TableHead>{gp.col_category || "Category"}</TableHead>
+                                    <TableHead>{gp.col_owner || "Owner"}</TableHead>
+                                    <TableHead>{gp.col_status || "Status"}</TableHead>
+                                    <TableHead>{gp.col_progress || "Progress"}</TableHead>
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("targetAmount")} onClick={() => toggleSort("targetAmount")} align="right">
+                                            {gp.col_target || "Target"}
+                                        </TableSortHeader>
+                                    </TableHead>
+                                    <TableHead>
+                                        <TableSortHeader direction={sortDirection("deadline")} onClick={() => toggleSort("deadline")}>
+                                            {gp.col_deadline || "Deadline"}
+                                        </TableSortHeader>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {data.map(g => {
+                                {loading ? (
+                                    <TableSkeletonRows rows={8} columns={7} widths={[144, 92, 128, 92, 132, 104, 96]} />
+                                ) : data.length === 0 ? (
+                                    <TableEmptyRow
+                                        colSpan={7}
+                                        title={gp.no_goals || "No goals found"}
+                                        description={gp.no_goals_hint || "Try changing the search or status filter."}
+                                    />
+                                ) : data.map(g => {
                                     const pct = Number(g.targetAmount) > 0 ? Math.min(100, Math.round((Number(g.currentAmount) / Number(g.targetAmount)) * 100)) : 0
                                     return (
                                         <TableRow key={g.id}>
@@ -151,57 +208,24 @@ export default function AdminGoalsPage() {
                                             <TableCell>
                                                 <Link href={`/admin/users/${g.user.id}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">{g.user.name}</Link>
                                             </TableCell>
-                                            <TableCell>{goalStatusBadge(g.status)}</TableCell>
+                                            <TableCell>{goalStatusBadge(g.status, gp)}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <div className="h-2 w-20 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
                                                         <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
                                                     </div>
-                                                    <span className="text-xs text-neutral-500">{pct}%</span>
+                                                    <span className="text-xs text-neutral-400">{pct}%</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right font-mono text-sm">{formatCurrency(Number(g.targetAmount))}</TableCell>
-                                            <TableCell className="text-sm text-neutral-500">{g.deadline ? new Date(g.deadline).toLocaleDateString() : "—"}</TableCell>
+                                            <TableCell className="text-sm text-neutral-400">{g.deadline ? new Date(g.deadline).toLocaleDateString() : "—"}</TableCell>
                                         </TableRow>
                                     )
                                 })}
                             </TableBody>
                         </Table>
-                    </div>
-                )}
-
-                {!loading && pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-neutral-500 hidden lg:block">Showing {(pagination.page - 1) * pagination.limit + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}</p>
-                        <div className="flex items-center gap-1 ml-auto">
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page <= 1} onClick={() => fetchData(1)}><ChevronsLeft className="size-4" /></Button>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page <= 1} onClick={() => fetchData(pagination.page - 1)}><ChevronLeft className="size-4" /></Button>
-                            <span className="px-3 text-sm text-neutral-600 dark:text-neutral-400">{pagination.page} / {pagination.totalPages}</span>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page >= pagination.totalPages} onClick={() => fetchData(pagination.page + 1)}><ChevronRight className="size-4" /></Button>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page >= pagination.totalPages} onClick={() => fetchData(pagination.totalPages)}><ChevronsRight className="size-4" /></Button>
-                        </div>
-                    </div>
-                )}
+                </UniversalTable>
             </div>
         </>
-    )
-}
-
-function TableSkeleton() {
-    return (
-        <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
-            <Table>
-                <TableHeader className="bg-black/3 dark:bg-white/3">
-                    <TableRow>{["Name","Category","Owner","Status","Progress","Target","Deadline"].map((h,i) => <TableHead key={i}>{h}</TableHead>)}</TableRow>
-                </TableHeader>
-                <TableBody>
-                    {[...Array(8)].map((_,i) => (
-                        <TableRow key={i}>
-                            {[28,16,24,16,24,20,20].map((w,j) => <TableCell key={j}><Skeleton className="h-4" style={{width: w*4}} /></TableCell>)}
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
     )
 }

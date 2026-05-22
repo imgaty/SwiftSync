@@ -3,19 +3,31 @@
 import * as React from "react"
 import Link from "next/link"
 import {
-    Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     RefreshCw, Filter, ScrollText, Shield,
 } from "lucide-react"
 
 import { AdminHeader } from "@/components/admin/admin-header"
+import { useLanguage } from "@/components/language-provider"
+import { PRISM } from "@/lib/PRISM"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableEmptyRow,
+    TableHead,
+    TableHeader,
+    TablePaginationBar,
+    TableRow,
+    TableSearchControl,
+    TableSkeletonRows,
+    TableToolbar,
+    TableToolbarGroup,
+    UniversalTable,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
@@ -27,10 +39,13 @@ interface AuditEntry {
     targetUser: { id: string; name: string; email: string } | null
 }
 interface Pagination { page: number; limit: number; total: number; totalPages: number }
+type AdminCopy = Record<string, string | undefined> & {
+    audit_page?: Record<string, string>
+}
 
 function actionBadge(action: string) {
     const color = action.includes("ban") || action.includes("delete")
-        ? "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
+        ? PRISM.destructiveBadge
         : action.includes("suspend")
             ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
             : action.includes("create")
@@ -47,20 +62,24 @@ function parseDetails(details: string | null): string {
     } catch { return details }
 }
 
-function timeAgo(dateStr: string) {
+function timeAgo(dateStr: string, ad: Record<string, string | undefined> = {}) {
     const d = new Date(dateStr)
     const diff = Date.now() - d.getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 1) return "Just now"
-    if (mins < 60) return `${mins}m ago`
+    if (mins < 1) return ad.just_now || "Just now"
+    if (mins < 60) return `${mins}${ad.m_ago || "m ago"}`
     const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours}h ago`
+    if (hours < 24) return `${hours}${ad.h_ago || "h ago"}`
     const days = Math.floor(hours / 24)
-    if (days < 30) return `${days}d ago`
+    if (days < 30) return `${days}${ad.d_ago || "d ago"}`
     return d.toLocaleDateString()
 }
 
 export default function AdminAuditLogPage() {
+    const { t } = useLanguage()
+    const ad = ((t as { admin?: AdminCopy }).admin || {}) as AdminCopy
+    const al = ad.audit_page || {}
+
     const [data, setData] = React.useState<AuditEntry[]>([])
     const [pagination, setPagination] = React.useState<Pagination>({ page: 1, limit: 30, total: 0, totalPages: 0 })
     const [loading, setLoading] = React.useState(true)
@@ -86,65 +105,92 @@ export default function AdminAuditLogPage() {
             if (!res.ok) throw new Error()
             const json = await res.json()
             setData(json.logs); setPagination(json.pagination)
-        } catch { toast.error("Failed to load audit log") }
+        } catch { toast.error(al.failed_load || "Failed to load audit log") }
         finally { setLoading(false) }
-    }, [debouncedAction, entityFilter])
+    }, [debouncedAction, entityFilter, al.failed_load])
 
     React.useEffect(() => { fetchData(1) }, [fetchData])
 
+    const toolbar = (
+        <TableToolbar>
+            <TableToolbarGroup>
+                <TableSearchControl
+                    value={actionFilter}
+                    onValueChange={setActionFilter}
+                    placeholder={al.filter_placeholder || "Filter by action (e.g. user.suspend)..."}
+                    width={320}
+                />
+                <Select value={entityFilter} onValueChange={setEntityFilter}>
+                    <SelectTrigger className="w-[145px]" size="sm">
+                        <Filter className="size-4" />
+                        <SelectValue placeholder={al.entity || "Entity"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">{al.all_entities || "All Entities"}</SelectItem>
+                        <SelectItem value="user">{al.user || "User"}</SelectItem>
+                        <SelectItem value="announcement">{al.announcement || "Announcement"}</SelectItem>
+                        <SelectItem value="system">{al.system_entity || "System"}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </TableToolbarGroup>
+        </TableToolbar>
+    )
+
     return (
         <>
-            <AdminHeader title="Audit Log" breadcrumbs={[{ label: "Audit Log" }]}
-                actions={<Button variant="outline" size="sm" onClick={() => fetchData(pagination.page)} disabled={loading}><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>}
+            <AdminHeader title={al.title || "Audit Log"} breadcrumbs={[{ label: al.title || "Audit Log" }]}
+                actions={<Button variant="glass" size="sm" onClick={() => fetchData(pagination.page)} disabled={loading}><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> {ad.refresh || "Refresh"}</Button>}
             />
 
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3 flex items-center gap-3">
-                    <ScrollText className="size-5 text-neutral-500" />
+                    <ScrollText className="size-5 text-neutral-400" />
                     <div>
-                        <p className="text-sm font-medium">Total Entries</p>
+                        <p className="text-sm font-medium">{al.total_entries || "Total Entries"}</p>
                         <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : pagination.total.toLocaleString()}</p>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative flex-1 min-w-[200px] max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
-                        <Input label="Filter action" placeholder="Filter by action (e.g. user.suspend)..." value={actionFilter} onChange={e => setActionFilter(e.target.value)} className="pl-9" />
-                    </div>
-                    <Select value={entityFilter} onValueChange={setEntityFilter}>
-                        <SelectTrigger className="w-[130px]" size="sm"><Filter className="size-4" /><SelectValue placeholder="Entity" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Entities</SelectItem>
-                            <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="announcement">Announcement</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {loading ? <AuditSkeleton /> : data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 dark:border-white/10 p-12 text-center">
-                        <ScrollText className="size-12 text-neutral-300 dark:text-neutral-600 mb-3" />
-                        <p className="text-lg font-medium text-neutral-600 dark:text-neutral-400">No audit entries</p>
-                    </div>
-                ) : (
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+                <UniversalTable
+                    toolbar={toolbar}
+                    maxHeight="calc(100vh - 18rem)"
+                    footer={!loading && pagination.totalPages > 1 ? (
+                        <TablePaginationBar
+                            page={pagination.page}
+                            totalPages={pagination.totalPages}
+                            pageSize={pagination.limit}
+                            total={pagination.total}
+                            label={ad.showing_range || "Showing"}
+                            onFirst={() => fetchData(1)}
+                            onPrevious={() => fetchData(pagination.page - 1)}
+                            onNext={() => fetchData(pagination.page + 1)}
+                            onLast={() => fetchData(pagination.totalPages)}
+                        />
+                    ) : undefined}
+                >
                         <Table>
-                            <TableHeader className="bg-black/3 dark:bg-white/3">
+                            <TableHeader>
                                 <TableRow>
-                                    <TableHead>When</TableHead>
-                                    <TableHead>Action</TableHead>
-                                    <TableHead>Performed By</TableHead>
-                                    <TableHead>Target User</TableHead>
-                                    <TableHead>Details</TableHead>
-                                    <TableHead>IP</TableHead>
+                                    <TableHead>{al.col_when || "When"}</TableHead>
+                                    <TableHead>{al.col_action || "Action"}</TableHead>
+                                    <TableHead>{al.col_performed_by || "Performed By"}</TableHead>
+                                    <TableHead>{al.col_target_user || "Target User"}</TableHead>
+                                    <TableHead>{al.col_details || "Details"}</TableHead>
+                                    <TableHead>{al.col_ip || "IP"}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {data.map(entry => (
+                                {loading ? (
+                                    <TableSkeletonRows rows={10} columns={6} widths={[88, 132, 144, 128, 180, 92]} />
+                                ) : data.length === 0 ? (
+                                    <TableEmptyRow
+                                        colSpan={6}
+                                        title={al.no_entries || "No audit entries"}
+                                        description={al.no_entries_hint || "Audit events will appear here after admin actions."}
+                                    />
+                                ) : data.map(entry => (
                                     <TableRow key={entry.id}>
-                                        <TableCell className="text-sm text-neutral-500 whitespace-nowrap">{timeAgo(entry.createdAt)}</TableCell>
+                                        <TableCell className="text-sm text-neutral-400 whitespace-nowrap">{timeAgo(entry.createdAt, ad)}</TableCell>
                                         <TableCell>{actionBadge(entry.action)}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
@@ -154,50 +200,17 @@ export default function AdminAuditLogPage() {
                                         </TableCell>
                                         <TableCell>
                                             {entry.targetUser ? (
-                                                <Link href={`/admin/users/${entry.targetUser.id}`} className="text-sm text-neutral-600 dark:text-neutral-400 hover:underline">{entry.targetUser.name}</Link>
+                                                <Link href={`/admin/users/${entry.targetUser.id}`} className="text-sm text-neutral-400 hover:underline">{entry.targetUser.name}</Link>
                                             ) : <span className="text-xs text-neutral-400">—</span>}
                                         </TableCell>
-                                        <TableCell className="max-w-[200px] truncate text-xs text-neutral-500">{parseDetails(entry.details)}</TableCell>
+                                        <TableCell className="max-w-[200px] truncate text-xs text-neutral-400">{parseDetails(entry.details)}</TableCell>
                                         <TableCell className="text-xs text-neutral-400 font-mono">{entry.ipAddress || "—"}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
-                    </div>
-                )}
-
-                {!loading && pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-neutral-500 hidden lg:block">Page {pagination.page} of {pagination.totalPages} ({pagination.total} entries)</p>
-                        <div className="flex items-center gap-1 ml-auto">
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page <= 1} onClick={() => fetchData(1)}><ChevronsLeft className="size-4" /></Button>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page <= 1} onClick={() => fetchData(pagination.page - 1)}><ChevronLeft className="size-4" /></Button>
-                            <span className="px-3 text-sm text-neutral-600 dark:text-neutral-400">{pagination.page} / {pagination.totalPages}</span>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page >= pagination.totalPages} onClick={() => fetchData(pagination.page + 1)}><ChevronRight className="size-4" /></Button>
-                            <Button variant="outline" size="icon" className="size-8" disabled={pagination.page >= pagination.totalPages} onClick={() => fetchData(pagination.totalPages)}><ChevronsRight className="size-4" /></Button>
-                        </div>
-                    </div>
-                )}
+                </UniversalTable>
             </div>
         </>
-    )
-}
-
-function AuditSkeleton() {
-    return (
-        <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
-            <Table>
-                <TableHeader className="bg-black/3 dark:bg-white/3">
-                    <TableRow>{["When","Action","Performed By","Target","Details","IP"].map((h,i) => <TableHead key={i}>{h}</TableHead>)}</TableRow>
-                </TableHeader>
-                <TableBody>
-                    {[...Array(10)].map((_,i) => (
-                        <TableRow key={i}>
-                            {[16,24,24,20,32,16].map((w,j) => <TableCell key={j}><Skeleton className="h-4" style={{width: w*4}} /></TableCell>)}
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
     )
 }

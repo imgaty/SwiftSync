@@ -50,7 +50,6 @@ import {
     getFacetedRowModel,
     getFacetedUniqueValues,
     getFilteredRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
     Row,
     SortingState,
@@ -63,6 +62,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useLanguage } from "@/components/language-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -88,11 +88,11 @@ import {
 import {
     Dropdown,
     DropdownCheckboxItem,
-    DropdownShell,
+    DropdownContent,
     DropdownItem,
     DropdownSeparator,
     DropdownTrigger,
-} from "@/components/ui/app-dropdown"
+} from "@/components/ui/dropdown"
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -148,14 +148,15 @@ function DragHandle({ id }: { id: number }) {
       {...listeners}
       variant = "ghost"
       size = "icon"
-      className = "text-neutral-500 dark:text-neutral-400 size-7 hover:bg-transparent cursor-grab active:cursor-grabbing"
+      className = "text-neutral-400 size-7 hover:bg-transparent cursor-grab active:cursor-grabbing"
     >
-      <GripVertical className = "text-neutral-500 dark:text-neutral-400 size-3" />
+      <GripVertical className = "text-neutral-400 size-3" />
     </Button>
   )
 }
 
-const columns: ColumnDef<z.infer<typeof schema>>[] = [
+function getColumns(dt: Record<string, string>): ColumnDef<z.infer<typeof schema>>[] {
+  return [
     {
         id: "drag",
         header: ()  => null,
@@ -171,7 +172,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
                         (table.getIsSomePageRowsSelected() && "indeterminate")
                     }
                     onCheckedChange = {(value)  => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label = "Selecionar todos"
+                    aria-label = {dt.select_all || "Select all"}
                 />
             </div>
         ),
@@ -181,7 +182,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
                 <Checkbox
                     checked = {row.getIsSelected()}
                     onCheckedChange = {(value)  => row.toggleSelected(!!value)}
-                    aria-label = "Selecionar linha"
+                    aria-label = {dt.select_row || "Select row"}
                 />
             </div>
         ),
@@ -191,7 +192,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     },
     {
         accessorKey: "service",
-        header: "Serviço",
+        header: dt.service || "Service",
 
         cell: ({ row })  => {
             return <TableCellViewer item = {row.original} />
@@ -201,10 +202,10 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     },
     {
         accessorKey: "status",
-        header: "Estado",
+        header: dt.status || "Status",
 
         cell: ({ row })  => (
-            <Badge variant = "outline" className = "px-1.5 | text-neutral-500 dark:text-neutral-400">
+            <Badge variant = "outline" className = "px-1.5 | text-neutral-400">
                 {row.original.status == "Done" ? (
                     <CircleCheck className = "fill-green-500 dark:fill-green-400 text-white" />
                 ) : (
@@ -217,27 +218,27 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     {
         accessorKey: "nextInstant",
 
-        header: ()  => <div className = "w-full | text-right">Próximo instante</div>,
+        header: ()  => <div className = "w-full | text-right">{dt.next_due || "Next due"}</div>,
         cell: ({ row })  => (
             <form
                 onSubmit = {(e)  => {
                     e.preventDefault()
                     
                     toast.promise(new Promise((resolve)  => setTimeout(resolve, 1000)), {
-                        loading: `Guardando ${row.original.header}`,
-                        success: "Guardado",
-                        error: "Erro",
+                        loading: `${dt.saving || "Saving"} ${row.original.header}`,
+                        success: dt.saved || "Saved",
+                        error: dt.error || "Error",
                     })
                 }}
 
                 className = "flex justify-end"
             >
                 <Label htmlFor = {`${row.original.id}-target`} className = "sr-only">
-                    Próximo instante
+                    {dt.next_due || "Next due"}
                 </Label>
 
                 <Input
-                    label="Target"
+                    label={dt.target || "Target"}
                     id = {`${row.original.id}-target`}
                     className = "w-16 h-8 | bg-transparent focus-visible:bg-background hover:bg-input/30 dark:bg-transparent dark:focus-visible:bg-input/30 dark:hover:bg-input/30 | border-transparent focus-visible:border | text-right shadow-none"
                     defaultValue = {row.original.target}
@@ -248,27 +249,27 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     {
         accessorKey: "value",
 
-        header: ()  => <div className = "w-full text-right">Valor</div>,
+        header: ()  => <div className = "w-full text-right">{dt.value || "Value"}</div>,
         cell: ({ row })  => (
             <form
                 onSubmit = {(e)  => {
                     e.preventDefault()
 
                     toast.promise(new Promise((resolve)  => setTimeout(resolve, 1000)), {
-                        loading: `Saving ${row.original.header}`,
-                        success: "Done",
-                        error: "Error",
+                        loading: `${dt.saving || "Saving"} ${row.original.header}`,
+                        success: dt.saved || "Saved",
+                        error: dt.error || "Error",
                     })
                 }}
 
                 className = "flex justify-end"
             >
                 <Label htmlFor = {`${row.original.id}-limit`} className = "sr-only">
-                    Valor
+                    {dt.value || "Value"}
                 </Label>
 
                 <Input
-                    label="Valor"
+                    label={dt.value || "Value"}
                     id = {`${row.original.id}-limit`}
                     className = "w-16 h-8 | bg-transparent focus-visible:bg-background hover:bg-input/30 dark:bg-transparent dark:focus-visible:bg-input/30 dark:hover:bg-input/30 | border-transparent focus-visible:border | text-right shadow-none"
                     defaultValue = {row.original.limit}
@@ -279,27 +280,27 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     {
         accessorKey: "accumulative",
 
-        header: ()  => <div className = "w-full text-right">Acumulante</div>,
+        header: ()  => <div className = "w-full text-right">{dt.cumulative || "Cumulative"}</div>,
         cell: ({ row })  => (
             <form
                 onSubmit = {(e)  => {
                     e.preventDefault()
 
                     toast.promise(new Promise((resolve)  => setTimeout(resolve, 1000)), {
-                        loading: `Saving ${row.original.header}`,
-                        success: "Done",
-                        error: "Error",
+                        loading: `${dt.saving || "Saving"} ${row.original.header}`,
+                        success: dt.saved || "Saved",
+                        error: dt.error || "Error",
                     })
                 }}
 
                 className = "flex justify-end"
             >
                 <Label htmlFor = {`${row.original.id}-limit`} className = "sr-only">
-                    Acumulante
+                    {dt.cumulative || "Cumulative"}
                 </Label>
 
                 <Input
-                    label="Acumulante"
+                    label={dt.cumulative || "Cumulative"}
                     id = {`${row.original.id}-limit`}
                     className = "w-16 h-8 | bg-transparent focus-visible:bg-background hover:bg-input/30 dark:bg-transparent dark:focus-visible:bg-input/30 dark:hover:bg-input/30 | border-transparent focus-visible:border | text-right shadow-none"
                     defaultValue = {row.original.limit}
@@ -309,11 +310,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     },
     {
         accessorKey: "vat",
-        header: "IVA",
+        header: dt.vat || "VAT",
 
         cell: ({ row })  => (
             <div className = "w-32">
-                <Badge variant = "outline" className = "text-neutral-500 dark:text-neutral-400 px-1.5">
+                <Badge variant = "outline" className = "text-neutral-400 px-1.5">
                     {row.original.type}
                 </Badge>
             </div>
@@ -365,38 +366,39 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
                     <DropdownTrigger asChild>
                         <Button
                             variant = "ghost"
-                            className = "data-[state = open]:bg-black/5 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 flex size-8"
+                            className = "data-[state = open]:bg-black/5 dark:bg-white/5 text-neutral-400 flex size-8"
                             size = "icon"
                         >
                             <EllipsisVertical />
-                            <span className = "sr-only">Expandir</span>
+                            <span className = "sr-only">{dt.expand || "Expand"}</span>
                         </Button>
                     </DropdownTrigger>
                 </SmartTooltip>
 
-                <DropdownShell align = "end" className = "w-32">
+                <DropdownContent align = "end" className = "w-32">
                     <DropdownItem>
-                        <ArrowUpToLine /> Afixar
+                        <ArrowUpToLine /> {dt.pin || "Pin"}
                     </DropdownItem>
 
                     <DropdownSeparator />
 
                     <DropdownItem>
-                        <Pencil /> Editar
+                        <Pencil /> {dt.edit || "Edit"}
                     </DropdownItem>
                     <DropdownItem>
-                        <Copy /> Duplicar
+                        <Copy /> {dt.duplicate || "Duplicate"}
                     </DropdownItem>
 
                     <DropdownSeparator />
 
-                    <DropdownItem variant = "destructive"><Clock />Timeout</DropdownItem>
-                    <DropdownItem variant = "destructive"><Delete />Eliminar</DropdownItem>
-                </DropdownShell>
+                    <DropdownItem variant = "destructive"><Clock />{dt.timeout || "Timeout"}</DropdownItem>
+                    <DropdownItem variant = "destructive"><Delete />{dt.delete || "Delete"}</DropdownItem>
+                </DropdownContent>
             </Dropdown>
         ),
     },
-]
+  ]
+}
 
 function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
     const { transform, transition, setNodeRef, isDragging } = useSortable({
@@ -427,6 +429,8 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 
 /* Table */
 export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[] }) {
+    const { t } = useLanguage()
+    const dt = (t as any).data_table || {} as Record<string, any>
     const [data, setData] = React.useState(()  => initialData)
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility]  = 
@@ -444,6 +448,8 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
         useSensor(TouchSensor, {}),
         useSensor(KeyboardSensor, {})
     )
+
+    const columns = React.useMemo(() => getColumns(dt), [dt])
 
     const dataIds = React.useMemo<UniqueIdentifier[]>(
         ()  => data?.map(({ id })  => id) || [],
@@ -471,7 +477,6 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
         onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
@@ -496,46 +501,46 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
         <Tabs defaultValue = "outline" className = "flex-col justify-start gap-4 | w-full">
             <div className = "flex items-center justify-between px-4 lg:px-4">
                 <Label htmlFor = "view-selector" className = "sr-only">
-                    Ver
+                    {dt.view || "View"}
                 </Label>
 
                 <Select defaultValue = "outline">
                     <SelectTrigger id = "view-selector" className = "flex w-fit @4xl/main:hidden" size = "sm">
-                        <SelectValue placeholder = "Vistas" />
+                        <SelectValue placeholder = {dt.views || "Views"} />
                     </SelectTrigger>
 
                     <SelectContent>
-                        <SelectItem value = "outline">Serviços</SelectItem>
-                    <SelectItem value = "Opcao2">Opção 2</SelectItem>
-                    <SelectItem value = "Opcao3">Opção 3</SelectItem>
-                    <SelectItem value = "Opcao4">Opção 4</SelectItem>
+                        <SelectItem value = "outline">{dt.services || "Services"}</SelectItem>
+                    <SelectItem value = "Opcao2">{dt.option_2 || "Option 2"}</SelectItem>
+                    <SelectItem value = "Opcao3">{dt.option_3 || "Option 3"}</SelectItem>
+                    <SelectItem value = "Opcao4">{dt.option_4 || "Option 4"}</SelectItem>
                 </SelectContent>
             </Select>
 
             <TabsList className = "**:data-[slot = badge]:bg-black/5 dark:bg-white/5-foreground/30 hidden **:data-[slot = badge]:size-5 **:data-[slot = badge]:rounded-full **:data-[slot = badge]:px-1 @4xl/main:flex">
-                <TabsTrigger value = "outline">Serviços</TabsTrigger>
-                <TabsTrigger value = "Opcao2">Opção 2</TabsTrigger>
+                <TabsTrigger value = "outline">{dt.services || "Services"}</TabsTrigger>
+                <TabsTrigger value = "Opcao2">{dt.option_2 || "Option 2"}</TabsTrigger>
                 <TabsTrigger value = "Opcao3">
-                    Opção 3
+                    {dt.option_3 || "Option 3"}
                     <Badge variant = "default">2</Badge>
                 </TabsTrigger>
-                <TabsTrigger value = "Opcao4">Opção 4</TabsTrigger>
+                <TabsTrigger value = "Opcao4">{dt.option_4 || "Option 4"}</TabsTrigger>
             </TabsList>
 
             <div className = "flex items-center gap-2">
                 <Dropdown>
                     <SmartTooltip text="Columns" group="table-toolbar">
                         <DropdownTrigger asChild>
-                            <Button variant = "outline" size = "sm">
+                            <Button variant = "glass" size = "sm">
                                 <Columns />
-                                <span className = "hidden lg:inline">Editar colunas</span>
-                                <span className = "lg:hidden">Colunas</span>
+                                <span className = "hidden lg:inline">{dt.edit_columns || "Edit columns"}</span>
+                                <span className = "lg:hidden">{dt.columns || "Columns"}</span>
                                 <ChevronDown />
                             </Button>
                         </DropdownTrigger>
                     </SmartTooltip>
                         
-                        <DropdownShell align = "end" className = "w-56">
+                        <DropdownContent align = "end" className = "w-56">
                             {table
                                 .getAllColumns()
 
@@ -560,13 +565,13 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
                                     )
                                 })
                             }
-                        </DropdownShell>
+                        </DropdownContent>
                     </Dropdown>
 
                     <SmartTooltip text="Add Item" group="table-toolbar">
-                        <Button variant = "outline" size = "sm">
+                        <Button variant = "glass" size = "sm">
                             <Plus />
-                            <span className = "hidden lg:inline">Adicionar</span>
+                            <span className = "hidden lg:inline">{dt.add || "Add"}</span>
                         </Button>
                     </SmartTooltip>
                 </div>
@@ -618,109 +623,13 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan = {columns.length} className = "h-24 | text-center">
-                                            Sem resultados.
+                                            {dt.no_results || "No results."}
                                         </TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
                         </Table>
                     </DndContext>
-                </div>
-
-                <div className = "flex items-center justify-between | px-4">
-                    <div className = "hidden lg:flex flex-1 | text-neutral-500 dark:text-neutral-400 text-sm">
-                        <span>
-                            {table.getFilteredSelectedRowModel().rows.length} de{" "}
-                            {table.getFilteredRowModel().rows.length} linha(s) selecionada(s).
-                        </span>
-                    </div>
-
-                    <div className = "flex items-center gap-8 | w-full lg:w-fit">
-                        <div className = "hidden items-center gap-2 lg:flex">
-                            <Label htmlFor = "rows-per-page" className = "text-sm font-medium">
-                                Linhas em exibição
-                            </Label>
-                            
-                            <Select
-                                value = {`${table.getState().pagination.pageSize}`}
-                                onValueChange = {(value)  => {
-                                table.setPageSize(Number(value))
-                                }}
-                            >
-                                <SelectTrigger id = "rows-per-page" size = "sm" className = "w-20">
-                                    <SelectValue placeholder = {table.getState().pagination.pageSize}/>
-                                </SelectTrigger>
-
-                                <SelectContent side = "top">
-                                    {[10, 20, 30, 40, 50].map((pageSize)  => (
-                                        <SelectItem key = {pageSize} value = {`${pageSize}`}>
-                                            {pageSize}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className = "flex items-center justify-center | w-fit | text-sm font-medium">
-                            <span>
-                                Página {table.getState().pagination.pageIndex + 1} de{" "}
-                                {table.getPageCount()}
-                            </span>
-                        </div>
-
-                        <div className = "flex items-center gap-2 | ml-auto lg:ml-0">
-                            <SmartTooltip text="First Page" group="table-pagination">
-                                <Button
-                                    variant = "outline"
-                                    className = "hidden lg:flex | h-8 w-8 | p-0"
-                                    onClick = {()  => table.setPageIndex(0)}
-                                    disabled = {!table.getCanPreviousPage()}
-                                >
-                                    <span className = "sr-only">Primeira página</span>
-                                    <ChevronsLeft />
-                                </Button>
-                            </SmartTooltip>
-
-                            <SmartTooltip text="Previous Page" group="table-pagination">
-                                <Button
-                                    variant = "outline"
-                                    className = "size-8"
-                                    size = "icon"
-                                    onClick = {()  => table.previousPage()}
-                                    disabled = {!table.getCanPreviousPage()}
-                                >
-                                    <span className = "sr-only">Página anterior</span>
-                                    <ChevronLeft />
-                                </Button>
-                            </SmartTooltip>
-
-                            <SmartTooltip text="Next Page" group="table-pagination">
-                                <Button
-                                    variant = "outline"
-                                    className = "size-8"
-                                    size = "icon"
-                                    onClick = {()  => table.nextPage()}
-                                    disabled = {!table.getCanNextPage()}
-                                >
-                                    <span className = "sr-only">Próxima página</span>
-                                    <ChevronRight />
-                                </Button>
-                            </SmartTooltip>
-                            
-                            <SmartTooltip text="Last Page" group="table-pagination">
-                                <Button
-                                    variant = "outline"
-                                    className = "hidden lg:flex | size-8"
-                                    size = "icon"
-                                    onClick = {()  => table.setPageIndex(table.getPageCount() - 1)}
-                                    disabled = {!table.getCanNextPage()}
-                                >
-                                    <span className = "sr-only">Última página</span>
-                                    <ChevronsRight />
-                                </Button>
-                            </SmartTooltip>
-                        </div>
-                    </div>
                 </div>
             </TabsContent>
 
@@ -741,20 +650,24 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
 
 
 
-const chartData = [
-    { month: "Janeiro",     desktop: 186,   mobile: 80 },
-    { month: "Fevereiro",   desktop: 305,   mobile: 200 },
-    { month: "Março",       desktop: 237,   mobile: 120 },
-    { month: "Abril",       desktop: 73,    mobile: 190 },
-    { month: "Maio",        desktop: 209,   mobile: 130 },
-    { month: "Junho",       desktop: 214,   mobile: 140 },
-    { month: "Julho",       desktop: 214,   mobile: 140 },
-    { month: "Agosto",      desktop: 214,   mobile: 140 },
-    { month: "Setembro",    desktop: 214,   mobile: 140 },
-    { month: "Outubro",     desktop: 214,   mobile: 140 },
-    { month: "Novembro",    desktop: 214,   mobile: 140 },
-    { month: "Dezembro",    desktop: 214,   mobile: 140 },
-]
+const defaultMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+function getChartData(months: string[]) {
+    return [
+        { month: months[0] || defaultMonths[0],   desktop: 186,   mobile: 80 },
+        { month: months[1] || defaultMonths[1],   desktop: 305,   mobile: 200 },
+        { month: months[2] || defaultMonths[2],   desktop: 237,   mobile: 120 },
+        { month: months[3] || defaultMonths[3],   desktop: 73,    mobile: 190 },
+        { month: months[4] || defaultMonths[4],   desktop: 209,   mobile: 130 },
+        { month: months[5] || defaultMonths[5],   desktop: 214,   mobile: 140 },
+        { month: months[6] || defaultMonths[6],   desktop: 214,   mobile: 140 },
+        { month: months[7] || defaultMonths[7],   desktop: 214,   mobile: 140 },
+        { month: months[8] || defaultMonths[8],   desktop: 214,   mobile: 140 },
+        { month: months[9] || defaultMonths[9],   desktop: 214,   mobile: 140 },
+        { month: months[10] || defaultMonths[10],  desktop: 214,   mobile: 140 },
+        { month: months[11] || defaultMonths[11],  desktop: 214,   mobile: 140 },
+    ]
+}
 
 /* Table Row Inspect Sidepanel Chart Popup */
 const chartConfig = {
@@ -773,11 +686,15 @@ const chartConfig = {
 /* Table Cell Inspect Sidepanel */
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     const isMobile = useIsMobile()
+    const { t } = useLanguage()
+    const dt = (t as any).data_table || {} as Record<string, any>
+    const months = Array.isArray(dt.months) ? dt.months : defaultMonths
+    const chartData = React.useMemo(() => getChartData(months), [months])
 
     return (
         <Drawer direction = {isMobile ? "bottom" : "right"}>
             <DrawerTrigger asChild>
-                <Button variant = "link" className = "w-fit | px-0 | text-black dark:text-white text-left">
+                <Button variant = "ghost" className = "w-fit | px-0 | text-black dark:text-white text-left">
                     {item.header}
                 </Button>
             </DrawerTrigger>
@@ -788,7 +705,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                         {item.header}
                     </DrawerTitle>
                     <DrawerDescription>
-                        Descrição
+                        {dt.description || "Description"}
                     </DrawerDescription>
                 </DrawerHeader>
 
@@ -848,15 +765,13 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
 
                         <div className = "grid gap-2">
                             <div className = "flex gap-2 | font-medium leading-none">
-                                <span>+406.25€ este mês</span>{" "}
+                                <span>{(dt.trending_up || "+{amount} this month").replace("{amount}", "406.25€")}</span>{" "}
                                 <TrendingUp className = "size-4" />
                             </div>
 
-                            <div className = "text-neutral-500 dark:text-neutral-400">
+                            <div className = "text-neutral-400">
                                 <span>
-                                    Showing total visitors for the last 6 months. This is just
-                                    some random text to test the layout. It spans multiple lines
-                                    and should wrap around.
+                                    {dt.chart_description || "Showing total visitors for the last 6 months. This is just some random text to test the layout. It spans multiple lines and should wrap around."}
                                 </span>
                             </div>
                         </div>
@@ -866,36 +781,36 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                     )}
 
                     <form className = "flex flex-col gap-4">
-                        <Input id = "service" label="Serviço" defaultValue = {item.header} />
+                        <Input id = "service" label={dt.service || "Service"} defaultValue = {item.header} />
 
                         <div className = "grid grid-cols-2 gap-4">
-                            <Input id = "target" label="Próximo instante" defaultValue = {item.target} />
+                            <Input id = "target" label={dt.next_due || "Next due"} defaultValue = {item.target} />
 
-                            <Input id = "limit" label="Valor" defaultValue = {item.limit} />
+                            <Input id = "limit" label={dt.value || "Value"} defaultValue = {item.limit} />
                         </div>
 
                         <div className = "grid grid-cols-2 gap-4">
                             <div className = "flex flex-col gap-3">
-                                <Label htmlFor = "status">Estado</Label>
+                                <Label htmlFor = "status">{dt.status_label || "Status"}</Label>
 
                                 <Select defaultValue = {item.status}>
                                     <SelectTrigger id = "status" className = "w-full">
-                                        <SelectValue placeholder = "Selecione um estado" />
+                                        <SelectValue placeholder = {dt.select_status || "Select a status"} />
                                     </SelectTrigger>
 
                                     <SelectContent>
-                                        <SelectItem value = "Paid">Pago</SelectItem>
-                                        <SelectItem value = "To be paid">Por pagar</SelectItem>
+                                        <SelectItem value = "Paid">{dt.paid || "Paid"}</SelectItem>
+                                        <SelectItem value = "To be paid">{dt.to_be_paid || "To be paid"}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className = "flex flex-col gap-3">
-                                <Label htmlFor = "IVA">IVA</Label>
+                                <Label htmlFor = "IVA">{dt.vat_label || "VAT"}</Label>
 
                                 <Select defaultValue = {item.type}>
                                     <SelectTrigger id = "type" className = "w-full">
-                                        <SelectValue placeholder = "Selecione uma percentagem de IVA" />
+                                        <SelectValue placeholder = {dt.select_vat || "Select a VAT percentage"} />
                                     </SelectTrigger>
 
                                     <SelectContent>
@@ -930,10 +845,10 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                 </div>
 
                 <DrawerFooter>
-                    <Button>Submeter</Button>
+                    <Button>{dt.submit || "Submit"}</Button>
 
                     <DrawerClose asChild>
-                        <Button variant = "outline">Feito</Button>
+                        <Button variant = "glass">{dt.done || "Done"}</Button>
                     </DrawerClose>
                 </DrawerFooter>
             </DrawerContent>

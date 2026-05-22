@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { generateDefaultAvatarDataUrl } from './avatar';
 
 // =============================================================================
 // TYPES
@@ -9,6 +10,7 @@ export interface User {
   email: string;
   password: string;
   name: string;
+  avatar?: string;
   dateOfBirth: string;
   recoveryEmail?: string;
   createdAt: string;
@@ -48,6 +50,7 @@ export async function createUser(
       email,
       password,
       name,
+      avatar: generateDefaultAvatarDataUrl(name),
       dateOfBirth,
     },
   });
@@ -67,6 +70,7 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
   if (updates.email !== undefined) data.email = updates.email;
   if (updates.password !== undefined) data.password = updates.password;
   if (updates.name !== undefined) data.name = updates.name;
+  if (updates.avatar !== undefined) data.avatar = updates.avatar;
   if (updates.dateOfBirth !== undefined) data.dateOfBirth = updates.dateOfBirth;
   if (updates.recoveryEmail !== undefined) data.recoveryEmail = updates.recoveryEmail;
   
@@ -98,12 +102,13 @@ export async function deleteUser(id: string): Promise<boolean> {
 // HELPER FUNCTIONS
 // =============================================================================
 
-function rowToUser(row: { id: string; email: string; password: string; name: string; dateOfBirth: string; recoveryEmail: string | null; createdAt: Date }): User {
+function rowToUser(row: { id: string; email: string; password: string; name: string; avatar: string | null; dateOfBirth: string; recoveryEmail: string | null; createdAt: Date }): User {
   return {
     id: row.id,
     email: row.email,
     password: row.password,
     name: row.name,
+    avatar: row.avatar ?? undefined,
     dateOfBirth: row.dateOfBirth,
     recoveryEmail: row.recoveryEmail ?? undefined,
     createdAt: row.createdAt.toISOString(),

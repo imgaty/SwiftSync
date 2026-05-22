@@ -1,27 +1,42 @@
+/* Multi-action auth router.
+ *
+ * One catch-all handler for every session-touching auth verb: login, register,
+ * logout, verify, profile, update, delete-account, 2FA login, trusted-device
+ * management. The `[action]` segment dispatches to the matching `handle*`
+ * function below.
+ *
+ * Learn more in `docs/Authentication & Security.md`
+ */
+
 import { cookies, headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { randomBytes, randomInt, createHash } from 'crypto';
+import { randomBytes, randomInt, createHash, createHmac, timingSafeEqual } from 'crypto';
+import * as OTPAuth from 'otpauth';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword, hashPassword, passwordShouldUpgrade } from '@/lib/adaptive-encryption';
+import { verifyPassword, hashPassword, passwordNeedsRehash } from '@/lib/password';
 import { send2FACode } from '@/lib/email';
+import { decrypt } from '@/lib/encryption-v2';
 import { createSessionToken, verifySessionToken } from '@/lib/session';
+import { EMAIL_RE } from '@/lib/validation';
+import { generateDefaultAvatarDataUrl } from '@/lib/avatar';
+
+export const dynamic = 'force-dynamic';
 
 // --- Constants ---------------------------------------------------------------
 const TRUST_DEVICE_MAX_AGE = 30 * 24 * 60 * 60;                                                                                 // Amount of time the device will be trusted for (30 days)
-const SESSION_MAX_AGE = 30 * 24 * 60 * 60;                                                                                      // Amount of time the login session cookies will persist (30 days)
+const SESSION_MAX_AGE = 7 * 24 * 60 * 60;                                                                                       // Amount of time the login session cookies will persist (7 days)
 const TRUST_COOKIE = 'trusted-device';                                                                                          // Name of the cookie that stores the trusted device token
 const COOKIE_OPTS = {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     path: '/'
 };
-const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_WINDOW_MS = 30 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 const MAX_2FA_ATTEMPTS = 5;
 const MAX_PENDING = 10_000;
 const PW_MIN = 8;
 const PW_MAX = 128;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEN_MIN = 10 * 60 * 1000;
 
 // --- In-memory stores --------------------------------------------------------
@@ -32,6 +47,27 @@ const pending2FA = new Map<string, { userId: string; expiresAt: number; attempts
 const ok = (data: object, status = 200) => NextResponse.json(data, { status });
 const err = (error: string, status: number) => NextResponse.json({ error }, { status });
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
+// HMAC-based hash for device tokens: mixes SESSION_PEPPER so a DB leak alone
+// doesn't let an attacker confirm guessed raw tokens offline.
+const _rawPepper = process.env.SESSION_PEPPER || process.env.ENCRYPTION_MASTER_KEY;
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production' && (!_rawPepper || _rawPepper.length < 32)) {
+    throw new Error(
+        'SESSION_PEPPER env var is required in production and must be at least 32 chars. ' +
+        'Generate one with: openssl rand -hex 32'
+    );
+}
+const SESSION_PEPPER = _rawPepper || '';
+const deviceTokenHash = (v: string) =>
+    SESSION_PEPPER
+        ? createHmac('sha256', SESSION_PEPPER).update(v).digest('hex')
+        : sha256(v);
+// Produce a short opaque identifier for log correlation that doesn't leak
+// the raw user ID to downstream log sinks.
+const logId = (userId: string) =>
+    (SESSION_PEPPER
+        ? createHmac('sha256', SESSION_PEPPER).update(userId).digest('hex')
+        : sha256(userId)
+    ).slice(0, 12);
 const token = () => randomBytes(32).toString('hex');
 
 let _dummy: string | null = null;
@@ -98,18 +134,21 @@ async function getAuth<T extends Record<string, boolean>>(select?: T) {
 
 async function setAuth(userId: string) {
     const cs = await cookies();
-    const token = await createSessionToken(userId, SESSION_MAX_AGE);
+    const sessionToken = await createSessionToken(userId, SESSION_MAX_AGE);
 
-    cs.set('auth-token', token, { httpOnly: true, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
-    cs.set('user-session', JSON.stringify({ id: userId }), { httpOnly: false, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
+    cs.set('auth-token', sessionToken, { httpOnly: true, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
+    cs.set('user-session', JSON.stringify({ id: userId }), { httpOnly: true, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
 }
 
-async function maybeUpgrade(userId: string, password: string, storedHash: string, extraData?: object) {
-    if (!passwordShouldUpgrade(storedHash)) return;
-    
-    await prisma.user.update({ where: { id: userId }, data: { password: hashPassword(password), ...extraData } });
-    
-    console.log(`🧬 User ${userId} password hash auto-upgraded`);
+async function finishAuthenticatedSession(userId: string, role?: string, message = 'Login successful') {
+    await setAuth(userId);
+
+    return ok({
+        success: true,
+        message,
+        userId,
+        role,
+    });
 }
 
 // --- Route handlers ----------------------------------------------------------
@@ -158,22 +197,23 @@ async function handleLogin(request: Request) {
             select: { id: true, email: true, password: true, twoFactorEnabled: true, role: true },
         });
 
-        if (!user) { 
+        // Single error message for both branches (no email + wrong password) to
+        // prevent user enumeration. Combined with the dummyHash work below,
+        // request shape is indistinguishable.
+        if (!user) {
             verifyPassword(password, dummyHash());
             rateFail(clientIp);
-
-            return err('NO_ACCOUNT', 401);
+            return err('Invalid email or password', 401);
         }
 
         if (!verifyPassword(password, user.password)) {
             rateFail(clientIp);
-
-            return err('WRONG_PASSWORD', 401);
+            return err('Invalid email or password', 401);
         }
 
         rateLimits.delete(clientIp);
 
-        const upgrade = passwordShouldUpgrade(user.password) ? { password: hashPassword(password) } : {};
+        const upgrade = passwordNeedsRehash(user.password) ? { password: hashPassword(password) } : {};
         const needsUpgrade = 'password' in upgrade;
 
         // 2FA path
@@ -182,17 +222,18 @@ async function handleLogin(request: Request) {
             const raw = cs.get(TRUST_COOKIE)?.value;
 
             if (raw) {
-                const td = await prisma.trustedDevice.findUnique({ where: { token: sha256(raw) } });
+                const td = await prisma.trustedDevice.findUnique({ where: { token: deviceTokenHash(raw) } });
 
                 if (td && td.userId === user.id && td.expiresAt > new Date()) {
-                    await Promise.all([setAuth(user.id), needsUpgrade && prisma.user.update({ where: { id: user.id }, data: upgrade })]);
+                    if (needsUpgrade) {
+                        await prisma.user.update({ where: { id: user.id }, data: upgrade });
+                        console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
+                    }
 
-                    if (needsUpgrade) console.log(`🧬 User ${user.id} password hash auto-upgraded`);
-
-                    return ok({ success: true, message: 'Login successful (trusted device)', userId: user.id, role: user.role });
+                    return finishAuthenticatedSession(user.id, user.role, 'Login successful (trusted device)');
                 }
 
-                if (td) await prisma.trustedDevice.delete({ where: { id: td.id } }).catch(() => {});
+                if (td) await prisma.trustedDevice.delete({ where: { id: td.id } }).catch((e) => { console.error('Trusted device delete (mismatch) failed:', e); });
                 cs.delete(TRUST_COOKIE);
             }
 
@@ -203,10 +244,41 @@ async function handleLogin(request: Request) {
                 data: { ...upgrade, twoFactorCode: sha256(code), twoFactorCodeExpiry: new Date(Date.now() + TEN_MIN) },
             });
 
-            if (needsUpgrade) console.log(`🧬 User ${user.id} password hash auto-upgraded`);
+            if (needsUpgrade) console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
 
             try { await send2FACode(user.email, code); }
-            catch (e) { console.error('Failed to send 2FA email:', e); return err('Failed to send verification code', 500); }
+            catch (e) {
+              console.error('Failed to send 2FA email:', e);
+
+              const details = e instanceof Error ? e.message : String(e);
+              const isResendTestMode = /testing emails to your own email address|verify a domain/i.test(details);
+
+              cleanup();
+
+              if (pending2FA.size >= MAX_PENDING) {
+                const k = pending2FA.keys().next().value;
+                if (k) pending2FA.delete(k);
+              }
+
+              const tmp = token();
+              pending2FA.set(tmp, {
+                userId: user.id,
+                expiresAt: Date.now() + TEN_MIN,
+                attempts: 0,
+              });
+
+              if (process.env.NODE_ENV !== 'production' && isResendTestMode) {
+                return ok({
+                  success: true,
+                  needs_2fa: true,
+                  tempToken: tmp,
+                  dev2FACode: code,
+                  message: 'Email delivery unavailable in local test mode. Use the temporary code below.',
+                });
+              }
+
+              return err('Failed to send verification code', 500);
+            }
 
             cleanup();
             
@@ -231,19 +303,15 @@ async function handleLogin(request: Request) {
         }
 
         // Non-2FA path
-        await Promise.all([setAuth(user.id), needsUpgrade && prisma.user.update({
-            where: { id: user.id },
-            data: upgrade
-        })]);
-
-        if (needsUpgrade) console.log(`🧬 User ${user.id} password hash auto-upgraded`);
+        if (needsUpgrade) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: upgrade
+            });
+            console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
+        }
         
-        return ok({
-            success: true,
-            message: 'Login successful',
-            userId: user.id,
-            role: user.role
-        });
+        return finishAuthenticatedSession(user.id, user.role);
 
     } catch (e) {
         console.error('Login error:', e); return err('Something went wrong while signing in. Please try again.', 500);
@@ -272,14 +340,24 @@ async function handle2FALogin(request: Request) {
       return err('Code expired. Please log in again.', 401);
     }
 
-    if (sha256(code) !== user.twoFactorCode) { session.attempts++; return err('Invalid verification code', 401); }
+    const submitted = Buffer.from(sha256(code));
+    const stored = Buffer.from(user.twoFactorCode);
+    if (submitted.length !== stored.length || !timingSafeEqual(submitted, stored)) {
+      // Invalidate the stored code AND the pending session on every failed attempt:
+      // a leaked code can't be replayed, and the user gets a truthful "session
+      // expired" message on retry instead of a confusing "invalid code" when they
+      // type the right code on the second try.
+      pending2FA.delete(tempToken);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { twoFactorCode: null, twoFactorCodeExpiry: null },
+      }).catch((e) => { console.error('2FA code invalidation failed:', e); });
+      return err('Invalid verification code. Please log in again.', 401);
+    }
 
     pending2FA.delete(tempToken);
     const fullUser = await prisma.user.findUnique({ where: { id: session.userId }, select: { role: true } });
-    await Promise.all([
-      prisma.user.update({ where: { id: user.id }, data: { twoFactorCode: null, twoFactorCodeExpiry: null } }),
-      setAuth(session.userId),
-    ]);
+    await prisma.user.update({ where: { id: user.id }, data: { twoFactorCode: null, twoFactorCodeExpiry: null } });
 
     if (trustDevice) {
       const raw = token();
@@ -287,14 +365,14 @@ async function handle2FALogin(request: Request) {
       await Promise.all([
         prisma.trustedDevice.deleteMany({ where: { userId: session.userId, expiresAt: { lt: new Date() } } }),
         prisma.trustedDevice.create({
-          data: { userId: session.userId, token: sha256(raw), label: deviceLabel(hdr.get('user-agent')), expiresAt: new Date(Date.now() + TRUST_DEVICE_MAX_AGE * 1000) },
+          data: { userId: session.userId, token: deviceTokenHash(raw), label: deviceLabel(hdr.get('user-agent')), expiresAt: new Date(Date.now() + TRUST_DEVICE_MAX_AGE * 1000) },
         }),
       ]);
       const cs = await cookies();
       cs.set(TRUST_COOKIE, raw, { httpOnly: true, ...COOKIE_OPTS, maxAge: TRUST_DEVICE_MAX_AGE });
     }
 
-    return ok({ success: true, message: 'Login successful', userId: session.userId, role: fullUser?.role });
+    return finishAuthenticatedSession(session.userId, fullUser?.role);
   } catch (e) { console.error('2FA login error:', e); return err('Something went wrong while verifying your code. Please try again.', 500); }
 }
 
@@ -313,25 +391,46 @@ async function handleCheckEmail(request: Request) {
 // --- REGISTER ----------------------------------------------------------------
 async function handleRegister(request: Request) {
   try {
-    const { name, email: rawEmail, dateOfBirth, password, recoveryEmail, enable2FA } = await request.json();
+    const {
+      name,
+      email: rawEmail,
+      dateOfBirth,
+      password,
+      recoveryEmail,
+    } = await request.json();
+
     const email = validateEmail(rawEmail);
     if (!name || !email || !dateOfBirth || !password) return err('All fields are required', 400);
     const pwErr = validatePw(password);
     if (pwErr) return err(pwErr, 400);
 
-    let newUser: { id: string };
+    let createdUserId = '';
+
     try {
-      newUser = await prisma.user.create({
-        data: { email, name, password: hashPassword(password), dateOfBirth, ...(recoveryEmail ? { recoveryEmail } : {}), ...(enable2FA ? { twoFactorEnabled: true } : {}) },
+      const user = await prisma.user.create({
+        data: {
+          email,
+          name,
+          avatar: generateDefaultAvatarDataUrl(name),
+          password: hashPassword(password),
+          dateOfBirth,
+          ...(recoveryEmail ? { recoveryEmail } : {}),
+        },
         select: { id: true },
       });
+
+      createdUserId = user.id;
     } catch (e: unknown) {
       if (e && typeof e === 'object' && 'code' in e && e.code === 'P2002') return err('User already exists', 409);
       throw e;
     }
 
-    await setAuth(newUser.id);
-    return ok({ success: true, message: 'Registration successful', userId: newUser.id }, 201);
+    await setAuth(createdUserId);
+    return ok({
+      success: true,
+      message: 'Registration successful',
+      userId: createdUserId,
+    }, 201);
   } catch (e) { console.error('Registration error:', e); return err('Something went wrong during registration. Please try again.', 500); }
 }
 
@@ -340,7 +439,7 @@ async function handleLogout() {
   try {
     const cs = await cookies();
     const raw = cs.get(TRUST_COOKIE)?.value;
-    if (raw) { await prisma.trustedDevice.deleteMany({ where: { token: sha256(raw) } }).catch(() => {}); cs.delete(TRUST_COOKIE); }
+    if (raw) { await prisma.trustedDevice.deleteMany({ where: { token: deviceTokenHash(raw) } }).catch((e) => { console.error('Trusted device cleanup failed on logout:', e); }); cs.delete(TRUST_COOKIE); }
     cs.delete('auth-token');
     cs.delete('user-session');
     return ok({ success: true, message: 'Logged out successfully' });
@@ -359,6 +458,7 @@ async function handleVerify() {
 
     const user = await prisma.user.findUnique({ where: { id: session.uid }, select: { id: true } });
     if (!user) { cs.delete('auth-token'); cs.delete('user-session'); return ok({ authenticated: false }, 401); }
+
     return ok({ authenticated: true, userId: user.id });
   } catch (e) { console.error('Verification error:', e); return ok({ authenticated: false }, 500); }
 }
@@ -366,14 +466,22 @@ async function handleVerify() {
 // --- PROFILE -----------------------------------------------------------------
 async function handleProfile() {
   try {
-    const user = await getAuth({ id: true, name: true, email: true, dateOfBirth: true, recoveryEmail: true, createdAt: true } as const);
+    const user = await getAuth({ id: true, name: true, email: true, avatar: true, dateOfBirth: true, recoveryEmail: true, createdAt: true, role: true } as const);
     if (!user) return err('Not authenticated', 401);
 
     const initials = (user.name || '').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
-    return ok({
+    return NextResponse.json({
       id: user.id, name: user.name || '', email: user.email,
+      avatar: user.avatar || generateDefaultAvatarDataUrl(user.name || ''),
       dateOfBirth: user.dateOfBirth || '', recoveryEmail: user.recoveryEmail || '',
-      initials, createdAt: user.createdAt.toISOString(),
+      initials, createdAt: user.createdAt.toISOString(), role: user.role,
+    }, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
     });
   } catch (e) { console.error('Profile fetch error:', e); return err('Could not load your profile. Please try again.', 500); }
 }
@@ -381,7 +489,7 @@ async function handleProfile() {
 // --- UPDATE PROFILE ----------------------------------------------------------
 async function handleUpdate(request: Request) {
   try {
-    const user = await getAuth({ id: true, password: true } as const);
+    const user = await getAuth({ id: true, email: true, password: true } as const);
     if (!user) return err('Not authenticated', 401);
 
     const { name, email, dateOfBirth, recoveryEmail, currentPassword, newPassword } = await request.json();
@@ -389,22 +497,45 @@ async function handleUpdate(request: Request) {
 
     if (name !== undefined) updates.name = name.trim() || '';
 
+    let emailChange: string | null = null;
     if (email !== undefined && email.trim()) {
       const newEmail = email.trim().toLowerCase();
-      if (!EMAIL_RE.test(newEmail)) return err('Invalid email format', 400);
-      const taken = await prisma.user.findFirst({ where: { email: { equals: newEmail, mode: 'insensitive' }, id: { not: user.id } }, select: { id: true } });
-      if (taken) return err('Email is already in use', 409);
-      updates.email = newEmail;
+      if (newEmail !== user.email) {
+        if (!EMAIL_RE.test(newEmail)) return err('Invalid email format', 400);
+        const taken = await prisma.user.findFirst({ where: { email: { equals: newEmail, mode: 'insensitive' }, id: { not: user.id } }, select: { id: true } });
+        if (taken) return err('Email is already in use', 409);
+        emailChange = newEmail;
+      }
+    }
+
+    let recoveryEmailChange: string | null | undefined = undefined;
+    if (recoveryEmail !== undefined) {
+      recoveryEmailChange = recoveryEmail.trim() || null;
     }
 
     if (dateOfBirth !== undefined) updates.dateOfBirth = dateOfBirth.trim() || '';
-    if (recoveryEmail !== undefined) updates.recoveryEmail = recoveryEmail.trim() || '';
+
+    // Sensitive identity fields (email, recoveryEmail, password) require the current
+    // password as proof. Email is the password-reset destination, so a hijacked session
+    // could otherwise change the email and lock the legitimate owner out.
+    const sensitiveChange =
+      emailChange !== null || recoveryEmailChange !== undefined || (currentPassword && newPassword);
+
+    if (sensitiveChange) {
+      if (!currentPassword || typeof currentPassword !== 'string') {
+        return err('Current password is required to change email, recovery email, or password.', 400);
+      }
+      if (currentPassword.length > PW_MAX) return err('Password too long', 400);
+      if (!verifyPassword(currentPassword, user.password)) return err('Current password is incorrect', 400);
+    }
+
+    if (emailChange) updates.email = emailChange;
+    if (recoveryEmailChange !== undefined) updates.recoveryEmail = recoveryEmailChange;
 
     if (currentPassword && newPassword) {
-      if (currentPassword.length > PW_MAX || newPassword.length > PW_MAX) return err('Password too long', 400);
+      if (newPassword.length > PW_MAX) return err('Password too long', 400);
       const pwValidation = validatePw(newPassword);
       if (pwValidation) return err(pwValidation, 400);
-      if (!verifyPassword(currentPassword, user.password)) return err('Current password is incorrect', 400);
       updates.password = hashPassword(newPassword);
     }
 
@@ -418,12 +549,42 @@ async function handleUpdate(request: Request) {
 // --- DELETE ACCOUNT ----------------------------------------------------------
 async function handleDeleteAccount(request: Request) {
   try {
-    const user = await getAuth({ id: true, password: true } as const);
+    const user = await getAuth({
+      id: true,
+      name: true,
+      email: true,
+      password: true,
+      twoFactorEnabled: true,
+      twoFactorSecret: true,
+    } as const);
     if (!user) return err('Not authenticated', 401);
 
-    const { password } = await request.json();
+    const { password, code } = await request.json();
     if (!password || typeof password !== 'string') return err('Password is required', 400);
     if (!verifyPassword(password, user.password)) return err('Incorrect password', 403);
+
+    // If 2FA is enabled, also require a valid TOTP code so a stolen password
+    // alone cannot destroy the account.
+    if (user.twoFactorEnabled) {
+      if (!code || typeof code !== 'string') {
+        return err('A 2FA code is required to delete this account.', 400);
+      }
+      if (!user.twoFactorSecret) {
+        return err('2FA is enabled but not fully configured.', 400);
+      }
+      const secret = decrypt(user.twoFactorSecret);
+      const totp = new OTPAuth.TOTP({
+        issuer: 'Argent',
+        label: user.name || user.email,
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: OTPAuth.Secret.fromBase32(secret),
+      });
+      if (totp.validate({ token: code, window: 1 }) === null) {
+        return err('Invalid 2FA code', 403);
+      }
+    }
 
     // Delete user — cascading deletes handle related records
     await prisma.user.delete({ where: { id: user.id } });
@@ -462,7 +623,7 @@ async function handleTrustedDevices(request: Request) {
       return ok({ success: true, message: 'All devices revoked' });
     }
 
-    const curHash = cs.get(TRUST_COOKIE)?.value ? sha256(cs.get(TRUST_COOKIE)!.value) : null;
+    const curHash = cs.get(TRUST_COOKIE)?.value ? deviceTokenHash(cs.get(TRUST_COOKIE)!.value) : null;
     const [devices, cur] = await Promise.all([
       prisma.trustedDevice.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, select: { id: true, label: true, createdAt: true, expiresAt: true } }),
       curHash ? prisma.trustedDevice.findUnique({ where: { token: curHash }, select: { id: true } }) : null,

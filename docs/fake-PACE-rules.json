@@ -1,0 +1,68 @@
+[
+  {
+    "pattern": "continente|pingo doce|lidl|auchan",
+    "matchField": "description",
+    "tag": "groceries",
+    "priority": 100
+  },
+  {
+    "pattern": "uber eats|glovo|bolt food",
+    "matchField": "description",
+    "tag": "food_delivery",
+    "priority": 95
+  },
+  {
+    "pattern": "netflix|spotify|icloud|google one|adobe",
+    "matchField": "description",
+    "tag": "subscriptions",
+    "priority": 90
+  },
+  {
+    "pattern": "edp|galp energia|vodafone|meo|nos",
+    "matchField": "description",
+    "tag": "utilities",
+    "priority": 90
+  },
+  {
+    "pattern": "caf[eé]|pastelaria|coffee|starbucks",
+    "matchField": "description",
+    "tag": "coffee_snacks",
+    "priority": 85
+  },
+  {
+    "pattern": "restaurante|restaurant|marisqueira|pizzaria|burger",
+    "matchField": "description",
+    "tag": "restaurants",
+    "priority": 85
+  },
+  {
+    "pattern": "uber\b|bolt\b|taxi",
+    "matchField": "description",
+    "tag": "transport",
+    "priority": 80
+  },
+  {
+    "pattern": "farmacia|pharmacy",
+    "matchField": "description",
+    "tag": "health",
+    "priority": 75
+  },
+  {
+    "pattern": "mbway\s+joao|mbway\s+maria|mbway\s+ana",
+    "matchField": "description",
+    "tag": "transfer_personal",
+    "priority": 70
+  },
+  {
+    "pattern": "^trf\s+intl|wire transfer|swift",
+    "matchField": "description",
+    "tag": "international_transfer",
+    "priority": 65
+  },
+  {
+    "pattern": "amazon|worten|fnac|zara|hm",
+    "matchField": "description",
+    "tag": "shopping",
+    "priority": 60
+  }
+]

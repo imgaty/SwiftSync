@@ -3,46 +3,8 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import {
-    closestCenter,
-    DndContext,
-    KeyboardSensor,
-    MouseSensor,
-    TouchSensor,
-    useSensor,
-    useSensors,
-    type DragEndEvent,
-    type UniqueIdentifier,
-} from "@dnd-kit/core"
-
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
-import {
-    arrayMove,
-    SortableContext,
-    useSortable,
-    verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities"
-import type { DraggableAttributes } from "@dnd-kit/core"
-
-import { CSS } from "@dnd-kit/utilities"
-import {
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    EllipsisVertical,
-    GripVertical,
-    Columns,
-    Plus,
-    Pencil,
-    Copy,
-    Delete,
     ArrowUpRight,
     ArrowDownRight,
-    Search,
-    Filter,
-    X,
 } from "lucide-react"
 
 import {
@@ -53,9 +15,7 @@ import {
     getFacetedRowModel,
     getFacetedUniqueValues,
     getFilteredRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
-    Row,
     SortingState,
     useReactTable,
     VisibilityState,
@@ -63,37 +23,27 @@ import {
 
 import { z } from "zod"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-    Dropdown,
-    DropdownCheckboxItem,
-    DropdownShell,
-    DropdownItem,
-    DropdownSeparator,
-    DropdownTrigger,
-} from "@/components/ui/app-dropdown"
-
-import { Input } from "@/components/ui/input"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 
 import {
+    TableShell,
+    TableScrollArea,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableRow,
-    TableResizeHandle,
+    TableActionsCell,
+    TableActionButton,
+    TableToolbar,
+    TableToolbarGroup,
+    TableSearchControl,
+    TableFilterSelect,
+    TableSortControl,
+    TableColumnsControl,
+    TableAddButton,
 } from "@/components/ui/table"
-
 import { EmptyStateInline } from "@/components/empty-state"
 
 import {
@@ -103,8 +53,14 @@ import {
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { SmartTooltip } from "@/components/ui/tooltip"
+import { toast } from "sonner"
 
 import { useLanguage } from "@/components/language-provider"
+import { useCurrency } from "@/components/currency-provider"
+import { MobileCard, MobileCardList, useIsMobileView } from "@/components/mobile-card"
+import type { Account } from "@/lib/types"
+import { TagCell } from "@/components/transactions/tag-cell"
+import { useAvailableTags } from "@/components/tag-picker"
 
 export const transactionSchema = z.object({
     id: z.string(),
@@ -118,18 +74,19 @@ export const transactionSchema = z.object({
 
 export type Transaction = z.infer<typeof transactionSchema>
 
-function DragHandle({ attributes, listeners }: { attributes?: DraggableAttributes; listeners?: SyntheticListenerMap }) {
-    return (
-        <Button
-            {...attributes}
-            {...listeners}
-            variant="ghost"
-            size="icon"
-            className="text-neutral-500 dark:text-neutral-400 size-7 hover:bg-transparent cursor-grab active:cursor-grabbing"
-        >
-            <GripVertical className="text-neutral-500 dark:text-neutral-400 size-3" />
-        </Button>
-    )
+interface TransactionsTableProps {
+    data: Transaction[]
+    accounts?: Account[]
+    isLoading?: boolean
+    showSummary?: boolean
+    showToolbar?: boolean
+    variant?: "default" | "dashboard"
+    pageSize?: number
+    showSelectColumn?: boolean
+    showActionsColumn?: boolean
+    onEditTransaction?: (transaction: Transaction) => void
+    onDeleteTransaction?: (transaction: Transaction) => void
+    onAddTransaction?: () => void
 }
 
 const tagColors: Record<string, string> = {
@@ -145,45 +102,45 @@ const tagColors: Record<string, string> = {
     services: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
     salary: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800",
     freelance: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800",
-    other: "bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800",
+    other: "bg-neutral-500/10 text-neutral-400 border-neutral-200 dark:border-neutral-800",
 }
 
-// Memoized draggable row component for performance
-const DraggableRow = React.memo(function DraggableRow({ row }: { row: Row<Transaction> }) {
-    const { transform, transition, setNodeRef, isDragging, attributes, listeners } = useSortable({
-        id: row.original.id,
-    })
+// (DraggableRow removed: drag-and-drop disabled.)
 
-    return (
-        <TableRow
-            data-state={row.getIsSelected() && "selected"}
-            data-dragging={isDragging}
-            ref={setNodeRef}
-            className="group/row relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 data-[dragging=true]:shadow-lg animate-fade-in"
-            style={{
-                transform: CSS.Transform.toString(transform),
-                transition: transition,
-            }}
-        >
-            {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id} className="transition-colors duration-150">
-                    {cell.column.id === "drag" 
-                        ? <DragHandle attributes={attributes} listeners={listeners} />
-                        : flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-            ))}
-        </TableRow>
-    )
-})
-
-export function TransactionsTable({ data: initialData, isLoading = false }: { data: Transaction[]; isLoading?: boolean }) {
+export function TransactionsTable({
+    data: initialData,
+    accounts = [],
+    isLoading = false,
+    showToolbar = true,
+    variant = "default",
+    pageSize = 10,
+    showSelectColumn,
+    showActionsColumn,
+    onEditTransaction,
+    onDeleteTransaction,
+    onAddTransaction,
+}: TransactionsTableProps) {
     const { t, isLoading: isLangLoading } = useLanguage()
+    const { formatCurrency } = useCurrency()
     const f = (t.finance || {}) as Record<string, unknown>
     const tt = (f.transactions_table || {}) as Record<string, string>
     const fTable = (f.table || {}) as Record<string, string>
     const fActions = (f.actions || {}) as Record<string, string>
     const fFilter = (f.filter || {}) as Record<string, string>
     const dataLabels = t.data_type_labels || {}
+    const isDashboard = variant === "dashboard"
+    const selectEnabled = showSelectColumn ?? !isDashboard
+    const actionsEnabled = showActionsColumn ?? !isDashboard
+
+    const accountsById = React.useMemo(() => {
+        const map = new Map<string, Account>()
+        for (const acc of accounts) map.set(acc.id, acc)
+        return map
+    }, [accounts])
+
+    // Real tags from the user's Tag table — used by both the tag-filter
+    // dropdown and to translate raw slugs to display names + colors.
+    const availableTags = useAvailableTags()
 
     const tagLabels: Record<string, string> = React.useMemo(() => ({
         food: dataLabels.food || "Food",
@@ -201,53 +158,27 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
         other: dataLabels.other || "Other",
     }), [dataLabels])
 
-    const columns: ColumnDef<Transaction>[] = React.useMemo(() => [
-        {
-            id: "drag",
-            header: () => null,
-            cell: () => null, // DraggableRow handles this
-            size: 40,
-            minSize: 40,
-            maxSize: 40,
-            enableResizing: false,
-        },
-        {
-            id: "select",
-            header: ({ table }) => (
-                <div className="flex items-center justify-center">
-                    <Checkbox
-                        checked={
-                            table.getIsAllPageRowsSelected() ||
-                            (table.getIsSomePageRowsSelected() && "indeterminate")
-                        }
-                        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                        aria-label={fTable.select_all || "Select all"}
-                    />
-                </div>
-            ),
-            cell: ({ row }) => (
-                <div className="flex items-center justify-center">
-                    <Checkbox
-                        checked={row.getIsSelected()}
-                        onCheckedChange={(value) => row.toggleSelected(!!value)}
-                        aria-label={fTable.select_row || "Select row"}
-                    />
-                </div>
-            ),
-            enableSorting: false,
-            enableHiding: false,
-            size: 50,
-            minSize: 50,
-            maxSize: 50,
-            enableResizing: false,
-        },
+    const columns: ColumnDef<Transaction>[] = React.useMemo(() => {
+        const baseColumns: ColumnDef<Transaction>[] = [
         {
             accessorKey: "date",
             header: tt.date,
-            cell: ({ row }) => (
-                <div className="font-medium">{row.original.date}</div>
-            ),
-            size: 120,
+            cell: ({ row }) => {
+                const date = new Date(row.original.date)
+                const isValid = !isNaN(date.getTime())
+                if (!isValid) return <span className="text-[13px] text-neutral-400">{row.original.date}</span>
+                return (
+                    <div className="flex flex-col leading-tight">
+                        <span className="text-[13px] font-medium tabular-nums">
+                            {date.toLocaleDateString(t.config?.locale || "en-US", { month: "short", day: "numeric" })}
+                        </span>
+                        <span className="text-[11px] text-neutral-400 tabular-nums">
+                            {date.toLocaleDateString(t.config?.locale || "en-US", { year: "numeric" })}
+                        </span>
+                    </div>
+                )
+            },
+            size: 110,
             minSize: 80,
             maxSize: 200,
         },
@@ -255,48 +186,48 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
             accessorKey: "description",
             header: tt.description,
             cell: ({ row }) => (
-                <span className="auto-scroll block max-w-[200px] font-medium">{row.original.description}</span>
+                <span className="auto-scroll block max-w-[260px] text-[13px] font-medium">{row.original.description}</span>
             ),
             enableHiding: false,
-            size: 200,
+            size: 220,
             minSize: 100,
             maxSize: 400,
         },
         {
             accessorKey: "tags",
             header: tt.category || "Tags",
-            cell: ({ row }) => {
-                const tags = row.original.tags
-                const firstTag = tags[0] || "other"
-                return (
-                    <Badge variant="outline" className={`${tagColors[firstTag] || tagColors.other} px-2`}>
-                        {tagLabels[firstTag] || firstTag}
-                    </Badge>
-                )
-            },
-            size: 130,
-            minSize: 80,
-            maxSize: 200,
+            cell: ({ row }) => (
+                <TagCell
+                    transactionId={row.original.id}
+                    tags={row.original.tags}
+                />
+            ),
+            size: 160,
+            minSize: 100,
+            maxSize: 240,
         },
         {
             accessorKey: "type",
             header: tt.type,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-1">
-                    {row.original.type === "in" ? (
-                        <>
-                            <ArrowUpRight className="size-4 text-positive" />
-                            <span className="text-positive">{tt.income || "Income"}</span>
-                        </>
-                    ) : (
-                        <>
-                            <ArrowDownRight className="size-4 text-negative" />
-                            <span className="text-negative">{tt.expense || "Expense"}</span>
-                        </>
-                    )}
-                </div>
-            ),
-            size: 100,
+            cell: ({ row }) => {
+                const isIncome = row.original.type === "in"
+                return (
+                    <span
+                        className={cn(
+                            "inline-flex items-center gap-1.5 h-5 px-2 rounded-full text-[11px] font-medium",
+                            isIncome
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-red-500/10 text-red-600 dark:text-red-400",
+                        )}
+                    >
+                        {isIncome
+                            ? <ArrowUpRight className="size-3" />
+                            : <ArrowDownRight className="size-3" />}
+                        {isIncome ? (tt.income || "Income") : (tt.expense || "Expense")}
+                    </span>
+                )
+            },
+            size: 110,
             minSize: 80,
             maxSize: 150,
         },
@@ -306,14 +237,14 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
             cell: ({ row }) => {
                 const amount = row.original.amount
                 const type = row.original.type
-                const formatted = new Intl.NumberFormat(t.config?.locale || "en-US", {
-                    style: "currency",
-                    currency: "EUR",
-                }).format(amount)
+                const formatted = formatCurrency(amount)
 
                 return (
-                    <div className={`text-right font-medium ${type === "in" ? "text-positive" : "text-negative"}`}>
-                        {type === "in" ? "+" : "-"}{formatted}
+                    <div className={cn(
+                        "text-right text-[13px] font-semibold tabular-nums",
+                        type === "in" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+                    )}>
+                        {type === "in" ? "+" : "−"}{formatted}
                     </div>
                 )
             },
@@ -324,60 +255,108 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
         {
             accessorKey: "accountId",
             header: tt.account || "Account",
-            cell: ({ row }) => (
-                <Badge variant="secondary" className="font-normal">
-                    {row.original.accountId}
-                </Badge>
-            ),
-            size: 120,
-            minSize: 80,
-            maxSize: 200,
+            cell: ({ row }) => {
+                const account = accountsById.get(row.original.accountId)
+                return (
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span
+                            className="size-2 rounded-full shrink-0"
+                            style={{ backgroundColor: account?.color || "var(--muted-foreground)" }}
+                        />
+                        <span className="truncate text-[13px]">
+                            {account?.name || row.original.accountId}
+                        </span>
+                    </div>
+                )
+            },
+            size: 140,
+            minSize: 100,
+            maxSize: 220,
         },
-        {
-            id: "actions",
-            cell: () => (
-                <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                    <SmartTooltip text={fActions.edit || 'Edit'} group="table-actions">
-                        <Button variant="ghost" size="icon" className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white">
-                            <Pencil className="size-4" />
-                        </Button>
-                    </SmartTooltip>
-                    <SmartTooltip text={fActions.delete || 'Delete'} group="table-actions">
-                        <Button variant="ghost" size="icon" className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-red-500">
-                            <Delete className="size-4" />
-                        </Button>
-                    </SmartTooltip>
-                </div>
-            ),
-        },
-    ], [t, f, tt, tagLabels])
+        ]
 
+        if (actionsEnabled) {
+            baseColumns.push({
+            id: "actions",
+            header: () => <span className="text-[11px] uppercase tracking-wider text-neutral-400">{fActions.actions || "Actions"}</span>,
+            cell: ({ row }) => (
+                <TableActionsCell>
+                    <TableActionButton
+                        intent="edit"
+                        label={fActions.edit || "Edit"}
+                        onClick={() => {
+                            if (onEditTransaction) onEditTransaction(row.original)
+                            else toast.info(`${fActions.edit || "Edit"}: ${row.original.description}`)
+                        }}
+                    />
+                    <TableActionButton
+                        intent="delete"
+                        label={fActions.delete || "Delete"}
+                        onClick={() => {
+                            if (onDeleteTransaction) onDeleteTransaction(row.original)
+                            else toast.info(`${fActions.delete || "Delete"}: ${row.original.description}`)
+                        }}
+                    />
+                </TableActionsCell>
+            ),
+            size: 96,
+            minSize: 80,
+            maxSize: 120,
+            enableResizing: false,
+            })
+        }
+
+        if (selectEnabled) {
+            baseColumns.unshift({
+                id: "select",
+                header: ({ table }) => (
+                    <div className="flex items-center justify-center">
+                        <Checkbox
+                            checked={
+                                table.getIsAllPageRowsSelected() ||
+                                (table.getIsSomePageRowsSelected() && "indeterminate")
+                            }
+                            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                            aria-label={fTable.select_all || "Select all"}
+                        />
+                    </div>
+                ),
+                cell: ({ row }) => (
+                    <div className="flex items-center justify-center">
+                        <Checkbox
+                            checked={row.getIsSelected()}
+                            onCheckedChange={(value) => row.toggleSelected(!!value)}
+                            aria-label={fTable.select_row || "Select row"}
+                        />
+                    </div>
+                ),
+                enableSorting: false,
+                enableHiding: false,
+                size: 50,
+                minSize: 50,
+                maxSize: 50,
+            })
+        }
+
+        return baseColumns
+    }, [t, fTable.select_all, fTable.select_row, fActions.actions, fActions.edit, fActions.delete, tt, tagLabels, formatCurrency, accountsById, selectEnabled, actionsEnabled, onEditTransaction, onDeleteTransaction])
     const [data, setData] = React.useState<Transaction[]>(() => initialData)
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [sorting, setSorting] = React.useState<SortingState>([])
-    const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
+    const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize })
+
+    React.useEffect(() => {
+        setPagination((current) => current.pageSize === pageSize ? current : { pageIndex: 0, pageSize })
+    }, [pageSize])
     const [globalFilter, setGlobalFilter] = React.useState("")
+    const isMobile = useIsMobileView()
 
     // Sync data when initialData changes (e.g., after async fetch)
     React.useEffect(() => {
         setData(initialData)
     }, [initialData])
-
-    const sortableId = React.useId()
-    const sensors = useSensors(
-        useSensor(MouseSensor, {}),
-        useSensor(TouchSensor, {}),
-        useSensor(KeyboardSensor, {})
-    )
-
-    const dataIds = React.useMemo<UniqueIdentifier[]>(
-        () => data?.map(({ id }) => id) || [],
-        [data]
-    )
-
-    const [columnSizing, setColumnSizing] = React.useState({})
 
     const table = useReactTable({
         data,
@@ -389,13 +368,9 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
             columnFilters,
             pagination,
             globalFilter,
-            columnSizing,
         },
         getRowId: (row) => row.id,
-        enableRowSelection: true,
-        enableColumnResizing: true,
-        columnResizeMode: 'onChange',
-        onColumnSizingChange: setColumnSizing,
+        enableRowSelection: selectEnabled,
         onRowSelectionChange: setRowSelection,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
@@ -404,52 +379,12 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
         onGlobalFilterChange: setGlobalFilter,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
     })
 
-    function handleDragEnd(event: DragEndEvent) {
-        const { active, over } = event
-        if (active && over && active.id !== over.id) {
-            setData((data) => {
-                const oldIndex = dataIds.indexOf(active.id)
-                const newIndex = dataIds.indexOf(over.id)
-                return arrayMove(data, oldIndex, newIndex)
-            })
-        }
-    }
-
-    const totals = React.useMemo(() => {
-        let income = 0
-        let expenses = 0
-        // Single pass through data instead of two filter passes
-        for (const tx of data) {
-            if (tx.type === "in") {
-                income += tx.amount
-            } else {
-                expenses += tx.amount
-            }
-        }
-        return { income, expenses, balance: income - expenses }
-    }, [data])
-
-    // Memoize currency formatter to avoid recreation on each render
-    const formatCurrency = React.useCallback(
-        (value: number) => new Intl.NumberFormat(t.config?.locale || "en-US", { style: "currency", currency: "EUR" }).format(value),
-        [t.config?.locale]
-    )
-
-    // Search state - must be before any conditional returns
-    const [searchOpen, setSearchOpen] = React.useState(false)
-    const searchInputRef = React.useRef<HTMLInputElement>(null)
-
-    React.useEffect(() => {
-        if (searchOpen && searchInputRef.current) {
-            searchInputRef.current.focus()
-        }
-    }, [searchOpen])
+    void setData
 
     // Show loading state while translations are loading
     if (isLangLoading) {
@@ -460,33 +395,24 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
     if (isLoading) {
         return (
             <div className="flex flex-col gap-4 w-full">
-                {/* Header skeleton */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Skeleton className="h-9 w-[200px] lg:w-[300px]" />
-                        <Skeleton className="h-8 w-[130px]" />
-                        <Skeleton className="h-8 w-[150px]" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Skeleton className="h-8 w-24" />
-                        <Skeleton className="h-8 w-32" />
-                    </div>
-                </div>
-
-                {/* Summary Cards skeleton */}
-                <div className="grid grid-cols-3 gap-4">
-                    {[0, 1, 2].map(i => (
-                        <div key={i} className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                            <Skeleton className="h-4 w-24 mb-2" />
+                {showToolbar && (
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Skeleton className="h-9 w-[200px] lg:w-[300px]" />
+                            <Skeleton className="h-8 w-[130px]" />
+                            <Skeleton className="h-8 w-[150px]" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Skeleton className="h-8 w-24" />
                             <Skeleton className="h-8 w-32" />
                         </div>
-                    ))}
-                </div>
+                    </div>
+                )}
 
                 {/* Table skeleton */}
-                <div className="border border-black/6 dark:border-white/6 rounded-xl overflow-hidden">
+                <TableShell>
                     <Table>
-                        <TableHeader className="bg-black/3 dark:bg-white/3">
+                        <TableHeader>
                             <TableRow>
                                 <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
                                 <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
@@ -512,7 +438,7 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
                             ))}
                         </TableBody>
                     </Table>
-                </div>
+                </TableShell>
 
                 {/* Pagination skeleton */}
                 <div className="flex items-center justify-between">
@@ -526,278 +452,173 @@ export function TransactionsTable({ data: initialData, isLoading = false }: { da
     }
 
     return (
-        <Tabs defaultValue="all" className="flex-col justify-start gap-4 w-full">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="relative flex items-center">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn("size-9 shrink-0", searchOpen && "hidden")}
-                            onClick={() => setSearchOpen(true)}
-                        >
-                            <Search className="size-4 text-neutral-500 dark:text-neutral-400" />
-                        </Button>
-                        <div className={cn(
-                            "flex items-center transition-all duration-200 overflow-hidden",
-                            searchOpen ? "w-[200px] lg:w-[300px] opacity-100" : "w-0 opacity-0"
-                        )}>
-                            <div className="relative w-full">
-                                <Search className="absolute left-2.5 top-2.5 size-4 text-neutral-500 dark:text-neutral-400" />
-                                <Input
-                                    label="Search transactions"
-                                    ref={searchInputRef}
-                                    placeholder={tt.search_transactions}
-                                    value={globalFilter}
-                                    onChange={(e) => setGlobalFilter(e.target.value)}
-                                    onBlur={() => !globalFilter && setSearchOpen(false)}
-                                    className="pl-8 pr-8 w-full"
+        <Tabs defaultValue="all" className={cn("flex flex-col justify-start w-full min-h-0 flex-1", isDashboard ? "h-full gap-2" : "gap-4")}>
+            {showToolbar && (
+            <TableToolbar className={cn(isDashboard && "border-b border-black/6 dark:border-white/8 pb-2") }>
+                <TableToolbarGroup className="flex-wrap">
+                    <TableSearchControl
+                        table={table}
+                        placeholder={tt.search_transactions}
+                        width={isDashboard ? 200 : 260}
+                    />
+                    {!isDashboard && (
+                        <>
+                            <TableFilterSelect
+                                table={table}
+                                columnId="type"
+                                label={tt.type || "Type"}
+                                allLabel={fFilter.all_types || "All Types"}
+                                options={[
+                                    { value: "in", label: tt.income || "Income" },
+                                    { value: "out", label: tt.expense || "Expense" },
+                                ]}
+                            />
+                            <TableFilterSelect
+                                table={table}
+                                columnId="tags"
+                                label={tt.category || "Tags"}
+                                allLabel={fFilter.all_categories || "All"}
+                                options={availableTags.map((tag) => ({ value: tag.slug, label: tag.name }))}
+                            />
+                            {accounts.length > 0 && (
+                                <TableFilterSelect
+                                    table={table}
+                                    columnId="accountId"
+                                    label={tt.account || "Account"}
+                                    allLabel={(t as { account_filter?: { all_accounts?: string } }).account_filter?.all_accounts || "All Accounts"}
+                                    options={accounts.map((acc) => ({ value: acc.id, label: acc.name }))}
                                 />
-                                {globalFilter && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-0 top-0 size-9 text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white"
-                                        onClick={() => { setGlobalFilter(""); setSearchOpen(false) }}
-                                    >
-                                        <X className="size-4" />
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <Select
-                        onValueChange={(value) => {
-                            if (value === "all") {
-                                table.getColumn("type")?.setFilterValue(undefined)
-                            } else {
-                                table.getColumn("type")?.setFilterValue(value)
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-[130px]" size="sm">
-                            <Filter className="size-4" />
-                            <SelectValue placeholder={tt.type} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{fFilter.all_types || "All Types"}</SelectItem>
-                            <SelectItem value="in">{tt.income || "Income"}</SelectItem>
-                            <SelectItem value="out">{tt.expense || "Expense"}</SelectItem>
-                        </SelectContent>
-                    </Select>
+                            )}
+                        </>
+                    )}
+                </TableToolbarGroup>
 
-                    <Select
-                        onValueChange={(value) => {
-                            if (value === "all") {
-                                table.getColumn("tags")?.setFilterValue(undefined)
-                            } else {
-                                table.getColumn("tags")?.setFilterValue(value)
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-[150px]" size="sm">
-                            <SelectValue placeholder={tt.category || "Tags"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{fFilter.all_categories || "All"}</SelectItem>
-                            <SelectItem value="food">{tagLabels.food}</SelectItem>
-                            <SelectItem value="transport">{tagLabels.transport}</SelectItem>
-                            <SelectItem value="housing">{tagLabels.housing}</SelectItem>
-                            <SelectItem value="utilities">{tagLabels.utilities}</SelectItem>
-                            <SelectItem value="subscriptions">{tagLabels.subscriptions}</SelectItem>
-                            <SelectItem value="entertainment">{tagLabels.entertainment}</SelectItem>
-                            <SelectItem value="shopping">{tagLabels.shopping}</SelectItem>
-                            <SelectItem value="health">{tagLabels.health}</SelectItem>
-                            <SelectItem value="insurance">{tagLabels.insurance}</SelectItem>
-                            <SelectItem value="services">{tagLabels.services}</SelectItem>
-                            <SelectItem value="other">{tagLabels.other}</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                <TableToolbarGroup>
+                    {!isDashboard && (
+                        <TableSortControl
+                            table={table}
+                            options={[
+                                { id: "date", label: tt.date || "Date" },
+                                { id: "amount", label: tt.amount || "Amount" },
+                                { id: "description", label: tt.description || "Description" },
+                            ]}
+                        />
+                    )}
+                    <TableColumnsControl table={table} label={fTable.columns || "Columns"} />
+                    <TableAddButton onClick={onAddTransaction} label={tt.add_transaction || "Add"} />
+                </TableToolbarGroup>
+            </TableToolbar>
+            )}
 
-                <div className="flex items-center gap-2">
-                    <Dropdown>
-                        <SmartTooltip text={t.tooltips?.columns || 'Columns'} group="table-toolbar">
-                            <DropdownTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <Columns />
-                                    <span className="hidden lg:inline">{fTable.columns || "Columns"}</span>
-                                    <ChevronDown />
-                                </Button>
-                            </DropdownTrigger>
-                        </SmartTooltip>
-                        <DropdownShell align="end" className="w-56">
-                            {table
-                                .getAllColumns()
-                                .filter(
-                                    (column) =>
-                                        typeof column.accessorFn !== "undefined" &&
-                                        column.getCanHide()
-                                )
-                                .map((column) => (
-                                    <DropdownCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
+            <TabsContent value="all" className={cn("relative flex flex-col min-h-0 flex-1", isDashboard ? "gap-2" : "gap-4")}>
+                {isMobile ? (
+                    <>
+                    <MobileCardList>
+                        {table.getRowModel().rows?.length ? (
+                            (isDashboard
+                                ? table.getRowModel().rows.slice(0, 3)
+                                : table.getRowModel().rows
+                            ).map((row, index) => {
+                                const tx = row.original
+                                return (
+                                    <MobileCard
+                                        key={row.id}
+                                        item={tx}
+                                        id={tx.id}
+                                        index={index}
+                                        fieldLayout={isDashboard ? "grid" : "carousel"}
+                                        isSelected={row.getIsSelected()}
+                                        onSelect={(checked) => row.toggleSelected(checked)}
+                                        icon={
+                                            tx.type === "in"
+                                                ? <ArrowDownRight className="size-5 text-positive" />
+                                                : <ArrowUpRight className="size-5 text-negative" />
                                         }
-                                    >
-                                        {column.id}
-                                    </DropdownCheckboxItem>
-                                ))}
-                        </DropdownShell>
-                    </Dropdown>
-
-                    <SmartTooltip text={t.tooltips?.add_transaction || 'Add Transaction'} group="table-toolbar">
-                        <Button variant="outline" size="sm">
-                            <Plus />
-                            <span className="hidden lg:inline">{tt.add_transaction}</span>
-                        </Button>
-                    </SmartTooltip>
-                </div>
-            </div>
-
-            {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{tt.total_income}</p>
-                    <p className="text-lg font-bold text-positive mt-1">
-                        +{formatCurrency(totals.income)}
-                    </p>
-                </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{tt.total_expenses}</p>
-                    <p className="text-lg font-bold text-negative mt-1">
-                        -{formatCurrency(totals.expenses)}
-                    </p>
-                </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{tt.balance}</p>
-                    <p className={`text-lg font-bold mt-1 ${totals.balance >= 0 ? "text-positive" : "text-negative"}`}>
-                        {formatCurrency(totals.balance)}
-                    </p>
-                </div>
-            </div>
-
-            <TabsContent value="all" className="relative flex flex-col gap-4 overflow-auto">
-                <div className="border border-black/6 dark:border-white/6 rounded-xl overflow-hidden">
-                    <DndContext
-                        id={sortableId}
-                        collisionDetection={closestCenter}
-                        modifiers={[restrictToVerticalAxis]}
-                        onDragEnd={handleDragEnd}
-                        sensors={sensors}
-                    >
-                        <Table className="w-full">
-                            <TableHeader className="bg-black/3 dark:bg-white/3 sticky top-0 z-10">
-                                {table.getHeaderGroups().map((headerGroup) => (
-                                    <TableRow key={headerGroup.id}>
-                                        {headerGroup.headers.map((header) => (
-                                            <TableHead 
-                                                key={header.id} 
-                                                colSpan={header.colSpan}
-                                                style={{ width: header.getSize() }}
-                                            >
-                                                {header.isPlaceholder
-                                                    ? null
-                                                    : flexRender(
-                                                        header.column.columnDef.header,
-                                                        header.getContext()
-                                                    )}
-                                                {header.column.getCanResize() && (
-                                                    <TableResizeHandle
-                                                        onMouseDown={header.getResizeHandler()}
-                                                        onTouchStart={header.getResizeHandler()}
-                                                        onDoubleClick={() => header.column.resetSize()}
-                                                        isResizing={header.column.getIsResizing()}
-                                                    />
+                                        title={tx.description}
+                                        subtitle={new Date(tx.date).toLocaleDateString(t.config?.locale || "en-US")}
+                                        badge={{
+                                            label: tx.type === "in" ? (tt.income || "Income") : (tt.expense || "Expense"),
+                                            variant: tx.type === "in" ? "default" : "destructive",
+                                        }}
+                                        fields={[
+                                            {
+                                                label: tt.amount || "Amount",
+                                                value: (
+                                                    <span className={tx.type === "in" ? "text-positive" : "text-negative"}>
+                                                        {tx.type === "in" ? "+" : "-"}{formatCurrency(tx.amount)}
+                                                    </span>
+                                                ),
+                                            },
+                                            {
+                                                label: tt.tags || "Tags",
+                                                value: tx.tags.length > 0 ? tx.tags.join(", ") : "—",
+                                            },
+                                        ]}
+                                    />
+                                )
+                            })
+                        ) : (
+                            <EmptyStateInline variant={globalFilter || columnFilters.length > 0 ? "filtered" : "no-transactions"} />
+                        )}
+                    </MobileCardList>
+                    </>
+                ) : (
+                <TableShell className={cn(isDashboard ? "h-full" : "flex-1")}>
+                    <TableScrollArea>
+                    <Table className="w-full">
+                        <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                                    {headerGroup.headers.map((header) => (
+                                        <TableHead
+                                            key={header.id}
+                                            colSpan={header.colSpan}
+                                        >
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                    header.column.columnDef.header,
+                                                    header.getContext()
                                                 )}
-                                            </TableHead>
-                                        ))}
-                                    </TableRow>
-                                ))}
-                            </TableHeader>
-                            <TableBody>
-                                {table.getRowModel().rows?.length ? (
-                                    <SortableContext
-                                        items={dataIds}
-                                        strategy={verticalListSortingStrategy}
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow
+                                        key={row.id}
+                                        data-state={row.getIsSelected() && "selected"}
+                                        onClick={(e) => {
+                                            const target = e.target as HTMLElement
+                                            if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
+                                            row.toggleSelected()
+                                        }}
+                                        className="group/row animate-fade-in"
                                     >
-                                        {table.getRowModel().rows.map((row) => (
-                                            <DraggableRow key={row.id} row={row} />
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id} className={cn(isDashboard && "py-2")}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
                                         ))}
-                                    </SortableContext>
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={columns.length} className="h-48">
-                                            <EmptyStateInline 
-                                                variant={globalFilter || columnFilters.length > 0 ? "filtered" : "no-transactions"}
-                                            />
-                                        </TableCell>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </DndContext>
-                </div>
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between">
-                    <div className="hidden lg:flex flex-1 text-neutral-500 dark:text-neutral-400 text-sm">
-                        {(fTable.rows_selected || "%count of %total selected")
-                            .replace("%count", String(table.getFilteredSelectedRowModel().rows.length))
-                            .replace("%total", String(table.getFilteredRowModel().rows.length))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <SmartTooltip text={t.tooltips?.first_page || 'First Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.setPageIndex(0)}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <ChevronsLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.previous_page || 'Previous Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <ChevronLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <span className="text-sm">
-                            {(fTable.page_of || "Page %current of %total")
-                                .replace("%current", String(table.getState().pagination.pageIndex + 1))
-                                .replace("%total", String(table.getPageCount()))}
-                        </span>
-                        <SmartTooltip text={t.tooltips?.next_page || 'Next Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <ChevronRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.last_page || 'Last Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <ChevronsRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                    </div>
-                </div>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-48">
+                                        <EmptyStateInline
+                                            variant={globalFilter || columnFilters.length > 0 ? "filtered" : "no-transactions"}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                    </TableScrollArea>
+                </TableShell>
+                )}
             </TabsContent>
         </Tabs>
     )

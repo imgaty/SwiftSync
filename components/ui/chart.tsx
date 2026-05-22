@@ -17,6 +17,7 @@ import {
 } from "recharts"
 
 import { cn } from "@/lib/utils"
+import { PRISM } from "@/lib/PRISM"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
@@ -70,14 +71,14 @@ function ChartContainer({
                 data-slot="chart"
                 data-chart={chartId}
                 className={cn(
-                    "select-none [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden [&_svg]:outline-none [&_svg]:border-none **:outline-none",
+                    "select-none min-w-0 min-h-px [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden [&_svg]:outline-none [&_svg]:border-none **:outline-none",
                     className
                 )}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 {...props}
             >
                 <ChartStyle id={chartId} config={config} />
-                <RechartsPrimitive.ResponsiveContainer>
+                <RechartsPrimitive.ResponsiveContainer minWidth={1} minHeight={1}>
                     {children}
                 </RechartsPrimitive.ResponsiveContainer>
             </div>
@@ -184,7 +185,7 @@ function ChartTooltipContent({
 
         if (labelFormatter) {
             return (
-                <div className={cn("font-medium", labelClassName)}>
+                <div className={cn(PRISM.label, "auto-scroll", labelClassName)}>
                     {labelFormatter(label, payload)}
                 </div>
             )
@@ -194,7 +195,7 @@ function ChartTooltipContent({
             return null
         }
 
-        return <div className={cn("font-medium", labelClassName)}>{value}</div>
+        return <div className={cn(PRISM.label, "auto-scroll", labelClassName)}>{value}</div>
     }, [
         label,
         labelFormatter,
@@ -214,12 +215,13 @@ function ChartTooltipContent({
     return (
         <div
             className={cn(
-                "z-9999 border-black/10 dark:border-white/10 bg-white dark:bg-black grid min-w-32 items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
+                PRISM.container,
+                "z-9999 grid w-[220px] items-start gap-0",
                 className
             )}
         >
-            {!nestLabel ? tooltipLabel : null}
-            <div className="grid gap-1.5">
+            {!nestLabel && tooltipLabel ? tooltipLabel : null}
+            <div className="grid gap-0.5">
                 {payload
                     .filter((item) => item.type !== "none")
                     .map((item, index) => {
@@ -236,8 +238,7 @@ function ChartTooltipContent({
                             <div
                                 key={item.dataKey}
                                 className={cn(
-                                    "[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
-                                    indicator === "dot" && "items-center"
+                                    "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[13px]",
                                 )}
                             >
                                 {formatter &&
@@ -253,26 +254,22 @@ function ChartTooltipContent({
                                 ) : (
                                     <>
                                         {itemConfig?.icon ? (
-                                            <itemConfig.icon />
+                                            <span className="size-4 shrink-0 [&_svg]:size-full"><itemConfig.icon /></span>
                                         ) : (
                                             !hideIndicator && (
                                                 <div
                                                     className={cn(
-                                                        "shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)",
+                                                        "shrink-0 rounded-sm border-(--color-border) bg-(--color-bg)",
                                                         {
-                                                            "h-2.5 w-2.5":
+                                                            "size-2.5":
                                                                 indicator ===
                                                                 "dot",
-                                                            "w-1":
+                                                            "h-3 w-1":
                                                                 indicator ===
                                                                 "line",
-                                                            "w-0 border-[1.5px] border-dashed bg-transparent":
+                                                            "h-3 w-0 border-[1.5px] border-dashed bg-transparent":
                                                                 indicator ===
                                                                 "dashed",
-                                                            "my-0.5":
-                                                                nestLabel &&
-                                                                indicator ===
-                                                                    "dashed",
                                                         }
                                                     )}
                                                     style={
@@ -284,31 +281,19 @@ function ChartTooltipContent({
                                                 />
                                             )
                                         )}
-                                        <div
-                                            className={cn(
-                                                "flex flex-1 justify-between leading-none gap-3",
-                                                nestLabel
-                                                    ? "items-end"
-                                                    : "items-center"
-                                            )}
-                                        >
-                                            <div className="grid gap-1.5">
-                                                {nestLabel
-                                                    ? tooltipLabel
-                                                    : null}
-                                                <span className="text-muted-foreground">
-                                                    {itemConfig?.label ||
-                                                        item.name}
-                                                </span>
-                                            </div>
-                                            {item.value !== undefined && item.value !== null && (
-                                                <span className="text-foreground font-mono font-medium tabular-nums">
-                                                    {typeof item.value === 'number' 
-                                                        ? item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                                                        : item.value}
-                                                </span>
-                                            )}
-                                        </div>
+                                        <span className="auto-scroll flex-1 min-w-0 text-black dark:text-white">
+                                            {nestLabel && tooltipLabel ? (
+                                                <span className={PRISM.muted}>{tooltipLabel} · </span>
+                                            ) : null}
+                                            {itemConfig?.label || item.name}
+                                        </span>
+                                        {item.value !== undefined && item.value !== null && (
+                                            <span className="shrink-0 text-[13px] text-black dark:text-white font-mono font-semibold tabular-nums tracking-tight">
+                                                {typeof item.value === 'number' 
+                                                    ? item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                                    : item.value}
+                                            </span>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -362,7 +347,7 @@ function ChartLegendContent({
                         <div
                             key={item.value}
                             className={cn(
-                                "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3"
+                                "[&>svg]:text-neutral-400 flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3"
                             )}
                         >
                             {itemConfig?.icon && !hideIcon ? (
@@ -537,16 +522,16 @@ const getXAxisFormatter = (periodType: string, locale: string) => (value: string
     return date.toLocaleDateString(locale, { month: "short", day: "numeric" })
 }
 
-const getYAxisFormatter = (locale: string) => (value: number) => {
+const getYAxisFormatter = (locale: string, currencyCode: string = "EUR") => (value: number) => {
     return Number(value).toLocaleString(locale, {
         style: "currency",
-        currency: "EUR",
+        currency: currencyCode,
         notation: locale === 'en-US' ? 'compact' : 'standard',
     })
 }
 
 // Calculate dynamic Y-axis width based on maximum value
-const getYAxisWidth = (data: Record<string, unknown>[], chartKeys: string[], locale: string): number => {
+const getYAxisWidth = (data: Record<string, unknown>[], chartKeys: string[], locale: string, currencyCode: string = "EUR"): number => {
     if (!data.length) return 65
     
     let maxValue = 0
@@ -560,7 +545,7 @@ const getYAxisWidth = (data: Record<string, unknown>[], chartKeys: string[], loc
     // Format the max value to get actual string length
     const formatted = maxValue.toLocaleString(locale, {
         style: "currency",
-        currency: "EUR",
+        currency: currencyCode,
         notation: locale === 'en-US' ? 'compact' : 'standard',
     })
     
@@ -621,6 +606,7 @@ function AreaChartComponent({
     chartKeys,
     periodType,
     locale = "pt-PT",
+    currencyCode = "EUR",
     animationBegin = 0,
     animationDuration = 800,
     isSelected = false,
@@ -630,6 +616,7 @@ function AreaChartComponent({
     chartKeys: string[]
     periodType: string
     locale?: string
+    currencyCode?: string
     animationBegin?: number
     animationDuration?: number
     isSelected?: boolean
@@ -638,7 +625,7 @@ function AreaChartComponent({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [activePayload, setActivePayload] = React.useState<any[] | null>(null)
     const tooltipLabelFormatter = React.useMemo(() => getTooltipLabelFormatter(periodType, locale), [periodType, locale])
-    const yAxisWidth = React.useMemo(() => getYAxisWidth(data, chartKeys, locale), [data, chartKeys, locale])
+    const yAxisWidth = React.useMemo(() => getYAxisWidth(data, chartKeys, locale, currencyCode), [data, chartKeys, locale, currencyCode])
     
     return (
         <ChartContainer config={config} className="w-full h-full relative overflow-hidden">
@@ -649,18 +636,18 @@ function AreaChartComponent({
                         isSelected ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
                     )}
                 >
-                    <div className="text-xs font-medium text-muted-foreground border-b pb-1 mb-1">
+                    <div className="text-xs font-medium text-neutral-400 border-b pb-1 mb-1">
                         {tooltipLabelFormatter(activePayload[0].payload.date)}
                     </div>
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {activePayload.map((item: any) => (
                         <div key={item.name} className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <span className="text-[10px] text-neutral-400 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
                                 {config[item.name]?.label ?? item.name}
                             </span>
                             <span className="text-xs font-medium tabular-nums">
-                                {getYAxisFormatter(locale)(item.value)}
+                                {getYAxisFormatter(locale, currencyCode)(item.value)}
                             </span>
                         </div>
                     ))}
@@ -709,7 +696,7 @@ function AreaChartComponent({
                     tickLine={false}
                     axisLine={false}
                     tickMargin={10}
-                    tickFormatter={getYAxisFormatter(locale)}
+                    tickFormatter={getYAxisFormatter(locale, currencyCode)}
                     width={yAxisWidth}
                 />
 
@@ -736,6 +723,7 @@ function BarChartComponent({
     chartKeys,
     periodType,
     locale = "pt-PT",
+    currencyCode = "EUR",
     animationBegin = 0,
     animationDuration = 800,
     isSelected = false,
@@ -745,6 +733,7 @@ function BarChartComponent({
     chartKeys: string[]
     periodType: string
     locale?: string
+    currencyCode?: string
     animationBegin?: number
     animationDuration?: number
     isSelected?: boolean
@@ -753,7 +742,7 @@ function BarChartComponent({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [activePayload, setActivePayload] = React.useState<any[] | null>(null)
     const tooltipLabelFormatter = React.useMemo(() => getTooltipLabelFormatter(periodType, locale), [periodType, locale])
-    const yAxisWidth = React.useMemo(() => getYAxisWidth(data, chartKeys, locale), [data, chartKeys, locale])
+    const yAxisWidth = React.useMemo(() => getYAxisWidth(data, chartKeys, locale, currencyCode), [data, chartKeys, locale, currencyCode])
     
     return (
         <ChartContainer config={config} className="w-full h-full relative overflow-hidden">
@@ -764,18 +753,18 @@ function BarChartComponent({
                         isSelected ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
                     )}
                 >
-                    <div className="text-xs font-medium text-muted-foreground border-b pb-1 mb-1">
+                    <div className="text-xs font-medium text-neutral-400 border-b pb-1 mb-1">
                         {tooltipLabelFormatter(activePayload[0].payload.date)}
                     </div>
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {activePayload.map((item: any) => (
                         <div key={item.name} className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <span className="text-[10px] text-neutral-400 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
                                 {config[item.name]?.label ?? item.name}
                             </span>
                             <span className="text-xs font-medium tabular-nums">
-                                {getYAxisFormatter(locale)(item.value)}
+                                {getYAxisFormatter(locale, currencyCode)(item.value)}
                             </span>
                         </div>
                     ))}
@@ -824,7 +813,7 @@ function BarChartComponent({
                     tickLine={false}
                     axisLine={false}
                     tickMargin={10}
-                    tickFormatter={getYAxisFormatter(locale)}
+                    tickFormatter={getYAxisFormatter(locale, currencyCode)}
                     width={yAxisWidth}
                 />
 
@@ -845,12 +834,11 @@ function BarChartComponent({
 
 // Pie legend with smart scroll fade that hides when scrolled to bottom
 function PieLegendScroll({ 
-    pieData, 
-    config, 
-    total, 
+    pieData,
+    config,
+    total,
     setHoverIndex,
-    isSelected = false
-}: { 
+}: {
     pieData: Record<string, unknown>[]
     config: ChartConfig
     total: number
@@ -888,7 +876,7 @@ function PieLegendScroll({
         <div className="relative shrink-0 self-stretch flex flex-col overflow-hidden">
             <div 
                 ref={scrollRef}
-                className="chart-legend-scroll flex-1 min-h-0 overflow-y-auto pr-2 py-1"
+                className="scrollbar-subtle flex-1 min-h-0 overflow-y-auto pr-2 py-1"
             >
                 <table className="text-xs">
                     <tbody>
@@ -897,7 +885,7 @@ function PieLegendScroll({
                             return (
                                 <tr 
                                     key={idx} 
-                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="cursor-pointer rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                                     onMouseEnter={() => setHoverIndex(idx)}
                                     onMouseLeave={() => setHoverIndex(null)}
                                 >
@@ -907,7 +895,7 @@ function PieLegendScroll({
                                                 className="w-2 h-2 rounded-full shrink-0" 
                                                 style={{ backgroundColor: item.fill as string }}
                                             />
-                                            <span className="text-muted-foreground">
+                                            <span className="text-neutral-400">
                                                 {config[item.name as string]?.label ?? String(item.name)}
                                             </span>
                                         </span>
@@ -932,7 +920,7 @@ function PieLegendScroll({
 }
 
 // Bottom drawer for pie legend on small screens
-function PieLegendDrawer({
+function _PieLegendDrawer({
     pieData,
     config,
     total,
@@ -1008,7 +996,7 @@ function PieLegendDrawer({
                 onClick={handleClick}
             >
                 <div className="w-8 h-1 bg-muted-foreground/30 rounded-full mb-1" />
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-[10px] text-neutral-400">
                     {/* Category color dots preview */}
                     <div className="flex -space-x-0.5">
                         {pieData.slice(0, 5).map((item, idx) => (
@@ -1060,7 +1048,7 @@ function PieLegendDrawer({
                                         className="w-2 h-2 rounded-full shrink-0"
                                         style={{ backgroundColor: item.fill as string }}
                                     />
-                                    <span className="auto-scroll text-muted-foreground">
+                                    <span className="auto-scroll text-neutral-400">
                                         {config[item.name as string]?.label ?? String(item.name)}
                                     </span>
                                 </span>
@@ -1211,7 +1199,7 @@ function PieLegendCarousel({
                                                 className="w-2.5 h-2.5 rounded-full shrink-0"
                                                 style={{ backgroundColor: item.fill as string }}
                                             />
-                                            <span className="auto-scroll text-muted-foreground">
+                                            <span className="auto-scroll text-neutral-400">
                                                 {config[item.name as string]?.label ?? String(item.name)}
                                             </span>
                                         </span>
@@ -1261,6 +1249,7 @@ function PieChartComponent({
     animationBegin = 0,
     animationDuration = 800,
     locale = "pt-PT",
+    currencyCode = "EUR",
     isSelected = false,
 }: {
     pieData: Record<string, unknown>[]
@@ -1272,22 +1261,21 @@ function PieChartComponent({
     animationBegin?: number
     animationDuration?: number
     locale?: string
+    currencyCode?: string
     isSelected?: boolean
 }) {
     const containerRef = React.useRef<HTMLDivElement>(null)
     const [containerWidth, setContainerWidth] = React.useState(300)
-    const [containerHeight, setContainerHeight] = React.useState(200)
-    
+
     // Track container size
     React.useEffect(() => {
         const el = containerRef.current
         if (!el) return
-        
+
         const observer = new ResizeObserver((entries) => {
             const entry = entries[0]
             if (entry) {
                 setContainerWidth(entry.contentRect.width)
-                setContainerHeight(entry.contentRect.height)
             }
         })
         
@@ -1324,7 +1312,7 @@ function PieChartComponent({
         return (
             <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
                 <tspan x="50%" dy="-0.4em" className="fill-foreground font-bold text-lg">
-                    {total.toLocaleString(locale, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                    {total.toLocaleString(locale, { style: 'currency', currency: currencyCode, maximumFractionDigits: 0 })}
                 </tspan>
                 <tspan x="50%" dy="1.4em" className="fill-muted-foreground text-[10px]">
                     Total
@@ -1345,19 +1333,24 @@ function PieChartComponent({
             const fill = item.payload?.fill
             
             return (
-                <div className="z-9999 border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
-                    <div className="flex items-center gap-3">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: fill }} />
-                        <span className="text-muted-foreground">{label}</span>
-                        <span className="font-mono font-medium tabular-nums ml-auto">
-                            {value.toLocaleString(locale, { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 })}
+                <div className={cn(PRISM.container, "z-9999 grid min-w-[220px] max-w-[min(320px,calc(100vw-24px))] gap-0")}>
+                    <div className={cn(PRISM.label, "auto-scroll")}>
+                        {label}
+                    </div>
+                    <div className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-[13px]">
+                        <span className="flex min-w-0 items-center gap-2.5">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" style={{ backgroundColor: fill }} />
+                            <span className="auto-scroll text-black dark:text-white">Value</span>
                         </span>
-                        <span className="text-muted-foreground tabular-nums">({percentage}%)</span>
+                        <span className="text-[13px] font-mono font-semibold tabular-nums tracking-tight text-black dark:text-white">
+                            {value.toLocaleString(locale, { style: 'currency', currency: currencyCode, minimumFractionDigits: 2 })}
+                        </span>
+                        <span className={cn(PRISM.muted, "tabular-nums")}>{percentage}%</span>
                     </div>
                 </div>
             )
         },
-        [config, total, locale]
+        [config, total, locale, currencyCode]
     )
     
     // Use carousel for small/medium, side legend for large
@@ -1463,7 +1456,7 @@ function ListChartComponent({
     return (
         <div className="h-full w-full pr-2 overflow-auto">
             <table className="w-full text-sm text-left">
-                <thead className="sticky top-0 bg-card text-muted-foreground">
+                <thead className="sticky top-0 bg-card text-neutral-400">
                     <tr>
                         <th className="pb-2 font-medium">{dateHeader}</th>
                         {chartKeys.map((key) => (

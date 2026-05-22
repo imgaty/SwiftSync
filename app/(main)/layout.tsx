@@ -5,6 +5,8 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { CanvasBackground } from "@/components/canvas-background"
+import { SettingsRouter } from "@/components/settings-router"
+import { AutoRecategorize } from "@/components/auto-recategorize"
 
 export default async function MainLayout({
     children,
@@ -14,7 +16,8 @@ export default async function MainLayout({
     const cookieStore = await cookies()
 
     // Read all sidebar preferences from cookies (server-side to prevent hydration flash)
-    const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+    const openCookie = cookieStore.get("sidebar_state")?.value
+    const defaultOpen = openCookie ? openCookie === "true" : true
     const defaultSide = (cookieStore.get("sidebar_side")?.value as "left" | "right") || "left"
     // Width is stored in px
     const savedWidth = parseInt(cookieStore.get("sidebar_width")?.value || "240", 10)
@@ -23,7 +26,7 @@ export default async function MainLayout({
     return (
         <>
             <CommandPalette />
-            <Toaster richColors closeButton position="top-center" />
+            <Toaster richColors closeButton position="bottom-right" />
             <AppLoadingProvider>
                 <SidebarProvider defaultOpen={defaultOpen} defaultSide={defaultSide} defaultWidth={defaultWidth} showRail>
                     <AppSidebar />
@@ -33,6 +36,8 @@ export default async function MainLayout({
                             {children}
                         </div>
                     </SidebarInset>
+                    <SettingsRouter />
+                    <AutoRecategorize />
                 </SidebarProvider>
             </AppLoadingProvider>
         </>

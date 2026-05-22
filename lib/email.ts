@@ -9,14 +9,56 @@ import { Resend } from 'resend';
 // =============================================================================
 
 let _resend: Resend | null = null;
+let _loggedDevRecipientOverride = false;
+
 function getResend() {
   if (!_resend) {
-    _resend = new Resend(process.env.RESEND_API_KEY);
+    const apiKey = process.env.RESEND_API_KEY?.trim();
+
+    if (!apiKey) {
+      throw new Error('Email service is not configured. Missing `RESEND_API_KEY`.');
+    }
+
+    _resend = new Resend(apiKey);
   }
+
   return _resend;
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'SwiftSync <onboarding@resend.dev>';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Argent <onboarding@resend.dev>';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
+const DEV_TO_EMAIL = process.env.RESEND_DEV_TO_EMAIL?.trim() || '';
+
+function resolveRecipient(to: string) {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (!isProduction && DEV_TO_EMAIL) {
+    if (!_loggedDevRecipientOverride) {
+      console.warn(
+        `Email dev override active: redirecting outgoing email recipients to ${DEV_TO_EMAIL}`,
+      );
+      _loggedDevRecipientOverride = true;
+    }
+
+    return DEV_TO_EMAIL;
+  }
+
+  return to;
+}
+
+async function sendEmailOrThrow(
+  payload: { from: string; to: string; subject: string; html: string },
+  label: string,
+) {
+  const to = resolveRecipient(payload.to);
+  const result = await getResend().emails.send({ ...payload, to });
+
+  if (result.error) {
+    throw new Error(`Failed to send ${label} to ${to}: ${result.error.message}`);
+  }
+
+  return result.data;
+}
 
 // =============================================================================
 // SEND PASSWORD RESET EMAIL
@@ -26,12 +68,12 @@ export async function sendPasswordResetEmail(
   to: string,
   resetToken: string
 ) {
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+  const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
 
-  await getResend().emails.send({
+  await sendEmailOrThrow({
     from: FROM_EMAIL,
     to,
-    subject: 'Reset Your Password — SwiftSync',
+    subject: 'Reset Your Password — Argent',
     html: `
       <!DOCTYPE html>
       <html>
@@ -56,7 +98,7 @@ export async function sendPasswordResetEmail(
                   <!-- Logo -->
                   <tr>
                     <td align="center" style="padding-bottom: 32px;">
-                      <span style="font-size: 20px; font-weight: 700; color: #18181b; letter-spacing: -0.03em;">SwiftSync</span>
+                      <span style="font-size: 20px; font-weight: 700; color: #18181b; letter-spacing: -0.03em;">Argent</span>
                     </td>
                   </tr>
                   <!-- Card -->
@@ -103,7 +145,7 @@ export async function sendPasswordResetEmail(
                   <tr>
                     <td align="center" style="padding-top: 28px;">
                       <p style="margin: 0; font-size: 11px; color: #a1a1aa; letter-spacing: 0.01em;">
-                        &copy; ${new Date().getFullYear()} SwiftSync
+                        &copy; ${new Date().getFullYear()} Argent
                       </p>
                     </td>
                   </tr>
@@ -114,7 +156,7 @@ export async function sendPasswordResetEmail(
         </body>
       </html>
     `,
-  });
+  }, 'password reset email');
 }
 
 // =============================================================================
@@ -122,10 +164,10 @@ export async function sendPasswordResetEmail(
 // =============================================================================
 
 export async function send2FACode(to: string, code: string) {
-  await getResend().emails.send({
+  await sendEmailOrThrow({
     from: FROM_EMAIL,
     to,
-    subject: 'Your Verification Code — SwiftSync',
+    subject: 'Your Verification Code — Argent',
     html: `
       <!DOCTYPE html>
       <html>
@@ -150,7 +192,7 @@ export async function send2FACode(to: string, code: string) {
                   <!-- Logo -->
                   <tr>
                     <td align="center" style="padding-bottom: 32px;">
-                      <span style="font-size: 20px; font-weight: 700; color: #18181b; letter-spacing: -0.03em;">SwiftSync</span>
+                      <span style="font-size: 20px; font-weight: 700; color: #18181b; letter-spacing: -0.03em;">Argent</span>
                     </td>
                   </tr>
                   <!-- Card -->
@@ -191,7 +233,7 @@ export async function send2FACode(to: string, code: string) {
                   <tr>
                     <td align="center" style="padding-top: 28px;">
                       <p style="margin: 0; font-size: 11px; color: #a1a1aa; letter-spacing: 0.01em;">
-                        &copy; ${new Date().getFullYear()} SwiftSync
+                        &copy; ${new Date().getFullYear()} Argent
                       </p>
                     </td>
                   </tr>
@@ -202,5 +244,5 @@ export async function send2FACode(to: string, code: string) {
         </body>
       </html>
     `,
-  });
+  }, '2FA email');
 }

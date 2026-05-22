@@ -165,7 +165,7 @@ export type TrustedDeviceGroupByOutputType = {
   _max: TrustedDeviceMaxAggregateOutputType | null
 }
 
-type GetTrustedDeviceGroupByPayload<T extends TrustedDeviceGroupByArgs> = Prisma.PrismaPromise<
+export type GetTrustedDeviceGroupByPayload<T extends TrustedDeviceGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TrustedDeviceGroupByOutputType, T['by']> &
       {

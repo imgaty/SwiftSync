@@ -10,6 +10,7 @@ import {
     BreadcrumbSeparator,
     BreadcrumbPage,
 } from "@/components/ui/breadcrumb"
+import { useLanguage } from "@/components/language-provider"
 
 interface AdminHeaderProps {
     title: string
@@ -18,6 +19,9 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ title, breadcrumbs, actions }: AdminHeaderProps) {
+    const { t } = useLanguage()
+    const a = (t as any).admin || {} as Record<string, any>
+
     return (
         <header className="flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
@@ -28,7 +32,7 @@ export function AdminHeader({ title, breadcrumbs, actions }: AdminHeaderProps) {
                 <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
-                            <BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+                            <BreadcrumbLink href="/admin">{a.admin_breadcrumb || "Admin"}</BreadcrumbLink>
                         </BreadcrumbItem>
                         {breadcrumbs?.map((crumb, i) => (
                             <span key={i} className="contents">
@@ -54,7 +58,7 @@ export function AdminHeader({ title, breadcrumbs, actions }: AdminHeaderProps) {
 
                 {/* Right-side actions */}
                 {actions && (
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex items-center gap-2 *:rounded-full *:transition-transform *:duration-200 hover:*:scale-105 active:*:scale-95">
                         {actions}
                     </div>
                 )}

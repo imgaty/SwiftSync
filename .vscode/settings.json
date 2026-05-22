@@ -12,6 +12,9 @@
         "diffEditor.removedTextBorder": "#f8514980",
         "editorGutter.addedBackground": "#2ea043",
         "editorGutter.deletedBackground": "#f85149",
-        "editorGutter.modifiedBackground": "#d29922"
+        "editorGutter.modifiedBackground": "#d29922",
+        "editor.selectionForeground": "#ffffff",
+        "editor.selectionBackground": "#264F78",
+        "editor.inactiveSelectionBackground": "#264F7844"
     }
 }

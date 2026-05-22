@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getAuthUserId } from "@/lib/auth-helpers"
-import { lookupCard, parseIBAN, simulateBankSync } from "@/lib/bank-api"
+import { lookupCard, parseIBAN } from "@/lib/bank-api"
 
 // POST /api/bank/lookup — Identify bank from card number or IBAN
 export async function POST(request: Request) {

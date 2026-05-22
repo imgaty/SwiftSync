@@ -3,22 +3,11 @@
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    EllipsisVertical,
-    Columns,
-    Plus,
-    Pencil,
-    Delete,
     Calendar,
     CheckCircle,
     Clock,
     AlertCircle,
     RefreshCw,
-    Bell,
 } from "lucide-react"
 
 import {
@@ -29,7 +18,6 @@ import {
     getFacetedRowModel,
     getFacetedUniqueValues,
     getFilteredRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
     SortingState,
     useReactTable,
@@ -39,38 +27,36 @@ import {
 import { z } from "zod"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-    Dropdown,
-    DropdownCheckboxItem,
-    DropdownShell,
-    DropdownItem,
-    DropdownSeparator,
-    DropdownTrigger,
-} from "@/components/ui/app-dropdown"
 
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-
-import {
+    TableShell,
+    TableScrollArea,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableRow,
+    TableActionsCell,
+    TableActionButton,
+    TableToolbar,
+    TableToolbarGroup,
+    TableSearchControl,
+    TableFilterSelect,
+    TableSortControl,
+    TableColumnsControl,
+    TableAddButton,
 } from "@/components/ui/table"
 import { EmptyStateInline } from "@/components/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SmartTooltip } from "@/components/ui/tooltip"
+import { toast } from "sonner"
 
 import { useLanguage } from "@/components/language-provider"
+import { PRISM } from "@/lib/PRISM"
+import { useCurrency } from "@/components/currency-provider"
+import { MobileCard, MobileCardList, useIsMobileView } from "@/components/mobile-card"
 
 export const billSchema = z.object({
     id: z.string(),
@@ -89,16 +75,6 @@ export const billSchema = z.object({
 
 export type Bill = z.infer<typeof billSchema>
 
-const tagColors: Record<string, string> = {
-    utilities: "bg-yellow-500",
-    housing: "bg-blue-500",
-    insurance: "bg-green-500",
-    subscriptions: "bg-purple-500",
-    services: "bg-cyan-500",
-    health: "bg-pink-500",
-    other: "bg-neutral-500",
-}
-
 const categoryConfig: Record<string, { color: string; icon: string }> = {
     Other: { color: "bg-neutral-500", icon: "📦" },
     utilities: { color: "bg-yellow-500", icon: "⚡" },
@@ -109,23 +85,20 @@ const categoryConfig: Record<string, { color: string; icon: string }> = {
     health: { color: "bg-pink-500", icon: "🏥" },
 }
 
-const tagIcons: Record<string, string> = {
-    utilities: "⚡",
-    housing: "🏠",
-    insurance: "🛡️",
-    subscriptions: "📺",
-    services: "🔧",
-    health: "🏥",
-    other: "📋",
-}
-
-export function BillsTable({ data: initialData, isLoading = false }: { data: Bill[]; isLoading?: boolean }) {
+export function BillsTable({ data: initialData, isLoading = false, onAddBill, onEditBill, onDeleteBill, onMarkPaid }: { data: Bill[]; isLoading?: boolean; onAddBill?: () => void; onEditBill?: (bill: Bill) => void; onDeleteBill?: (bill: Bill) => void; onMarkPaid?: (bill: Bill) => void }) {
     const { t, isLoading: isLangLoading } = useLanguage()
+    const { formatCurrency } = useCurrency()
     const f = (t.finance || {}) as Record<string, unknown>
     const bl = (f.bills_table || {}) as Record<string, string>
     const fTable = (f.table || {}) as Record<string, string>
     const fActions = (f.actions || {}) as Record<string, string>
     const fFilters = (f.filters || {}) as Record<string, string>
+
+    const [data, setData] = React.useState(() => initialData)
+
+    React.useEffect(() => {
+        setData(initialData)
+    }, [initialData])
 
     // Show loading state while translations are loading
     if (isLangLoading) {
@@ -203,7 +176,7 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
                         </div>
                         <div className="min-w-0 flex-1">
                             <div className="auto-scroll font-medium">{row.original.name}</div>
-                            <div className="auto-scroll text-xs text-neutral-500 dark:text-neutral-400">{category}</div>
+                            <div className="auto-scroll text-xs text-neutral-400">{category}</div>
                         </div>
                     </div>
                 )
@@ -214,10 +187,7 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
             accessorKey: "amount",
             header: () => <div className="text-right">{bl.amount}</div>,
             cell: ({ row }) => {
-                const formatted = new Intl.NumberFormat(t.config.locale, {
-                    style: "currency",
-                    currency: "EUR",
-                }).format(row.original.amount)
+                const formatted = formatCurrency(row.original.amount)
                 return <div className="text-right font-medium">{formatted}</div>
             },
         },
@@ -229,11 +199,11 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
                 const today = new Date()
                 const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
                 
-                let dueDateClass = "text-neutral-500 dark:text-neutral-400"
+                let dueDateClass = "text-neutral-400"
                 let dueText = ""
                 
                 if (diffDays < 0) {
-                    dueDateClass = "text-red-600 font-medium"
+                    dueDateClass = "text-negative font-medium"
                     dueText = bl.days_overdue.replace("%days", String(Math.abs(diffDays)))
                 } else if (diffDays === 0) {
                     dueDateClass = "text-orange-600 font-medium"
@@ -248,7 +218,7 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
                 return (
                     <div>
                         <div className={dueDateClass}>{row.original.dueDate}</div>
-                        <div className="text-xs text-neutral-500 dark:text-neutral-400">{dueText}</div>
+                        <div className="text-xs text-neutral-400">{dueText}</div>
                     </div>
                 )
             },
@@ -268,7 +238,7 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
             header: bl.status,
             cell: ({ row }) => {
                 const status = row.original.status || "pending"
-                // @ts-ignore
+                // @ts-expect-error indexing translation map by status string
                 const config = statusConfig[status] || statusConfig.pending
                 const Icon = config.icon
 
@@ -300,34 +270,43 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
             accessorKey: "account",
             header: bl.account,
             cell: ({ row }) => (
-                <div className="text-neutral-500 dark:text-neutral-400">{row.original.account}</div>
+                <div className="text-neutral-400">{row.original.account}</div>
             ),
         },
         {
             id: "actions",
-            cell: () => (
-                <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                    <SmartTooltip text={fActions.edit || 'Edit'} group="table-actions">
-                        <Button variant="ghost" size="icon" className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white">
-                            <Pencil className="size-4" />
-                        </Button>
-                    </SmartTooltip>
-                    <SmartTooltip text={fActions.mark_paid || 'Mark Paid'} group="table-actions">
-                        <Button variant="ghost" size="icon" className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-green-600">
-                            <CheckCircle className="size-4" />
-                        </Button>
-                    </SmartTooltip>
-                    <SmartTooltip text={fActions.delete || 'Delete'} group="table-actions">
-                        <Button variant="ghost" size="icon" className="size-8 text-neutral-500 dark:text-neutral-400 hover:text-red-500">
-                            <Delete className="size-4" />
-                        </Button>
-                    </SmartTooltip>
-                </div>
+            cell: ({ row }) => (
+                <TableActionsCell>
+                    <TableActionButton
+                        intent="edit"
+                        label={fActions.edit || "Edit"}
+                        onClick={() => {
+                            if (onEditBill) onEditBill(row.original)
+                            else toast.info(`${fActions.edit || "Edit"}: ${row.original.name}`)
+                        }}
+                    />
+                    <TableActionButton
+                        label={fActions.mark_paid || "Mark Paid"}
+                        icon={<CheckCircle className="size-4" />}
+                        className="hover:text-green-600 dark:hover:text-green-400"
+                        onClick={() => {
+                            if (onMarkPaid) onMarkPaid(row.original)
+                            else toast.success(`${fActions.mark_paid || "Mark Paid"}: ${row.original.name}`)
+                        }}
+                    />
+                    <TableActionButton
+                        intent="delete"
+                        label={fActions.delete || "Delete"}
+                        onClick={() => {
+                            if (onDeleteBill) onDeleteBill(row.original)
+                            else toast.info(`${fActions.delete || "Delete"}: ${row.original.name}`)
+                        }}
+                    />
+                </TableActionsCell>
             ),
         },
-    ], [t, f, bl, statusConfig, frequencyLabels])
+    ], [t, f, bl, statusConfig, frequencyLabels, formatCurrency, fActions, onEditBill, onDeleteBill, onMarkPaid])
 
-    const [data] = React.useState(() => initialData)
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -353,11 +332,12 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
         onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
     })
+
+    const isMobile = useIsMobileView()
 
     const totals = React.useMemo(() => {
         let totalMonthly = 0
@@ -375,12 +355,6 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
         }
         return { totalMonthly, totalPending, overdueCount, upcomingCount }
     }, [data])
-
-    // Memoize currency formatter to avoid recreation on each render
-    const formatCurrency = React.useCallback(
-        (value: number) => new Intl.NumberFormat(t.config.locale, { style: "currency", currency: "EUR" }).format(value),
-        [t.config.locale]
-    )
 
     // Loading skeleton
     if (isLoading) {
@@ -409,9 +383,9 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
                 </div>
 
                 {/* Table skeleton */}
-                <div className="border border-black/6 dark:border-white/6 rounded-xl overflow-hidden">
+                <TableShell>
                     <Table>
-                        <TableHeader className="bg-black/3 dark:bg-white/3">
+                        <TableHeader>
                             <TableRow>
                                 <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
                                 {[120, 80, 80, 100, 80, 80, 80, 40].map((w, i) => (
@@ -443,7 +417,7 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
                             ))}
                         </TableBody>
                     </Table>
-                </div>
+                </TableShell>
 
                 {/* Pagination skeleton */}
                 <div className="flex items-center justify-between">
@@ -458,117 +432,72 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
 
     return (
         <div className="flex flex-col gap-4 w-full">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Select
-                        onValueChange={(value) => {
-                            if (value === "all") {
-                                table.getColumn("status")?.setFilterValue(undefined)
-                            } else {
-                                table.getColumn("status")?.setFilterValue(value)
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-[130px]" size="sm">
-                            <SelectValue placeholder={bl.status} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{fFilters.all_status || 'All Status'}</SelectItem>
-                            <SelectItem value="paid">{bl.paid}</SelectItem>
-                            <SelectItem value="pending">{bl.pending}</SelectItem>
-                            <SelectItem value="overdue">{bl.overdue}</SelectItem>
-                            <SelectItem value="upcoming">{bl.upcoming}</SelectItem>
-                        </SelectContent>
-                    </Select>
+            <TableToolbar>
+                <TableToolbarGroup>
+                    <TableSearchControl table={table} placeholder={bl.search_bills || "Search bills…"} width={240} />
+                    <TableFilterSelect
+                        table={table}
+                        columnId="status"
+                        label={bl.status || "Status"}
+                        allLabel={fFilters.all_status || "All Status"}
+                        options={[
+                            { value: "paid", label: bl.paid },
+                            { value: "pending", label: bl.pending },
+                            { value: "overdue", label: bl.overdue },
+                            { value: "upcoming", label: bl.upcoming },
+                        ]}
+                    />
+                    <TableFilterSelect
+                        table={table}
+                        columnId="frequency"
+                        label={bl.frequency || "Frequency"}
+                        allLabel={fFilters.all_frequencies || "All Frequencies"}
+                        options={[
+                            { value: "weekly", label: bl.weekly },
+                            { value: "monthly", label: bl.monthly },
+                            { value: "quarterly", label: bl.quarterly },
+                            { value: "yearly", label: bl.yearly },
+                            { value: "one_time", label: bl.one_time },
+                        ]}
+                    />
+                </TableToolbarGroup>
 
-                    <Select
-                        onValueChange={(value) => {
-                            if (value === "all") {
-                                table.getColumn("frequency")?.setFilterValue(undefined)
-                            } else {
-                                table.getColumn("frequency")?.setFilterValue(value)
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-[140px]" size="sm">
-                            <SelectValue placeholder={bl.frequency} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">{fFilters.all_frequencies || 'All Frequencies'}</SelectItem>
-                            <SelectItem value="weekly">{bl.weekly}</SelectItem>
-                            <SelectItem value="monthly">{bl.monthly}</SelectItem>
-                            <SelectItem value="quarterly">{bl.quarterly}</SelectItem>
-                            <SelectItem value="yearly">{bl.yearly}</SelectItem>
-                            <SelectItem value="one_time">{bl.one_time}</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Dropdown>
-                        <SmartTooltip text={t.tooltips?.columns || 'Columns'} group="table-toolbar">
-                            <DropdownTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <Columns />
-                                    <span className="hidden lg:inline">{fTable.columns}</span>
-                                    <ChevronDown />
-                                </Button>
-                            </DropdownTrigger>
-                        </SmartTooltip>
-                        <DropdownShell align="end" className="w-56">
-                            {table
-                                .getAllColumns()
-                                .filter(
-                                    (column) =>
-                                        typeof column.accessorFn !== "undefined" &&
-                                        column.getCanHide()
-                                )
-                                .map((column) => (
-                                    <DropdownCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
-                                        }
-                                    >
-                                        {column.id}
-                                    </DropdownCheckboxItem>
-                                ))}
-                        </DropdownShell>
-                    </Dropdown>
-
-                    <SmartTooltip text={t.tooltips?.add_bill || 'Add Bill'} group="table-toolbar">
-                        <Button variant="outline" size="sm">
-                            <Plus />
-                            <span className="hidden lg:inline">{bl.add_bill}</span>
-                        </Button>
-                    </SmartTooltip>
-                </div>
-            </div>
+                <TableToolbarGroup>
+                    <TableSortControl
+                        table={table}
+                        options={[
+                            { id: "name", label: bl.name || "Name" },
+                            { id: "amount", label: bl.amount || "Amount" },
+                            { id: "dueDate", label: bl.due_date || "Due Date" },
+                        ]}
+                    />
+                    <TableColumnsControl table={table} label={fTable.columns || "Columns"} />
+                    <TableAddButton onClick={onAddBill} label={bl.add_bill || "Add Bill"} />
+                </TableToolbarGroup>
+            </TableToolbar>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bl.monthly_bills}</p>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.monthly_bills}</p>
                     <p className="text-lg font-bold mt-1">
                         {formatCurrency(totals.totalMonthly)}
                     </p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bl.pending_amount}</p>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.pending_amount}</p>
                     <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400 mt-1">
                         {formatCurrency(totals.totalPending)}
                     </p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bl.overdue}</p>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.overdue}</p>
                     <p className="text-lg font-bold text-negative mt-1">
                         {totals.overdueCount}
                     </p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bl.upcoming}</p>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.upcoming}</p>
                     <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
                         {totals.upcomingCount}
                     </p>
@@ -576,9 +505,63 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
             </div>
 
             <div className="relative flex flex-col gap-4 overflow-auto">
-                <div className="border border-black/6 dark:border-white/6 rounded-xl overflow-hidden">
+                {isMobile ? (
+                    <MobileCardList>
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row, index) => {
+                                const bill = row.original
+                                const status = bill.status || "pending"
+                                // @ts-expect-error indexing translation map by status string
+                                const statusCfg = statusConfig[status] || statusConfig.pending
+                                return (
+                                    <MobileCard
+                                        key={row.id}
+                                        item={bill}
+                                        id={bill.id}
+                                        index={index}
+                                        isSelected={row.getIsSelected()}
+                                        onSelect={(checked) => row.toggleSelected(checked)}
+                                        icon={
+                                            <div className={`size-8 rounded-lg ${(categoryConfig[bill.category] || categoryConfig.Other).color} flex items-center justify-center text-white text-sm`}>
+                                                {(categoryConfig[bill.category] || categoryConfig.Other).icon}
+                                            </div>
+                                        }
+                                        title={bill.name}
+                                        subtitle={bill.category}
+                                        badge={{
+                                            label: statusCfg.label,
+                                            variant: status === "overdue" ? "destructive" : status === "paid" ? "default" : "secondary",
+                                        }}
+                                        fields={[
+                                            {
+                                                label: bl.amount || "Amount",
+                                                value: formatCurrency(bill.amount),
+                                            },
+                                            {
+                                                label: bl.due_date || "Due Date",
+                                                value: bill.dueDate || "—",
+                                            },
+                                            {
+                                                label: bl.frequency || "Frequency",
+                                                value: frequencyLabels[bill.frequency] || bill.frequency,
+                                            },
+                                            {
+                                                label: bl.autopay || "Autopay",
+                                                value: bill.autopay ? (bl.enabled || "Enabled") : (bl.disabled || "Disabled"),
+                                            },
+                                        ]}
+                                    />
+                                )
+                            })
+                        ) : (
+                            <EmptyStateInline variant={columnFilters.length > 0 ? "filtered" : "no-bills"} />
+                        )}
+                    </MobileCardList>
+                ) : (
+                <TableShell>
+                    <TableScrollArea maxHeight="calc(100vh - 22rem)">
                     <Table>
-                        <TableHeader className="bg-black/3 dark:bg-white/3 sticky top-0 z-10">
+                        <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
@@ -608,7 +591,12 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
                                             delay: index * 0.02
                                         }}
                                         data-state={row.getIsSelected() && "selected"}
-                                        className="group/row border-b transition-colors hover:bg-black/3 dark:hover:bg-white/3 data-[state=selected]:bg-black/5 dark:bg-white/5"
+                                        onClick={(e) => {
+                                            const target = e.target as HTMLElement
+                                            if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
+                                            row.toggleSelected()
+                                        }}
+                                        className="group/row cursor-pointer transition-colors hover:bg-black/2.5 dark:hover:bg-white/4 data-[state=selected]:bg-primary/5 dark:data-[state=selected]:bg-primary/10"
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
@@ -629,63 +617,9 @@ export function BillsTable({ data: initialData, isLoading = false }: { data: Bil
                             </AnimatePresence>
                         </TableBody>
                     </Table>
-                </div>
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between">
-                    <div className="hidden lg:flex flex-1 text-neutral-500 dark:text-neutral-400 text-sm">
-                        {(fTable.rows_selected || "%count of %total selected")
-                            .replace("%count", String(table.getFilteredSelectedRowModel().rows.length))
-                            .replace("%total", String(table.getFilteredRowModel().rows.length))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <SmartTooltip text={t.tooltips?.first_page || 'First Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.setPageIndex(0)}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <ChevronsLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.previous_page || 'Previous Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <ChevronLeft className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <span className="text-sm">
-                            {(fTable.page_of || "Page %current of %total")
-                                .replace("%current", String(table.getState().pagination.pageIndex + 1))
-                                .replace("%total", String(table.getPageCount()))}
-                        </span>
-                        <SmartTooltip text={t.tooltips?.next_page || 'Next Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <ChevronRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                        <SmartTooltip text={t.tooltips?.last_page || 'Last Page'} group="table-pagination">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <ChevronsRight className="size-4" />
-                            </Button>
-                        </SmartTooltip>
-                    </div>
-                </div>
+                    </TableScrollArea>
+                </TableShell>
+                )}
             </div>
         </div>
     )

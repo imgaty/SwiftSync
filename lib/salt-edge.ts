@@ -6,6 +6,8 @@
  * Open Banking API to connect bank accounts and fetch real financial data.
  */
 
+import type { AuthContext } from "@/lib/auth-helpers"
+
 const BASE_URL = process.env.SALT_EDGE_BASE_URL || "https://www.saltedge.com/api/v6"
 const APP_ID = process.env.SALT_EDGE_APP_ID || ""
 const SECRET = process.env.SALT_EDGE_SECRET || ""
@@ -55,8 +57,8 @@ export interface SaltEdgeConnection {
   provider_name: string
   country_code: string
   status: string // "active" | "inactive" | "disabled"
-  categorization: string
-  categorization_vendor: string | null
+  PACE_classification: string
+  PACE_vendor: string | null
   automatic_refresh: boolean
   next_refresh_possible_at: string | null
   created_at: string
@@ -280,21 +282,63 @@ export async function listCustomers(identifier?: string): Promise<SaltEdgeCustom
 /**
  * Get or create a Salt Edge customer for a given user ID.
  * Returns the customer ID to use in connect sessions.
+ *
+ * Cached on the User row (`saltEdgeCustomerId`) to avoid hitting the Salt Edge
+ * `/customers` endpoint on every authenticated bank request. If the DB cache
+ * is populated we skip the API call entirely; otherwise we query, create if
+ * missing, and persist the result locally.
  */
 export async function getOrCreateCustomer(userId: string): Promise<string> {
+  // Lazy import to avoid pulling Prisma into code paths that only use the
+  // lower-level saltEdgeRequest helpers (e.g. scripts / tests).
+  const { prisma } = await import("@/lib/prisma")
+
+  const cached = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { saltEdgeCustomerId: true },
+  })
+  if (cached?.saltEdgeCustomerId) {
+    return cached.saltEdgeCustomerId
+  }
+
+  let customerId: string | null = null
   try {
-    // Try to find existing customer
     const customers = await listCustomers(userId)
     if (customers.length > 0) {
-      return customers[0].customer_id
+      customerId = customers[0].customer_id
     }
   } catch {
     // Customer list might fail, try creating
   }
 
-  // Create new customer
-  const customer = await createCustomer(userId)
-  return customer.customer_id
+  if (!customerId) {
+    const customer = await createCustomer(userId)
+    customerId = customer.customer_id
+  }
+
+  // Persist for subsequent requests. Ignore unique-conflict races — if another
+  // concurrent request won, the value we read back below is the authoritative one.
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { saltEdgeCustomerId: customerId },
+    })
+  } catch {
+    const fresh = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { saltEdgeCustomerId: true },
+    })
+    if (fresh?.saltEdgeCustomerId) return fresh.saltEdgeCustomerId
+  }
+
+  return customerId
+}
+
+/**
+ * Return a Salt Edge customer for the authenticated personal account.
+ */
+export async function getOrCreateCustomerForScope(ctx: AuthContext): Promise<string> {
+  return getOrCreateCustomer(ctx.userId)
 }
 
 // =============================================================================

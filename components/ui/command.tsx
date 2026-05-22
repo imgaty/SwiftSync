@@ -6,6 +6,7 @@ import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { PRISM } from "@/lib/PRISM"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 function Command({
@@ -16,7 +17,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "bg-white dark:bg-black text-black dark:text-white flex h-full w-full flex-col overflow-hidden rounded-md",
+        "bg-white dark:bg-transparent text-neutral-400 flex h-full w-full flex-col overflow-hidden rounded-lg font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',sans-serif]",
         className
       )}
       {...props}
@@ -32,7 +33,7 @@ function CommandDialog({
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0 shadow-xl">
         <DialogTitle className="sr-only">Command Palette</DialogTitle>
-        <Command className="**:[[cmdk-group-heading]]:text-muted-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 **:[[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 **:[[cmdk-input]]:h-12 **:[[cmdk-item]]:px-2 **:[[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+        <Command className="**:[[cmdk-group-heading]]:text-neutral-400 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 **:[[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 **:[[cmdk-input]]:h-12 **:[[cmdk-item]]:px-2 **:[[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
           {children}
         </Command>
       </DialogContent>
@@ -49,11 +50,11 @@ function CommandInput({
       data-slot="command-input-wrapper"
       className="flex items-center border-b border-black/8 dark:border-white/8 px-3"
     >
-      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+      <Search className="mr-2 h-4 w-4 shrink-0 text-neutral-400" />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "placeholder:text-neutral-400 dark:placeholder:text-neutral-500 flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "placeholder:text-neutral-400 dark:placeholder:text-neutral-400 flex h-11 w-full rounded-lg bg-transparent py-3 text-[13px] outline-none disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
@@ -84,7 +85,7 @@ function CommandEmpty({
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
-      className="py-6 text-center text-sm"
+      className="py-6 text-center text-[13px] text-neutral-400"
       {...props}
     />
   )
@@ -98,7 +99,7 @@ function CommandGroup({
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        "text-black dark:text-white **:[[cmdk-group-heading]]:text-neutral-500 dark:**:[[cmdk-group-heading]]:text-neutral-400 overflow-hidden p-1 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium",
+        "text-neutral-400 **:[[cmdk-group-heading]]:text-neutral-400 dark:**:[[cmdk-group-heading]]:text-neutral-400 overflow-hidden p-[7px] **:[[cmdk-group-heading]]:px-2.5 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:tracking-wide",
         className
       )}
       {...props}
@@ -113,7 +114,7 @@ function CommandSeparator({
   return (
     <CommandPrimitive.Separator
       data-slot="command-separator"
-      className={cn("bg-black/8 dark:bg-white/8 -mx-1 h-px", className)}
+      className={cn("dark:bg-transparent -mx-[7px] h-px", PRISM.separator, className)}
       {...props}
     />
   )
@@ -127,7 +128,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:bg-black/5 dark:data-[selected=true]:bg-white/10 data-[selected=true]:text-black dark:data-[selected=true]:text-white relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+        "data-[selected=true]:bg-black/10 dark:data-[selected=true]:bg-white/[0.12] dark:data-[selected=true]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] data-[selected=true]:text-black dark:data-[selected=true]:text-white relative flex cursor-default select-none items-center gap-2 rounded-lg px-2 py-2 text-[13px] outline-none transition-colors duration-75 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -143,7 +144,7 @@ function CommandShortcut({
     <span
       data-slot="command-shortcut"
       className={cn(
-        "text-neutral-500 dark:text-neutral-400 ml-auto text-xs tracking-widest",
+        "text-neutral-400 ml-auto text-[12px] tracking-wide",
         className
       )}
       {...props}

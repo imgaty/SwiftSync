@@ -1,61 +1,42 @@
-# SwiftSync
+<div align="center">
 
-A personal finance web application built with Next.js. Track bank accounts, transactions, bills, budgets, and financial goals — all in one place.
+# **Argent**
 
-## Features
+A personal finance app that connects to your bank, categorizes your transactions, and helps you stay on top of your money.
 
-- **Bank Integration** — Connect real bank accounts via Salt Edge (Open Banking) to automatically sync transactions and balances
-- **Transaction Management** — View, search, filter, and categorize transactions with automatic categorization
-- **Bills & Subscriptions** — Track recurring bills with due dates, autopay status, and payment history
-- **Budgets** — Create and monitor budgets by category with spending progress
-- **Financial Goals** — Set savings goals and track progress over time
-- **Dashboard** — Customizable dashboard with interactive charts and financial summaries
-- **Multi-language** — Supports English and Portuguese
-- **Accessibility** — Colorblind mode support (deuteranopia, protanopia, tritanopia)
-- **Dark Mode** — Light, dark, and system theme options
-- **Authentication** — Email/password with 2FA (TOTP + email codes), plus OAuth (Google, GitHub, Microsoft, Apple)
-- **Admin Panel** — User management, audit logs, and system monitoring
+**Built with**
 
-## Tech Stack
+![Next.js](https://img.shields.io/badge/Next.js_16-000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React_19-000?style=for-the-badge&logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-000?style=for-the-badge&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-000?style=for-the-badge&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma_7-000?style=for-the-badge&logo=prisma&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-000?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Radix UI](https://img.shields.io/badge/Radix_UI-000?style=for-the-badge&logo=radixui&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000?style=for-the-badge&logo=vercel&logoColor=white)
 
-| Layer       | Technology                                                   |
-|-------------|--------------------------------------------------------------|
-| Framework   | [Next.js 16](https://nextjs.org) (App Router)               |
-| Language    | TypeScript                                                   |
-| Database    | PostgreSQL + [Prisma ORM](https://www.prisma.io)            |
-| Styling     | [Tailwind CSS 4](https://tailwindcss.com)                   |
-| UI          | [Radix UI](https://www.radix-ui.com) + [shadcn/ui](https://ui.shadcn.com) |
-| Charts      | [Recharts](https://recharts.org)                            |
-| Email       | [Resend](https://resend.com)                                |
-| Banking API | [Salt Edge](https://www.saltedge.com)                       |
+<br>
 
-## Quick Start
+</div>
 
-```bash
-# Clone the repository
-git clone https://github.com/HilFerr/SwiftSync.git
-cd SwiftSync
+<div align="center">
 
-# Install dependencies
-pnpm install
+## Description
 
-# Set up environment variables (see SETUP_GUIDE.md for details)
-cp .env.example .env
+</div>
 
-# Set up the database
-pnpm prisma generate --schema prisma/schema.prisma
-pnpm prisma migrate deploy --schema prisma/schema.prisma
+<div align="justify">
 
-# Start the development server
-pnpm dev
-```
+Argent is a web-based personal financial management application, with the purpose of centralizing, organizing, and interpreting a user's financial information from multiple bank accounts.
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+<br>
+
+</div>
+
+<div align="center">
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [SETUP_GUIDE.md](SETUP_GUIDE.md) | Full installation, configuration, and deployment instructions |
-| [TECHNICAL_README.md](TECHNICAL_README.md) | How the code works — encryption, authentication, security, and architecture |
-| [docs/transaction-categorization-system.md](docs/transaction-categorization-system.md) | Transaction auto-categorization logic |
+[Setup Guide](docs/Setup%20Guide.md) | [Technical Documentation](docs/Technical%20Documentation.md) | [PACE Engine](docs/PACE%20Engine.md)
+
+</div>

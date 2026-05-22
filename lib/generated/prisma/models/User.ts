@@ -26,12 +26,13 @@ export type AggregateUser = {
 
 export type UserMinAggregateOutputType = {
   id: string | null
-  email: string | null
   name: string | null
+  email: string | null
   password: string | null
   dateOfBirth: string | null
   recoveryEmail: string | null
   role: string | null
+  avatar: string | null
   status: string | null
   suspendedAt: Date | null
   suspendedReason: string | null
@@ -44,18 +45,20 @@ export type UserMinAggregateOutputType = {
   twoFactorCode: string | null
   twoFactorCodeExpiry: Date | null
   twoFactorBackupCodes: string | null
+  saltEdgeCustomerId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type UserMaxAggregateOutputType = {
   id: string | null
-  email: string | null
   name: string | null
+  email: string | null
   password: string | null
   dateOfBirth: string | null
   recoveryEmail: string | null
   role: string | null
+  avatar: string | null
   status: string | null
   suspendedAt: Date | null
   suspendedReason: string | null
@@ -68,18 +71,20 @@ export type UserMaxAggregateOutputType = {
   twoFactorCode: string | null
   twoFactorCodeExpiry: Date | null
   twoFactorBackupCodes: string | null
+  saltEdgeCustomerId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type UserCountAggregateOutputType = {
   id: number
-  email: number
   name: number
+  email: number
   password: number
   dateOfBirth: number
   recoveryEmail: number
   role: number
+  avatar: number
   status: number
   suspendedAt: number
   suspendedReason: number
@@ -92,6 +97,7 @@ export type UserCountAggregateOutputType = {
   twoFactorCode: number
   twoFactorCodeExpiry: number
   twoFactorBackupCodes: number
+  saltEdgeCustomerId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -100,12 +106,13 @@ export type UserCountAggregateOutputType = {
 
 export type UserMinAggregateInputType = {
   id?: true
-  email?: true
   name?: true
+  email?: true
   password?: true
   dateOfBirth?: true
   recoveryEmail?: true
   role?: true
+  avatar?: true
   status?: true
   suspendedAt?: true
   suspendedReason?: true
@@ -118,18 +125,20 @@ export type UserMinAggregateInputType = {
   twoFactorCode?: true
   twoFactorCodeExpiry?: true
   twoFactorBackupCodes?: true
+  saltEdgeCustomerId?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type UserMaxAggregateInputType = {
   id?: true
-  email?: true
   name?: true
+  email?: true
   password?: true
   dateOfBirth?: true
   recoveryEmail?: true
   role?: true
+  avatar?: true
   status?: true
   suspendedAt?: true
   suspendedReason?: true
@@ -142,18 +151,20 @@ export type UserMaxAggregateInputType = {
   twoFactorCode?: true
   twoFactorCodeExpiry?: true
   twoFactorBackupCodes?: true
+  saltEdgeCustomerId?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type UserCountAggregateInputType = {
   id?: true
-  email?: true
   name?: true
+  email?: true
   password?: true
   dateOfBirth?: true
   recoveryEmail?: true
   role?: true
+  avatar?: true
   status?: true
   suspendedAt?: true
   suspendedReason?: true
@@ -166,6 +177,7 @@ export type UserCountAggregateInputType = {
   twoFactorCode?: true
   twoFactorCodeExpiry?: true
   twoFactorBackupCodes?: true
+  saltEdgeCustomerId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -245,12 +257,13 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail: string | null
   role: string
+  avatar: string | null
   status: string
   suspendedAt: Date | null
   suspendedReason: string | null
@@ -263,6 +276,7 @@ export type UserGroupByOutputType = {
   twoFactorCode: string | null
   twoFactorCodeExpiry: Date | null
   twoFactorBackupCodes: string | null
+  saltEdgeCustomerId: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -270,7 +284,7 @@ export type UserGroupByOutputType = {
   _max: UserMaxAggregateOutputType | null
 }
 
-type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
+export type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UserGroupByOutputType, T['by']> &
       {
@@ -290,12 +304,13 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
-  email?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringFilter<"User"> | string
   dateOfBirth?: Prisma.StringFilter<"User"> | string
   recoveryEmail?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.StringFilter<"User"> | string
+  avatar?: Prisma.StringNullableFilter<"User"> | string | null
   status?: Prisma.StringFilter<"User"> | string
   suspendedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   suspendedReason?: Prisma.StringNullableFilter<"User"> | string | null
@@ -308,30 +323,37 @@ export type UserWhereInput = {
   twoFactorCode?: Prisma.StringNullableFilter<"User"> | string | null
   twoFactorCodeExpiry?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   twoFactorBackupCodes?: Prisma.StringNullableFilter<"User"> | string | null
+  saltEdgeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  auditLogsPerformed?: Prisma.AuditLogListRelationFilter
+  auditLogs?: Prisma.AuditLogListRelationFilter
   bankAccounts?: Prisma.BankAccountListRelationFilter
-  transactions?: Prisma.TransactionListRelationFilter
   bills?: Prisma.BillListRelationFilter
   budgets?: Prisma.BudgetListRelationFilter
+  counterparties?: Prisma.CounterpartyListRelationFilter
   financialGoals?: Prisma.FinancialGoalListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
-  categorizationRules?: Prisma.CategorizationRuleListRelationFilter
   oauthAccounts?: Prisma.OAuthAccountListRelationFilter
-  trustedDevices?: Prisma.TrustedDeviceListRelationFilter
+  PACERules?: Prisma.PACERuleListRelationFilter
+  rules?: Prisma.RuleListRelationFilter
   saltEdgeConnections?: Prisma.SaltEdgeConnectionListRelationFilter
-  auditLogs?: Prisma.AuditLogListRelationFilter
-  auditLogsPerformed?: Prisma.AuditLogListRelationFilter
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentListRelationFilter
+  spreadsheetLogs?: Prisma.SpreadsheetLogListRelationFilter
+  tags?: Prisma.TagListRelationFilter
+  transactions?: Prisma.TransactionListRelationFilter
+  trustedDevices?: Prisma.TrustedDeviceListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   recoveryEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
+  avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   suspendedReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -344,25 +366,33 @@ export type UserOrderByWithRelationInput = {
   twoFactorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorBackupCodes?: Prisma.SortOrderInput | Prisma.SortOrder
+  saltEdgeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  auditLogsPerformed?: Prisma.AuditLogOrderByRelationAggregateInput
+  auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   bankAccounts?: Prisma.BankAccountOrderByRelationAggregateInput
-  transactions?: Prisma.TransactionOrderByRelationAggregateInput
   bills?: Prisma.BillOrderByRelationAggregateInput
   budgets?: Prisma.BudgetOrderByRelationAggregateInput
+  counterparties?: Prisma.CounterpartyOrderByRelationAggregateInput
   financialGoals?: Prisma.FinancialGoalOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
-  categorizationRules?: Prisma.CategorizationRuleOrderByRelationAggregateInput
   oauthAccounts?: Prisma.OAuthAccountOrderByRelationAggregateInput
-  trustedDevices?: Prisma.TrustedDeviceOrderByRelationAggregateInput
+  PACERules?: Prisma.PACERuleOrderByRelationAggregateInput
+  rules?: Prisma.RuleOrderByRelationAggregateInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionOrderByRelationAggregateInput
-  auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
-  auditLogsPerformed?: Prisma.AuditLogOrderByRelationAggregateInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentOrderByRelationAggregateInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogOrderByRelationAggregateInput
+  tags?: Prisma.TagOrderByRelationAggregateInput
+  transactions?: Prisma.TransactionOrderByRelationAggregateInput
+  trustedDevices?: Prisma.TrustedDeviceOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  resetToken?: string
+  saltEdgeCustomerId?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -371,12 +401,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   dateOfBirth?: Prisma.StringFilter<"User"> | string
   recoveryEmail?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.StringFilter<"User"> | string
+  avatar?: Prisma.StringNullableFilter<"User"> | string | null
   status?: Prisma.StringFilter<"User"> | string
   suspendedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   suspendedReason?: Prisma.StringNullableFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   lastLoginIp?: Prisma.StringNullableFilter<"User"> | string | null
-  resetToken?: Prisma.StringNullableFilter<"User"> | string | null
   resetTokenExpiry?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   twoFactorEnabled?: Prisma.BoolFilter<"User"> | boolean
   twoFactorSecret?: Prisma.StringNullableFilter<"User"> | string | null
@@ -385,28 +415,34 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   twoFactorBackupCodes?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  auditLogsPerformed?: Prisma.AuditLogListRelationFilter
+  auditLogs?: Prisma.AuditLogListRelationFilter
   bankAccounts?: Prisma.BankAccountListRelationFilter
-  transactions?: Prisma.TransactionListRelationFilter
   bills?: Prisma.BillListRelationFilter
   budgets?: Prisma.BudgetListRelationFilter
+  counterparties?: Prisma.CounterpartyListRelationFilter
   financialGoals?: Prisma.FinancialGoalListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
-  categorizationRules?: Prisma.CategorizationRuleListRelationFilter
   oauthAccounts?: Prisma.OAuthAccountListRelationFilter
-  trustedDevices?: Prisma.TrustedDeviceListRelationFilter
+  PACERules?: Prisma.PACERuleListRelationFilter
+  rules?: Prisma.RuleListRelationFilter
   saltEdgeConnections?: Prisma.SaltEdgeConnectionListRelationFilter
-  auditLogs?: Prisma.AuditLogListRelationFilter
-  auditLogsPerformed?: Prisma.AuditLogListRelationFilter
-}, "id" | "email">
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentListRelationFilter
+  spreadsheetLogs?: Prisma.SpreadsheetLogListRelationFilter
+  tags?: Prisma.TagListRelationFilter
+  transactions?: Prisma.TransactionListRelationFilter
+  trustedDevices?: Prisma.TrustedDeviceListRelationFilter
+}, "id" | "email" | "resetToken" | "saltEdgeCustomerId">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   recoveryEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
+  avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   suspendedReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -419,6 +455,7 @@ export type UserOrderByWithAggregationInput = {
   twoFactorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorBackupCodes?: Prisma.SortOrderInput | Prisma.SortOrder
+  saltEdgeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -431,12 +468,13 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
-  email?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
+  email?: Prisma.StringWithAggregatesFilter<"User"> | string
   password?: Prisma.StringWithAggregatesFilter<"User"> | string
   dateOfBirth?: Prisma.StringWithAggregatesFilter<"User"> | string
   recoveryEmail?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   role?: Prisma.StringWithAggregatesFilter<"User"> | string
+  avatar?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"User"> | string
   suspendedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   suspendedReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -449,18 +487,20 @@ export type UserScalarWhereWithAggregatesInput = {
   twoFactorCode?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   twoFactorCodeExpiry?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   twoFactorBackupCodes?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  saltEdgeCustomerId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
 
 export type UserCreateInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -473,30 +513,37 @@ export type UserCreateInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -509,30 +556,37 @@ export type UserUncheckedCreateInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -545,30 +599,37 @@ export type UserUpdateInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -581,30 +642,37 @@ export type UserUncheckedUpdateInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -617,18 +685,20 @@ export type UserCreateManyInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -641,18 +711,20 @@ export type UserUpdateManyMutationInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -665,18 +737,20 @@ export type UserUncheckedUpdateManyInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   recoveryEmail?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  avatar?: Prisma.SortOrder
   status?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrder
   suspendedReason?: Prisma.SortOrder
@@ -689,18 +763,20 @@ export type UserCountOrderByAggregateInput = {
   twoFactorCode?: Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrder
   twoFactorBackupCodes?: Prisma.SortOrder
+  saltEdgeCustomerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   recoveryEmail?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  avatar?: Prisma.SortOrder
   status?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrder
   suspendedReason?: Prisma.SortOrder
@@ -713,18 +789,20 @@ export type UserMaxOrderByAggregateInput = {
   twoFactorCode?: Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrder
   twoFactorBackupCodes?: Prisma.SortOrder
+  saltEdgeCustomerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   recoveryEmail?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  avatar?: Prisma.SortOrder
   status?: Prisma.SortOrder
   suspendedAt?: Prisma.SortOrder
   suspendedReason?: Prisma.SortOrder
@@ -737,6 +815,7 @@ export type UserMinOrderByAggregateInput = {
   twoFactorCode?: Prisma.SortOrder
   twoFactorCodeExpiry?: Prisma.SortOrder
   twoFactorBackupCodes?: Prisma.SortOrder
+  saltEdgeCustomerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -897,18 +976,88 @@ export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput, Prisma.UserUpdateWithoutNotificationsInput>, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
 }
 
-export type UserCreateNestedOneWithoutCategorizationRulesInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutCategorizationRulesInput, Prisma.UserUncheckedCreateWithoutCategorizationRulesInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCategorizationRulesInput
+export type UserCreateNestedOneWithoutTagsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTagsInput, Prisma.UserUncheckedCreateWithoutTagsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTagsInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutCategorizationRulesNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutCategorizationRulesInput, Prisma.UserUncheckedCreateWithoutCategorizationRulesInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCategorizationRulesInput
-  upsert?: Prisma.UserUpsertWithoutCategorizationRulesInput
+export type UserUpdateOneRequiredWithoutTagsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTagsInput, Prisma.UserUncheckedCreateWithoutTagsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTagsInput
+  upsert?: Prisma.UserUpsertWithoutTagsInput
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCategorizationRulesInput, Prisma.UserUpdateWithoutCategorizationRulesInput>, Prisma.UserUncheckedUpdateWithoutCategorizationRulesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTagsInput, Prisma.UserUpdateWithoutTagsInput>, Prisma.UserUncheckedUpdateWithoutTagsInput>
+}
+
+export type UserCreateNestedOneWithoutCounterpartiesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCounterpartiesInput, Prisma.UserUncheckedCreateWithoutCounterpartiesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCounterpartiesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCounterpartiesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCounterpartiesInput, Prisma.UserUncheckedCreateWithoutCounterpartiesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCounterpartiesInput
+  upsert?: Prisma.UserUpsertWithoutCounterpartiesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCounterpartiesInput, Prisma.UserUpdateWithoutCounterpartiesInput>, Prisma.UserUncheckedUpdateWithoutCounterpartiesInput>
+}
+
+export type UserCreateNestedOneWithoutRulesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRulesInput, Prisma.UserUncheckedCreateWithoutRulesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRulesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutRulesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRulesInput, Prisma.UserUncheckedCreateWithoutRulesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRulesInput
+  upsert?: Prisma.UserUpsertWithoutRulesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRulesInput, Prisma.UserUpdateWithoutRulesInput>, Prisma.UserUncheckedUpdateWithoutRulesInput>
+}
+
+export type UserCreateNestedOneWithoutPACERulesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPACERulesInput, Prisma.UserUncheckedCreateWithoutPACERulesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPACERulesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPACERulesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPACERulesInput, Prisma.UserUncheckedCreateWithoutPACERulesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPACERulesInput
+  upsert?: Prisma.UserUpsertWithoutPACERulesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPACERulesInput, Prisma.UserUpdateWithoutPACERulesInput>, Prisma.UserUncheckedUpdateWithoutPACERulesInput>
+}
+
+export type UserCreateNestedOneWithoutSpreadsheetDocumentsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetDocumentsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetDocumentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSpreadsheetDocumentsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutSpreadsheetDocumentsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetDocumentsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetDocumentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSpreadsheetDocumentsInput
+  upsert?: Prisma.UserUpsertWithoutSpreadsheetDocumentsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSpreadsheetDocumentsInput, Prisma.UserUpdateWithoutSpreadsheetDocumentsInput>, Prisma.UserUncheckedUpdateWithoutSpreadsheetDocumentsInput>
+}
+
+export type UserCreateNestedOneWithoutSpreadsheetLogsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetLogsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSpreadsheetLogsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutSpreadsheetLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetLogsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSpreadsheetLogsInput
+  upsert?: Prisma.UserUpsertWithoutSpreadsheetLogsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSpreadsheetLogsInput, Prisma.UserUpdateWithoutSpreadsheetLogsInput>, Prisma.UserUncheckedUpdateWithoutSpreadsheetLogsInput>
 }
 
 export type UserCreateNestedOneWithoutAuditLogsPerformedInput = {
@@ -943,12 +1092,13 @@ export type UserUpdateOneWithoutAuditLogsNestedInput = {
 
 export type UserCreateWithoutTrustedDevicesInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -961,29 +1111,36 @@ export type UserCreateWithoutTrustedDevicesInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTrustedDevicesInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -996,19 +1153,25 @@ export type UserUncheckedCreateWithoutTrustedDevicesInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTrustedDevicesInput = {
@@ -1029,12 +1192,13 @@ export type UserUpdateToOneWithWhereWithoutTrustedDevicesInput = {
 
 export type UserUpdateWithoutTrustedDevicesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1047,29 +1211,36 @@ export type UserUpdateWithoutTrustedDevicesInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrustedDevicesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1082,29 +1253,36 @@ export type UserUncheckedUpdateWithoutTrustedDevicesInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutOauthAccountsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1117,29 +1295,36 @@ export type UserCreateWithoutOauthAccountsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOauthAccountsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1152,19 +1337,25 @@ export type UserUncheckedCreateWithoutOauthAccountsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOauthAccountsInput = {
@@ -1185,12 +1376,13 @@ export type UserUpdateToOneWithWhereWithoutOauthAccountsInput = {
 
 export type UserUpdateWithoutOauthAccountsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1203,29 +1395,36 @@ export type UserUpdateWithoutOauthAccountsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOauthAccountsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1238,29 +1437,36 @@ export type UserUncheckedUpdateWithoutOauthAccountsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSaltEdgeConnectionsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1273,29 +1479,36 @@ export type UserCreateWithoutSaltEdgeConnectionsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
 }
 
 export type UserUncheckedCreateWithoutSaltEdgeConnectionsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1308,19 +1521,25 @@ export type UserUncheckedCreateWithoutSaltEdgeConnectionsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
 }
 
 export type UserCreateOrConnectWithoutSaltEdgeConnectionsInput = {
@@ -1341,12 +1560,13 @@ export type UserUpdateToOneWithWhereWithoutSaltEdgeConnectionsInput = {
 
 export type UserUpdateWithoutSaltEdgeConnectionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1359,29 +1579,36 @@ export type UserUpdateWithoutSaltEdgeConnectionsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSaltEdgeConnectionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1394,29 +1621,36 @@ export type UserUncheckedUpdateWithoutSaltEdgeConnectionsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
 }
 
 export type UserCreateWithoutBankAccountsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1429,29 +1663,36 @@ export type UserCreateWithoutBankAccountsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutBankAccountsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1464,19 +1705,25 @@ export type UserUncheckedCreateWithoutBankAccountsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutBankAccountsInput = {
@@ -1497,12 +1744,13 @@ export type UserUpdateToOneWithWhereWithoutBankAccountsInput = {
 
 export type UserUpdateWithoutBankAccountsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1515,29 +1763,36 @@ export type UserUpdateWithoutBankAccountsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBankAccountsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1550,29 +1805,36 @@ export type UserUncheckedUpdateWithoutBankAccountsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTransactionsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1585,29 +1847,36 @@ export type UserCreateWithoutTransactionsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTransactionsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1620,19 +1889,25 @@ export type UserUncheckedCreateWithoutTransactionsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTransactionsInput = {
@@ -1653,12 +1928,13 @@ export type UserUpdateToOneWithWhereWithoutTransactionsInput = {
 
 export type UserUpdateWithoutTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1671,29 +1947,36 @@ export type UserUpdateWithoutTransactionsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1706,29 +1989,36 @@ export type UserUncheckedUpdateWithoutTransactionsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutBillsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1741,29 +2031,36 @@ export type UserCreateWithoutBillsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutBillsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1776,19 +2073,25 @@ export type UserUncheckedCreateWithoutBillsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutBillsInput = {
@@ -1809,12 +2112,13 @@ export type UserUpdateToOneWithWhereWithoutBillsInput = {
 
 export type UserUpdateWithoutBillsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1827,29 +2131,36 @@ export type UserUpdateWithoutBillsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBillsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1862,29 +2173,36 @@ export type UserUncheckedUpdateWithoutBillsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutBudgetsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1897,29 +2215,36 @@ export type UserCreateWithoutBudgetsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutBudgetsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -1932,19 +2257,25 @@ export type UserUncheckedCreateWithoutBudgetsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutBudgetsInput = {
@@ -1965,12 +2296,13 @@ export type UserUpdateToOneWithWhereWithoutBudgetsInput = {
 
 export type UserUpdateWithoutBudgetsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1983,29 +2315,36 @@ export type UserUpdateWithoutBudgetsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBudgetsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2018,29 +2357,36 @@ export type UserUncheckedUpdateWithoutBudgetsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFinancialGoalsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2053,29 +2399,36 @@ export type UserCreateWithoutFinancialGoalsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFinancialGoalsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2088,19 +2441,25 @@ export type UserUncheckedCreateWithoutFinancialGoalsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFinancialGoalsInput = {
@@ -2121,12 +2480,13 @@ export type UserUpdateToOneWithWhereWithoutFinancialGoalsInput = {
 
 export type UserUpdateWithoutFinancialGoalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2139,29 +2499,36 @@ export type UserUpdateWithoutFinancialGoalsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFinancialGoalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2174,29 +2541,36 @@ export type UserUncheckedUpdateWithoutFinancialGoalsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2209,29 +2583,36 @@ export type UserCreateWithoutNotificationsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2244,19 +2625,25 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -2277,12 +2664,13 @@ export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
 
 export type UserUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2295,29 +2683,36 @@ export type UserUpdateWithoutNotificationsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2330,29 +2725,36 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
-export type UserCreateWithoutCategorizationRulesInput = {
+export type UserCreateWithoutTagsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2365,29 +2767,220 @@ export type UserCreateWithoutCategorizationRulesInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
   transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutTagsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutTagsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTagsInput, Prisma.UserUncheckedCreateWithoutTagsInput>
+}
+
+export type UserUpsertWithoutTagsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTagsInput, Prisma.UserUncheckedUpdateWithoutTagsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTagsInput, Prisma.UserUncheckedCreateWithoutTagsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTagsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTagsInput, Prisma.UserUncheckedUpdateWithoutTagsInput>
+}
+
+export type UserUpdateWithoutTagsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTagsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutCounterpartiesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
-export type UserUncheckedCreateWithoutCategorizationRulesInput = {
+export type UserUncheckedCreateWithoutCounterpartiesInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2400,45 +2993,52 @@ export type UserUncheckedCreateWithoutCategorizationRulesInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
-export type UserCreateOrConnectWithoutCategorizationRulesInput = {
+export type UserCreateOrConnectWithoutCounterpartiesInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutCategorizationRulesInput, Prisma.UserUncheckedCreateWithoutCategorizationRulesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCounterpartiesInput, Prisma.UserUncheckedCreateWithoutCounterpartiesInput>
 }
 
-export type UserUpsertWithoutCategorizationRulesInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutCategorizationRulesInput, Prisma.UserUncheckedUpdateWithoutCategorizationRulesInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutCategorizationRulesInput, Prisma.UserUncheckedCreateWithoutCategorizationRulesInput>
+export type UserUpsertWithoutCounterpartiesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCounterpartiesInput, Prisma.UserUncheckedUpdateWithoutCounterpartiesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCounterpartiesInput, Prisma.UserUncheckedCreateWithoutCounterpartiesInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutCategorizationRulesInput = {
+export type UserUpdateToOneWithWhereWithoutCounterpartiesInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutCategorizationRulesInput, Prisma.UserUncheckedUpdateWithoutCategorizationRulesInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCounterpartiesInput, Prisma.UserUncheckedUpdateWithoutCounterpartiesInput>
 }
 
-export type UserUpdateWithoutCategorizationRulesInput = {
+export type UserUpdateWithoutCounterpartiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2451,29 +3051,36 @@ export type UserUpdateWithoutCategorizationRulesInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
-export type UserUncheckedUpdateWithoutCategorizationRulesInput = {
+export type UserUncheckedUpdateWithoutCounterpartiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2486,29 +3093,772 @@ export type UserUncheckedUpdateWithoutCategorizationRulesInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutRulesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutRulesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutRulesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRulesInput, Prisma.UserUncheckedCreateWithoutRulesInput>
+}
+
+export type UserUpsertWithoutRulesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRulesInput, Prisma.UserUncheckedUpdateWithoutRulesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRulesInput, Prisma.UserUncheckedCreateWithoutRulesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRulesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRulesInput, Prisma.UserUncheckedUpdateWithoutRulesInput>
+}
+
+export type UserUpdateWithoutRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutPACERulesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPACERulesInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPACERulesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPACERulesInput, Prisma.UserUncheckedCreateWithoutPACERulesInput>
+}
+
+export type UserUpsertWithoutPACERulesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPACERulesInput, Prisma.UserUncheckedUpdateWithoutPACERulesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPACERulesInput, Prisma.UserUncheckedCreateWithoutPACERulesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPACERulesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPACERulesInput, Prisma.UserUncheckedUpdateWithoutPACERulesInput>
+}
+
+export type UserUpdateWithoutPACERulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPACERulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutSpreadsheetDocumentsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSpreadsheetDocumentsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSpreadsheetDocumentsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetDocumentsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetDocumentsInput>
+}
+
+export type UserUpsertWithoutSpreadsheetDocumentsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSpreadsheetDocumentsInput, Prisma.UserUncheckedUpdateWithoutSpreadsheetDocumentsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetDocumentsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetDocumentsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSpreadsheetDocumentsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSpreadsheetDocumentsInput, Prisma.UserUncheckedUpdateWithoutSpreadsheetDocumentsInput>
+}
+
+export type UserUpdateWithoutSpreadsheetDocumentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSpreadsheetDocumentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutSpreadsheetLogsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSpreadsheetLogsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  dateOfBirth: string
+  recoveryEmail?: string | null
+  role?: string
+  avatar?: string | null
+  status?: string
+  suspendedAt?: Date | string | null
+  suspendedReason?: string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  resetToken?: string | null
+  resetTokenExpiry?: Date | string | null
+  twoFactorEnabled?: boolean
+  twoFactorSecret?: string | null
+  twoFactorCode?: string | null
+  twoFactorCodeExpiry?: Date | string | null
+  twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
+  bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
+  bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
+  budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
+  financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSpreadsheetLogsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetLogsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetLogsInput>
+}
+
+export type UserUpsertWithoutSpreadsheetLogsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSpreadsheetLogsInput, Prisma.UserUncheckedUpdateWithoutSpreadsheetLogsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSpreadsheetLogsInput, Prisma.UserUncheckedCreateWithoutSpreadsheetLogsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSpreadsheetLogsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSpreadsheetLogsInput, Prisma.UserUncheckedUpdateWithoutSpreadsheetLogsInput>
+}
+
+export type UserUpdateWithoutSpreadsheetLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSpreadsheetLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
+  recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetTokenExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  twoFactorSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
+  bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
+  budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
+  financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
+  saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAuditLogsPerformedInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2521,29 +3871,36 @@ export type UserCreateWithoutAuditLogsPerformedInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTargetUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsPerformedInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2556,19 +3913,25 @@ export type UserUncheckedCreateWithoutAuditLogsPerformedInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTargetUserInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsPerformedInput = {
@@ -2578,12 +3941,13 @@ export type UserCreateOrConnectWithoutAuditLogsPerformedInput = {
 
 export type UserCreateWithoutAuditLogsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2596,29 +3960,36 @@ export type UserCreateWithoutAuditLogsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
   bankAccounts?: Prisma.BankAccountCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
   bills?: Prisma.BillCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionCreateNestedManyWithoutUserInput
-  auditLogsPerformed?: Prisma.AuditLogCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
   id?: string
-  email: string
   name: string
+  email: string
   password: string
   dateOfBirth: string
   recoveryEmail?: string | null
   role?: string
+  avatar?: string | null
   status?: string
   suspendedAt?: Date | string | null
   suspendedReason?: string | null
@@ -2631,19 +4002,25 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   twoFactorCode?: string | null
   twoFactorCodeExpiry?: Date | string | null
   twoFactorBackupCodes?: string | null
+  saltEdgeCustomerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
   bankAccounts?: Prisma.BankAccountUncheckedCreateNestedManyWithoutUserInput
-  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
   bills?: Prisma.BillUncheckedCreateNestedManyWithoutUserInput
   budgets?: Prisma.BudgetUncheckedCreateNestedManyWithoutUserInput
+  counterparties?: Prisma.CounterpartyUncheckedCreateNestedManyWithoutUserInput
   financialGoals?: Prisma.FinancialGoalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedCreateNestedManyWithoutUserInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
+  PACERules?: Prisma.PACERuleUncheckedCreateNestedManyWithoutUserInput
+  rules?: Prisma.RuleUncheckedCreateNestedManyWithoutUserInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedCreateNestedManyWithoutUserInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedCreateNestedManyWithoutPerformerInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedCreateNestedManyWithoutUserInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedCreateNestedManyWithoutUserInput
+  tags?: Prisma.TagUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -2664,12 +4041,13 @@ export type UserUpdateToOneWithWhereWithoutAuditLogsPerformedInput = {
 
 export type UserUpdateWithoutAuditLogsPerformedInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2682,29 +4060,36 @@ export type UserUpdateWithoutAuditLogsPerformedInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutTargetUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsPerformedInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2717,19 +4102,25 @@ export type UserUncheckedUpdateWithoutAuditLogsPerformedInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTargetUserNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutAuditLogsInput = {
@@ -2745,12 +4136,13 @@ export type UserUpdateToOneWithWhereWithoutAuditLogsInput = {
 
 export type UserUpdateWithoutAuditLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2763,29 +4155,36 @@ export type UserUpdateWithoutAuditLogsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
   bankAccounts?: Prisma.BankAccountUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUpdateManyWithoutUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   dateOfBirth?: Prisma.StringFieldUpdateOperationsInput | string
   recoveryEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspendedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2798,19 +4197,25 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   twoFactorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   twoFactorCodeExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorBackupCodes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  saltEdgeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
   bankAccounts?: Prisma.BankAccountUncheckedUpdateManyWithoutUserNestedInput
-  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
   bills?: Prisma.BillUncheckedUpdateManyWithoutUserNestedInput
   budgets?: Prisma.BudgetUncheckedUpdateManyWithoutUserNestedInput
+  counterparties?: Prisma.CounterpartyUncheckedUpdateManyWithoutUserNestedInput
   financialGoals?: Prisma.FinancialGoalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  categorizationRules?: Prisma.CategorizationRuleUncheckedUpdateManyWithoutUserNestedInput
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
-  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
+  PACERules?: Prisma.PACERuleUncheckedUpdateManyWithoutUserNestedInput
+  rules?: Prisma.RuleUncheckedUpdateManyWithoutUserNestedInput
   saltEdgeConnections?: Prisma.SaltEdgeConnectionUncheckedUpdateManyWithoutUserNestedInput
-  auditLogsPerformed?: Prisma.AuditLogUncheckedUpdateManyWithoutPerformerNestedInput
+  spreadsheetDocuments?: Prisma.SpreadsheetDocumentUncheckedUpdateManyWithoutUserNestedInput
+  spreadsheetLogs?: Prisma.SpreadsheetLogUncheckedUpdateManyWithoutUserNestedInput
+  tags?: Prisma.TagUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  trustedDevices?: Prisma.TrustedDeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -2819,33 +4224,43 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
  */
 
 export type UserCountOutputType = {
+  auditLogsPerformed: number
+  auditLogs: number
   bankAccounts: number
-  transactions: number
   bills: number
   budgets: number
+  counterparties: number
   financialGoals: number
   notifications: number
-  categorizationRules: number
   oauthAccounts: number
-  trustedDevices: number
+  PACERules: number
+  rules: number
   saltEdgeConnections: number
-  auditLogs: number
-  auditLogsPerformed: number
+  spreadsheetDocuments: number
+  spreadsheetLogs: number
+  tags: number
+  transactions: number
+  trustedDevices: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  auditLogsPerformed?: boolean | UserCountOutputTypeCountAuditLogsPerformedArgs
+  auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
   bankAccounts?: boolean | UserCountOutputTypeCountBankAccountsArgs
-  transactions?: boolean | UserCountOutputTypeCountTransactionsArgs
   bills?: boolean | UserCountOutputTypeCountBillsArgs
   budgets?: boolean | UserCountOutputTypeCountBudgetsArgs
+  counterparties?: boolean | UserCountOutputTypeCountCounterpartiesArgs
   financialGoals?: boolean | UserCountOutputTypeCountFinancialGoalsArgs
   notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
-  categorizationRules?: boolean | UserCountOutputTypeCountCategorizationRulesArgs
   oauthAccounts?: boolean | UserCountOutputTypeCountOauthAccountsArgs
-  trustedDevices?: boolean | UserCountOutputTypeCountTrustedDevicesArgs
+  PACERules?: boolean | UserCountOutputTypeCountPACERulesArgs
+  rules?: boolean | UserCountOutputTypeCountRulesArgs
   saltEdgeConnections?: boolean | UserCountOutputTypeCountSaltEdgeConnectionsArgs
-  auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
-  auditLogsPerformed?: boolean | UserCountOutputTypeCountAuditLogsPerformedArgs
+  spreadsheetDocuments?: boolean | UserCountOutputTypeCountSpreadsheetDocumentsArgs
+  spreadsheetLogs?: boolean | UserCountOutputTypeCountSpreadsheetLogsArgs
+  tags?: boolean | UserCountOutputTypeCountTagsArgs
+  transactions?: boolean | UserCountOutputTypeCountTransactionsArgs
+  trustedDevices?: boolean | UserCountOutputTypeCountTrustedDevicesArgs
 }
 
 /**
@@ -2861,15 +4276,22 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountBankAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.BankAccountWhereInput
+export type UserCountOutputTypeCountAuditLogsPerformedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AuditLogWhereInput
 }
 
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.TransactionWhereInput
+export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AuditLogWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBankAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BankAccountWhereInput
 }
 
 /**
@@ -2889,6 +4311,13 @@ export type UserCountOutputTypeCountBudgetsArgs<ExtArgs extends runtime.Types.Ex
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountCounterpartiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CounterpartyWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountFinancialGoalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.FinancialGoalWhereInput
 }
@@ -2903,13 +4332,6 @@ export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Ty
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountCategorizationRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.CategorizationRuleWhereInput
-}
-
-/**
- * UserCountOutputType without action
- */
 export type UserCountOutputTypeCountOauthAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.OAuthAccountWhereInput
 }
@@ -2917,8 +4339,15 @@ export type UserCountOutputTypeCountOauthAccountsArgs<ExtArgs extends runtime.Ty
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountTrustedDevicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.TrustedDeviceWhereInput
+export type UserCountOutputTypeCountPACERulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PACERuleWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RuleWhereInput
 }
 
 /**
@@ -2931,26 +4360,48 @@ export type UserCountOutputTypeCountSaltEdgeConnectionsArgs<ExtArgs extends runt
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AuditLogWhereInput
+export type UserCountOutputTypeCountSpreadsheetDocumentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SpreadsheetDocumentWhereInput
 }
 
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountAuditLogsPerformedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AuditLogWhereInput
+export type UserCountOutputTypeCountSpreadsheetLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SpreadsheetLogWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TagWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TransactionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTrustedDevicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TrustedDeviceWhereInput
 }
 
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  email?: boolean
   name?: boolean
+  email?: boolean
   password?: boolean
   dateOfBirth?: boolean
   recoveryEmail?: boolean
   role?: boolean
+  avatar?: boolean
   status?: boolean
   suspendedAt?: boolean
   suspendedReason?: boolean
@@ -2963,31 +4414,38 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
   twoFactorBackupCodes?: boolean
+  saltEdgeCustomerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  auditLogsPerformed?: boolean | Prisma.User$auditLogsPerformedArgs<ExtArgs>
+  auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   bankAccounts?: boolean | Prisma.User$bankAccountsArgs<ExtArgs>
-  transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>
   bills?: boolean | Prisma.User$billsArgs<ExtArgs>
   budgets?: boolean | Prisma.User$budgetsArgs<ExtArgs>
+  counterparties?: boolean | Prisma.User$counterpartiesArgs<ExtArgs>
   financialGoals?: boolean | Prisma.User$financialGoalsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
-  categorizationRules?: boolean | Prisma.User$categorizationRulesArgs<ExtArgs>
   oauthAccounts?: boolean | Prisma.User$oauthAccountsArgs<ExtArgs>
-  trustedDevices?: boolean | Prisma.User$trustedDevicesArgs<ExtArgs>
+  PACERules?: boolean | Prisma.User$PACERulesArgs<ExtArgs>
+  rules?: boolean | Prisma.User$rulesArgs<ExtArgs>
   saltEdgeConnections?: boolean | Prisma.User$saltEdgeConnectionsArgs<ExtArgs>
-  auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
-  auditLogsPerformed?: boolean | Prisma.User$auditLogsPerformedArgs<ExtArgs>
+  spreadsheetDocuments?: boolean | Prisma.User$spreadsheetDocumentsArgs<ExtArgs>
+  spreadsheetLogs?: boolean | Prisma.User$spreadsheetLogsArgs<ExtArgs>
+  tags?: boolean | Prisma.User$tagsArgs<ExtArgs>
+  transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>
+  trustedDevices?: boolean | Prisma.User$trustedDevicesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  email?: boolean
   name?: boolean
+  email?: boolean
   password?: boolean
   dateOfBirth?: boolean
   recoveryEmail?: boolean
   role?: boolean
+  avatar?: boolean
   status?: boolean
   suspendedAt?: boolean
   suspendedReason?: boolean
@@ -3000,18 +4458,20 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
   twoFactorBackupCodes?: boolean
+  saltEdgeCustomerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  email?: boolean
   name?: boolean
+  email?: boolean
   password?: boolean
   dateOfBirth?: boolean
   recoveryEmail?: boolean
   role?: boolean
+  avatar?: boolean
   status?: boolean
   suspendedAt?: boolean
   suspendedReason?: boolean
@@ -3024,18 +4484,20 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
   twoFactorBackupCodes?: boolean
+  saltEdgeCustomerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
   id?: boolean
-  email?: boolean
   name?: boolean
+  email?: boolean
   password?: boolean
   dateOfBirth?: boolean
   recoveryEmail?: boolean
   role?: boolean
+  avatar?: boolean
   status?: boolean
   suspendedAt?: boolean
   suspendedReason?: boolean
@@ -3048,24 +4510,30 @@ export type UserSelectScalar = {
   twoFactorCode?: boolean
   twoFactorCodeExpiry?: boolean
   twoFactorBackupCodes?: boolean
+  saltEdgeCustomerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "dateOfBirth" | "recoveryEmail" | "role" | "status" | "suspendedAt" | "suspendedReason" | "lastLoginAt" | "lastLoginIp" | "resetToken" | "resetTokenExpiry" | "twoFactorEnabled" | "twoFactorSecret" | "twoFactorCode" | "twoFactorCodeExpiry" | "twoFactorBackupCodes" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "dateOfBirth" | "recoveryEmail" | "role" | "avatar" | "status" | "suspendedAt" | "suspendedReason" | "lastLoginAt" | "lastLoginIp" | "resetToken" | "resetTokenExpiry" | "twoFactorEnabled" | "twoFactorSecret" | "twoFactorCode" | "twoFactorCodeExpiry" | "twoFactorBackupCodes" | "saltEdgeCustomerId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  auditLogsPerformed?: boolean | Prisma.User$auditLogsPerformedArgs<ExtArgs>
+  auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   bankAccounts?: boolean | Prisma.User$bankAccountsArgs<ExtArgs>
-  transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>
   bills?: boolean | Prisma.User$billsArgs<ExtArgs>
   budgets?: boolean | Prisma.User$budgetsArgs<ExtArgs>
+  counterparties?: boolean | Prisma.User$counterpartiesArgs<ExtArgs>
   financialGoals?: boolean | Prisma.User$financialGoalsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
-  categorizationRules?: boolean | Prisma.User$categorizationRulesArgs<ExtArgs>
   oauthAccounts?: boolean | Prisma.User$oauthAccountsArgs<ExtArgs>
-  trustedDevices?: boolean | Prisma.User$trustedDevicesArgs<ExtArgs>
+  PACERules?: boolean | Prisma.User$PACERulesArgs<ExtArgs>
+  rules?: boolean | Prisma.User$rulesArgs<ExtArgs>
   saltEdgeConnections?: boolean | Prisma.User$saltEdgeConnectionsArgs<ExtArgs>
-  auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
-  auditLogsPerformed?: boolean | Prisma.User$auditLogsPerformedArgs<ExtArgs>
+  spreadsheetDocuments?: boolean | Prisma.User$spreadsheetDocumentsArgs<ExtArgs>
+  spreadsheetLogs?: boolean | Prisma.User$spreadsheetLogsArgs<ExtArgs>
+  tags?: boolean | Prisma.User$tagsArgs<ExtArgs>
+  transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>
+  trustedDevices?: boolean | Prisma.User$trustedDevicesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -3074,27 +4542,33 @@ export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
+    auditLogsPerformed: Prisma.$AuditLogPayload<ExtArgs>[]
+    auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     bankAccounts: Prisma.$BankAccountPayload<ExtArgs>[]
-    transactions: Prisma.$TransactionPayload<ExtArgs>[]
     bills: Prisma.$BillPayload<ExtArgs>[]
     budgets: Prisma.$BudgetPayload<ExtArgs>[]
+    counterparties: Prisma.$CounterpartyPayload<ExtArgs>[]
     financialGoals: Prisma.$FinancialGoalPayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
-    categorizationRules: Prisma.$CategorizationRulePayload<ExtArgs>[]
     oauthAccounts: Prisma.$OAuthAccountPayload<ExtArgs>[]
-    trustedDevices: Prisma.$TrustedDevicePayload<ExtArgs>[]
+    PACERules: Prisma.$PACERulePayload<ExtArgs>[]
+    rules: Prisma.$RulePayload<ExtArgs>[]
     saltEdgeConnections: Prisma.$SaltEdgeConnectionPayload<ExtArgs>[]
-    auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
-    auditLogsPerformed: Prisma.$AuditLogPayload<ExtArgs>[]
+    spreadsheetDocuments: Prisma.$SpreadsheetDocumentPayload<ExtArgs>[]
+    spreadsheetLogs: Prisma.$SpreadsheetLogPayload<ExtArgs>[]
+    tags: Prisma.$TagPayload<ExtArgs>[]
+    transactions: Prisma.$TransactionPayload<ExtArgs>[]
+    trustedDevices: Prisma.$TrustedDevicePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    email: string
     name: string
+    email: string
     password: string
     dateOfBirth: string
     recoveryEmail: string | null
     role: string
+    avatar: string | null
     status: string
     suspendedAt: Date | null
     suspendedReason: string | null
@@ -3107,6 +4581,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     twoFactorCode: string | null
     twoFactorCodeExpiry: Date | null
     twoFactorBackupCodes: string | null
+    saltEdgeCustomerId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -3503,18 +4978,23 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  auditLogsPerformed<T extends Prisma.User$auditLogsPerformedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsPerformedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  auditLogs<T extends Prisma.User$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bankAccounts<T extends Prisma.User$bankAccountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bankAccountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BankAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  transactions<T extends Prisma.User$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bills<T extends Prisma.User$billsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$billsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   budgets<T extends Prisma.User$budgetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$budgetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BudgetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  counterparties<T extends Prisma.User$counterpartiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$counterpartiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CounterpartyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   financialGoals<T extends Prisma.User$financialGoalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$financialGoalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FinancialGoalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  categorizationRules<T extends Prisma.User$categorizationRulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$categorizationRulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CategorizationRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   oauthAccounts<T extends Prisma.User$oauthAccountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$oauthAccountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OAuthAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  trustedDevices<T extends Prisma.User$trustedDevicesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trustedDevicesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrustedDevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  PACERules<T extends Prisma.User$PACERulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$PACERulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PACERulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  rules<T extends Prisma.User$rulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   saltEdgeConnections<T extends Prisma.User$saltEdgeConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$saltEdgeConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SaltEdgeConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  auditLogs<T extends Prisma.User$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  auditLogsPerformed<T extends Prisma.User$auditLogsPerformedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsPerformedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  spreadsheetDocuments<T extends Prisma.User$spreadsheetDocumentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$spreadsheetDocumentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SpreadsheetDocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  spreadsheetLogs<T extends Prisma.User$spreadsheetLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$spreadsheetLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SpreadsheetLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tags<T extends Prisma.User$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  transactions<T extends Prisma.User$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  trustedDevices<T extends Prisma.User$trustedDevicesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trustedDevicesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrustedDevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3545,12 +5025,13 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
-  readonly email: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
+  readonly email: Prisma.FieldRef<"User", 'String'>
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly dateOfBirth: Prisma.FieldRef<"User", 'String'>
   readonly recoveryEmail: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'String'>
+  readonly avatar: Prisma.FieldRef<"User", 'String'>
   readonly status: Prisma.FieldRef<"User", 'String'>
   readonly suspendedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly suspendedReason: Prisma.FieldRef<"User", 'String'>
@@ -3563,6 +5044,7 @@ export interface UserFieldRefs {
   readonly twoFactorCode: Prisma.FieldRef<"User", 'String'>
   readonly twoFactorCodeExpiry: Prisma.FieldRef<"User", 'DateTime'>
   readonly twoFactorBackupCodes: Prisma.FieldRef<"User", 'String'>
+  readonly saltEdgeCustomerId: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -3958,6 +5440,54 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
+ * User.auditLogsPerformed
+ */
+export type User$auditLogsPerformedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AuditLog
+   */
+  select?: Prisma.AuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AuditLog
+   */
+  omit?: Prisma.AuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AuditLogInclude<ExtArgs> | null
+  where?: Prisma.AuditLogWhereInput
+  orderBy?: Prisma.AuditLogOrderByWithRelationInput | Prisma.AuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.AuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
+}
+
+/**
+ * User.auditLogs
+ */
+export type User$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AuditLog
+   */
+  select?: Prisma.AuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AuditLog
+   */
+  omit?: Prisma.AuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AuditLogInclude<ExtArgs> | null
+  where?: Prisma.AuditLogWhereInput
+  orderBy?: Prisma.AuditLogOrderByWithRelationInput | Prisma.AuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.AuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
+}
+
+/**
  * User.bankAccounts
  */
 export type User$bankAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3979,30 +5509,6 @@ export type User$bankAccountsArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.BankAccountScalarFieldEnum | Prisma.BankAccountScalarFieldEnum[]
-}
-
-/**
- * User.transactions
- */
-export type User$transactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Transaction
-   */
-  select?: Prisma.TransactionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Transaction
-   */
-  omit?: Prisma.TransactionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TransactionInclude<ExtArgs> | null
-  where?: Prisma.TransactionWhereInput
-  orderBy?: Prisma.TransactionOrderByWithRelationInput | Prisma.TransactionOrderByWithRelationInput[]
-  cursor?: Prisma.TransactionWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.TransactionScalarFieldEnum | Prisma.TransactionScalarFieldEnum[]
 }
 
 /**
@@ -4054,6 +5560,30 @@ export type User$budgetsArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 }
 
 /**
+ * User.counterparties
+ */
+export type User$counterpartiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Counterparty
+   */
+  select?: Prisma.CounterpartySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Counterparty
+   */
+  omit?: Prisma.CounterpartyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CounterpartyInclude<ExtArgs> | null
+  where?: Prisma.CounterpartyWhereInput
+  orderBy?: Prisma.CounterpartyOrderByWithRelationInput | Prisma.CounterpartyOrderByWithRelationInput[]
+  cursor?: Prisma.CounterpartyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CounterpartyScalarFieldEnum | Prisma.CounterpartyScalarFieldEnum[]
+}
+
+/**
  * User.financialGoals
  */
 export type User$financialGoalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4102,30 +5632,6 @@ export type User$notificationsArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
- * User.categorizationRules
- */
-export type User$categorizationRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the CategorizationRule
-   */
-  select?: Prisma.CategorizationRuleSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the CategorizationRule
-   */
-  omit?: Prisma.CategorizationRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.CategorizationRuleInclude<ExtArgs> | null
-  where?: Prisma.CategorizationRuleWhereInput
-  orderBy?: Prisma.CategorizationRuleOrderByWithRelationInput | Prisma.CategorizationRuleOrderByWithRelationInput[]
-  cursor?: Prisma.CategorizationRuleWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.CategorizationRuleScalarFieldEnum | Prisma.CategorizationRuleScalarFieldEnum[]
-}
-
-/**
  * User.oauthAccounts
  */
 export type User$oauthAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4150,27 +5656,51 @@ export type User$oauthAccountsArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
- * User.trustedDevices
+ * User.PACERules
  */
-export type User$trustedDevicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$PACERulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the TrustedDevice
+   * Select specific fields to fetch from the PACERule
    */
-  select?: Prisma.TrustedDeviceSelect<ExtArgs> | null
+  select?: Prisma.PACERuleSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the TrustedDevice
+   * Omit specific fields from the PACERule
    */
-  omit?: Prisma.TrustedDeviceOmit<ExtArgs> | null
+  omit?: Prisma.PACERuleOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.TrustedDeviceInclude<ExtArgs> | null
-  where?: Prisma.TrustedDeviceWhereInput
-  orderBy?: Prisma.TrustedDeviceOrderByWithRelationInput | Prisma.TrustedDeviceOrderByWithRelationInput[]
-  cursor?: Prisma.TrustedDeviceWhereUniqueInput
+  include?: Prisma.PACERuleInclude<ExtArgs> | null
+  where?: Prisma.PACERuleWhereInput
+  orderBy?: Prisma.PACERuleOrderByWithRelationInput | Prisma.PACERuleOrderByWithRelationInput[]
+  cursor?: Prisma.PACERuleWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.TrustedDeviceScalarFieldEnum | Prisma.TrustedDeviceScalarFieldEnum[]
+  distinct?: Prisma.PACERuleScalarFieldEnum | Prisma.PACERuleScalarFieldEnum[]
+}
+
+/**
+ * User.rules
+ */
+export type User$rulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Rule
+   */
+  select?: Prisma.RuleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Rule
+   */
+  omit?: Prisma.RuleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RuleInclude<ExtArgs> | null
+  where?: Prisma.RuleWhereInput
+  orderBy?: Prisma.RuleOrderByWithRelationInput | Prisma.RuleOrderByWithRelationInput[]
+  cursor?: Prisma.RuleWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RuleScalarFieldEnum | Prisma.RuleScalarFieldEnum[]
 }
 
 /**
@@ -4198,51 +5728,123 @@ export type User$saltEdgeConnectionsArgs<ExtArgs extends runtime.Types.Extension
 }
 
 /**
- * User.auditLogs
+ * User.spreadsheetDocuments
  */
-export type User$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$spreadsheetDocumentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the AuditLog
+   * Select specific fields to fetch from the SpreadsheetDocument
    */
-  select?: Prisma.AuditLogSelect<ExtArgs> | null
+  select?: Prisma.SpreadsheetDocumentSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the AuditLog
+   * Omit specific fields from the SpreadsheetDocument
    */
-  omit?: Prisma.AuditLogOmit<ExtArgs> | null
+  omit?: Prisma.SpreadsheetDocumentOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.AuditLogInclude<ExtArgs> | null
-  where?: Prisma.AuditLogWhereInput
-  orderBy?: Prisma.AuditLogOrderByWithRelationInput | Prisma.AuditLogOrderByWithRelationInput[]
-  cursor?: Prisma.AuditLogWhereUniqueInput
+  include?: Prisma.SpreadsheetDocumentInclude<ExtArgs> | null
+  where?: Prisma.SpreadsheetDocumentWhereInput
+  orderBy?: Prisma.SpreadsheetDocumentOrderByWithRelationInput | Prisma.SpreadsheetDocumentOrderByWithRelationInput[]
+  cursor?: Prisma.SpreadsheetDocumentWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
+  distinct?: Prisma.SpreadsheetDocumentScalarFieldEnum | Prisma.SpreadsheetDocumentScalarFieldEnum[]
 }
 
 /**
- * User.auditLogsPerformed
+ * User.spreadsheetLogs
  */
-export type User$auditLogsPerformedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$spreadsheetLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the AuditLog
+   * Select specific fields to fetch from the SpreadsheetLog
    */
-  select?: Prisma.AuditLogSelect<ExtArgs> | null
+  select?: Prisma.SpreadsheetLogSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the AuditLog
+   * Omit specific fields from the SpreadsheetLog
    */
-  omit?: Prisma.AuditLogOmit<ExtArgs> | null
+  omit?: Prisma.SpreadsheetLogOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.AuditLogInclude<ExtArgs> | null
-  where?: Prisma.AuditLogWhereInput
-  orderBy?: Prisma.AuditLogOrderByWithRelationInput | Prisma.AuditLogOrderByWithRelationInput[]
-  cursor?: Prisma.AuditLogWhereUniqueInput
+  include?: Prisma.SpreadsheetLogInclude<ExtArgs> | null
+  where?: Prisma.SpreadsheetLogWhereInput
+  orderBy?: Prisma.SpreadsheetLogOrderByWithRelationInput | Prisma.SpreadsheetLogOrderByWithRelationInput[]
+  cursor?: Prisma.SpreadsheetLogWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
+  distinct?: Prisma.SpreadsheetLogScalarFieldEnum | Prisma.SpreadsheetLogScalarFieldEnum[]
+}
+
+/**
+ * User.tags
+ */
+export type User$tagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Tag
+   */
+  select?: Prisma.TagSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Tag
+   */
+  omit?: Prisma.TagOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TagInclude<ExtArgs> | null
+  where?: Prisma.TagWhereInput
+  orderBy?: Prisma.TagOrderByWithRelationInput | Prisma.TagOrderByWithRelationInput[]
+  cursor?: Prisma.TagWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TagScalarFieldEnum | Prisma.TagScalarFieldEnum[]
+}
+
+/**
+ * User.transactions
+ */
+export type User$transactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Transaction
+   */
+  select?: Prisma.TransactionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Transaction
+   */
+  omit?: Prisma.TransactionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TransactionInclude<ExtArgs> | null
+  where?: Prisma.TransactionWhereInput
+  orderBy?: Prisma.TransactionOrderByWithRelationInput | Prisma.TransactionOrderByWithRelationInput[]
+  cursor?: Prisma.TransactionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TransactionScalarFieldEnum | Prisma.TransactionScalarFieldEnum[]
+}
+
+/**
+ * User.trustedDevices
+ */
+export type User$trustedDevicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TrustedDevice
+   */
+  select?: Prisma.TrustedDeviceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TrustedDevice
+   */
+  omit?: Prisma.TrustedDeviceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TrustedDeviceInclude<ExtArgs> | null
+  where?: Prisma.TrustedDeviceWhereInput
+  orderBy?: Prisma.TrustedDeviceOrderByWithRelationInput | Prisma.TrustedDeviceOrderByWithRelationInput[]
+  cursor?: Prisma.TrustedDeviceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TrustedDeviceScalarFieldEnum | Prisma.TrustedDeviceScalarFieldEnum[]
 }
 
 /**

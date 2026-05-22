@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   CollapsedTooltip,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function NavSecondary({
@@ -22,14 +23,19 @@ export function NavSecondary({
     icon: LucideIcon
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+  const { isMobile, setOpenMobile } = useSidebar()
+  const handleNavClick = React.useCallback(() => {
+    if (isMobile) setOpenMobile(false)
+  }, [isMobile, setOpenMobile])
+
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <CollapsedTooltip asChild size="sm">
-                <Link href={item.url}>
+              <CollapsedTooltip asChild size="sm" tooltip={item.title}>
+                <Link href={item.url} onClick={handleNavClick}>
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>

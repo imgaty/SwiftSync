@@ -276,6 +276,19 @@ export function useLanguage() {
     return context
 }
 
+// Stable empty record returned when a namespace is missing — keeps reference
+// identity across renders so dependents like useCallback don't re-create.
+const EMPTY_NS = Object.freeze({}) as Record<string, string>
+
+// Look up an optional translation namespace (e.g. "forgot_password_extra")
+// without the `|| {}` allocation pattern that breaks memoization.
+export function useTranslationNamespace<T extends Record<string, string> = Record<string, string>>(
+    name: string,
+): T {
+    const { t } = useLanguage()
+    return ((t as unknown as Record<string, T | undefined>)[name] ?? EMPTY_NS) as T
+}
+
 // Export for type safety when adding new languages
 export { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE }
 export type { Language, Translations }
