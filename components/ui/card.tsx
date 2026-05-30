@@ -1,12 +1,22 @@
+//
+//  card.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Card UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import * as React from "react"
 
+import { PRISM } from "@/lib/PRISM"
 import { cn } from "@/lib/utils"
 
 
 
 function Card({ className, ...props }: React.ComponentProps<"div">) {
     return (
-        <div data-slot="card" className={cn("flex flex-col justify-between gap-4 p-4 bg-card border rounded-xl text-card-foreground transition-all duration-200", className)}
+        <div data-slot="card" className={cn(PRISM.cardSurface, "spotlight-surface relative flex flex-col justify-between gap-4 p-4 text-card-foreground transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-200", className)}
             {...props}
         />
     )
@@ -30,7 +40,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
 
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
     return (
-        <div data-slot = "card-description" className = {cn("text-neutral-400 text-sm", className)}
+        <div data-slot = "card-description" className = {cn("text-muted-foreground text-sm", className)}
             {...props}
         />
     )

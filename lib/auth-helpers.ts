@@ -1,6 +1,15 @@
+//
+//  auth-helpers.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides shared auth helpers logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/prisma"
-import { verifySessionToken } from "@/lib/session"
+import { sessionVersionMatches, verifySessionToken } from "@/lib/session"
 
 export interface AuthContext {
     userId: string
@@ -17,10 +26,11 @@ export async function getAuthContext(): Promise<AuthContext | null> {
 
     const user = await prisma.user.findUnique({
         where: { id: session.uid },
-        select: { id: true, status: true },
+        select: { id: true, status: true, sessionVersion: true },
     })
 
     if (!user || user.status !== "active") return null
+    if (!sessionVersionMatches(session, user.sessionVersion)) return null
 
     return { userId: user.id }
 }

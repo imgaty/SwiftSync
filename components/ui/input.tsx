@@ -1,8 +1,18 @@
+//
+//  input.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Input UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client';
 
 import { useState, useRef, useEffect, useMemo, type InputHTMLAttributes, type Ref, type KeyboardEvent, type ClipboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, TOOLTIP_DELAY } from '@/components/ui/tooltip';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -28,10 +38,13 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
             else if (e.animationName === 'onAutoFillCancel') setAutofilled(false);
         };
         el.addEventListener('animationstart', onAnim);
-        // Also check immediately for pre-applied autofill
-        try { if (el.matches(':autofill') || el.matches(':-webkit-autofill')) setAutofilled(true); } catch { /* ignore */ }
-        const t = setTimeout(() => { try { if (el.matches(':autofill') || el.matches(':-webkit-autofill')) setAutofilled(true); } catch {} }, 200);
-        return () => { el.removeEventListener('animationstart', onAnim); clearTimeout(t); };
+        // Also check for pre-applied autofill after the browser has painted.
+        const checkAutofill = () => {
+            try { if (el.matches(':autofill') || el.matches(':-webkit-autofill')) setAutofilled(true); } catch { /* ignore */ }
+        }
+        const raf = requestAnimationFrame(checkAutofill);
+        const t = setTimeout(checkAutofill, 200);
+        return () => { el.removeEventListener('animationstart', onAnim); cancelAnimationFrame(raf); clearTimeout(t); };
     }, []);
 
     const hasValue = value !== undefined && value !== null && String(value).length > 0;
@@ -74,12 +87,13 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                 className = {cn(
                     "w-full",
                     hasFloatingLabel ? "h-14 px-4 pt-4" : "h-11 px-4",
-                    "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl",
-                    "backdrop-blur-xl backdrop-saturate-150",
-                    "shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]",
-                    "text-neutral-900 dark:text-white text-[15px] text-left",
-                    "placeholder:text-neutral-400/60",
-                    "focus:outline-none focus:ring-2 focus:ring-black/15 dark:focus:ring-white/20 focus:border-transparent",
+                    "bg-[var(--surface)] border border-[color:var(--input)] rounded-xl",
+                    "backdrop-blur-xl backdrop-saturate-[1.25]",
+                    "shadow-[var(--shadow-subtle)]",
+                    "text-foreground text-[15px] text-left",
+                    "placeholder:text-muted-foreground/70",
+                    "hover:border-[color:var(--border-strong)]",
+                    "focus:outline-none focus:ring-2 focus:ring-focus/70 focus:ring-offset-2 focus:ring-offset-background focus:border-transparent",
                     "transition-all duration-200",
                     isPasswordType && "pr-12",
                     disabled && "opacity-50 cursor-not-allowed",
@@ -89,6 +103,7 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
 
             {hasFloatingLabel && (
                 <label
+                    htmlFor = {props.id}
                     className = {cn(
                         "absolute left-4 top-4",
                         "text-neutral-400",
@@ -106,20 +121,23 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                 <TooltipProvider>
                     <Tooltip delayDuration={TOOLTIP_DELAY}>
                         <TooltipTrigger asChild>
-                            <button
+                            <Button variant="ghost"
                                 type = "button"
                                 onClick = {() => setShowPassword(s => !s)}
+                                aria-label = {showPassword ? hidePasswordLabel : showPasswordLabel}
+                                aria-pressed = {showPassword}
                                 className = {cn(
-                                    "absolute right-3 top-1/2 -translate-y-1/2",
-                                    "p-1 | hover:bg-black/5 dark:hover:bg-white/5",
-                                    "text-neutral-400 hover:text-neutral-400 dark:hover:text-neutral-400",
+                                    "absolute right-2 top-1/2 -translate-y-1/2",
+                                    "inline-flex size-9 items-center justify-center",
+                                    "hover:bg-accent",
+                                    "text-muted-foreground hover:text-foreground",
                                     "rounded-lg",
-                                    "transition-colors"
+                                    "transition-colors",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                                 )}
-                                    tabIndex = {-1}
                             >
                                 {showPassword ? <Eye className = "w-5 h-5" /> : <EyeOff className = "w-5 h-5" />}
-                            </button>
+                            </Button>
                         </TooltipTrigger>
                         <TooltipContent side="right" className="text-xs">
                             {showPassword ? hidePasswordLabel : showPasswordLabel}
@@ -141,11 +159,12 @@ export interface OTPInputProps {
     onChange: (value: string) => void;
     disabled?: boolean;
     autoFocus?: boolean;
+    ariaLabel?: string;
     className?: string;
     ref?: Ref<HTMLDivElement>;
 }
 
-function OTPInput({ length = 6, value, onChange, disabled, autoFocus, className, ref }: OTPInputProps) {
+function OTPInput({ length = 6, value, onChange, disabled, autoFocus, ariaLabel = "Verification code", className, ref }: OTPInputProps) {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const digits = useMemo(
         () => value.split('').concat(Array(length).fill('')).slice(0, length),
@@ -200,7 +219,7 @@ function OTPInput({ length = 6, value, onChange, disabled, autoFocus, className,
     };
 
     return (
-        <div ref = {ref} className = {cn("flex items-center justify-center gap-2", className)}>
+        <div ref = {ref} role = "group" aria-label = {ariaLabel} className = {cn("flex items-center justify-center gap-2", className)}>
             {digits.map((digit, i) => (
                 <input
                     key = {i}
@@ -218,16 +237,17 @@ function OTPInput({ length = 6, value, onChange, disabled, autoFocus, className,
 
                     disabled = {disabled}
                     autoFocus = {autoFocus && i === 0}
+                    aria-label = {`${ariaLabel} digit ${i + 1}`}
 
                     className = {cn(
                         "w-12 h-16",
-                        "bg-[#f4f4f5] dark:bg-white/5",
-                        "border border-[#e4e4e7] dark:border-white/10",
-                        "text-center text-[24px] font-bold rounded-[10px] tracking-[-0.02em]",
-                        "text-[#18181b] dark:text-white",
-                        "focus:outline-none focus:ring-2 focus:ring-black/15 dark:focus:ring-white/20 focus:border-transparent",
+                        "bg-[var(--surface)]",
+                        "border border-[color:var(--input)]",
+                        "text-center text-[24px] font-bold rounded-[10px]",
+                        "text-foreground",
+                        "focus:outline-none focus:ring-2 focus:ring-focus/70 focus:ring-offset-2 focus:ring-offset-background focus:border-transparent",
                         "transition-all duration-200",
-                        "placeholder:text-neutral-400 dark:placeholder:text-neutral-400",
+                        "placeholder:text-muted-foreground",
 
                         disabled && "opacity-50 cursor-not-allowed"
                     )}

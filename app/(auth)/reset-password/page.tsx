@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /reset-password route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client'
 
 import { useState, Suspense } from 'react'
@@ -13,7 +22,6 @@ import {
   ErrorAlert,
   PasswordStrength,
   usePasswordStrength,
-  BTN_PRIMARY,
 } from '@/components/auth'
 import { PRISM } from '@/lib/PRISM'
 import { postAuth } from '@/lib/auth-fetch'
@@ -76,7 +84,7 @@ function ResetPasswordForm() {
           description={rp.password_reset_desc || 'Your password has been updated. You can now sign in.'}
         >
           <Link href="/login" className="block">
-            <Button variant="solid" size="lg" className={BTN_PRIMARY}>
+            <Button variant="solid" size="lg" className="w-full">
               {rp.sign_in || 'Sign in'}<ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
@@ -110,7 +118,7 @@ function ResetPasswordForm() {
             </div>
 
             <div className="space-y-4">
-              <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading || !passwordsMatch || !allPassed}>
+              <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading || !passwordsMatch || !allPassed}>
                 {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />{rp.resetting || 'Resetting...'}</> : <>{rp.reset_password || 'Reset password'}<ArrowRight className="w-4 h-4" /></>}
               </Button>
               <BackButton href="/login" label={rp.back_to_login || 'Back to login'} />

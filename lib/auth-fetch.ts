@@ -1,7 +1,12 @@
-// Shared client-side fetch helper for auth POST endpoints. Handles JSON
-// encoding, decoding, network errors, and non-JSON server responses uniformly
-// so each auth page doesn't ship its own copy.
-
+//
+//  auth-fetch.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides shared auth fetch logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 export interface PostAuthResult<T> {

@@ -1,3 +1,12 @@
+//
+//  chart-utils.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides shared chart utils logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { AGGREGATION_KEYS, DATE_FORMAT_OPTIONS, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from './chart-constants'
 import type { DailyData, MetricType } from './chart-types'
 

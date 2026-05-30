@@ -1,3 +1,12 @@
+//
+//  select.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Select UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -6,6 +15,7 @@ import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
+import { GlideHighlight, useGlideHighlight } from "@/components/ui/glide-highlight"
 
 function Select({
   ...props
@@ -38,7 +48,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-[13px] leading-snug outline-none transition-all duration-150",
+        "flex w-fit items-center justify-between gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-[13px] leading-snug outline-none transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150",
         // Lighter glass surface — was reading as a heavy "dark pill" next to
         // similar-shaped buttons in toolbars. Now feels like a subtle inline
         // control with the text carrying the visual weight.
@@ -72,14 +82,22 @@ function SelectContent({
   align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const { rect, visible, menuHandlers } = useGlideHighlight({
+    surfaceRef: contentRef,
+    keyboardNavigation: false,
+  })
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
+        ref={contentRef}
         data-slot="select-content"
         collisionPadding={16}
         avoidCollisions={true}
         className={cn(
           PRISM.container,
+          PRISM.glideSurface,
           PRISM.animateIn,
           PRISM.animateOut,
           "relative z-999 max-h-(--radix-select-content-available-height) w-[220px] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto",
@@ -90,18 +108,22 @@ function SelectContent({
         position={position}
         align={align}
         {...props}
+        {...menuHandlers}
       >
-        <SelectScrollUpButton />
-        <SelectPrimitive.Viewport
-          className={cn(
-            "p-0",
-            position === "popper" &&
-              "h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width) scroll-my-1"
-          )}
-        >
-          {children}
-        </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
+        <GlideHighlight rect={rect} visible={visible} />
+        <div className="relative z-[2]">
+          <SelectScrollUpButton />
+          <SelectPrimitive.Viewport
+            className={cn(
+              "p-0",
+              position === "popper" &&
+                "h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width) scroll-my-1"
+            )}
+          >
+            {children}
+          </SelectPrimitive.Viewport>
+          <SelectScrollDownButton />
+        </div>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   )
@@ -125,15 +147,21 @@ function SelectItem({
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Item>) {
+  const generatedGlideId = React.useId()
+  const dataGlideItem =
+    (props as { "data-glide-item"?: string })["data-glide-item"] ??
+    props.id ??
+    generatedGlideId
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      data-glide-item={dataGlideItem}
       className={cn(
         PRISM.item,
-        PRISM.itemFocus,
+        PRISM.glideItem,
         PRISM.itemDisabled,
         PRISM.itemIcon,
-        "active:scale-[0.98] active:bg-white/6",
         "w-full pr-8",
         "*:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className

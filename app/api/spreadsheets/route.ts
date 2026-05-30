@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Handles the /api/spreadsheets API endpoint for Argent, keeping request parsing, business
+//  operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { NextResponse } from "next/server"
 import { Prisma } from "@/lib/generated/prisma/client"
 

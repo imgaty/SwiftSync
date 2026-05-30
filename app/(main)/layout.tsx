@@ -1,5 +1,14 @@
+//
+//  layout.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the home route layout in Argent, providing shared structure, providers, and
+//  navigation context for nested screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { cookies } from "next/headers"
-import { AppLoadingProvider } from "@/components/loading-provider";
+import { redirect } from "next/navigation"
 import { CommandPalette } from "@/components/command-palette";
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -7,12 +16,16 @@ import { Toaster } from "@/components/ui/sonner"
 import { CanvasBackground } from "@/components/canvas-background"
 import { SettingsRouter } from "@/components/settings-router"
 import { AutoRecategorize } from "@/components/auto-recategorize"
+import { getAuthContext } from "@/lib/auth-helpers"
 
 export default async function MainLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const auth = await getAuthContext()
+    if (!auth) redirect("/login")
+
     const cookieStore = await cookies()
 
     // Read all sidebar preferences from cookies (server-side to prevent hydration flash)
@@ -27,19 +40,17 @@ export default async function MainLayout({
         <>
             <CommandPalette />
             <Toaster richColors closeButton position="bottom-right" />
-            <AppLoadingProvider>
-                <SidebarProvider defaultOpen={defaultOpen} defaultSide={defaultSide} defaultWidth={defaultWidth} showRail>
-                    <AppSidebar />
-                    <SidebarInset>
-                        <CanvasBackground inset />
-                        <div className="relative z-1 flex flex-col flex-1 min-h-0">
-                            {children}
-                        </div>
-                    </SidebarInset>
-                    <SettingsRouter />
-                    <AutoRecategorize />
-                </SidebarProvider>
-            </AppLoadingProvider>
+            <SidebarProvider defaultOpen={defaultOpen} defaultSide={defaultSide} defaultWidth={defaultWidth} showRail>
+                <AppSidebar />
+                <SidebarInset>
+                    <CanvasBackground inset />
+                    <div className="relative z-1 flex min-w-0 flex-col flex-1 min-h-0">
+                        {children}
+                    </div>
+                </SidebarInset>
+                <SettingsRouter />
+                <AutoRecategorize />
+            </SidebarProvider>
         </>
     );
 }

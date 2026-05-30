@@ -1,3 +1,12 @@
+//
+//  budget-table.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Budget table React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -111,19 +120,14 @@ export function BudgetTable({
     onDeleteBudget?: (budget: Budget) => void
 }) {
     const { t, isLoading: isLangLoading } = useLanguage()
-    const f = (t.finance || {}) as Record<string, unknown>
-    const bt = (f.budget_table || {}) as Record<string, string>
-    const cat = (f.categories || {}) as Record<string, string>
-    const fTable = (f.table || {}) as Record<string, string>
-    const fActions = (f.actions || {}) as Record<string, string>
-    const fFilter = (f.filter || {}) as Record<string, string>
+    const f = React.useMemo(() => (t.finance || {}) as Record<string, unknown>, [t.finance])
+    const bt = React.useMemo(() => (f.budget_table || {}) as Record<string, string>, [f])
+    const cat = React.useMemo(() => (f.categories || {}) as Record<string, string>, [f])
+    const fTable = React.useMemo(() => (f.table || {}) as Record<string, string>, [f])
+    const fActions = React.useMemo(() => (f.actions || {}) as Record<string, string>, [f])
+    const fFilter = React.useMemo(() => (f.filter || {}) as Record<string, string>, [f])
 
-    // Show loading state while translations are loading
-    if (isLangLoading) {
-        return <div className="flex items-center justify-center p-8">Loading...</div>
-    }
-
-    const categoryLabels: Record<string, string> = {
+    const categoryLabels: Record<string, string> = React.useMemo(() => ({
         Food: cat.food,
         Transport: cat.transport,
         Bills: cat.bills,
@@ -133,13 +137,13 @@ export function BudgetTable({
         Education: cat.education,
         Savings: cat.savings,
         Other: cat.other,
-    }
+    }), [cat])
 
-    const statusLabels: Record<string, string> = {
+    const statusLabels: Record<string, string> = React.useMemo(() => ({
         on_track: bt.on_track,
         warning: bt.warning,
         over_budget: bt.over_budget,
-    }
+    }), [bt])
 
     const columns: ColumnDef<Budget>[] = React.useMemo(() => [
         {
@@ -295,15 +299,20 @@ export function BudgetTable({
                 </TableActionsCell>
             ),
         },
-    ], [t, f, bt, cat, categoryLabels, statusLabels, fActions, onEditBudget, onDeleteBudget])
+    ], [t, bt, categoryLabels, statusLabels, fTable, fActions, onEditBudget, onDeleteBudget])
 
-    const [data] = React.useState(() => initialData)
+    const [data, setData] = React.useState(() => initialData)
+
+    React.useEffect(() => {
+        setData(initialData)
+    }, [initialData])
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table owns internal mutable row helpers.
     const table = useReactTable({
         data,
         columns,
@@ -346,6 +355,11 @@ export function BudgetTable({
         (value: number) => new Intl.NumberFormat(t.config.locale, { style: "currency", currency: "EUR" }).format(value),
         [t.config.locale]
     )
+
+    // Show loading state while translations are loading
+    if (isLangLoading) {
+        return <div className="flex items-center justify-center p-8">Loading...</div>
+    }
 
     // Loading skeleton
     if (isLoading) {

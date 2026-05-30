@@ -1,3 +1,12 @@
+//
+//  popover.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the reusable Popover UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -5,6 +14,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
+import { GlideHighlight, useGlideHighlight } from "@/components/ui/glide-highlight"
 
 function Popover({
   ...props
@@ -28,9 +38,16 @@ function PopoverContent({
   children,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const { rect, visible, menuHandlers } = useGlideHighlight({
+    surfaceRef: contentRef,
+    keyboardNavigation: false,
+  })
+
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
+        ref={contentRef}
         data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}
@@ -39,14 +56,19 @@ function PopoverContent({
         sticky={sticky}
         className={cn(
           PRISM.container,
+          PRISM.glideSurface,
           PRISM.animateIn,
           PRISM.animateOut,
           "z-50 w-[220px] origin-(--radix-popover-content-transform-origin) outline-hidden max-h-[calc(100vh-4rem)] overflow-y-auto",
           className
         )}
         {...props}
+        {...menuHandlers}
       >
-        {children}
+        <GlideHighlight rect={rect} visible={visible} />
+        <div className="relative z-[2] space-y-0.5">
+          {children}
+        </div>
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   )

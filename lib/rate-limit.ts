@@ -1,3 +1,12 @@
+//
+//  rate-limit.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides shared rate limit logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /**
  * Simple in-memory sliding-window rate limiter.
  *
@@ -67,9 +76,35 @@ export function rateLimitReset(scope: string, identifier: string) {
   buckets.delete(`${scope}:${identifier}`)
 }
 
+function firstIp(value: string | null): string | null {
+  const ip = value?.split(",").map((part) => part.trim()).find(Boolean)
+  return ip || null
+}
+
+function rightmostIp(value: string | null): string | null {
+  const ips = value?.split(",").map((part) => part.trim()).filter(Boolean) ?? []
+  return ips.at(-1) ?? null
+}
+
+/** Best-effort client-IP extraction. Prefer platform-owned headers over client-controlled XFF. */
+export function clientIpFromHeaders(headers: Headers): string {
+  const trustedHeader = process.env.TRUSTED_CLIENT_IP_HEADER?.trim().toLowerCase()
+  if (trustedHeader) {
+    const trustedValue = firstIp(headers.get(trustedHeader))
+    if (trustedValue) return trustedValue
+  }
+
+  return (
+    firstIp(headers.get("x-vercel-forwarded-for")) ??
+    firstIp(headers.get("cf-connecting-ip")) ??
+    firstIp(headers.get("fly-client-ip")) ??
+    firstIp(headers.get("x-real-ip")) ??
+    rightmostIp(headers.get("x-forwarded-for")) ??
+    "unknown"
+  )
+}
+
 /** Best-effort client-IP extraction. Trust only when behind a known proxy. */
 export function clientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for")
-  if (fwd) return fwd.split(",")[0].trim()
-  return req.headers.get("x-real-ip") ?? "unknown"
+  return clientIpFromHeaders(req.headers)
 }

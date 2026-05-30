@@ -1,3 +1,12 @@
+//
+//  accounts-table.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Accounts table React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -49,15 +58,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
+import {
+    FormDialogActions,
+    FormDialogBody,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import {
     TableShell,
     TableScrollArea,
@@ -678,20 +686,20 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
 
             {/* Add / Edit Account Dialog */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <FormDialogContent maxWidth={editingAccount ? "390px" : "430px"}>
                     {/* ============== Connect Bank (Salt Edge) — for new accounts ============== */}
                     {!editingAccount && addStep === "bank_connect" && (
                         <>
-                            <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2">
-                                    <Link className="size-5 text-primary" />
-                                    Connect Your Bank
-                                </DialogTitle>
-                                <DialogDescription>
-                                    Securely connect your bank via Open Banking. You&apos;ll be redirected to authorize access.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
+                            <FormDialogHeader
+                                icon={
+                                    <div className="mb-1 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                        <Link className="size-6" />
+                                    </div>
+                                }
+                                title="Connect Your Bank"
+                                description="Securely connect your bank via Open Banking. You'll be redirected to authorize access."
+                            />
+                            <FormDialogBody>
                                 <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/3 dark:bg-white/4 p-4">
                                     <div className="flex items-start gap-3">
                                         <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -724,12 +732,12 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                     <p>Your banking credentials are handled directly by your bank.</p>
                                     <p className="mt-1">Argent never sees or stores your login details.</p>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="glass" onClick={() => setDialogOpen(false)}>
-                                    {fActions.cancel || "Cancel"}
-                                </Button>
+                            </FormDialogBody>
+                            <FormDialogActions>
                                 <Button
+                                    variant="solid"
+                                    size="lg"
+                                    className="w-full gap-2"
                                     onClick={async () => {
                                         setIsConnectingBank(true)
                                         setSyncError(null)
@@ -755,7 +763,6 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                         }
                                     }}
                                     disabled={isConnectingBank}
-                                    className="gap-2"
                                 >
                                     {isConnectingBank ? (
                                         <>
@@ -769,21 +776,28 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                         </>
                                     )}
                                 </Button>
-                            </DialogFooter>
+                                <Button variant="glass" size="lg" className="w-full" onClick={() => setDialogOpen(false)}>
+                                    {fActions.cancel || "Cancel"}
+                                </Button>
+                            </FormDialogActions>
                         </>
                     )}
 
                     {/* ============== Edit Account (name & color only) ============== */}
                     {editingAccount && (
                         <>
-                            <DialogHeader>
-                                <DialogTitle>{at.edit_account || "Edit Account"}</DialogTitle>
-                                <DialogDescription>
-                                    {at.edit_account_description || "Update your account display name and color."}
-                                </DialogDescription>
-                            </DialogHeader>
+                            <FormDialogHeader
+                                title={at.edit_account || "Edit Account"}
+                                description={at.edit_account_description || "Update your account display name and color."}
+                            />
 
-                            <div className="grid gap-4 py-4">
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    handleSave()
+                                }}
+                                className="flex flex-col gap-4"
+                            >
                                 {/* Account Name */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="account-name">{at.account || "Account Name"}</Label>
@@ -801,7 +815,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                     <Label>{at.color || "Color"}</Label>
                                     <div className="flex gap-2 flex-wrap">
                                         {COLOR_OPTIONS.map((c) => (
-                                            <button
+                                            <Button variant="ghost"
                                                 key={c.value}
                                                 type="button"
                                                 className={`size-8 rounded-full border-2 transition-all ${
@@ -814,20 +828,20 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                         ))}
                                     </div>
                                 </div>
-                            </div>
 
-                            <DialogFooter>
-                                <Button variant="glass" onClick={() => setDialogOpen(false)}>
-                                    {fActions.cancel || "Cancel"}
-                                </Button>
-                                <Button variant="solid" onClick={handleSave} disabled={isSaving}>
+                                <FormDialogActions>
+                                <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving}>
                                     {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
                                     {fActions.save || "Save"}
                                 </Button>
-                            </DialogFooter>
+                                <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setDialogOpen(false)}>
+                                    {fActions.cancel || "Cancel"}
+                                </Button>
+                                </FormDialogActions>
+                            </form>
                         </>
                     )}
-                </DialogContent>
+                </FormDialogContent>
             </Dialog>
 
             {/* Delete Confirmation Dialog */}

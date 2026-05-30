@@ -1,7 +1,15 @@
+//
+//  use-spreadsheet.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the use spreadsheet React hook for Argent, encapsulating reusable state,
+//  effects, or data-access behavior for consuming components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
-import ExcelJS from "exceljs"
 import {
     Copy,
     ClipboardPaste,
@@ -66,6 +74,8 @@ interface UseSpreadsheetOptions {
     initialTemplateSheets?: SpreadsheetSheetTab[]
     initialTemplateName?: string
     finance?: FinanceData | null
+    gridRef?: React.RefObject<HTMLDivElement | null>
+    editRef?: React.RefObject<HTMLInputElement | null>
 }
 
 function sanitizeCellForSave(cell: SpreadsheetCellData): SpreadsheetCellData {
@@ -112,7 +122,7 @@ function serializeWorkbookForSave(workbook: Workbook): { sheets: SpreadsheetShee
     }
 }
 
-export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTemplateName, finance }: UseSpreadsheetOptions) {
+export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTemplateName, finance, gridRef: externalGridRef, editRef: externalEditRef }: UseSpreadsheetOptions) {
     const { refetch } = useSpreadsheetDocuments()
     const { t } = useLanguage()
     const sp = ((t as Record<string, unknown>).spreadsheets || {}) as Record<string, string>
@@ -167,8 +177,10 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
     const historyRef = React.useRef<string[]>([])
     const futureRef = React.useRef<string[]>([])
 
-    const gridRef = React.useRef<HTMLDivElement>(null)
-    const editRef = React.useRef<HTMLInputElement>(null)
+    const internalGridRef = React.useRef<HTMLDivElement>(null)
+    const internalEditRef = React.useRef<HTMLInputElement>(null)
+    const gridRef = externalGridRef ?? internalGridRef
+    const editRef = externalEditRef ?? internalEditRef
     const isSelecting = React.useRef(false)
 
     /* ── Virtualization state ────────────────────────────────────────── */
@@ -312,7 +324,7 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
 
     React.useEffect(() => {
         if (editing && editRef.current) editRef.current.focus()
-    }, [editing])
+    }, [editing, editRef])
 
     React.useEffect(() => {
         const up = () => { isSelecting.current = false }
@@ -358,7 +370,7 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
         observer.observe(el)
         viewportRef.current = { w: el.clientWidth, h: el.clientHeight }
         return () => observer.disconnect()
-    }, [updateVisibleRangeIfChanged])
+    }, [updateVisibleRangeIfChanged, gridRef])
 
     /* ── Undo helper ─────────────────────────────────────────────────── */
     const wbRef = React.useRef(wb)
@@ -1297,7 +1309,7 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
 
         if (cellTop < el.scrollTop + ROW_H) el.scrollTop = cellTop - ROW_H
         else if (cellBottom > el.scrollTop + el.clientHeight) el.scrollTop = cellBottom - el.clientHeight + 4
-    }, [sel, colOffsets, colW])
+    }, [sel, colOffsets, colW, gridRef])
 
     /* ── Save / Load / Export ────────────────────────────────────────── */
     const saveToServer = React.useCallback(async () => {
@@ -1340,6 +1352,7 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
     }, [saveToServer])
 
     const exportXlsx = async () => {
+        const ExcelJS = (await import("exceljs")).default
         const workbook = new ExcelJS.Workbook()
         for (const s of wb.sheets) {
             let maxR = 0, maxC = 0
@@ -1850,7 +1863,7 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
         }
         window.addEventListener("mousemove", onMove)
         window.addEventListener("mouseup", onUp)
-    }, [sel, range, performFill])
+    }, [sel, range, performFill, gridRef])
 
     /* ── Sort column ─────────────────────────────────────────────────── */
     const sortColumn = React.useCallback((col: number, order: "asc" | "desc") => {
@@ -1907,10 +1920,6 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
         ctxMenu,
         setCtxMenu,
         visibleRange,
-
-        // Refs
-        gridRef,
-        editRef,
 
         // Derived
         getCell,

@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /login route in Argent, composing page-level layout, data dependencies, and
+//  feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client'
 
 import { useState, useCallback } from 'react'
@@ -7,12 +16,12 @@ import { Button } from '@/components/ui/button'
 import { Input, OTPInput } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { OAuthButtons } from '@/components/oauth-buttons'
-import { AuthShell, AuthHeader, BackButton, ErrorAlert, BTN_PRIMARY } from '@/components/auth'
+import { AuthShell, AuthHeader, BackButton, ErrorAlert } from '@/components/auth'
 import { PRISM } from '@/lib/PRISM'
 import { useLanguage, useTranslationNamespace } from '@/components/language-provider'
 import { postAuth as postAuthBase } from '@/lib/auth-fetch'
-import { useResendCooldown } from '@/hooks/use-resend-cooldown'
-import { Loader2, ArrowRight, RotateCw } from 'lucide-react'
+import { isAdminPath, safeRedirectPath } from '@/lib/auth-redirect'
+import { Loader2, ArrowRight } from 'lucide-react'
 
 type AuthRole = 'user' | 'admin' | 'superadmin'
 
@@ -21,7 +30,6 @@ type LoginResponse = {
     error?: string
     needs_2fa?: boolean
     tempToken?: string
-    dev2FACode?: string
     role?: AuthRole
 }
 
@@ -42,13 +50,12 @@ export default function LoginPage() {
 
     const [needs2FA, setNeeds2FA] = useState(false)                 // Indicates whether to show the 2FA page
     const [tempToken, setTempToken] = useState('')                  // Stores a temporary token for 2FA
-    const [dev2FACode, setDev2FACode] = useState('')                // Local fallback code when email delivery is unavailable
     const [twoFactorCode, setTwoFactorCode] = useState('')          // Stores the user's 2FA code input
-    const [trustDevice, setTrustDevice] = useState(true)            // Indicates if the user wants to trust the current device
-    const { remaining: resendCooldown, start: startResendCooldown, isCoolingDown } = useResendCooldown(30)
-    const [resending, setResending] = useState(false)               // Indicates if the 2FA code is being resent
+    const [backupCode, setBackupCode] = useState('')
+    const [useBackupCode, setUseBackupCode] = useState(false)
+    const [trustDevice, setTrustDevice] = useState(false)           // Indicates if the user wants to trust the current device
 
-    // Send the login request to api/auth/login and return the response data. This is used by both the initial login attempt and the resend code function, since they have the same behavior when 2FA is required.
+    // Send the login request to api/auth/login and return the response data.
     const attemptLogin = useCallback(async () => {
         const { ok, data } = await postAuth<LoginResponse>('/api/auth/login', { email, password })
         if (!ok) {
@@ -60,44 +67,22 @@ export default function LoginPage() {
     }, [email, password, page])
 
 
-    const handleResendCode = useCallback(async () => {
-        if (resending || isCoolingDown || !email || !password) return
-        setResending(true)
-        setError('')
-
-        try {
-            const data = await attemptLogin()
-
-            if (data?.needs_2fa) {
-                setTempToken(data.tempToken || '')
-                setDev2FACode(data.dev2FACode || '')
-                setTwoFactorCode('')
-                startResendCooldown()
-            }
-
-        } catch (e) {
-            setError(e instanceof Error ? e.message : (le.error_resend_unknown || 'Unknown error while resending code.'))
-
-        } finally {
-            setResending(false)
-        }
-    }, [resending, isCoolingDown, email, password, attemptLogin, startResendCooldown, le])
-
     const reset2FAState = useCallback(() => {
         setNeeds2FA(false)
         setTempToken('')
-        setDev2FACode('')
         setTwoFactorCode('')
+        setBackupCode('')
+        setUseBackupCode(false)
         setError('')
     }, [])
 
     // Decides where to redirect the user after a login based on the role and the presence of a callbackUrl
-    /* Diference between isAdmin and wantsAdmin is that isAdmin checks the user's role, while wantsAdmin checks if the callbackUrl is an admin page.
+    /* Difference between isAdmin and wantsAdmin is that isAdmin checks the user's role, while wantsAdmin checks if the callbackUrl is an admin page.
      * This prevents a non-admin user from being redirected to an admin page via a manipulated callbackUrl, and also prevents an admin user from being redirected to a non-admin page if the callbackUrl is not an admin page. */
     const redirectAfterAuth = useCallback((role?: AuthRole) => {
-        const callbackUrl = searchParams.get('callbackUrl') || ''
+        const callbackUrl = safeRedirectPath(searchParams.get('callbackUrl'))
         const isAdmin = role === 'admin' || role === 'superadmin'
-        const wantsAdmin = callbackUrl.startsWith('/admin')
+        const wantsAdmin = isAdminPath(callbackUrl)
 
         if (isAdmin) {
             router.replace(wantsAdmin ? callbackUrl : '/admin')
@@ -128,7 +113,9 @@ export default function LoginPage() {
 
             if (data.needs_2fa) {
                 setTempToken(data.tempToken || '')
-                setDev2FACode(data.dev2FACode || '')
+                setTwoFactorCode('')
+                setBackupCode('')
+                setUseBackupCode(false)
                 setNeeds2FA(true)
                 return
             }
@@ -150,11 +137,12 @@ export default function LoginPage() {
         if (loading) return
         setError('')
 
-        if (!twoFactorCode) { setError(page?.error_2fa_required); return }
+        const submittedCode = (useBackupCode ? backupCode : twoFactorCode).trim()
+        if (!submittedCode) { setError(page?.error_2fa_required); return }
         setLoading(true)
 
         try {
-            const { ok, data } = await postAuth<LoginResponse>('/api/auth/2fa-login', { tempToken, code: twoFactorCode, trustDevice })
+            const { ok, data } = await postAuth<LoginResponse>('/api/auth/2fa-login', { tempToken, code: submittedCode, trustDevice })
 
             if (!ok) { setError(data.error || page?.error_2fa_invalid); return }
 
@@ -166,55 +154,68 @@ export default function LoginPage() {
         } finally {
             setLoading(false)
         }
-    }, [loading, twoFactorCode, tempToken, trustDevice, page, redirectAfterAuth, le])
+    }, [loading, useBackupCode, backupCode, twoFactorCode, tempToken, trustDevice, page, redirectAfterAuth, le])
 
 
     return (
         <AuthShell>
-            <form onSubmit = {needs2FA ? handle2FASubmit : handleSubmit} noValidate className = "flex flex-col gap-8 | w-full | animate-slide-in-right">
+            <form onSubmit = {needs2FA ? handle2FASubmit : handleSubmit} noValidate className = "flex flex-col gap-7 | w-full | animate-slide-in-right">
                 <ErrorAlert message={error} />
 
                 {needs2FA ? (
-                    <div className = "flex flex-col items-center gap-8">
+                    <div className = "flex flex-col items-center gap-7">
                         <div className = "flex flex-col gap-2 | text-center">
-                            <h1 className = "text-black dark:text-white text-2xl font-bold">{page?.two_factor_title}</h1>
-                            <div className = "flex items-center justify-center gap-2 | text-sm whitespace-nowrap text-neutral-400">
-                                <p>{page?.two_factor_subtitle}</p>
-                                <span>•</span>
-                                <button
-                                    type = "button"
-                                    onClick = {handleResendCode}
-                                    disabled = {resending || isCoolingDown}
-                                    className = "flex items-center gap-1 | hover:text-black dark:hover:text-white | transition-colors disabled:opacity-40 disabled:hover:text-neutral-400 dark:disabled:hover:text-neutral-400"
-                                >
-                                    <RotateCw className = {`w-3 h-3 ${resending ? 'animate-spin' : ''}`} />
-                                    {resending
-                                        ? (page?.resending_code)
-                                        : isCoolingDown
-                                            ? `${page?.resend_code} (${resendCooldown}s)`
-                                            : (page?.resend_code)
-                                    }
-                                </button>
-                            </div>
+                            <h1 className = "text-foreground text-[1.75rem] font-semibold leading-tight tracking-tight">{page?.two_factor_title}</h1>
+                            <p className = "text-sm leading-5 text-muted-foreground">
+                                {useBackupCode
+                                    ? (le.backup_code_subtitle || 'Enter one of your saved backup codes')
+                                    : page?.two_factor_subtitle}
+                            </p>
                         </div>
 
-                        <OTPInput value = {twoFactorCode} onChange = {setTwoFactorCode} disabled = {loading} autoFocus />
+                        {useBackupCode ? (
+                            <Input
+                                id="backup-code"
+                                type="text"
+                                label={le.backup_code || 'Backup code'}
+                                value={backupCode}
+                                onChange={(e) => setBackupCode(e.target.value)}
+                                disabled={loading}
+                                autoComplete="one-time-code"
+                                autoFocus
+                                className="w-full"
+                            />
+                        ) : (
+                            <OTPInput
+                                value = {twoFactorCode}
+                                onChange = {setTwoFactorCode}
+                                disabled = {loading}
+                                autoFocus
+                                ariaLabel = {page?.two_factor_hint || 'Verification code'}
+                            />
+                        )}
 
-                        {dev2FACode ? (
-                            <div className="w-full rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-left text-xs text-amber-200">
-                                <p className="font-medium">Local development fallback</p>
-                                <p className="mt-1">Use this temporary code: <span className="font-mono tracking-[0.2em]">{dev2FACode}</span></p>
-                            </div>
-                        ) : null}
+                        <Button variant="ghost"
+                            type="button"
+                            onClick={() => {
+                                setUseBackupCode((value) => !value)
+                                setError('')
+                            }}
+                            className="rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70"
+                        >
+                            {useBackupCode
+                                ? (le.use_authenticator_code || 'Use authenticator code')
+                                : (le.use_backup_code || 'Use backup code')}
+                        </Button>
 
-                        <label className = "flex items-center gap-2 justify-center cursor-pointer select-none group">
+                        <label className = "group flex w-full cursor-pointer select-none items-center justify-center gap-2 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-3 py-2.5 transition-colors hover:border-[color:var(--border-strong)]">
                             <Checkbox
                                 checked = {trustDevice}
                                 onCheckedChange = {(v) => setTrustDevice(v === true)}
                                 disabled = {loading}
-                                className = "h-4 w-4 | rounded border-black/15 dark:border-white/15 data-[state=checked]:bg-black dark:data-[state=checked]:bg-white data-[state=checked]:border-transparent"
+                                className = "h-4 w-4 rounded-[5px]"
                             />
-                            <span className = "text-xs text-neutral-400 group-hover:text-neutral-400 dark:group-hover:text-neutral-400 | transition-colors">{page?.trust_device}</span>
+                            <span className = "text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">{page?.trust_device}</span>
                         </label>
                     </div>
                 ) : (
@@ -223,12 +224,12 @@ export default function LoginPage() {
 
                         <Input id = "email" type = "email" label = {page?.email_label} value = {email} onChange = {e => setEmail(e.target.value)} disabled = {loading} required />
                         <Input id = "password" type = "password" label = {page?.password_label} value = {password} onChange = {e => setPassword(e.target.value)} disabled = {loading} required showPasswordLabel = {page?.show_password} hidePasswordLabel = {page?.hide_password} />
-                        <Link href = "/forgot-password" className = "self-end | w-fit | text-sm">{page?.forgot_password}</Link>
+                        <Link href = "/forgot-password" className = "self-end | w-fit | text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">{page?.forgot_password}</Link>
                     </div>
                 )}
 
                 <div className = "flex flex-col gap-4 | w-full | animate-slide-in-right">
-                    <Button type = "submit" variant = "solid" size="lg" className = {BTN_PRIMARY} disabled = {loading}>
+                    <Button type = "submit" variant = "solid" size="lg" className = "w-full" disabled = {loading}>
                         {loading
                             ? <><Loader2 className = "w-4 h-4 | animate-spin" />{needs2FA ? (page?.verifying) : (page?.signing_in)}</>
                             : <>{needs2FA ? (page?.verify) : (page?.sign_in)}<ArrowRight className = "w-4 h-4" /></>
@@ -249,7 +250,7 @@ export default function LoginPage() {
                                 <OAuthButtons mode = "login" />
                             </div>
 
-                            <p className = "flex items-center justify-center gap-1 | text-sm text-center text-neutral-400">
+                            <p className = "flex items-center justify-center gap-1 | text-sm text-center text-muted-foreground">
                                 {page?.no_account}
                                 <Link href = "/register">{page?.create_one}</Link>
                             </p>

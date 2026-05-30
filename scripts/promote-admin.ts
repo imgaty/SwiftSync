@@ -1,17 +1,24 @@
+//
+//  promote-admin.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the promote admin maintenance script for Argent, automating operational or
+//  data-repair work that supports local development and administration.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import 'dotenv/config'
-import pg from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../lib/generated/prisma/client'
 import { hashPassword } from '../lib/password'
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) })
 const inputEmail = process.argv[2]?.trim().toLowerCase()
 const inputPassword = process.argv[3]
 
 async function main() {
   if (!inputEmail || !inputPassword) {
-    console.error('Usage: npx tsx scripts/promote-admin.ts <email> <password>')
+    console.error('Usage: pnpm run admin:promote -- <email> <password>')
     process.exit(1)
   }
   if (inputPassword.length < 8) {

@@ -1,3 +1,12 @@
+//
+//  dropdown.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the reusable Dropdown UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client'
 
 import type { ComponentProps, ReactNode } from 'react'
@@ -388,10 +397,3 @@ export function DropdownSidebarPositionSection({
     />
   )
 }
-
-// Compatibility aliases for existing imports.
-export const DropdownShell = DropdownContent
-export const DropdownChild = DropdownSection
-export const DropdownUniversalShell = DropdownContent
-export const DropdownUniversalSection = DropdownSection
-export const DropdownUniversalItem = DropdownSectionItem

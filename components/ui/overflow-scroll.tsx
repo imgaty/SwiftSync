@@ -1,3 +1,12 @@
+//
+//  overflow-scroll.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the reusable Overflow scroll UI primitive for Argent, centralizing styling,
+//  composition behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -157,6 +166,7 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
             pauseStart: number
             lastTime: number
         }>()
+        const cleanupByElement = new Map<HTMLElement, () => void>()
 
         const SPEED = 30
         const PAUSE_DURATION = 2000
@@ -278,12 +288,12 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
             resizeObserver.observe(wrapper)
             resizeObserver.observe(content)
 
-            ;(el as any)._autoScrollCleanup = () => {
+            cleanupByElement.set(el, () => {
                 resizeObserver.disconnect()
                 const state = scrollStates.get(el)
                 if (state?.animationId) cancelAnimationFrame(state.animationId)
                 scrollStates.delete(el)
-            }
+            })
         }
 
         const observer = new MutationObserver((mutations) => {
@@ -310,10 +320,11 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
 
         return () => {
             observer.disconnect()
-            scrollStates.forEach((state, el) => {
+            scrollStates.forEach((state) => {
                 if (state.animationId) cancelAnimationFrame(state.animationId)
-                ;(el as any)._autoScrollCleanup?.()
             })
+            cleanupByElement.forEach((cleanup) => cleanup())
+            cleanupByElement.clear()
         }
     }, [])
 

@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/auth/2fa/disable API endpoint for Argent, keeping request parsing,
+//  business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /* Disable 2FA on the caller's account.
  *
  * Requires either the current password OR a valid TOTP code as proof — a

@@ -1,3 +1,12 @@
+//
+//  use-resend-cooldown.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the use resend cooldown React hook for Argent, encapsulating reusable state,
+//  effects, or data-access behavior for consuming components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
@@ -7,9 +16,9 @@ import { useEffect, useState, useCallback } from 'react'
 //
 // Usage:
 //   const { remaining, start, isCoolingDown } = useResendCooldown(30)
-//   <button disabled={isCoolingDown} onClick={() => { send(); start() }}>
+//   <Button disabled={isCoolingDown} onClick={() => { send(); start() }}>
 //     {isCoolingDown ? `Resend (${remaining}s)` : 'Resend'}
-//   </button>
+//   </Button>
 export function useResendCooldown(initialSeconds = 30) {
   const [remaining, setRemaining] = useState(0)
 

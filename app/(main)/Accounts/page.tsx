@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /Accounts route in Argent, composing page-level layout, data dependencies,
+//  and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -16,7 +25,7 @@ export default function AccountsPage() {
     const f = t.finance || {}
     const isPt = (t.config?.locale || "en-US").startsWith("pt")
     const { data, isLoading } = useFinanceData()
-    const allAccounts = (data?.accounts || []) as Account[]
+    const allAccounts = React.useMemo(() => (data?.accounts ?? []) as Account[], [data?.accounts])
 
     // Compute stats from accounts
     const stats = React.useMemo(() => {
@@ -33,7 +42,7 @@ export default function AccountsPage() {
     }, [allAccounts, isLoading, formatCurrency])
 
     return (
-        <PageShell>
+        <PageShell className="gap-4 p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -53,15 +62,17 @@ export default function AccountsPage() {
 
             <StatCards stats={stats} isLoading={isLoading} />
 
-            <PageSection stagger={2}>
-                <div id="bank-connections">
-                    <BankConnections />
-                </div>
-            </PageSection>
+            <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(280px,0.36fr)_minmax(0,1fr)] xl:items-start">
+                <PageSection stagger={2} className="xl:sticky xl:top-4">
+                    <div id="bank-connections">
+                        <BankConnections />
+                    </div>
+                </PageSection>
 
-            <PageSection stagger={3}>
-                <AccountsTable data={allAccounts} isLoading={isLoading} />
-            </PageSection>
+                <PageSection stagger={3} fill>
+                    <AccountsTable data={allAccounts} isLoading={isLoading} />
+                </PageSection>
+            </div>
         </PageShell>
     )
 }

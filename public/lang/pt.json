@@ -170,11 +170,9 @@
         "no_account": "Não tem uma conta?",
         "create_one": "Crie uma",
         "two_factor_title": "Autenticação de dois fatores",
-        "two_factor_subtitle": "Um código foi enviado para o seu email",
-        "two_factor_hint": "Verifique a sua caixa de entrada",
+        "two_factor_subtitle": "Introduza o código da sua app autenticadora",
+        "two_factor_hint": "Use a sua app autenticadora",
         "trust_device": "Confiar neste dispositivo por 30 dias",
-        "resend_code": "Reenviar código",
-        "resending_code": "A reenviar...",
         "error_fields_required": "Email e palavra-passe são obrigatórios",
         "error_no_account": "Não existe conta com este email.",
         "error_no_account_link": "Crie uma",
@@ -223,6 +221,48 @@
         "unknown": {
             "title": "Erro",
             "message": "Ocorreu um erro inesperado."
+        }
+    },
+    "empty_states": {
+        "nothing": {
+            "title": "Nada para mostrar aqui",
+            "description": "Quando houver algo para mostrar, aparece aqui."
+        },
+        "no_data": {
+            "title": "Nada para mostrar aqui",
+            "description": "Não há dados para exibir neste momento."
+        },
+        "no_results": {
+            "title": "Sem resultados",
+            "description": "Tente ajustar a pesquisa ou os filtros."
+        },
+        "empty_inbox": {
+            "title": "A caixa de entrada está vazia",
+            "description": "Ainda não há mensagens ou notificações."
+        },
+        "no_transactions": {
+            "title": "Ainda não há transações",
+            "description": "Adicione a primeira transação para começar a acompanhar as suas finanças."
+        },
+        "no_budgets": {
+            "title": "Nenhum orçamento criado",
+            "description": "Crie um orçamento para começar a gerir os seus gastos."
+        },
+        "no_bills": {
+            "title": "Nenhuma conta registada",
+            "description": "Adicione contas recorrentes para acompanhar os pagamentos."
+        },
+        "no_accounts": {
+            "title": "Nenhuma conta adicionada",
+            "description": "Ligue as suas contas bancárias para ver todas as finanças num só lugar."
+        },
+        "no_events": {
+            "title": "Sem próximos eventos",
+            "description": "O calendário está livre por agora."
+        },
+        "filtered": {
+            "title": "Sem itens correspondentes",
+            "description": "Nenhum item corresponde aos filtros atuais. Tente alterar ou limpar os filtros."
         }
     },
     "time_range": {
@@ -441,13 +481,33 @@
         "cat_other": "Outro"
     },
     "calendar_page": {
+        "title": "Calendário de caixa",
         "today": "Hoje",
+        "prev_month": "Mês anterior",
+        "next_month": "Mês seguinte",
         "description": "Vista de calendário financeiro",
         "monthly_income": "Receitas do mês",
         "monthly_expenses": "Despesas do mês",
+        "net_flow": "Fluxo líquido",
         "upcoming_bills": "Contas a vencer",
+        "active_days_change": "%count dias ativos",
+        "income": "Receitas",
+        "expenses": "Despesas",
+        "net": "Líquido",
+        "due": "A vencer",
+        "total_due": "Total a vencer",
+        "daily_summary": "Resumo diário",
+        "transactions": "Transações",
+        "selected_day": "Dia selecionado",
+        "month_at_a_glance": "Resumo do mês",
+        "activity": "Atividade",
         "bills_due": "Contas a vencer",
         "no_transactions": "Sem movimentos neste dia.",
+        "no_activity": "Sem atividade neste mês.",
+        "select_day_hint": "As transações e contas diárias aparecem aqui.",
+        "transaction_count": "%count mov.",
+        "bill_count": "%count contas",
+        "more_items": "+%count mais",
         "months": [
             "Janeiro",
             "Fevereiro",
@@ -652,10 +712,13 @@
     "login_page_extra": {
         "error_network_request": "Erro de rede — verifique a sua ligação à internet.",
         "error_server_no_json": "O servidor devolveu um erro sem corpo JSON.",
-        "error_resend_unknown": "Erro desconhecido ao reenviar código.",
         "error_login_unknown": "Erro desconhecido durante o login.",
         "error_2fa_unknown": "Erro desconhecido durante a verificação 2FA.",
-        "back_to_login": "Voltar ao login"
+        "back_to_login": "Voltar ao login",
+        "backup_code": "Código de recuperação",
+        "backup_code_subtitle": "Introduza um dos seus códigos de recuperação guardados",
+        "use_backup_code": "Usar código de recuperação",
+        "use_authenticator_code": "Usar código da app autenticadora"
     },
     "register_page_extra": {
         "error_enter_email": "Por favor insira o seu endereço de email.",

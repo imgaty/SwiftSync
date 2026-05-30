@@ -1,8 +1,19 @@
+//
+//  date-range-calendar.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the reusable Date range calendar UI primitive for Argent, centralizing styling,
+//  composition behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
+import { TabSwitcher, TabSwitcherItem } from "@/components/ui/tab-switcher"
 import { cn } from "@/lib/utils"
 
 // ==============================================================================
@@ -586,21 +597,21 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                 {/* Actions */}
                 {isHorizontalPanel ? (
                     <div className="flex flex-col gap-2 p-3 border-t border-black/8 dark:border-white/8 mt-auto">
-                        <button
+                        <Button variant="ghost"
                             onClick={handleApply}
                             disabled={!startDate || !endDate}
                             className="h-8 w-full text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-xl shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {labels.apply ?? "Apply Range"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button variant="ghost"
                             onClick={handleClear}
                             disabled={!value && !startDate}
                             className="h-8 w-full text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <X className="w-3.5 h-3.5" />
                             {labels.clear_range ?? "Clear"}
-                        </button>
+                        </Button>
                     </div>
                 ) : (
                     <div className="flex items-center gap-2 px-3 pb-3">
@@ -610,21 +621,21 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                             </span>
                         )}
                         <div className="flex-1" />
-                        <button
+                        <Button variant="ghost"
                             onClick={handleClear}
                             disabled={!value && !startDate}
                             className="h-8 px-3 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                         >
                             <X className="w-3.5 h-3.5" />
                             {labels.clear_range ?? "Clear"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button variant="ghost"
                             onClick={handleApply}
                             disabled={!startDate || !endDate}
                             className="h-8 px-4 text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-lg shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                         >
                             {labels.apply ?? "Apply"}
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>
@@ -646,7 +657,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                     <div className={cn("p-3", showInputs && isHorizontalPanel && "flex-1")}>
                         {/* Navigation header */}
                         <div className="flex items-center justify-between mb-3">
-                            <button
+                            <Button variant="ghost"
                                 onClick={() => {
                                     if (viewMode === 'days') setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
                                     else if (viewMode === 'months') setViewDate(new Date(viewDate.getFullYear() - 1, viewDate.getMonth(), 1))
@@ -655,9 +666,9 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                 className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button variant="ghost"
                                 onClick={() => {
                                     if (viewMode === 'days') setViewMode('months')
                                     else if (viewMode === 'months') setViewMode('years')
@@ -667,9 +678,9 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                 {viewMode === 'days' && `${viewDate.toLocaleDateString(locale, { month: 'long' })} ${viewDate.getFullYear()}`}
                                 {viewMode === 'months' && viewDate.getFullYear()}
                                 {viewMode === 'years' && `${years[0]} - ${years[years.length - 1]}`}
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button variant="ghost"
                                 onClick={() => {
                                     const now = new Date()
                                     if (viewMode === 'days') {
@@ -691,38 +702,22 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                 className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-4 h-4" />
-                            </button>
+                            </Button>
                         </div>
 
                         {/* View mode tabs */}
-                        <div className="flex items-center justify-center gap-1 mb-3">
-                            <button
-                                onClick={() => setViewMode('days')}
-                                className={cn(
-                                    "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                                    viewMode === 'days' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
-                                )}
-                            >
-                                {labels.day_view ?? 'Day'}
-                            </button>
-                            <button
-                                onClick={() => setViewMode('months')}
-                                className={cn(
-                                    "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                                    viewMode === 'months' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
-                                )}
-                            >
-                                {labels.month_view ?? 'Month'}
-                            </button>
-                            <button
-                                onClick={() => setViewMode('years')}
-                                className={cn(
-                                    "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                                    viewMode === 'years' ? "bg-neutral-900 dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
-                                )}
-                            >
-                                {labels.year_view ?? 'Year'}
-                            </button>
+                        <div className="mb-3 flex justify-center">
+                            <TabSwitcher ariaLabel="Calendar view">
+                                <TabSwitcherItem isActive={viewMode === 'days'} onClick={() => setViewMode('days')} className="px-3">
+                                    {labels.day_view ?? 'Day'}
+                                </TabSwitcherItem>
+                                <TabSwitcherItem isActive={viewMode === 'months'} onClick={() => setViewMode('months')} className="px-3">
+                                    {labels.month_view ?? 'Month'}
+                                </TabSwitcherItem>
+                                <TabSwitcherItem isActive={viewMode === 'years'} onClick={() => setViewMode('years')} className="px-3">
+                                    {labels.year_view ?? 'Year'}
+                                </TabSwitcherItem>
+                            </TabSwitcher>
                         </div>
 
                         {/* Days view */}
@@ -762,7 +757,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                     )} />
                                                 )}
 
-                                                <button
+                                                <Button variant="ghost"
                                                     onClick={() => !dragging && handleDayClick(day)}
                                                     onMouseDown={(e) => {
                                                         if (start && !disabled) { e.preventDefault(); handleDragStart('start') }
@@ -781,7 +776,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                     )}
                                                 >
                                                     {day.getDate()}
-                                                </button>
+                                                </Button>
                                             </div>
                                         )
                                     })}
@@ -809,7 +804,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                     isStart ? "left-1/2 right-0" : isEnd ? "left-0 right-1/2" : "inset-x-0"
                                                 )} />
                                             )}
-                                            <button
+                                            <Button variant="ghost"
                                                 onClick={() => handleMonthClick(month.index)}
                                                 onDoubleClick={() => handleMonthClick(month.index, true)}
                                                 disabled={disabled}
@@ -821,7 +816,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                 )}
                                             >
                                                 {month.name}
-                                            </button>
+                                            </Button>
                                         </div>
                                     )
                                 })}
@@ -847,7 +842,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                     isStart ? "left-1/2 right-0" : isEnd ? "left-0 right-1/2" : "inset-x-0"
                                                 )} />
                                             )}
-                                            <button
+                                            <Button variant="ghost"
                                                 onClick={() => handleYearClick(year)}
                                                 onDoubleClick={() => handleYearClick(year, true)}
                                                 disabled={disabled}
@@ -859,7 +854,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                 )}
                                             >
                                                 {year}
-                                            </button>
+                                            </Button>
                                         </div>
                                     )
                                 })}
@@ -878,39 +873,39 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                     placeholder="2013"
                                     className="w-16 px-2 py-1 text-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg outline-none focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-blue-500/30 text-center text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-400"
                                 />
-                                <button
+                                <Button variant="ghost"
                                     onClick={() => handleYearJump(yearJumpInput)}
                                     disabled={!yearJumpInput || yearJumpInput.length < 4}
                                     className="px-2 py-1 text-xs bg-black/5 dark:bg-white/5 text-neutral-900 dark:text-white rounded-lg hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     Go
-                                </button>
+                                </Button>
                             </div>
                         )}
 
                         {/* Inline footer when inputs are hidden */}
                         {!showInputs && (
                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/8 dark:border-white/8">
-                                <button
+                                <Button variant="ghost"
                                     onClick={handleClear}
                                     disabled={!value && !startDate}
                                     className="h-8 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg px-2.5 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <X className="w-3.5 h-3.5" />
                                     {labels.clear_range ?? "Clear"}
-                                </button>
+                                </Button>
                                 {daysDiff && (
                                     <span className="text-xs text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
                                         {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
                                     </span>
                                 )}
-                                <button
+                                <Button variant="ghost"
                                     onClick={handleApply}
                                     disabled={!startDate || !endDate}
                                     className="h-8 text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-xl px-4 shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {labels.apply ?? "Apply"}
-                                </button>
+                                </Button>
                             </div>
                         )}
                     </div>

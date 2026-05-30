@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin/settings route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -7,6 +16,7 @@ import {
 } from "lucide-react"
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
+import { getTranslations } from "@/lib/translation-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -23,8 +33,8 @@ interface AdminUser {
 
 export default function AdminSettingsPage() {
     const { t } = useLanguage()
-    const ad = (t as any).admin || {} as Record<string, any>
-    const sp = ad.settings_page || {} as Record<string, string>
+    const ad = getTranslations(t, "admin")
+    const sp = getTranslations(ad, "settings_page")
     const [profile, setProfile] = React.useState<AdminProfile | null>(null)
     const [admins, setAdmins] = React.useState<AdminUser[]>([])
     const [loading, setLoading] = React.useState(true)
@@ -40,7 +50,7 @@ export default function AdminSettingsPage() {
             } catch { toast.error(sp.failed_load || "Failed to load settings") }
             finally { setLoading(false) }
         })()
-    }, [])
+    }, [sp.failed_load])
 
     const handleExport = async (type: string) => {
         try {
@@ -63,7 +73,7 @@ export default function AdminSettingsPage() {
         <>
             <AdminHeader title={ad.settings || "Settings"} breadcrumbs={[{ label: ad.settings || "Settings" }]} />
 
-            <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6 max-w-4xl">
+            <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6 max-w-4xl">
                 {loading ? <SettingsSkeleton /> : (
                     <>
                         {/* Admin Profile */}
@@ -111,7 +121,7 @@ export default function AdminSettingsPage() {
                         {/* Data Export */}
                         <Section title={sp.data_export || "Data Export"} icon={<Download className="size-5 text-emerald-500" />}>
                             <p className="text-sm text-neutral-400 mb-4">{sp.export_description || "Export platform data as JSON for backup or analysis."}</p>
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 <ExportButton label={ad.users || "Users"} onClick={() => handleExport("users")} icon={<UsersIcon className="size-4" />} />
                                 <ExportButton label={ad.transactions || "Transactions"} onClick={() => handleExport("transactions")} icon={<FileText className="size-4" />} />
                                 <ExportButton label={ad.accounts || "Accounts"} onClick={() => handleExport("accounts")} icon={<FileText className="size-4" />} />
@@ -123,7 +133,7 @@ export default function AdminSettingsPage() {
 
                         {/* Quick Links */}
                         <Section title={sp.quick_actions || "Quick Actions"} icon={<Settings className="size-5 text-orange-500" />}>
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 <QuickLink href="/admin/users" label={sp.manage_users || "Manage Users"} icon={<UsersIcon className="size-4" />} />
                                 <QuickLink href="/admin/announcements" label={ad.announcements || "Announcements"} icon={<Shield className="size-4" />} />
                                 <QuickLink href="/admin/audit-log" label={ad.audit_log || "Audit Log"} icon={<FileText className="size-4" />} />
@@ -179,7 +189,7 @@ function QuickLink({ href, label, icon }: { href: string; label: string; icon: R
 
 function SettingsSkeleton() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}
         </div>
     )

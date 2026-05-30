@@ -1,3 +1,12 @@
+//
+//  dropdown-menu.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Dropdown menu UI primitive for Argent, centralizing styling,
+//  composition behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -6,6 +15,7 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
+import { GlideHighlight, useGlideHighlight } from "@/components/ui/glide-highlight"
 
 function DropdownMenu({
   ...props
@@ -38,23 +48,35 @@ function DropdownMenuContent({
   children,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const { rect, visible, menuHandlers } = useGlideHighlight({
+    surfaceRef: contentRef,
+    keyboardNavigation: false,
+  })
+
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
+        ref={contentRef}
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         collisionPadding={16}
         avoidCollisions={true}
         className={cn(
           PRISM.container,
+          PRISM.glideSurface,
           PRISM.animateIn,
           PRISM.animateOut,
           "z-999 w-[220px] max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
           className
         )}
         {...props}
+        {...menuHandlers}
       >
-        {children}
+        <GlideHighlight rect={rect} visible={visible} />
+        <div className="relative z-[2] space-y-0.5">
+          {children}
+        </div>
       </DropdownMenuPrimitive.Content>
     </DropdownMenuPrimitive.Portal>
   )
@@ -77,19 +99,25 @@ function DropdownMenuItem({
   inset?: boolean
   variant?: "default" | "destructive"
 }) {
+  const generatedGlideId = React.useId()
+  const dataGlideItem =
+    (props as { "data-glide-item"?: string })["data-glide-item"] ??
+    props.id ??
+    generatedGlideId
+
   return (
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
+      data-glide-item={dataGlideItem}
       data-inset={inset}
       data-variant={variant}
       className={cn(
         PRISM.item,
-        PRISM.itemFocus,
+        PRISM.glideItem,
         PRISM.itemIcon,
         PRISM.itemIconFocus,
         PRISM.itemDestructive,
         PRISM.itemDisabled,
-        "active:scale-[0.98] active:bg-white/6",
         "data-inset:pl-8",
         className
       )}
@@ -104,15 +132,21 @@ function DropdownMenuCheckboxItem({
   checked,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
+  const generatedGlideId = React.useId()
+  const dataGlideItem =
+    (props as { "data-glide-item"?: string })["data-glide-item"] ??
+    props.id ??
+    generatedGlideId
+
   return (
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
+      data-glide-item={dataGlideItem}
       className={cn(
         PRISM.checkboxItem,
-        PRISM.itemFocus,
+        PRISM.glideItem,
         PRISM.itemDisabled,
         PRISM.itemIcon,
-        "active:scale-[0.98] active:bg-white/6",
         className
       )}
       checked={checked}
@@ -144,12 +178,19 @@ function DropdownMenuRadioItem({
   children,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+  const generatedGlideId = React.useId()
+  const dataGlideItem =
+    (props as { "data-glide-item"?: string })["data-glide-item"] ??
+    props.id ??
+    generatedGlideId
+
   return (
     <DropdownMenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
+      data-glide-item={dataGlideItem}
       className={cn(
         PRISM.checkboxItem,
-        PRISM.itemFocus,
+        PRISM.glideItem,
         PRISM.itemDisabled,
         PRISM.itemIcon,
         className
@@ -229,16 +270,23 @@ function DropdownMenuSubTrigger({
 }: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
   inset?: boolean
 }) {
+  const generatedGlideId = React.useId()
+  const dataGlideItem =
+    (props as { "data-glide-item"?: string })["data-glide-item"] ??
+    props.id ??
+    generatedGlideId
+
   return (
     <DropdownMenuPrimitive.SubTrigger
       data-slot="dropdown-menu-sub-trigger"
+      data-glide-item={dataGlideItem}
       data-inset={inset}
       className={cn(
         PRISM.item,
+        PRISM.glideItem,
         PRISM.itemIcon,
-        PRISM.itemFocus,
         PRISM.itemIconFocus,
-        "data-[state=open]:bg-white/12 data-[state=open]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+        "data-[state=open]:bg-transparent data-[state=open]:shadow-none",
         "data-inset:pl-8",
         className
       )}
@@ -252,20 +300,35 @@ function DropdownMenuSubTrigger({
 
 function DropdownMenuSubContent({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const { rect, visible, menuHandlers } = useGlideHighlight({
+    surfaceRef: contentRef,
+    keyboardNavigation: false,
+  })
+
   return (
     <DropdownMenuPrimitive.SubContent
+      ref={contentRef}
       data-slot="dropdown-menu-sub-content"
       className={cn(
         PRISM.container,
+        PRISM.glideSurface,
         PRISM.animateIn,
         PRISM.animateOut,
         "z-999 w-[220px] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden",
         className
       )}
       {...props}
-    />
+      {...menuHandlers}
+    >
+      <GlideHighlight rect={rect} visible={visible} />
+      <div className="relative z-[2] space-y-0.5">
+        {children}
+      </div>
+    </DropdownMenuPrimitive.SubContent>
   )
 }
 

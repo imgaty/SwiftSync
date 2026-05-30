@@ -1,3 +1,12 @@
+//
+//  error-state.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Implements the Error state React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { AlertCircle, FileQuestion, Ban } from "lucide-react"

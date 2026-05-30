@@ -1,3 +1,12 @@
+//
+//  session.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides shared session logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 const encoder = new TextEncoder()
 
 const SESSION_SECRET =
@@ -31,7 +40,8 @@ export interface SessionPayload {
   uid: string
   iat: number
   exp: number
-  v: 2
+  sv: number
+  v: 1
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -96,26 +106,31 @@ async function signMessage(message: string): Promise<Uint8Array> {
   return new Uint8Array(signature)
 }
 
-export async function createSessionToken(userId: string, maxAgeSeconds: number): Promise<string> {
+export async function createSessionToken(
+  userId: string,
+  maxAgeSeconds: number,
+  sessionVersion = 0
+): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const payload: SessionPayload = {
     uid: userId,
     iat: now,
     exp: now + maxAgeSeconds,
-    v: 2,
+    sv: sessionVersion,
+    v: 1,
   }
 
   const payloadB64 = toBase64Url(JSON.stringify(payload))
   const sig = await signMessage(payloadB64)
   const sigB64 = toBase64Url(sig)
 
-  return `v2.${payloadB64}.${sigB64}`
+  return `v1.${payloadB64}.${sigB64}`
 }
 
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
     const [version, payloadB64, sigB64] = token.split(".")
-    if (version !== "v2" || !payloadB64 || !sigB64) return null
+    if (version !== "v1" || !payloadB64 || !sigB64) return null
 
     const expectedSig = await signMessage(payloadB64)
     const receivedSig = fromBase64Url(sigB64)
@@ -124,13 +139,25 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     const payloadJson = new TextDecoder().decode(fromBase64Url(payloadB64))
     const payload = JSON.parse(payloadJson) as SessionPayload
 
-    if (!payload?.uid || payload.v !== 2) return null
+    if (!payload?.uid || payload.v !== 1) return null
+
+    const sessionVersion =
+      typeof payload.sv === "number" && Number.isInteger(payload.sv) && payload.sv >= 0
+        ? payload.sv
+        : 0
 
     const now = Math.floor(Date.now() / 1000)
     if (payload.exp <= now) return null
 
-    return payload
+    return { ...payload, sv: sessionVersion }
   } catch {
     return null
   }
+}
+
+export function sessionVersionMatches(
+  session: SessionPayload,
+  currentSessionVersion: number | null | undefined
+): boolean {
+  return session.sv === (currentSessionVersion ?? 0)
 }

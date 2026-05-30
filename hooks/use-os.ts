@@ -1,21 +1,34 @@
+//
+//  use-os.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Provides the use os React hook for Argent, encapsulating reusable state, effects, or
+//  data-access behavior for consuming components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
-import { useState, useEffect } from "react"
+import { useSyncExternalStore } from "react"
+
+function isMacPlatform() {
+  if (typeof navigator === "undefined") return false
+  return (
+    navigator.platform.toUpperCase().includes("MAC") ||
+    navigator.userAgent.toUpperCase().includes("MAC")
+  )
+}
+
+function subscribeOSSnapshot() {
+  return () => {}
+}
 
 /**
  * Hook to detect the user's operating system
  * @returns Object with OS detection booleans and formatted shortcut key
  */
 export function useOS() {
-  const [isMac, setIsMac] = useState(false)
-
-  useEffect(() => {
-    // Check if running on macOS using navigator.platform or userAgent
-    const isMacOS =
-      navigator.platform.toUpperCase().includes("MAC") ||
-      navigator.userAgent.toUpperCase().includes("MAC")
-    setIsMac(isMacOS)
-  }, [])
+  const isMac = useSyncExternalStore(subscribeOSSnapshot, isMacPlatform, () => false)
 
   return {
     isMac,

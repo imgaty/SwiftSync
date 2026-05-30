@@ -1,3 +1,12 @@
+//
+//  chart.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Chart UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -19,6 +28,7 @@ import {
 import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { Button } from "@/components/ui/button"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -78,7 +88,13 @@ function ChartContainer({
                 {...props}
             >
                 <ChartStyle id={chartId} config={config} />
-                <RechartsPrimitive.ResponsiveContainer minWidth={1} minHeight={1}>
+                <RechartsPrimitive.ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    minWidth={1}
+                    minHeight={1}
+                    initialDimension={{ width: 1, height: 1 }}
+                >
                     {children}
                 </RechartsPrimitive.ResponsiveContainer>
             </div>
@@ -919,149 +935,6 @@ function PieLegendScroll({
     )
 }
 
-// Bottom drawer for pie legend on small screens
-function _PieLegendDrawer({
-    pieData,
-    config,
-    total,
-    setHoverIndex,
-    containerHeight,
-}: {
-    pieData: Record<string, unknown>[]
-    config: ChartConfig
-    total: number
-    setHoverIndex: (index: number | null) => void
-    containerHeight: number
-}) {
-    const [isExpanded, setIsExpanded] = React.useState(false)
-    const [isDragging, setIsDragging] = React.useState(false)
-    const [dragStartY, setDragStartY] = React.useState(0)
-    const [currentDragHeight, setCurrentDragHeight] = React.useState<number | null>(null)
-    const drawerRef = React.useRef<HTMLDivElement>(null)
-    
-    const collapsedHeight = 36 // Height of handle bar
-    const expandedHeight = containerHeight - 8 // Full height minus some padding
-    
-    const targetHeight = isExpanded ? expandedHeight : collapsedHeight
-    const displayHeight = currentDragHeight ?? targetHeight
-    
-    const handlePointerDown = (e: React.PointerEvent) => {
-        setIsDragging(true)
-        setDragStartY(e.clientY)
-        setCurrentDragHeight(displayHeight)
-        ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-    }
-    
-    const handlePointerMove = (e: React.PointerEvent) => {
-        if (!isDragging || currentDragHeight === null) return
-        const delta = dragStartY - e.clientY // Inverted: drag up = positive
-        const newHeight = Math.max(collapsedHeight, Math.min(expandedHeight, (isExpanded ? expandedHeight : collapsedHeight) + delta))
-        setCurrentDragHeight(newHeight)
-    }
-    
-    const handlePointerUp = () => {
-        if (!isDragging) return
-        setIsDragging(false)
-        
-        if (currentDragHeight !== null) {
-            // Snap to closest state based on current position
-            const midPoint = (expandedHeight + collapsedHeight) / 2
-            setIsExpanded(currentDragHeight > midPoint)
-        }
-        setCurrentDragHeight(null)
-    }
-    
-    const handleClick = () => {
-        if (!isDragging) {
-            setIsExpanded(!isExpanded)
-        }
-    }
-
-    return (
-        <div 
-            ref={drawerRef}
-            className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm rounded-t-xl transition-[height] duration-200 ease-out"
-            style={{ 
-                height: displayHeight,
-                transitionProperty: isDragging ? 'none' : 'height'
-            }}
-        >
-            {/* Drag handle */}
-            <div 
-                className="flex flex-col items-center justify-center py-2 cursor-grab active:cursor-grabbing touch-none select-none"
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                onClick={handleClick}
-            >
-                <div className="w-8 h-1 bg-muted-foreground/30 rounded-full mb-1" />
-                <div className="flex items-center gap-1.5 text-[10px] text-neutral-400">
-                    {/* Category color dots preview */}
-                    <div className="flex -space-x-0.5">
-                        {pieData.slice(0, 5).map((item, idx) => (
-                            <span 
-                                key={idx}
-                                className="w-2 h-2 rounded-full border border-card"
-                                style={{ backgroundColor: item.fill as string }}
-                            />
-                        ))}
-                        {pieData.length > 5 && (
-                            <span className="w-2 h-2 rounded-full bg-muted-foreground/30 border border-card flex items-center justify-center text-[6px]">
-                                +
-                            </span>
-                        )}
-                    </div>
-                    <span>{pieData.length} categories</span>
-                    <svg 
-                        className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                </div>
-            </div>
-            
-            {/* Category list */}
-            <div 
-                className="overflow-y-auto px-3 pb-2"
-                style={{ 
-                    height: `calc(100% - ${collapsedHeight}px)`,
-                    opacity: displayHeight > collapsedHeight + 10 ? 1 : 0,
-                    transition: 'opacity 150ms'
-                }}
-            >
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                    {pieData.map((item, idx) => {
-                        const percentage = total > 0 ? ((item.value as number) / total * 100).toFixed(0) : 0
-                        return (
-                            <div 
-                                key={idx}
-                                className="flex items-center justify-between text-xs py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
-                                onMouseEnter={() => setHoverIndex(idx)}
-                                onMouseLeave={() => setHoverIndex(null)}
-                            >
-                                <span className="auto-scroll flex items-center gap-1.5">
-                                    <span 
-                                        className="w-2 h-2 rounded-full shrink-0"
-                                        style={{ backgroundColor: item.fill as string }}
-                                    />
-                                    <span className="auto-scroll text-neutral-400">
-                                        {config[item.name as string]?.label ?? String(item.name)}
-                                    </span>
-                                </span>
-                                <span className="font-medium tabular-nums ml-1 shrink-0">{percentage}%</span>
-                            </div>
-                        )
-                    })}
-                </div>
-            </div>
-        </div>
-    )
-}
-
 // Carousel for pie legend on small screens - swipe/scroll or click dots to switch views
 function PieLegendCarousel({
     pieData,
@@ -1147,9 +1020,7 @@ function PieLegendCarousel({
             : (activeView === 'legend' ? 0 : 100)
         
         if (isDragging) {
-            const containerWidth = containerRef.current?.offsetWidth || 300
-            const dragPercent = (dragDelta / containerWidth) * 100
-            return `translateX(calc(${baseOffset}% + ${dragPercent}%))`
+            return `translateX(calc(${baseOffset}% + ${dragDelta}px))`
         }
         return `translateX(${baseOffset}%)`
     }
@@ -1211,24 +1082,24 @@ function PieLegendCarousel({
                     </div>
                 </div>
             </div>
-            
+
             {/* Navigation dots */}
             {pieData.length > 1 && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
-                    <button 
+                    <Button variant="ghost"
                         onClick={() => setActiveView('chart')}
                         className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                            activeView === 'chart' 
-                                ? 'bg-foreground scale-100' 
+                            activeView === 'chart'
+                                ? 'bg-foreground scale-100'
                                 : 'bg-muted-foreground/40 scale-90 hover:bg-muted-foreground/60'
                         }`}
                         aria-label="Show chart"
                     />
-                    <button 
+                    <Button variant="ghost"
                         onClick={() => setActiveView('legend')}
                         className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                            activeView === 'legend' 
-                                ? 'bg-foreground scale-100' 
+                            activeView === 'legend'
+                                ? 'bg-foreground scale-100'
                                 : 'bg-muted-foreground/40 scale-90 hover:bg-muted-foreground/60'
                         }`}
                         aria-label="Show legend"

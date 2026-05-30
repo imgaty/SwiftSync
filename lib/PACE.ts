@@ -1,22 +1,12 @@
-// =============================================================================
-// PACE — Pattern Aware Categorization Engine
-// =============================================================================
 //
-// Single-file home for everything categorization. The pipeline runs on every
-// Salt Edge sync and on every manual transaction create.
+//  PACE.ts
+//  Argent
 //
-// Layering precedence (deduped, multi-tag):
-//   1. Salt Edge category (when meaningful — "uncategorized"/"other"/empty are filtered)
-//   2. User Rules (structured filters: counterparty, description, amount, type)
-//   3. Counterparty.cachedTagSlug — instant cache hit, no model call
-//   4. Embedding similarity fallback (Transformers.js + multilingual MiniLM)
-//      — only when 1+2+3 produced nothing AND we have a counterparty
-//      — result is written to Counterparty.cachedTagSlug, so each merchant
-//        triggers exactly one model inference per tag set
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides shared PACE logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
 //
-// Plus the legacy regex/keyword PACE engine lives at the bottom for back-compat
-// with the old PACERule UI/API. Both engines coexist and contribute additively.
-
 import type { SaltEdgeTransaction } from "./salt-edge"
 import { z } from "zod"
 

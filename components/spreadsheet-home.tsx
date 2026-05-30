@@ -1,3 +1,12 @@
+//
+//  spreadsheet-home.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Spreadsheet home React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -15,6 +24,7 @@ import {
 
 import { useSpreadsheetDocuments } from "@/hooks/use-spreadsheet-documents"
 import type { SpreadsheetCellData, SpreadsheetDocument, SpreadsheetSheetTab } from "@/lib/types"
+import { getTranslations } from "@/lib/translation-utils"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -356,8 +366,8 @@ export function SpreadsheetHome({
 }) {
     const { documents, isLoading, refetch } = useSpreadsheetDocuments()
     const { t } = useLanguage()
-    const sp = (t as any).spreadsheets || {} as Record<string, string>
-    const common = (t as any).common || {} as Record<string, string>
+    const sp = getTranslations(t, "spreadsheets")
+    const common = getTranslations(t, "common")
     const [search, setSearch] = React.useState("")
     const [visibleCount, setVisibleCount] = React.useState(ITEMS_PER_PAGE)
     const [templateOpen, setTemplateOpen] = React.useState(false)
@@ -441,7 +451,7 @@ export function SpreadsheetHome({
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-3 pt-2">
                         {TEMPLATES.map((tpl, i) => (
-                            <button
+                            <Button variant="ghost"
                                 key={tpl.name}
                                 onClick={() => {
                                     setTemplateOpen(false)
@@ -454,7 +464,7 @@ export function SpreadsheetHome({
                                 </div>
                                 <span className="text-sm font-medium text-foreground">{tpl.name}</span>
                                 <span className="text-xs text-neutral-400 mt-0.5">{tpl.description}</span>
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </DialogContent>
@@ -495,7 +505,7 @@ export function SpreadsheetHome({
                     <>
                         <div className="flex flex-col gap-1.5">
                             {visible.map((doc) => (
-                                <button
+                                <Button variant="ghost"
                                     key={doc.id}
                                     onClick={() => onOpen(doc)}
                                     onContextMenu={(e) => {
@@ -531,7 +541,7 @@ export function SpreadsheetHome({
                                             <Trash2 className="size-3 text-neutral-400 group-hover:text-destructive/70" />
                                         </div>
                                     </div>
-                                </button>
+                                </Button>
                             ))}
                         </div>
 

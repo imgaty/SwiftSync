@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin/goals route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -134,7 +143,7 @@ export default function AdminGoalsPage() {
                 actions={<Button variant="glass" size="sm" onClick={() => fetchData(pagination.page)} disabled={loading}><RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} /> {ad.refresh || "Refresh"}</Button>}
             />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-4">
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
                         <p className="text-xs text-neutral-400 flex items-center gap-1"><Target className="size-3" /> {gp.total_goals || "Total Goals"}</p>
                         <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : pagination.total}</p>

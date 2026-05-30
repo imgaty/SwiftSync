@@ -129,7 +129,7 @@ Rotation consequences:
 4. The stored hash is split via the `scrypt$v1$salt$hash` format. The server derives the candidate hash using the same salt, scrypt parameters, and pepper, then compares byte-for-byte with `timingSafeEqual`.
 5. If the stored hash uses an older format (e.g. a leftover `generation:salt:hash` row from before the migration), `passwordNeedsRehash` flags it and the password is transparently re-hashed with the new scheme on the current login.
 6. If 2FA is enabled, the server returns a challenge instead of a session. The user must verify the code before receiving cookies.
-7. On success, the session cookies are set (`auth-token` and `user-session`) and the user is redirected to the dashboard.
+7. On success, the `auth-token` session cookie is set and the user is redirected to the dashboard.
 
 <br>
 
@@ -171,6 +171,7 @@ The session token follows the format: `v1.payload.signature`
   - `uid` — The user's database ID.
   - `iat` — "Issued at" timestamp (Unix seconds).
   - `exp` — Expiration timestamp (Unix seconds). The token is invalid after this time.
+  - `sv` — User session version. Incrementing this in the database revokes previously issued tokens.
   - `v` — Payload version (always `1`).
 - **`signature`** — The HMAC-SHA256 signature of the payload, encoded in base64url.
 
@@ -180,12 +181,11 @@ To verify a token, the server re-signs the payload with the same secret key and 
 
 #### Cookies
 
-Two cookies are set after successful authentication:
+One cookie is set after successful authentication:
 
-| Cookie         | Specs             | Purpose                                                                                                                                                                                                                                                                                     |
-| :------------- | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `auth-token`   | HttpOnly, 30 days | The HMAC-signed session token. Used for all server-side authentication. The `HttpOnly` flag means JavaScript running in the browser cannot read this cookie — it is only sent automatically with HTTP requests. This prevents cross-site scripting (XSS) attacks from stealing the session. |
-| `user-session` | 30 days           | Non-sensitive UI context (user name, preferences). This cookie *is* readable by client-side JavaScript, so the frontend can display the user's name without making an API call. It contains no secrets.                                                                                     |
+| Cookie       | Specs            | Purpose                                                                                                                                                                                                                                                                                     |
+| :----------- | :--------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `auth-token` | HttpOnly, 7 days | The HMAC-signed session token. Used for all server-side authentication. The `HttpOnly` flag means JavaScript running in the browser cannot read this cookie — it is only sent automatically with HTTP requests. This prevents cross-site scripting (XSS) attacks from stealing the session. |
 
 <br>
 
@@ -199,8 +199,8 @@ Every API route starts by calling `getAuthUserId()`. This function is the single
 4. Re-sign the payload using the server's `SESSION_SECRET` and compare to the received signature using `timingSafeEqual`.
 5. If the signature does not match, return `null` (token was forged or corrupted).
 6. Decode the payload and check that `exp` has not passed (token not expired).
-7. Look up the user in the database by `uid` and confirm their status is `"active"`.
-8. If the user exists and is active, return their ID. Otherwise, return `null`.
+7. Look up the user in the database by `uid`, confirm their status is `"active"`, and compare the token `sv` with the user's current `sessionVersion`.
+8. If the user exists, is active, and the session version matches, return their ID. Otherwise, return `null`.
 
 If `getAuthUserId()` returns `null`, the API route responds with 401 Unauthorized.
 

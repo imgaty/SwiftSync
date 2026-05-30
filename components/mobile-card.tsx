@@ -1,3 +1,12 @@
+//
+//  mobile-card.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Mobile card React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -176,7 +185,7 @@ interface MobileCardListProps {
 
 export function MobileCardList({ children, className }: MobileCardListProps) {
     return (
-        <div className={cn("flex flex-col gap-3", className)}>
+        <div className={cn("flex flex-col gap-4", className)}>
             <AnimatePresence mode="popLayout">
                 {children}
             </AnimatePresence>

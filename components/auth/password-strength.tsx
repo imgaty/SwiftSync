@@ -1,3 +1,12 @@
+//
+//  password-strength.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Password strength auth component for Argent, supporting sign-in,
+//  registration, recovery, or security flows with reusable presentation logic.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { memo, useMemo } from 'react'
 
 const STRENGTH_COLORS = ['text-red-500 dark:text-red-400', 'text-amber-500 dark:text-amber-400', 'text-emerald-500 dark:text-emerald-400']

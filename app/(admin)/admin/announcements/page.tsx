@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin/announcements route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -7,8 +16,10 @@ import {
 } from "lucide-react"
 
 import { AdminHeader } from "@/components/admin/admin-header"
+import { EmptyState } from "@/components/empty-state"
 import { useLanguage } from "@/components/language-provider"
 import { PRISM } from "@/lib/PRISM"
+import { getTranslations } from "@/lib/translation-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +31,11 @@ import {
     Dialog, DialogContent, DialogDescription, DialogFooter,
     DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
+import {
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
@@ -50,8 +66,8 @@ function typeBadge(type: string) {
 
 export default function AdminAnnouncementsPage() {
     const { t } = useLanguage()
-    const ad = (t as any).admin || {} as Record<string, any>
-    const ap = ad.announcements_page || {} as Record<string, string>
+    const ad = getTranslations(t, "admin")
+    const ap = getTranslations(ad, "announcements_page")
 
     const [data, setData] = React.useState<Announcement[]>([])
     const [loading, setLoading] = React.useState(true)
@@ -169,7 +185,7 @@ export default function AdminAnnouncementsPage() {
 
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {loading ? (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {[...Array(4)].map((_, i) => (
                             <div key={i} className="rounded-xl border border-black/10 dark:border-white/10 p-4">
                                 <div className="flex items-start justify-between">
@@ -183,14 +199,21 @@ export default function AdminAnnouncementsPage() {
                         ))}
                     </div>
                 ) : data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 dark:border-white/10 p-12 text-center">
-                        <Megaphone className="size-12 text-neutral-400 mb-3" />
-                        <p className="text-lg font-medium text-neutral-400">No announcements yet</p>
-                        <p className="text-sm text-neutral-400 mb-4">Create one to broadcast to all users.</p>
-                        <Button size="sm" onClick={openCreate}><Plus className="size-4 mr-1" /> {ap.create || "Create Announcement"}</Button>
-                    </div>
+                    <EmptyState
+                        variant="nothing"
+                        placement="section"
+                        title="No announcements yet"
+                        description="Create one to broadcast to all users."
+                        icon={<Megaphone className="size-8" />}
+                        action={{
+                            label: ap.create || "Create Announcement",
+                            onClick: openCreate,
+                            icon: <Plus className="size-4" />,
+                        }}
+                        className="min-h-[280px]"
+                    />
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {data.map(a => (
                             <div key={a.id} className={`rounded-xl border p-4 transition-colors ${a.isActive ? "border-black/10 dark:border-white/10" : "border-black/5 dark:border-white/5 opacity-60"}`}>
                                 <div className="flex items-start justify-between gap-4">
@@ -227,14 +250,18 @@ export default function AdminAnnouncementsPage() {
 
             {/* Create / Edit Dialog */}
             <Dialog open={dialog.open} onOpenChange={open => setDialog(prev => ({ ...prev, open }))}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{dialog.mode === "create" ? (ap.create || "New Announcement") : (ap.title || "Edit Announcement")}</DialogTitle>
-                        <DialogDescription>
-                            {dialog.mode === "create" ? (ap.create || "This will be visible to all users.") : (ap.message || "Update the announcement details.")}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
+                <FormDialogContent maxWidth="430px">
+                    <FormDialogHeader
+                        title={dialog.mode === "create" ? (ap.create || "New Announcement") : (ap.title || "Edit Announcement")}
+                        description={dialog.mode === "create" ? (ap.create || "This will be visible to all users.") : (ap.message || "Update the announcement details.")}
+                    />
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            handleSave()
+                        }}
+                        className="flex flex-col gap-4"
+                    >
                         <div className="space-y-2">
                             <Label>{ap.title || "Title"}</Label>
                             <Input label={ap.title || "Title"} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder={ap.title || "Announcement title..."} />
@@ -242,13 +269,13 @@ export default function AdminAnnouncementsPage() {
                         <div className="space-y-2">
                             <Label>{ap.message || "Message"}</Label>
                             <textarea
-                                className="w-full rounded-lg border border-black/10 dark:border-white/10 bg-transparent px-3 py-2 text-sm min-h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="min-h-24 w-full resize-none rounded-xl border border-[color:var(--input)] bg-[var(--surface)] px-4 py-3 text-[15px] text-foreground shadow-[var(--shadow-subtle)] outline-none transition-all placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-focus/70 focus:ring-offset-2 focus:ring-offset-background"
                                 value={form.message}
                                 onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                                 placeholder={ap.message || "Announcement message..."}
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-2">
                                 <Label>{ap.type || "Type"}</Label>
                                 <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
@@ -266,15 +293,15 @@ export default function AdminAnnouncementsPage() {
                                 <Input label="Expires" type="datetime-local" value={form.expiresAt} onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))} />
                             </div>
                         </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="glass" onClick={() => setDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
-                        <Button onClick={handleSave} disabled={saving}>
+                        <FormDialogActions>
+                        <Button type="submit" variant="solid" size="lg" className="w-full" disabled={saving}>
                             {saving && <RefreshCw className="size-4 animate-spin mr-2" />}
                             {dialog.mode === "create" ? (ap.create || "Create") : (ap.title || "Save")}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
+                        <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
+                        </FormDialogActions>
+                    </form>
+                </FormDialogContent>
             </Dialog>
 
             {/* Delete Dialog */}

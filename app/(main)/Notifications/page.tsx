@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Renders the /Notifications route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -5,6 +14,7 @@ import Link from "next/link"
 import { Bell, Check, SquareArrowOutUpRight as ExternalLink, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { PageHeader, PageSection, PageShell } from "@/components/page-framework"
+import { EmptyState } from "@/components/empty-state"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -94,6 +104,8 @@ export default function NotificationsPage() {
         fetchNotifications()
     }, [fetchNotifications])
 
+    const hasFilters = Boolean(search) || typeFilter !== "all" || readFilter !== "all"
+
     const markAllRead = async () => {
         await fetch("/api/notifications", { method: "PATCH" })
         fetchNotifications()
@@ -126,6 +138,15 @@ export default function NotificationsPage() {
                 }
             />
 
+            {!loading && notifications.length === 0 && !hasFilters ? (
+                <EmptyState
+                    variant="empty-inbox"
+                    placement="page"
+                    title={isPt ? "Sem notificações" : "No notifications"}
+                    description={isPt ? "As novas notificações aparecem aqui." : "New notifications will appear here."}
+                    icon={<Bell className="size-8" />}
+                />
+            ) : (
             <PageSection stagger={2} className="space-y-4">
                 <TableToolbar>
                     <TableToolbarGroup className="flex-wrap">
@@ -183,12 +204,13 @@ export default function NotificationsPage() {
                             ))}
                         </div>
                     ) : notifications.length === 0 ? (
-                        <div className="flex min-h-[280px] flex-col items-center justify-center gap-2 px-6 py-8 text-center">
-                            <Bell className="size-8 text-neutral-400" />
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                {isPt ? "Sem notificações" : "No notifications"}
-                            </p>
-                        </div>
+                        <EmptyState
+                            variant="no-results"
+                            placement="section"
+                            title={isPt ? "Sem notificações" : "No notifications"}
+                            description={isPt ? "Tente ajustar a pesquisa ou os filtros." : "Try adjusting your search or filters."}
+                            icon={<Bell className="size-7" />}
+                        />
                     ) : (
                         <div className="divide-y divide-black/6 dark:divide-white/8">
                             {notifications.map((notif) => (
@@ -278,6 +300,7 @@ export default function NotificationsPage() {
                     </div>
                 )}
             </PageSection>
+            )}
         </PageShell>
     )
 }

@@ -1,3 +1,12 @@
+//
+//  expanded-chart-view.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Expanded chart view React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -6,10 +15,11 @@ import { Button } from "@/components/ui/button"
 import { ChartConfig, AreaChartComponent, BarChartComponent, PieChartComponent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dropdown, DropdownContent, DropdownTrigger, DropdownCheckboxItem, DropdownSeparator } from "@/components/ui/dropdown"
+import { TabSwitcher, TabSwitcherIconButton, TabSwitcherItem } from "@/components/ui/tab-switcher"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
 import { DISPLAY_MODE_ICONS, DATE_FORMAT_OPTIONS, DISPLAY_MODES, METRIC_TYPES } from "@/lib/chart-constants"
-import { getOffsetDate, getFilteredPeriodData, getFilteredCustomRangeData, getCategoryOptions, getConfigColor, formatPeriodLabel } from "@/lib/chart-utils"
+import { getOffsetDate, getFilteredPeriodData, getFilteredCustomRangeData, getCategoryOptions, getConfigColor } from "@/lib/chart-utils"
 import type { ChartInstance, DailyData, MetricType, DisplayMode, CustomDateRange } from "@/lib/chart-types"
 import { DatePicker } from "@/components/date-picker"
 import { useCurrency } from "@/components/currency-provider"
@@ -95,12 +105,6 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
         return { periodData: data, chartKeys: keys, pieData: pie, total: sum }
     }, [chartData, periodType, offsetDate, customDateRange, showTotal, selectedCategories, metricType, categoryOptions, convertAmount])
 
-    const periodLabel = React.useMemo(() => 
-        customDateRange?.startDate && customDateRange?.endDate
-            ? `${new Date(customDateRange.startDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)} - ${new Date(customDateRange.endDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)}`
-            : formatPeriodLabel(periodType, offsetDate, locale, labels.all_time ?? "All time")
-    , [periodType, offsetDate, locale, labels.all_time, customDateRange])
-
     const filterLabel = React.useMemo(() => {
         if (showTotal || selectedCategories.length === 0) return labels.total ?? "Total"
         if (selectedCategories.length === 1) return chartConfig[selectedCategories[0] as keyof typeof chartConfig]?.label ?? selectedCategories[0]
@@ -119,10 +123,6 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
         if (v !== 'custom') { onClearCustomDateRange(); onSetPeriodType(v); onSetTimeOffset(0) }
     }, [onClearCustomDateRange, onSetPeriodType, onSetTimeOffset])
     const handleDateRangeClose = React.useCallback(() => setDateRangeOpen(false), [])
-
-    // Match the segmented-pill toolbar style used in the non-expanded chart header.
-    const prismControlSurface = "border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]"
-    const prismControlHover = "hover:bg-black/10 dark:hover:bg-white/10"
 
     return (
         <Dialog open={true} onOpenChange={(open) => { if (!open) onClose() }}>
@@ -150,49 +150,50 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                                 <span className="auto-scroll">{filterLabel}</span>
                             </div>
                         </div>
-                        <button type="button" onClick={onClose} className={cn(PRISM.closeButton, "shrink-0")} aria-label={labels.close ?? "Close"}><X className="w-4 h-4" /></button>
+                        <Button variant="ghost" type="button" onClick={onClose} className={cn(PRISM.closeButton, "shrink-0")} aria-label={labels.close ?? "Close"}><X className="w-4 h-4" /></Button>
                     </div>
 
                     {/* Controls — matches the non-expanded chart toolbar style */}
                     <div className="flex flex-wrap items-center gap-2">
                         {/* Metric segmented toggle */}
-                        <div className={cn(prismControlSurface, "inline-flex items-center h-8 rounded-md overflow-hidden divide-x divide-border/50 shrink-0")}>
+                        <TabSwitcher ariaLabel={labels.metric_type ?? "Metric type"} className="shrink-0">
                             {METRIC_TYPES.map(type => {
                                 const typeLabel = chartConfig[type]?.label ?? type
                                 const isActive = metricType === type
                                 return (
                                     <Tooltip key={type}>
                                         <TooltipTrigger asChild>
-                                            <button
+                                            <TabSwitcherItem
+                                                isActive={isActive}
                                                 onClick={() => handleMetricChange(type)}
-                                                className={cn(
-                                                    "h-full px-4 text-sm font-medium cursor-pointer transition-colors",
-                                                    isActive ? "bg-black/12 dark:bg-white/12" : cn("bg-transparent", prismControlHover),
-                                                )}
+                                                className="px-4 text-[13px]"
                                             >
                                                 {typeLabel}
-                                            </button>
+                                            </TabSwitcherItem>
                                         </TooltipTrigger>
                                         <TooltipContent side="bottom"><p>{typeLabel}</p></TooltipContent>
                                     </Tooltip>
                                 )
                             })}
-                        </div>
+                        </TabSwitcher>
 
                         {/* Filter dropdown */}
-                        <div className={cn(prismControlSurface, "inline-flex items-center h-8 rounded-md overflow-hidden shrink-0")}>
+                        <TabSwitcher ariaLabel={labels.filter_categories ?? "Filter categories"} className="shrink-0">
                             <Dropdown>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <DropdownTrigger asChild>
-                                            <button className={cn("flex items-center gap-1 px-2 h-full cursor-pointer transition-colors", prismControlHover)}>
+                                            <TabSwitcherIconButton
+                                                aria-label={labels.filter_categories ?? "Filter categories"}
+                                                className="w-auto px-2"
+                                            >
                                                 <Filter className="w-4 h-4" />
                                                 {!showTotal && selectedCategories.length > 0 && (
                                                     <span className="flex items-center justify-center w-4 h-4 bg-primary text-xs text-white dark:text-black rounded-full">
                                                         {selectedCategories.length}
                                                     </span>
                                                 )}
-                                            </button>
+                                            </TabSwitcherIconButton>
                                         </DropdownTrigger>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p>{labels.filter_categories ?? "Filter categories"}</p></TooltipContent>
@@ -215,51 +216,61 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                                     ))}
                                 </DropdownContent>
                             </Dropdown>
-                        </div>
+                        </TabSwitcher>
 
                         <Separator orientation="vertical" className="h-6 hidden md:block" />
 
                         {/* Time range segmented toggle with prev/next chevrons */}
-                        <div className={cn(prismControlSurface, "inline-flex items-center h-8 rounded-md divide-x divide-border/50 shrink-0", customDateRange && "opacity-50")}>
-                            <div className="flex items-center justify-center h-full px-1 shrink-0">
-                                <button onClick={handlePrev} disabled={!canGoPrev || !!customDateRange} className={cn("inline-flex items-center justify-center h-5 w-5 bg-transparent rounded disabled:opacity-50 disabled:cursor-not-allowed", prismControlHover)}>
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                            </div>
+                        <TabSwitcher
+                            ariaLabel={labels.time_range ?? "Time range"}
+                            className={cn("shrink-0", customDateRange && "opacity-50")}
+                        >
+                            <TabSwitcherIconButton
+                                onClick={handlePrev}
+                                disabled={!canGoPrev || !!customDateRange}
+                                aria-label={labels.previous ?? "Previous"}
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </TabSwitcherIconButton>
                             {/* Hide period buttons on small viewports, fall back to Select */}
-                            <div className="hidden sm:flex items-center divide-x divide-border/50">
+                            <div className="hidden items-center gap-0.5 sm:flex">
                                 {TIME_OPTIONS.map(opt => {
                                     const isActive = !customDateRange && periodType === opt.value
                                     const lbl = labels[opt.key] ?? opt.value
                                     return (
-                                        <button
+                                        <TabSwitcherItem
                                             key={opt.value}
+                                            isActive={isActive}
                                             onClick={() => handlePeriodChange(opt.value)}
                                             disabled={!!customDateRange}
-                                            className={cn(
-                                                "h-full px-3 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed",
-                                                isActive ? "bg-black/12 dark:bg-white/12" : cn("bg-transparent disabled:hover:bg-transparent", prismControlHover),
-                                            )}
+                                            className="px-3 text-[13px]"
                                         >
                                             {lbl}
-                                        </button>
+                                        </TabSwitcherItem>
                                     )
                                 })}
                             </div>
                             <div className="sm:hidden flex items-center min-w-0">
                                 <Select value={customDateRange ? 'custom' : periodType} onValueChange={handlePeriodChange} disabled={!!customDateRange}>
-                                    <SelectTrigger className="h-full border-0 rounded-none shadow-none cursor-pointer focus:ring-0 px-3" size="sm"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger
+                                        className="min-w-[92px] rounded-full border-transparent bg-transparent px-2 text-[12px] font-semibold text-foreground-secondary shadow-none hover:bg-white/70 hover:text-foreground focus:ring-0 data-[size=sm]:h-7 dark:hover:bg-white/[0.08]"
+                                        size="sm"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
                                     <SelectContent>
                                         {TIME_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{labels[opt.key] ?? opt.value}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="flex items-center justify-center h-full px-1 shrink-0">
-                                <button onClick={handleNext} disabled={!canGoNext || !!customDateRange} className={cn("inline-flex items-center justify-center h-5 w-5 bg-transparent rounded disabled:opacity-50 disabled:cursor-not-allowed", prismControlHover)}>
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
+                            <TabSwitcherIconButton
+                                onClick={handleNext}
+                                disabled={!canGoNext || !!customDateRange}
+                                aria-label={labels.next ?? "Next"}
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </TabSwitcherIconButton>
+                        </TabSwitcher>
 
                         {/* Custom date range */}
                         <DatePicker
@@ -273,43 +284,47 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                             open={dateRangeOpen}
                             onOpenChange={(v) => { setDateRangeOpen(v); if (!v) handleDateRangeClose() }}
                             trigger={
-                                <button className={cn(
-                                    "inline-flex items-center justify-center gap-2 h-8 px-2 rounded-md text-sm font-medium transition-colors shrink-0",
-                                    customDateRange ? "border border-primary bg-primary/10 text-primary" : cn(prismControlSurface, prismControlHover),
-                                )}>
-                                    <CalendarRange className="w-4 h-4" />
-                                    {customDateRange?.startDate && customDateRange?.endDate && (
-                                        <span className="hidden sm:inline text-xs">
-                                            {`${new Date(customDateRange.startDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)} - ${new Date(customDateRange.endDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)}`}
-                                        </span>
-                                    )}
-                                </button>
+                                <TabSwitcher
+                                    ariaLabel={labels.custom_date_range ?? "Custom date range"}
+                                    className={cn("shrink-0", customDateRange && "border-primary/30 bg-primary/10 dark:bg-primary/15")}
+                                >
+                                    <TabSwitcherIconButton
+                                        isActive={!!customDateRange}
+                                        aria-label={labels.custom_date_range ?? "Custom date range"}
+                                        className={cn("w-auto px-2", customDateRange && "border-primary/30 bg-primary/10 text-primary shadow-none dark:bg-primary/15")}
+                                    >
+                                        <CalendarRange className="w-4 h-4" />
+                                        {customDateRange?.startDate && customDateRange?.endDate && (
+                                            <span className="hidden sm:inline text-xs">
+                                                {`${new Date(customDateRange.startDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)} - ${new Date(customDateRange.endDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)}`}
+                                            </span>
+                                        )}
+                                    </TabSwitcherIconButton>
+                                </TabSwitcher>
                             }
                         />
 
                         {/* Display mode segmented toggle */}
-                        <div className={cn(prismControlSurface, "ml-auto inline-flex items-center h-8 rounded-md overflow-hidden divide-x divide-border/50 shrink-0")}>
+                        <TabSwitcher ariaLabel={labels.chart_type ?? "Chart style"} className="ml-auto shrink-0">
                             {DISPLAY_MODES.map(mode => {
                                 const Icon = DISPLAY_MODE_ICONS[mode]
                                 const isActive = displayMode === mode
                                 return (
                                     <Tooltip key={mode}>
                                         <TooltipTrigger asChild>
-                                            <button
+                                            <TabSwitcherIconButton
+                                                isActive={isActive}
                                                 onClick={() => handleDisplayChange(mode)}
-                                                className={cn(
-                                                    "h-full px-3 cursor-pointer transition-colors",
-                                                    isActive ? "bg-black/12 dark:bg-white/12" : cn("bg-transparent", prismControlHover),
-                                                )}
+                                                aria-label={labels[mode] ?? mode}
                                             >
                                                 <Icon className="w-4 h-4" />
-                                            </button>
+                                            </TabSwitcherIconButton>
                                         </TooltipTrigger>
                                         <TooltipContent side="bottom"><p>{labels[mode] ?? mode}</p></TooltipContent>
                                     </Tooltip>
                                 )
                             })}
-                        </div>
+                        </TabSwitcher>
                     </div>
                 </div>
 

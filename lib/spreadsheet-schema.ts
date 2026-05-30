@@ -1,9 +1,12 @@
-// =============================================================================
-// SPREADSHEET INPUT VALIDATION (Zod)
-// =============================================================================
-// Bounds applied at the API boundary to prevent DB-fill DoS and to keep
-// structural guarantees about user-supplied content.
-
+//
+//  spreadsheet-schema.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides shared spreadsheet schema logic for Argent, centralizing domain behavior,
+//  helpers, or integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { z } from "zod"
 
 // Cell-level caps

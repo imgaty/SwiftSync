@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /forgot-password route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client'
 
 import { useState, useCallback } from 'react'
@@ -9,8 +18,6 @@ import {
   BackButton,
   StatusCard,
   ErrorAlert,
-  BTN_PRIMARY,
-  BTN_OUTLINE,
 } from '@/components/auth'
 import { useLanguage, useTranslationNamespace } from '@/components/language-provider'
 import { postAuth } from '@/lib/auth-fetch'
@@ -121,7 +128,7 @@ export default function ForgotPasswordPage() {
                         type="button"
                         variant="glass"
                         size="lg"
-                        className={BTN_OUTLINE}
+                        className="w-full"
                         onClick={handleResend}
                         disabled={resending || isCoolingDown}
                     >
@@ -144,7 +151,7 @@ export default function ForgotPasswordPage() {
                         <Input id="email" type="email" label={page?.email_label} value={email} onChange={e => setEmail(e.target.value)} disabled={loading} required />
 
                         <div className="flex flex-col gap-4">
-                            <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading}>
+                            <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
                                 {loading
                                     ? <><Loader2 className="w-4 h-4 animate-spin" />{page?.sending}</>
                                     : <>{page?.send_reset_link}<ArrowRight className="w-4 h-4" /></>

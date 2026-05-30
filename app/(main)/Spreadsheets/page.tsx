@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Renders the /Spreadsheets route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -9,6 +18,7 @@ import { SpreadsheetLogs } from "@/components/spreadsheet-logs"
 import { useLanguage } from "@/components/language-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
 import type { SpreadsheetDocument, SpreadsheetSheetTab } from "@/lib/types"
+import { getTranslations } from "@/lib/translation-utils"
 
 type View =
     | { screen: "home" }
@@ -17,7 +27,7 @@ type View =
 
 export default function SpreadsheetsPage() {
     const { t } = useLanguage()
-    const sp = (t as any).spreadsheets || {} as Record<string, string>
+    const sp = getTranslations(t, "spreadsheets")
     const { data, isLoading } = useFinanceData()
     const [view, setView] = React.useState<View>({ screen: "home" })
 
@@ -29,7 +39,7 @@ export default function SpreadsheetsPage() {
 
     if (view.screen === "workspace") {
         return (
-            <PageShell className="gap-3 min-h-0 overflow-hidden">
+            <PageShell className="gap-4 min-h-0 overflow-hidden">
                 <SpreadsheetWorkspace
                     data={data}
                     isLoading={isLoading}
@@ -44,7 +54,7 @@ export default function SpreadsheetsPage() {
 
     if (view.screen === "logs") {
         return (
-            <PageShell>
+            <PageShell className="gap-4 p-3 md:p-4">
                 <PageHeader
                     breadcrumbs={[
                         { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -62,7 +72,7 @@ export default function SpreadsheetsPage() {
     }
 
     return (
-        <PageShell>
+        <PageShell className="gap-4 p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },

@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/bank/providers API endpoint for Argent, keeping request parsing,
+//  business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { NextRequest, NextResponse } from "next/server"
 import { listProviders } from "@/lib/salt-edge"
 import { getAuthUserId } from "@/lib/auth-helpers"

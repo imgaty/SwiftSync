@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /Bills route in Argent, composing page-level layout, data dependencies, and
+//  feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -5,16 +14,15 @@ import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { PageShell, PageHeader, StatCards, PageSection } from "@/components/page-framework"
 import { BillsTable, Bill } from "@/components/bills-table"
+import { EmptyState } from "@/components/empty-state"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -36,9 +44,10 @@ export default function BillsPage() {
     const queryClient = useQueryClient()
     const f = t.finance || {}
     const { data, isLoading } = useFinanceData()
-    const billsData = (data?.bills || []) as Bill[]
-    const accounts = data?.accounts || []
+    const billsData = React.useMemo(() => (data?.bills ?? []) as Bill[], [data?.bills])
+    const accounts = React.useMemo(() => data?.accounts ?? [], [data?.accounts])
     const isPt = (t.config?.locale || "en-US").startsWith("pt")
+    const hasBills = billsData.length > 0
 
     const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
     const [editingBillId, setEditingBillId] = React.useState<string | null>(null)
@@ -139,6 +148,24 @@ export default function BillsPage() {
         }
     }
 
+    async function handleMarkPaid(bill: Bill) {
+        try {
+            const res = await fetch(`/api/bills/${bill.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "paid" }),
+            })
+            if (!res.ok) {
+                const err = await res.json().catch(() => null)
+                throw new Error(err?.error || "Failed to mark bill as paid")
+            }
+            await queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
+            toast.success(isPt ? "Conta marcada como paga." : "Bill marked as paid.")
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : (isPt ? "Não foi possível atualizar." : "Could not update bill."))
+        }
+    }
+
     // Compute stats from bills
     const stats = React.useMemo(() => {
         if (isLoading || billsData.length === 0) return []
@@ -159,7 +186,7 @@ export default function BillsPage() {
     }, [billsData, isLoading, formatCurrency])
 
     return (
-        <PageShell>
+        <PageShell className="gap-4 p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -177,39 +204,73 @@ export default function BillsPage() {
             />
 
 
-            <StatCards stats={stats} isLoading={isLoading} />
-
-            <PageSection stagger={3}>
-                <BillsTable
-                    data={billsData}
-                    isLoading={isLoading}
-                    onAddBill={() => setIsAddDialogOpen(true)}
-                    onEditBill={openEditDialog}
-                    onDeleteBill={handleDeleteBill}
+            {isLoading ? (
+                <>
+                    <StatCards stats={stats} isLoading />
+                    <PageSection stagger={3} fill>
+                        <BillsTable
+                            data={billsData}
+                            isLoading
+                            onAddBill={() => setIsAddDialogOpen(true)}
+                            onEditBill={openEditDialog}
+                            onDeleteBill={handleDeleteBill}
+                            onMarkPaid={handleMarkPaid}
+                        />
+                    </PageSection>
+                </>
+            ) : !hasBills ? (
+                <EmptyState
+                    variant="no-bills"
+                    placement="page"
+                    title={isPt ? "Nada para mostrar aqui" : "Nothing to show here yet"}
+                    description={isPt ? "Adicione contas recorrentes para acompanhar pagamentos." : "Add recurring bills to stay on top of payments."}
+                    action={{
+                        label: isPt ? "Adicionar conta" : "Add bill",
+                        onClick: () => setIsAddDialogOpen(true),
+                        icon: <Plus className="size-4" />,
+                    }}
                 />
-            </PageSection>
+            ) : (
+                <>
+                    <StatCards stats={stats} isLoading={false} />
+                    <PageSection stagger={3} fill>
+                        <BillsTable
+                            data={billsData}
+                            isLoading={false}
+                            onAddBill={() => setIsAddDialogOpen(true)}
+                            onEditBill={openEditDialog}
+                            onDeleteBill={handleDeleteBill}
+                            onMarkPaid={handleMarkPaid}
+                        />
+                    </PageSection>
+                </>
+            )}
 
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
                 setIsAddDialogOpen(open)
                 if (!open) { setEditingBillId(null); resetForm() }
             }}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>{editingBillId ? (isPt ? "Editar conta a pagar" : "Edit bill") : (isPt ? "Adicionar conta a pagar" : "Add bill")}</DialogTitle>
-                        <DialogDescription>
-                            {accounts.length > 0
-                                ? (isPt ? "Crie uma nova despesa recorrente e associe-a a uma conta." : "Create a new recurring expense and link it to an account.")
-                                : (isPt ? "Ligue primeiro uma conta na página Accounts para poder associar a despesa." : "Connect an account first on the Accounts page so the bill can be assigned.")}
-                        </DialogDescription>
-                    </DialogHeader>
+                <FormDialogContent maxWidth="430px">
+                    <FormDialogHeader
+                        title={editingBillId ? (isPt ? "Editar conta a pagar" : "Edit bill") : (isPt ? "Adicionar conta a pagar" : "Add bill")}
+                        description={accounts.length > 0
+                            ? (isPt ? "Crie uma nova despesa recorrente e associe-a a uma conta." : "Create a new recurring expense and link it to an account.")
+                            : (isPt ? "Ligue primeiro uma conta na página Accounts para poder associar a despesa." : "Connect an account first on the Accounts page so the bill can be assigned.")}
+                    />
 
-                    <div className="grid gap-4 py-2">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            handleCreateBill()
+                        }}
+                        className="flex flex-col gap-4"
+                    >
                         <div className="grid gap-2">
                             <Label htmlFor="bill-name">{isPt ? "Nome" : "Name"}</Label>
                             <Input id="bill-name" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} placeholder={isPt ? "Ex.: Internet" : "e.g. Internet"} />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="bill-amount">{isPt ? "Valor" : "Amount"}</Label>
                                 <Input id="bill-amount" type="number" min="0" step="0.01" value={formData.amount} onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))} />
@@ -220,7 +281,7 @@ export default function BillsPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label>{isPt ? "Frequência" : "Frequency"}</Label>
                                 <Select value={formData.frequency} onValueChange={(value) => setFormData((prev) => ({ ...prev, frequency: value }))}>
@@ -267,23 +328,27 @@ export default function BillsPage() {
                             </Select>
                         </div>
 
-                        <label className="flex items-center gap-2 text-sm text-neutral-400">
+                        <label className="group flex cursor-pointer select-none items-center justify-center gap-2 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-3 py-2.5 transition-colors hover:border-[color:var(--border-strong)]">
                             <Checkbox checked={formData.autopay} onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, autopay: checked === true }))} />
-                            {isPt ? "Pagamento automático" : "Autopay enabled"}
+                            <span className="text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+                                {isPt ? "Pagamento automático" : "Autopay enabled"}
+                            </span>
                         </label>
-                    </div>
 
-                    <DialogFooter>
-                        <Button variant="glass" onClick={() => setIsAddDialogOpen(false)}>{isPt ? "Cancelar" : "Cancel"}</Button>
-                        <Button onClick={handleCreateBill} disabled={isSaving || accounts.length === 0}>
+                        <FormDialogActions>
+                            <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving || accounts.length === 0}>
                             {isSaving
                                 ? (isPt ? "A guardar..." : "Saving...")
                                 : editingBillId
                                     ? (isPt ? "Guardar" : "Save")
                                     : (isPt ? "Adicionar" : "Add bill")}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
+                            </Button>
+                            <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setIsAddDialogOpen(false)}>
+                                {isPt ? "Cancelar" : "Cancel"}
+                            </Button>
+                        </FormDialogActions>
+                    </form>
+                </FormDialogContent>
             </Dialog>
         </PageShell>
     )

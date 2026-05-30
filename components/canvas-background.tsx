@@ -1,3 +1,12 @@
+//
+//  canvas-background.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Canvas background React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import { useEffect, useRef } from "react"
@@ -10,30 +19,39 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    const context = canvas.getContext("2d")
+    if (!context) return
+    const ctx: CanvasRenderingContext2D = context
     const container = inset ? canvas.parentElement : null
 
-    // ── Respect prefers-reduced-motion ──
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
-    if (mq.matches) return // skip animation entirely
+    if (mq.matches) return
 
-    // ── Config ──
-    const GAP = 24
-    const DOT_R_BASE = 1.0    // base dot radius
-    const DOT_R_PEAK = 1.3    // dot radius at wave peak
-    const ALPHA_BASE = 0.05   // base alpha
-    const ALPHA_PEAK = 0.08   // alpha at wave peak
-    const WAVE_AMP = 4        // positional displacement px
-    const WAVE_WIDTH = 280    // width of the single wave band in px (wider = smoother)
-    const CYCLE_MS = 7000     // ms for one full sweep across the screen
-    const ZOOM_R = 100        // hover lens radius
-    const ZOOM_SCALE = 1.8    // max dot scale at center of lens
-    const PARALLAX_PX = 14    // max parallax shift in px
+    const DPR_CAP = 1
+    const BASE_GAP = 34
+    const DOT_R_BASE = 1.0
+    const DOT_R_PEAK = 1.3
+    const ALPHA_BASE = 0.05
+    const ALPHA_PEAK = 0.08
+    const WAVE_AMP = 4
+    const WAVE_WIDTH = 280
+    const CYCLE_MS = 7000
+    const ZOOM_R = 100
+    const ZOOM_SCALE = 1.8
+    const PARALLAX_PX = 14
 
     let rafId = 0
+    let boundsRafId = 0
+    let loadingObserver: MutationObserver | null = null
+    let deferredByLoader = Boolean(document.querySelector('[aria-label="Loading"]'))
 
-    // ── Helpers for inset vs fixed mode ──
+    const getDpr = () => Math.min(window.devicePixelRatio || 1, DPR_CAP)
+    const getGap = (w: number, h: number) => {
+      if (w * h > 1_600_000) return BASE_GAP + 6
+      if (w < 760) return BASE_GAP + 2
+      return BASE_GAP
+    }
+
     const getSize = () => {
       if (inset && container) {
         return { w: container.clientWidth, h: container.clientHeight }
@@ -49,137 +67,103 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
       return { ox: 0, oy: 0 }
     }
 
-    // ── Keep the canvas locked to the viewport ──
-    const syncCanvasBounds = () => {
-      const dpr = window.devicePixelRatio || 1
-      const { w, h } = getSize()
-
-      if (inset && container) {
-        const rect = container.getBoundingClientRect()
-        canvas.style.left = `${rect.left}px`
-        canvas.style.top = `${rect.top}px`
-      } else {
-        canvas.style.left = "0px"
-        canvas.style.top = "0px"
-      }
-
-      canvas.width = w * dpr
-      canvas.height = h * dpr
-      canvas.style.width = `${w}px`
-      canvas.style.height = `${h}px`
-    }
-    syncCanvasBounds()
-
-    let ro: ResizeObserver | null = null
-    if (inset && container) {
-      ro = new ResizeObserver(syncCanvasBounds)
-      ro.observe(container)
-      window.addEventListener("resize", syncCanvasBounds)
-      window.addEventListener("scroll", syncCanvasBounds, { passive: true })
-    } else {
-      window.addEventListener("resize", syncCanvasBounds)
-    }
-
-    // ── Cache dark mode via MutationObserver ──
     let dark = document.documentElement.classList.contains("dark")
     const mo = new MutationObserver(() => {
       dark = document.documentElement.classList.contains("dark")
+      scheduleDraw()
     })
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
 
-    // Perpendicular to travel direction (bottom-right → top-left)
-    const PERP_X = -0.7071 // -1/√2
-    const PERP_Y =  0.7071 //  1/√2
+    const PERP_X = -0.7071
+    const PERP_Y = 0.7071
 
-    // ── Draw loop ──
-    const draw = (time: number) => {
-      const dpr = window.devicePixelRatio || 1
+    function scheduleDraw() {
+      if (deferredByLoader) return
+      if (rafId || document.visibilityState === "hidden") return
+      rafId = requestAnimationFrame(draw)
+    }
+
+    function draw(time: number) {
+      rafId = 0
+
+      const dpr = getDpr()
       const { w, h } = getSize()
+      if (w <= 0 || h <= 0) return
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
       const st = stateRef.current
 
-      // Smooth fade for zoom lens
       if (st.active) st.fade = Math.min(1, st.fade + 0.06)
       else st.fade = Math.max(0, st.fade - 0.04)
 
-      const cols = Math.ceil(w / GAP) + 6
-      const rows = Math.ceil(h / GAP) + 6
-      const darkMul = dark ? 0.8 : 1
+      const gap = getGap(w, h)
+      const cols = Math.ceil(w / gap) + 6
+      const rows = Math.ceil(h / gap) + 6
+      const darkMul = dark ? 0.48 : 1
       const { mx, my, fade } = st
 
-      // ── Parallax: smooth mouse-based offset ──
-      // pmx/pmy track normalised mouse position (0…1), lerped for smoothness
       const targetPx = mx >= 0 ? mx / w : 0.5
       const targetPy = my >= 0 ? my / h : 0.5
+      const parallaxSettling =
+        Math.abs(targetPx - st.pmx) > 0.001 ||
+        Math.abs(targetPy - st.pmy) > 0.001
       st.pmx += (targetPx - st.pmx) * 0.04
       st.pmy += (targetPy - st.pmy) * 0.04
-      const parX = (st.pmx - 0.5) * -PARALLAX_PX  // shift opposite to cursor
+      const parX = (st.pmx - 0.5) * -PARALLAX_PX
       const parY = (st.pmy - 0.5) * -PARALLAX_PX
 
-      // The full diagonal span of the screen
       const maxDiag = (w + h) * 0.7071
-      // Current position of the wave center along the diagonal,
-      // traveling from bottom-right (maxDiag) to top-left (0), looping.
-      // Add WAVE_WIDTH padding so the wave fully exits before re-entering.
       const totalTravel = maxDiag + WAVE_WIDTH * 2
-      const t01 = (time % CYCLE_MS) / CYCLE_MS  // 0→1 repeating
+      const t01 = (time % CYCLE_MS) / CYCLE_MS
       const waveCenter = maxDiag + WAVE_WIDTH - t01 * totalTravel
+      const sigma = WAVE_WIDTH * 0.55
 
-      // Gaussian-like shape: exp(-(d/sigma)²)
-      const sigma = WAVE_WIDTH * 0.55  // wider falloff → smoother band
-
-      // ── Click ripples ──
-      const RIPPLE_DURATION = 1800   // ms to fully fade out
-      const RIPPLE_MAX_R = 350       // max radius px
-      const RIPPLE_RING_W = 90       // width of the visible ring band
+      const RIPPLE_DURATION = 1800
+      const RIPPLE_MAX_R = 350
+      const RIPPLE_RING_W = 90
       const ripples = ripplesRef.current
-      // Prune dead ripples
+
       for (let i = ripples.length - 1; i >= 0; i--) {
         if (time - ripples[i].born > RIPPLE_DURATION) ripples.splice(i, 1)
       }
 
-      // Zoomed dots need individual draws (variable radius / alpha)
       const zoomBuf: { x: number; y: number; r: number; a: number }[] = []
+      ctx.fillStyle = dark ? "rgb(255,255,255)" : "rgb(0,0,0)"
 
       for (let row = -3; row < rows; row++) {
         for (let col = -3; col < cols; col++) {
-          const bx = col * GAP + parX
-          const by = row * GAP + parY
+          const bx = col * gap + parX
+          const by = row * gap + parY
 
-          // ── Single wave pulse ──
-          const diag = (col * GAP + row * GAP) * 0.7071
+          const diag = (col * gap + row * gap) * 0.7071
           const dist = diag - waveCenter
-          const pulse = Math.exp(-(dist * dist) / (sigma * sigma)) // 0…1
+          const pulse = Math.exp(-(dist * dist) / (sigma * sigma))
 
-          // Positional displacement (perpendicular, at wave peak)
           const dx = WAVE_AMP * PERP_X * pulse
           const dy = WAVE_AMP * PERP_Y * pulse
 
-          // Size & opacity modulated by pulse
           let dotR = DOT_R_BASE + (DOT_R_PEAK - DOT_R_BASE) * pulse
           let dotAlpha = (ALPHA_BASE + (ALPHA_PEAK - ALPHA_BASE) * pulse) * darkMul
 
           let x = bx + dx
           let y = by + dy
 
-          // ── Apply click ripples to this dot ──
           for (const rp of ripples) {
-            const age = (time - rp.born) / RIPPLE_DURATION // 0→1
-            const easeAge = 1 - (1 - age) * (1 - age) // ease-out quadratic for expansion
+            const age = (time - rp.born) / RIPPLE_DURATION
+            const easeAge = 1 - (1 - age) * (1 - age)
             const rpRadius = Math.max(0.01, easeAge * RIPPLE_MAX_R)
             const rdx = x - rp.x
             const rdy = y - rp.y
             const rdist = Math.sqrt(rdx * rdx + rdy * rdy)
             const ringDist = Math.abs(rdist - rpRadius)
             if (ringDist < RIPPLE_RING_W) {
-              const ringT = 1 - ringDist / RIPPLE_RING_W // 1 at ring center, 0 at edge
-              const fadeOut = (1 - age) * (1 - age) * (1 - age) // cubic fade — very gentle
+              const ringT = 1 - ringDist / RIPPLE_RING_W
+              const fadeOut = (1 - age) * (1 - age) * (1 - age)
               const intensity = ringT * ringT * fadeOut
               dotR += 0.5 * intensity
               dotAlpha += 0.04 * intensity * darkMul
-              // Gentle push outward from ripple center
+
               if (rdist > 0.1) {
                 const push = 1.5 * intensity
                 x += (rdx / rdist) * push
@@ -187,11 +171,11 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
               }
             }
           }
+
           let zoomed = false
           let finalR = dotR
           let finalA = dotAlpha
 
-          // ── Zoom lens ──
           if (fade > 0.01 && mx >= 0) {
             const dx2 = x - mx
             const dy2 = y - my
@@ -199,12 +183,11 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
 
             if (dist < ZOOM_R) {
               const t = 1 - dist / ZOOM_R
-              const ease = t * t * (3 - 2 * t) // smoothstep
+              const ease = t * t * (3 - 2 * t)
               const scale = 1 + (ZOOM_SCALE - 1) * ease * fade
               finalR = dotR * scale
               finalA = dotAlpha + dotAlpha * 1.5 * ease * fade
 
-              // Push outward for magnification feel
               if (dist > 0.1) {
                 const push = ease * fade * 4
                 x += (dx2 / dist) * push
@@ -217,10 +200,7 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
           }
 
           if (!zoomed) {
-            // Each dot gets its own colour since alpha varies with wave
-            ctx.fillStyle = dark
-              ? `rgba(255,255,255,${finalA})`
-              : `rgba(0,0,0,${finalA})`
+            ctx.globalAlpha = Math.min(1, finalA)
             ctx.beginPath()
             ctx.arc(x, y, finalR, 0, Math.PI * 2)
             ctx.fill()
@@ -228,74 +208,135 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
         }
       }
 
-      // Draw zoomed dots
       for (const d of zoomBuf) {
-        ctx.fillStyle = dark
-          ? `rgba(255,255,255,${d.a})`
-          : `rgba(0,0,0,${d.a})`
+        ctx.globalAlpha = Math.min(1, d.a)
         ctx.beginPath()
         ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2)
         ctx.fill()
       }
 
-      // ── Draw ripple rings ──
+      ctx.globalAlpha = 1
+      ctx.strokeStyle = dark ? "rgb(255,255,255)" : "rgb(0,0,0)"
       for (const rp of ripples) {
         const age = (time - rp.born) / RIPPLE_DURATION
         const easeAge = 1 - (1 - age) * (1 - age)
         const rpRadius = Math.max(0.01, easeAge * RIPPLE_MAX_R)
-        const fadeOut = (1 - age) * (1 - age) * (1 - age) // cubic fade
+        const fadeOut = (1 - age) * (1 - age) * (1 - age)
         if (fadeOut > 0.001) {
           ctx.beginPath()
           ctx.arc(rp.x, rp.y, rpRadius, 0, Math.PI * 2)
-          ctx.strokeStyle = dark
-            ? `rgba(255,255,255,${0.035 * fadeOut})`
-            : `rgba(0,0,0,${0.025 * fadeOut})`
+          ctx.globalAlpha = (dark ? 0.02 : 0.025) * fadeOut
           ctx.lineWidth = 1
           ctx.stroke()
         }
       }
+      ctx.globalAlpha = 1
 
-      rafId = requestAnimationFrame(draw)
+      const fadeChanging = st.active ? st.fade < 0.995 : st.fade > 0.01
+      if (fadeChanging || parallaxSettling || ripples.length > 0) {
+        scheduleDraw()
+      }
     }
-    rafId = requestAnimationFrame(draw)
 
-    // ── Click ripple handler ──
+    const syncCanvasBounds = () => {
+      const dpr = getDpr()
+      const { w, h } = getSize()
+
+      if (inset && container) {
+        const rect = container.getBoundingClientRect()
+        canvas.style.left = `${rect.left}px`
+        canvas.style.top = `${rect.top}px`
+      } else {
+        canvas.style.left = "0px"
+        canvas.style.top = "0px"
+      }
+
+      canvas.width = Math.max(1, Math.ceil(w * dpr))
+      canvas.height = Math.max(1, Math.ceil(h * dpr))
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      scheduleDraw()
+    }
+
+    const scheduleCanvasBoundsSync = () => {
+      if (boundsRafId) return
+      boundsRafId = requestAnimationFrame(() => {
+        boundsRafId = 0
+        syncCanvasBounds()
+      })
+    }
+
+    if (deferredByLoader) {
+      loadingObserver = new MutationObserver(() => {
+        if (document.querySelector('[aria-label="Loading"]')) return
+        deferredByLoader = false
+        loadingObserver?.disconnect()
+        loadingObserver = null
+        scheduleCanvasBoundsSync()
+      })
+      loadingObserver.observe(document.body, { childList: true, subtree: true })
+    }
+
+    syncCanvasBounds()
+
+    let ro: ResizeObserver | null = null
+    if (inset && container) {
+      ro = new ResizeObserver(scheduleCanvasBoundsSync)
+      ro.observe(container)
+      window.addEventListener("resize", scheduleCanvasBoundsSync)
+      window.addEventListener("scroll", scheduleCanvasBoundsSync, { passive: true })
+    } else {
+      window.addEventListener("resize", scheduleCanvasBoundsSync)
+    }
+
     const onClick = (e: MouseEvent) => {
       const { ox, oy } = getOffset()
       const rp = ripplesRef.current
-      // Cap at 8 simultaneous ripples to prevent overload
-      if (rp.length >= 8) rp.shift()
+      if (rp.length >= 4) rp.shift()
       rp.push({ x: e.clientX - ox, y: e.clientY - oy, born: performance.now() })
+      scheduleDraw()
     }
     window.addEventListener("click", onClick)
 
-    // ── Mouse tracking ──
     const onMove = (e: MouseEvent) => {
       const el = e.target as HTMLElement
-      // Hide zoom when cursor is over any interactive UI element
-      const overUI = el.closest(
-        "form, button, input, a, select, textarea"
-      )
+      const overUI = el.closest("form, button, input, a, select, textarea")
       const { ox, oy } = getOffset()
       stateRef.current.mx = e.clientX - ox
       stateRef.current.my = e.clientY - oy
       stateRef.current.active = !overUI
+      scheduleDraw()
     }
     const onLeave = () => {
       stateRef.current.active = false
+      scheduleDraw()
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        cancelAnimationFrame(rafId)
+        rafId = 0
+        cancelAnimationFrame(boundsRafId)
+        boundsRafId = 0
+      } else {
+        scheduleCanvasBoundsSync()
+      }
     }
 
     window.addEventListener("mousemove", onMove)
     document.addEventListener("mouseleave", onLeave)
+    document.addEventListener("visibilitychange", onVisibilityChange)
 
     return () => {
       cancelAnimationFrame(rafId)
+      cancelAnimationFrame(boundsRafId)
+      loadingObserver?.disconnect()
       mo.disconnect()
       if (ro) ro.disconnect()
-      window.removeEventListener("resize", syncCanvasBounds)
-      if (inset) window.removeEventListener("scroll", syncCanvasBounds)
+      window.removeEventListener("resize", scheduleCanvasBoundsSync)
+      if (inset) window.removeEventListener("scroll", scheduleCanvasBoundsSync)
       window.removeEventListener("mousemove", onMove)
       document.removeEventListener("mouseleave", onLeave)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
       window.removeEventListener("click", onClick)
     }
   }, [inset])

@@ -1,9 +1,17 @@
+//
+//  reset-to-admin.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the reset to admin maintenance script for Argent, automating operational or
+//  data-repair work that supports local development and administration.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /**
  * Reset the database to a single admin user using the new password hashing.
  *
  * Usage:
- *   pnpm tsx scripts/reset-to-admin.ts <adminEmail> <newPassword>
- *   npx  tsx scripts/reset-to-admin.ts <adminEmail> <newPassword>
+ *   pnpm run admin:reset -- <adminEmail> <newPassword>
  *
  * What it does (transactionally):
  *   1. Upserts the admin user (role=admin, status=active) with a fresh scrypt hash
@@ -17,14 +25,12 @@
  */
 
 import 'dotenv/config'
-import pg from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../lib/generated/prisma/client'
 import { hashPassword } from '../lib/password'
 
 function usage(): never {
-  console.error('Usage: pnpm tsx scripts/reset-to-admin.ts <adminEmail> <newPassword>')
-  console.error('   or: npx  tsx scripts/reset-to-admin.ts <adminEmail> <newPassword>')
+  console.error('Usage: pnpm run admin:reset -- <adminEmail> <newPassword>')
   process.exit(1)
 }
 
@@ -41,8 +47,7 @@ if (newPassword.length < 8) {
   process.exit(1)
 }
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) })
 
 async function main() {
   const hash = hashPassword(newPassword)

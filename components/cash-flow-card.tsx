@@ -1,8 +1,18 @@
+//
+//  cash-flow-card.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Cash flow card React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { EmptyState } from "@/components/empty-state"
 import {
     ContextMenu,
     ContextMenuContent,
@@ -45,6 +55,9 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
     const { formatCurrency } = useCurrency()
     const [data, setData] = React.useState<CashFlowData | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
+    const shellClassName = compact
+        ? "flex h-full min-h-0 flex-col overflow-hidden bg-transparent"
+        : cn("overflow-hidden rounded-2xl", PRISM.cardSurface)
 
     const buildUrl = React.useCallback(() => {
         const params = new URLSearchParams({ months: compact ? "4" : "6" })
@@ -75,7 +88,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
 
     if (isLoading) {
         return (
-            <div className={cn("overflow-hidden rounded-2xl", compact && "flex h-full min-h-0 flex-col", PRISM.cardSurface)}>
+            <div className={shellClassName}>
                 <div className={cn(compact ? "p-4 pb-3" : "p-5 pb-4")}>
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-2.5">
@@ -92,7 +105,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                     </div>
                 </div>
                 <div className={cn(compact ? "min-h-0 flex-1 space-y-3.5 overflow-auto px-4 pb-4" : "px-5 pb-5 space-y-5")}>
-                    <div className={cn("grid grid-cols-2 @[640px]/main:grid-cols-4", compact ? "gap-3" : "gap-4")}>
+                    <div className="grid grid-cols-2 gap-4 @[640px]/main:grid-cols-4">
                         {[0, 1, 2, 3].map(i => (
                             <div key={i} className="space-y-1.5">
                                 <Skeleton className="h-3 w-16" />
@@ -114,13 +127,26 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
         )
     }
 
-    if (!data) return null
+    const isPt = language === "pt"
+
+    if (!data) {
+        return (
+            <div className={shellClassName}>
+                <EmptyState
+                    variant="no-data"
+                    placement={compact ? "card" : "section"}
+                    title={isPt ? "Nada para mostrar aqui" : "Nothing to show here yet"}
+                    description={isPt ? "A previsão aparece quando houver histórico financeiro suficiente." : "The forecast appears once there is enough financial history."}
+                    className="h-full min-h-[220px]"
+                />
+            </div>
+        )
+    }
 
     const projectionRows = compact ? data.projections.slice(0, 4) : data.projections
 
     const isPositiveNet = data.monthlyNet >= 0
     const fmt = (n: number) => formatCurrency(n)
-    const isPt = language === "pt"
 
     const handleCopySummary = () => {
         const summary = [
@@ -146,7 +172,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>
-                <div className={cn("overflow-hidden rounded-2xl", compact && "flex h-full min-h-0 flex-col", PRISM.cardSurface)}>
+                <div className={shellClassName}>
             <div className={cn(compact ? "p-4 pb-3" : "p-5 pb-4")}>
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-2.5">
@@ -174,7 +200,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
             </div>
             <div className={cn(compact ? "min-h-0 flex-1 space-y-3.5 overflow-auto px-4 pb-4" : "px-5 pb-5 space-y-5")}>
                 {/* Summary Stats */}
-                <div className={cn("grid grid-cols-2 @[640px]/main:grid-cols-4", compact ? "gap-3" : "gap-4")}>
+                <div className="grid grid-cols-2 gap-4 @[640px]/main:grid-cols-4">
                     <div className="space-y-1">
                         <p className="text-[11px] font-semibold tracking-wide text-neutral-400">
                             {isPt ? "Receita média" : "Avg. Income"}

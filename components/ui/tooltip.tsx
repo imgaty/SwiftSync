@@ -1,7 +1,18 @@
+//
+//  tooltip.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Tooltip UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
@@ -14,6 +25,11 @@ export const TOOLTIP_DELAY = 400
 // ==============================================================================
 
 type Side = "top" | "right" | "bottom" | "left"
+type CursorPoint = { x: number; y: number }
+type TooltipSize = { width: number; height: number }
+
+const CURSOR_TOOLTIP_OFFSET = 12
+const CURSOR_TOOLTIP_MARGIN = 8
 
 interface TooltipRegistryEntry {
     id: string
@@ -48,6 +64,39 @@ function getSiblingPreference(groupId?: string): Side | null {
     return Object.entries(sideCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as Side || null
 }
 
+function getCursorTooltipStyle(
+    point: CursorPoint,
+    size: TooltipSize | null,
+    text: string
+): React.CSSProperties {
+    const width = size?.width ?? Math.min(220, text.length * 8 + 24)
+    const height = size?.height ?? 34
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    let left = point.x + CURSOR_TOOLTIP_OFFSET
+    let top = point.y + CURSOR_TOOLTIP_OFFSET
+
+    if (left + width > viewportWidth - CURSOR_TOOLTIP_MARGIN) {
+        left = point.x - width - CURSOR_TOOLTIP_OFFSET
+    }
+
+    if (top + height > viewportHeight - CURSOR_TOOLTIP_MARGIN) {
+        top = point.y - height - CURSOR_TOOLTIP_OFFSET
+    }
+
+    left = Math.max(CURSOR_TOOLTIP_MARGIN, Math.min(left, viewportWidth - width - CURSOR_TOOLTIP_MARGIN))
+    top = Math.max(CURSOR_TOOLTIP_MARGIN, Math.min(top, viewportHeight - height - CURSOR_TOOLTIP_MARGIN))
+
+    return {
+        position: "fixed",
+        left,
+        top,
+        zIndex: 999,
+        pointerEvents: "none",
+    }
+}
+
 // ==============================================================================
 // SMART TOOLTIP - Self-aware positioning
 // ==============================================================================
@@ -57,6 +106,8 @@ interface SmartTooltipProps {
     text: string
     /** Optional group ID - tooltips in the same group will try to be consistent */
     group?: string
+    /** Position once at the pointer entry point instead of anchoring to the trigger */
+    cursorAnchor?: boolean
     /** Force a specific side (overrides smart positioning) */
     forceSide?: Side
     /** Delay before showing (default: 400ms) */
@@ -77,7 +128,7 @@ interface SmartTooltipProps {
  * Usage:
  * ```tsx
  * <SmartTooltip text="Remove chart">
- *     <button>X</button>
+ *     <Button>X</Button>
  * </SmartTooltip>
  * ```
  */
@@ -85,18 +136,25 @@ export function SmartTooltip({
     children,
     text,
     group,
+    cursorAnchor = false,
     forceSide,
     delay = TOOLTIP_DELAY,
     className
 }: SmartTooltipProps) {
     const triggerRef = React.useRef<HTMLButtonElement>(null)
+    const contentRef = React.useRef<HTMLDivElement>(null)
+    const cursorOpenTimeout = React.useRef<number | null>(null)
     const [computedSide, setComputedSide] = React.useState<Side>("top")
     const [isDisabled, setIsDisabled] = React.useState(false)
+    const [cursorTrigger, setCursorTrigger] = React.useState<HTMLElement | null>(null)
+    const [cursorPoint, setCursorPoint] = React.useState<CursorPoint | null>(null)
+    const [cursorTooltipOpen, setCursorTooltipOpen] = React.useState(false)
+    const [cursorTooltipSize, setCursorTooltipSize] = React.useState<TooltipSize | null>(null)
     const tooltipId = React.useId()
 
     // Detect if the child element is disabled
     React.useEffect(() => {
-        const trigger = triggerRef.current
+        const trigger = cursorAnchor ? cursorTrigger : triggerRef.current
         if (!trigger) return
 
         const checkDisabled = () => {
@@ -117,12 +175,12 @@ export function SmartTooltip({
         observer.observe(trigger, { attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'class'] })
 
         return () => observer.disconnect()
-    }, [])
+    }, [cursorAnchor, cursorTrigger])
 
     const calculateBestSide = React.useCallback(() => {
         if (forceSide) return forceSide
 
-        const trigger = triggerRef.current
+        const trigger = cursorAnchor ? cursorTrigger : triggerRef.current
         if (!trigger) return "top"
 
         const rect = trigger.getBoundingClientRect()
@@ -220,7 +278,7 @@ export function SmartTooltip({
             .sort((a, b) => b[1] - a[1])[0][0]
 
         return bestSide
-    }, [forceSide, text.length, group])
+    }, [forceSide, text.length, group, cursorAnchor, cursorTrigger])
 
     // Recalculate on mount and when relevant props change
     React.useEffect(() => {
@@ -242,6 +300,100 @@ export function SmartTooltip({
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     }, [calculateBestSide, tooltipId, group])
+
+    React.useEffect(() => {
+        return () => {
+            if (cursorOpenTimeout.current) window.clearTimeout(cursorOpenTimeout.current)
+        }
+    }, [])
+
+    React.useEffect(() => {
+        if (!cursorTooltipOpen || !contentRef.current) return
+
+        const rect = contentRef.current.getBoundingClientRect()
+        setCursorTooltipSize({ width: rect.width, height: rect.height })
+    }, [cursorTooltipOpen, text])
+
+    const closeCursorTooltip = React.useCallback(() => {
+        if (cursorOpenTimeout.current) {
+            window.clearTimeout(cursorOpenTimeout.current)
+            cursorOpenTimeout.current = null
+        }
+
+        setCursorTooltipOpen(false)
+        setCursorTooltipSize(null)
+        setCursorPoint(null)
+        setCursorTrigger(null)
+    }, [])
+
+    const openCursorTooltip = React.useCallback((point: CursorPoint) => {
+        setCursorPoint(point)
+
+        if (cursorOpenTimeout.current) window.clearTimeout(cursorOpenTimeout.current)
+        cursorOpenTimeout.current = window.setTimeout(() => {
+            setCursorTooltipOpen(true)
+            cursorOpenTimeout.current = null
+        }, delay)
+    }, [delay])
+
+    const handleCursorPointerEnter = React.useCallback((event: React.PointerEvent<HTMLElement>) => {
+        if (event.pointerType === "touch") return
+        setCursorTrigger(event.currentTarget)
+        openCursorTooltip({ x: event.clientX, y: event.clientY })
+    }, [openCursorTooltip])
+
+    const handleCursorFocus = React.useCallback((event: React.FocusEvent<HTMLElement>) => {
+        setCursorTrigger(event.currentTarget)
+        const rect = event.currentTarget.getBoundingClientRect()
+
+        if (cursorOpenTimeout.current) window.clearTimeout(cursorOpenTimeout.current)
+        setCursorPoint({ x: rect.right, y: rect.top + rect.height / 2 })
+        setCursorTooltipOpen(true)
+    }, [])
+
+    if (cursorAnchor) {
+        const tooltip = cursorTooltipOpen && cursorPoint
+            ? createPortal(
+                <div
+                    ref={contentRef}
+                    id={tooltipId}
+                    role="tooltip"
+                    data-state="open"
+                    data-side={computedSide}
+                    className={cn(
+                        PRISM.animateIn,
+                        "w-fit max-w-[220px]",
+                        PRISM.container,
+                        "text-balance",
+                        isDisabled
+                            ? "bg-white/3 text-neutral-400"
+                            : "",
+                        className
+                    )}
+                    style={getCursorTooltipStyle(cursorPoint, cursorTooltipSize, text)}
+                >
+                    {text}
+                </div>,
+                document.body
+            )
+            : null
+
+        return (
+            <>
+                <Slot
+                    aria-describedby={cursorTooltipOpen ? tooltipId : undefined}
+                    onPointerEnter={handleCursorPointerEnter}
+                    onPointerLeave={closeCursorTooltip}
+                    onFocus={handleCursorFocus}
+                    onBlur={closeCursorTooltip}
+                    onClick={closeCursorTooltip}
+                >
+                    {children}
+                </Slot>
+                {tooltip}
+            </>
+        )
+    }
 
     return (
         <TooltipProvider>
@@ -370,13 +522,13 @@ function TooltipContent({
  * 
  *     return (
  *         <>
- *             <button
+ *             <Button
  *                 onMouseEnter={tooltip.onMouseEnter}
  *                 onMouseLeave={tooltip.onMouseLeave}
  *                 onClick={() => { doSomething(); tooltip.hide() }}
  *             >
  *                 Hover me
- *             </button>
+ *             </Button>
  * 
  *             {tooltip.isVisible && (
  *                 <div

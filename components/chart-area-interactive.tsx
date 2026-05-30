@@ -1,10 +1,19 @@
+//
+//  chart-area-interactive.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Implements the Chart area interactive React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { CalendarRange, ChevronLeft, ChevronRight, ClipboardCopy, Filter, Maximize2, Minus, Plus, Settings2 } from "lucide-react"
 
 import { useChartManager } from "@/hooks/use-chart-manager"
-import { useChartData } from "@/hooks/use-chart-data"
+import { useChartData, type APITransaction } from "@/hooks/use-chart-data"
 import { ChartProvider } from "@/components/chart-context"
 
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +21,7 @@ import { ChartConfig } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dropdown, DropdownContent, DropdownTrigger } from "@/components/ui/dropdown"
 import { Button } from "@/components/ui/button"
+import { TabSwitcher, TabSwitcherIconButton, TabSwitcherItem } from "@/components/ui/tab-switcher"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
@@ -46,7 +56,7 @@ const ExpandedChartView = React.lazy(() => import("@/components/expanded-chart-v
 // CONSTANTS
 // ==============================================================================
 
-const getLabelWithFallback = (labels: Record<string, string>, key: string): string => 
+const getLabelWithFallback = (labels: Record<string, string>, key: string): string =>
     labels[key] ?? key.charAt(0).toUpperCase() + key.slice(1)
 
 
@@ -58,13 +68,14 @@ const getLabelWithFallback = (labels: Record<string, string>, key: string): stri
 interface ChartAreaInteractiveProps {
     accountIds?: string[]
     compact?: boolean
+    transactions?: APITransaction[] | null
 }
 
-export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaInteractiveProps = {}) {
+export function ChartAreaInteractive({ accountIds, compact = false, transactions }: ChartAreaInteractiveProps = {}) {
     const { t: lang } = useLanguage()
     const { currency, formatCurrency } = useCurrency()
-    const { data: chartData, isLoading, errorInfo, minDate } = useChartData(accountIds)
-    
+    const { data: chartData, isLoading, errorInfo, minDate } = useChartData(accountIds, transactions)
+
     // Selected chart for controls (click/tap selection) - visual indicator only - visual indicator only
     const [selectedChartIdForControls, setSelectedChartIdForControls] = React.useState<string | null>(null)
     const selectionTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
@@ -97,12 +108,12 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
     const { periodType, timeOffset, customDateRange } = selectedChart
     const [dateRangeOpen, setDateRangeOpen] = React.useState(false)
     const [expandedChartId, setExpandedChartId] = React.useState<string | null>(null)
-    
+
     // Responsive layout states - all based on collision detection
     const [controlsWrapped, setControlsWrapped] = React.useState(false)
     const [timeToggleCollapsed, setTimeToggleCollapsed] = React.useState(false)
     const [horizontalLayout, setHorizontalLayout] = React.useState(true)
-    
+
     // Refs for collision detection
     const headerRef = React.useRef<HTMLDivElement>(null)
     const controlsRef = React.useRef<HTMLDivElement>(null)
@@ -118,64 +129,57 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
     React.useEffect(() => {
         layoutStateRef.current = { controlsWrapped, timeToggleCollapsed, horizontalLayout }
     }, [controlsWrapped, timeToggleCollapsed, horizontalLayout])
-    
+
     // Collision detection for responsive layout
     React.useEffect(() => {
         const header = headerRef.current, controls = controlsRef.current
         const leftGroup = leftGroupRef.current, rightGroup = rightGroupRef.current
         const toggleEl = timeToggleRef.current
         const amount = amountRef.current
-        
+
         if (!header || !controls || !leftGroup || !rightGroup || !amount) return
-        
+
         let rafId: number
         const DATE_PICKER_WIDTH = 40
-        
+
         const check = () => {
             const { controlsWrapped: wrapped, timeToggleCollapsed: collapsed, horizontalLayout: horiz } = layoutStateRef.current
             const w = header.offsetWidth
             const stored = naturalWidthsRef.current
             const isExpanded = horiz && !collapsed && !wrapped
-            
-            // Measure or use stored values
+
             const left = isExpanded ? leftGroup.scrollWidth : (stored?.left ?? leftGroup.scrollWidth)
             const amnt = isExpanded ? amount.scrollWidth : (stored?.amount ?? amount.scrollWidth)
-            
-            // Measure current toggle width and store appropriately
+
             let rightExp = stored?.rightExpanded ?? 200 + 12 + DATE_PICKER_WIDTH
             let rightCol = stored?.rightCollapsed ?? 180
-            
+
             if (toggleEl) {
                 if (isExpanded) {
-                    // Currently showing expanded view - measure it
                     rightExp = toggleEl.scrollWidth + 12 + DATE_PICKER_WIDTH
                 } else if (collapsed && !wrapped) {
-                    // Currently showing collapsed view - measure it
                     rightCol = toggleEl.scrollWidth + 12 + DATE_PICKER_WIDTH
                 }
             }
-            
-            // Store measurements
+
             if (isExpanded) naturalWidthsRef.current = { left, rightExpanded: rightExp, rightCollapsed: rightCol, amount: amnt }
             else if (stored) naturalWidthsRef.current = { ...stored, rightCollapsed: rightCol }
             else naturalWidthsRef.current = { left, rightExpanded: rightExp, rightCollapsed: rightCol, amount: amnt }
-            
-            // Calculate thresholds (NO hysteresis - same in both directions)
+
             const expNeeded = left + 12 + rightExp
             const colNeeded = left + 12 + rightCol
             const horizNeeded = amnt + 16 + expNeeded
-            
-            // Update states only when changed
+
             if ((horizNeeded <= w) !== horiz) setHorizontalLayout(horizNeeded <= w)
             if ((expNeeded > w) !== collapsed) setTimeToggleCollapsed(expNeeded > w)
             if ((colNeeded > w) !== wrapped) setControlsWrapped(colNeeded > w)
         }
-        
+
         check()
         const observer = new ResizeObserver(() => { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(check) })
         observer.observe(header)
         observer.observe(controls)
-        
+
         return () => { cancelAnimationFrame(rafId); observer.disconnect() }
     }, [])
 
@@ -193,8 +197,8 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
 
     const contextValue = React.useMemo(() => ({ chartConfig, labels, locale, currency }), [chartConfig, labels, locale, currency])
     const offsetDate = React.useMemo(() => getOffsetDate(periodType, timeOffset), [periodType, timeOffset])
-    
-    const periodData = React.useMemo(() => 
+
+    const periodData = React.useMemo(() =>
         customDateRange?.startDate && customDateRange?.endDate
             ? getFilteredCustomRangeData(chartData, customDateRange.startDate, customDateRange.endDate)
             : getFilteredPeriodData(chartData, periodType, offsetDate)
@@ -210,15 +214,15 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
     }, [periodType, minDate, offsetDate])
 
     const selectedTotal = React.useMemo(() => {
-        const keys = selectedChart.showTotal || selectedChart.selectedCategories.length === 0 
+        const keys = selectedChart.showTotal || selectedChart.selectedCategories.length === 0
             ? [selectedChart.metricType] : selectedChart.selectedCategories
         return periodData.reduce((sum, item) => sum + keys.reduce((s, k) => s + ((item[k] as number) || 0), 0), 0)
     }, [periodData, selectedChart.showTotal, selectedChart.selectedCategories, selectedChart.metricType])
 
     const metricColor = getConfigColor(chartConfig, selectedChart.metricType)
     const metricColorStyle = React.useMemo(() => ({ backgroundColor: metricColor }), [metricColor])
-    
-    const periodLabel = React.useMemo(() => 
+
+    const periodLabel = React.useMemo(() =>
         customDateRange?.startDate && customDateRange?.endDate
             ? `${new Date(customDateRange.startDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)} - ${new Date(customDateRange.endDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)}`
             : formatPeriodLabel(periodType, offsetDate, locale, labels.all_time ?? "All time")
@@ -241,7 +245,7 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
     const handleMetricTypeChange = React.useCallback((v: string) => v && updateSelectedChart({ metricType: v as MetricType, selectedCategories: [], showTotal: true }), [updateSelectedChart])
     const handleDisplayModeChange = React.useCallback((v: string) => v && updateSelectedChart({ displayMode: v as DisplayMode }), [updateSelectedChart])
     const handlePeriodTypeClick = React.useCallback((key: string) => () => setPeriodType(key), [setPeriodType])
-    
+
     // Chart selection handler (click/tap) with auto-hide timeout
     const handleChartSelect = React.useCallback((chartId: string) => {
         // Clear existing timeout
@@ -252,12 +256,12 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
         // Set timeout to auto-hide visual indicator
         selectionTimeoutRef.current = setTimeout(() => setSelectedChartIdForControls(null), SELECTION_TIMEOUT)
     }, [setSelectedChartId])
-    
+
     // Cleanup timeout on unmount
     React.useEffect(() => {
         return () => { if (selectionTimeoutRef.current) clearTimeout(selectionTimeoutRef.current) }
     }, [])
-    
+
     // Click/tap outside chart area to deselect
     React.useEffect(() => {
         const handleClickOutside = (e: MouseEvent | TouchEvent) => {
@@ -277,7 +281,7 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
             document.removeEventListener('touchstart', handleClickOutside)
         }
     }, [selectedChartIdForControls])
-    
+
     const hasCustomDateRange = !!customDateRange
     const prevDisabled = periodType === 'all' || isBackDisabled || hasCustomDateRange
     const nextDisabled = periodType === 'all' || timeOffset === 0 || hasCustomDateRange
@@ -298,82 +302,75 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
         setSettingsOpen(true)
     }, [setSettingsOpen])
 
-    const prismControlSurface = "border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]"
-    const prismControlHover = "hover:bg-black/10 dark:hover:bg-white/10"
-
-    const visibleCharts = charts
+    const visibleCharts = compact ? charts.slice(0, 1) : charts
+    const allowChartEditing = !compact
 
     if (errorInfo) return <ErrorState type={errorInfo.type} details={errorInfo.details} className="h-[300px]" />
 
     return (
         <ChartProvider value = {contextValue}>
             <TooltipProvider>
-                <div className={compact ? "flex h-full min-h-0 w-full flex-col overflow-hidden" : "w-full overflow-hidden"}>
-                    {/* 
-                        Responsive layout - all controlled by JS collision detection:
-                        - horizontalLayout: amount left, controls right (when space allows)
-                        - timeToggleCollapsed: dropdown vs buttons (when space allows)
-                        - controlsWrapped: wrap to 2 rows (when collapsed toggle still collides)
-                    */}
-                    {/*
-                      In compact (dashboard) mode the surrounding PageSection
-                      already provides a heading + description, so the chart
-                      drops its internal title/amount block and the separator
-                      below the controls. On the dedicated Analytics page
-                      (compact = false) the full chrome is preserved.
-                    */}
-                    <CardHeader ref = {headerRef} className = {`flex gap-4 px-0 py-0 ${compact ? 'pb-2.5' : 'pb-4'} border-b border-black/8 dark:border-white/10 ${horizontalLayout ? 'flex-row justify-between items-start' : 'flex-col'}`}>
-                        {/* Controls - order-2 in horizontal to appear on right */}
+                <div className={compact
+                    ? "flex h-full min-h-[280px] w-full min-w-0 flex-col overflow-hidden"
+                    : "w-full overflow-hidden"
+                }>
+                    <CardHeader ref={headerRef} className={`flex gap-4 px-0 py-0 ${compact ? 'pb-2.5' : 'pb-4'} border-b border-black/8 dark:border-white/10 ${horizontalLayout ? 'flex-row justify-between items-start' : 'flex-col'}`}>
                         <div ref={controlsRef} className={`flex items-center gap-3 min-w-0 justify-between ${horizontalLayout ? 'order-2 shrink-0' : 'w-full'} ${controlsWrapped ? 'flex-wrap gap-y-3' : ''}`}>
-                            {/* Left group: Metric toggle + Filter */}
                             <div ref={leftGroupRef} className={`flex items-center gap-3 min-w-0 ${controlsWrapped ? 'w-full' : 'shrink-0'}`}>
-                                <div className={`inline-flex items-center h-8 rounded-md overflow-hidden divide-x divide-border/50 ${prismControlSurface} ${controlsWrapped ? 'flex-1' : ''}`}>
+                                <TabSwitcher
+                                    ariaLabel={labels.metric_type ?? "Metric type"}
+                                    className={cn(controlsWrapped && "flex-1")}
+                                >
                                     {METRIC_TYPES.map(type => {
                                         const typeLabel = getLabelWithFallback(labels, type)
                                         return (
                                             <Tooltip key={type}>
                                                 <TooltipTrigger asChild>
-                                                    <button
+                                                    <TabSwitcherItem
+                                                        isActive={selectedChart.metricType === type}
                                                         onClick={() => handleMetricTypeChange(type)}
-                                                        className={`h-full px-4 text-sm font-medium cursor-pointer transition-colors ${controlsWrapped ? 'flex-1' : ''} ${selectedChart.metricType === type ? 'bg-black/12 dark:bg-white/12' : `bg-transparent ${prismControlHover}`}`}
+                                                        className={cn("px-4 text-[13px]", controlsWrapped && "flex-1")}
                                                     >
                                                         {typeLabel}
-                                                    </button>
+                                                    </TabSwitcherItem>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="bottom"><p>{typeLabel}</p></TooltipContent>
                                             </Tooltip>
                                         )
                                     })}
-                                </div>
+                                </TabSwitcher>
 
-                                <div className={`inline-flex items-center h-8 rounded-md overflow-hidden divide-x divide-border/50 ${prismControlSurface}`}>
+                                <TabSwitcher ariaLabel={labels.filter_categories ?? "Filter categories"}>
                                     <Dropdown>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <DropdownTrigger asChild>
-                                                    <button className={`flex items-center gap-1 px-2 h-full cursor-pointer transition-colors ${prismControlHover}`}>
+                                                    <TabSwitcherIconButton
+                                                        aria-label={labels.filter_categories ?? "Filter categories"}
+                                                        className="w-auto px-2"
+                                                    >
                                                         <Filter className="w-4 h-4" />
                                                         {!selectedChart.showTotal && selectedChart.selectedCategories.length > 0 && (
                                                             <span className="flex items-center justify-center | w-4 h-4 | bg-primary | text-xs text-white dark:text-black rounded-full">
                                                                 {selectedChart.selectedCategories.length}
                                                             </span>
                                                         )}
-                                                    </button>
+                                                    </TabSwitcherIconButton>
                                                 </DropdownTrigger>
                                             </TooltipTrigger>
                                             <TooltipContent side="bottom"><p>{labels.filter_categories ?? "Filter categories"}</p></TooltipContent>
                                         </Tooltip>
-                                        
+
                                         <DropdownContent align="center" onCloseAutoFocus={(e) => e.preventDefault()} width={200}>
                                             <div className="p-2 flex flex-col gap-1.5">
                                                 {/* Total chip */}
-                                                <button
+                                                <Button variant="ghost"
                                                     onClick={() => handleTotalToggle()}
                                                     className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${selectedChart.showTotal ? 'bg-primary/10 text-foreground ring-1 ring-inset ring-primary/20' : 'bg-black/5 dark:bg-white/5 text-muted-foreground hover:bg-black/10 dark:hover:bg-white/10'}`}
                                                 >
                                                     <span className="w-2 h-2 rounded-full shrink-0" style={metricColorStyle} />
                                                     {labels.total ?? "Total"}
-                                                </button>
+                                                </Button>
                                                 <div className="h-px bg-border/50" />
                                                 {/* Category chips */}
                                                 <div className="flex flex-wrap gap-1">
@@ -381,51 +378,63 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                                         const isChecked = selectedChart.selectedCategories.includes(cat)
                                                         const color = getConfigColor(chartConfig, cat)
                                                         return (
-                                                            <button
+                                                            <Button variant="ghost"
                                                                 key={cat}
                                                                 onClick={() => handleCategoryToggle(cat)}
-                                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all ${isChecked ? '' : 'bg-black/5 dark:bg-white/5 text-neutral-400 hover:bg-black/10 dark:hover:bg-white/10'}`}
+                                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all ${isChecked ? '' : 'bg-black/5 text-neutral-600 hover:bg-black/10 dark:bg-white/5 dark:text-neutral-400 dark:hover:bg-white/10'}`}
                                                                 style={isChecked ? { backgroundColor: `${color}22`, color, boxShadow: `inset 0 0 0 1px ${color}44` } : undefined}
                                                             >
                                                                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color, opacity: isChecked ? 1 : 0.5 }} />
                                                                 {chartConfig[cat as keyof typeof chartConfig]?.label ?? cat}
-                                                            </button>
+                                                            </Button>
                                                         )
                                                     })}
                                                 </div>
                                                 <div className="h-px bg-border/50" />
                                                 {/* Actions */}
                                                 <div className="flex gap-1">
-                                                    <button onClick={handleSelectAll} className="flex-1 px-2 py-1 rounded text-[11px] text-primary transition-colors hover:bg-primary/10">{labels.select_all ?? "All"}</button>
-                                                    <button onClick={handleClearAll} className="flex-1 px-2 py-1 rounded text-[11px] text-muted-foreground transition-colors hover:bg-black/5 dark:hover:bg-white/5">{labels.clear ?? "Clear"}</button>
+                                                    <Button variant="ghost" onClick={handleSelectAll} className="flex-1 px-2 py-1 rounded text-[11px] text-primary transition-colors hover:bg-primary/10">{labels.select_all ?? "All"}</Button>
+                                                    <Button variant="ghost" onClick={handleClearAll} className="flex-1 px-2 py-1 rounded text-[11px] text-muted-foreground transition-colors hover:bg-black/5 dark:hover:bg-white/5">{labels.clear ?? "Clear"}</Button>
                                                 </div>
                                             </div>
                                         </DropdownContent>
                                     </Dropdown>
-                                </div>
+                                </TabSwitcher>
                             </div>
 
                             <Separator orientation="vertical" className={`h-6 ${horizontalLayout ? 'block' : 'hidden'}`} />
 
-                            {/* Right group: Time controls + Custom date range */}
                             <div ref={rightGroupRef} className={`flex items-center gap-2 min-w-0 ${controlsWrapped ? 'w-full' : 'shrink-0'}`}>
-                                {/* Time toggle - adapts between dropdown (collapsed) and buttons (expanded) */}
-                                <div ref={timeToggleRef} className={`inline-flex items-center rounded-md h-8 divide-x divide-border/50 ${prismControlSurface} ${timeToggleCollapsed ? (controlsWrapped ? 'flex-1' : '') : 'shrink-0'} ${hasCustomDateRange ? 'opacity-50' : ''}`}>
-                                    <div className="flex items-center justify-center h-full px-1 shrink-0">
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <button onClick={handlePrevPeriod} disabled={prevDisabled} className={`inline-flex items-center justify-center h-5 w-5 bg-transparent rounded disabled:opacity-50 disabled:cursor-not-allowed ${prismControlHover}`}>
-                                                    <ChevronLeft className="w-4 h-4" />
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="bottom" disabled={prevDisabled}><p>{prevPeriodLabel}</p></TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                    
+                                <TabSwitcher
+                                    ref={timeToggleRef}
+                                    ariaLabel={labels.time_range ?? "Time range"}
+                                    className={cn(
+                                        timeToggleCollapsed ? (controlsWrapped ? "flex-1" : "") : "shrink-0",
+                                        hasCustomDateRange && "opacity-50",
+                                    )}
+                                >
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <TabSwitcherIconButton
+                                                onClick={handlePrevPeriod}
+                                                disabled={prevDisabled}
+                                                aria-label={prevPeriodLabel}
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </TabSwitcherIconButton>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" disabled={prevDisabled}><p>{prevPeriodLabel}</p></TooltipContent>
+                                    </Tooltip>
+
                                     {timeToggleCollapsed ? (
                                         <div className="flex items-center min-w-0 flex-1">
                                             <Select value={periodType} onValueChange={setPeriodType} disabled={hasCustomDateRange}>
-                                                <SelectTrigger className="w-full h-full border-0 rounded-none shadow-none cursor-pointer focus:ring-0 disabled:opacity-50" size="sm"><SelectValue /></SelectTrigger>
+                                                <SelectTrigger
+                                                    className="w-full min-w-[92px] rounded-full border-transparent bg-transparent px-2 text-[12px] font-semibold text-foreground-secondary shadow-none hover:bg-white/70 hover:text-foreground focus:ring-0 data-[size=sm]:h-7 dark:hover:bg-white/[0.08]"
+                                                    size="sm"
+                                                >
+                                                    <SelectValue />
+                                                </SelectTrigger>
                                                 <SelectContent className="rounded-xl">
                                                     {timeRangeEntries.map(([key, label]) => <SelectItem key={key} value={key}>{label as string}</SelectItem>)}
                                                 </SelectContent>
@@ -435,26 +444,34 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                         timeRangeEntries.map(([key, label]) => (
                                             <Tooltip key={key}>
                                                 <TooltipTrigger asChild>
-                                                    <button onClick={handlePeriodTypeClick(key)} disabled={hasCustomDateRange} className={`h-full px-3 text-sm font-medium cursor-pointer transition-colors disabled:cursor-not-allowed ${periodType === key && !hasCustomDateRange ? 'bg-black/12 dark:bg-white/12' : `bg-transparent ${prismControlHover} disabled:hover:bg-transparent`}`}>{label as string}</button>
+                                                    <TabSwitcherItem
+                                                        isActive={periodType === key && !hasCustomDateRange}
+                                                        onClick={handlePeriodTypeClick(key)}
+                                                        disabled={hasCustomDateRange}
+                                                        className="px-3 text-[13px]"
+                                                    >
+                                                        {label as string}
+                                                    </TabSwitcherItem>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="bottom"><p>{label as string}</p></TooltipContent>
                                             </Tooltip>
                                         ))
                                     )}
-                                    
-                                    <div className="flex items-center justify-center h-full px-1 shrink-0">
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <button onClick={handleNextPeriod} disabled={nextDisabled} className={`inline-flex items-center justify-center h-5 w-5 bg-transparent rounded disabled:opacity-50 disabled:cursor-not-allowed ${prismControlHover}`}>
-                                                    <ChevronRight className="w-4 h-4" />
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="bottom" disabled={nextDisabled}><p>{nextPeriodLabel}</p></TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                </div>
 
-                                {/* Custom date range picker */}
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <TabSwitcherIconButton
+                                                onClick={handleNextPeriod}
+                                                disabled={nextDisabled}
+                                                aria-label={nextPeriodLabel}
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </TabSwitcherIconButton>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" disabled={nextDisabled}><p>{nextPeriodLabel}</p></TooltipContent>
+                                    </Tooltip>
+                                </TabSwitcher>
+
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div>
@@ -469,17 +486,26 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                                 open={dateRangeOpen}
                                                 onOpenChange={setDateRangeOpen}
                                                 trigger={
-                                                    <button className={`inline-flex items-center justify-center gap-2 h-8 px-2 rounded-md text-sm font-medium transition-colors ${hasCustomDateRange ? 'border border-primary bg-primary/10 text-primary' : `${prismControlSurface} ${prismControlHover}`}`}>
-                                                        <CalendarRange className="w-4 h-4" />
-                                                        {customDateRange && (
-                                                            <span className="hidden sm:inline text-xs">
-                                                                {customDateRange.startDate && customDateRange.endDate
-                                                                    ? `${new Date(customDateRange.startDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)} - ${new Date(customDateRange.endDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)}`
-                                                                    : labels.custom_range ?? 'Custom'
-                                                                }
-                                                            </span>
-                                                        )}
-                                                    </button>
+                                                    <TabSwitcher
+                                                        ariaLabel={labels.custom_date_range ?? "Custom date range"}
+                                                        className={cn(hasCustomDateRange && "border-primary/30 bg-primary/10 dark:bg-primary/15")}
+                                                    >
+                                                        <TabSwitcherIconButton
+                                                            isActive={hasCustomDateRange}
+                                                            aria-label={labels.custom_date_range ?? "Custom date range"}
+                                                            className={cn("w-auto px-2", hasCustomDateRange && "border-primary/30 bg-primary/10 text-primary shadow-none dark:bg-primary/15")}
+                                                        >
+                                                            <CalendarRange className="w-4 h-4" />
+                                                            {customDateRange && (
+                                                                <span className="hidden sm:inline text-xs">
+                                                                    {customDateRange.startDate && customDateRange.endDate
+                                                                        ? `${new Date(customDateRange.startDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)} - ${new Date(customDateRange.endDate).toLocaleDateString(locale, DATE_FORMAT_OPTIONS.SHORT)}`
+                                                                        : labels.custom_range ?? 'Custom'
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                        </TabSwitcherIconButton>
+                                                    </TabSwitcher>
                                                 }
                                             />
                                         </div>
@@ -489,10 +515,9 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                             </div>
                         </div>
 
-                        {/* Amount display */}
                         <div ref={amountRef} className={`flex flex-col gap-2 shrink-0 ${horizontalLayout ? 'order-1 w-auto' : 'w-full'}`}>
                                 {!compact && (
-                                    <CardTitle className="text-sm font-medium text-neutral-400">{labels.chart_title ?? "Overview"}</CardTitle>
+                                    <CardTitle className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{labels.chart_title ?? "Overview"}</CardTitle>
                                 )}
                                 {isLoading ? (
                                     <>
@@ -504,13 +529,13 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                         <span className={compact ? "text-2xl font-bold" : "text-4xl font-bold"}>
                                             {formatCurrency(selectedTotal, { locale })}
                                         </span>
-                                        <div className="flex items-center gap-4 | text-sm text-neutral-400 text-nowrap">
+                                        <div className="flex items-center gap-4 | text-sm text-neutral-600 dark:text-neutral-400 text-nowrap">
                                             <div className="flex items-center gap-2">
                                                 <span className="w-2.5 h-2.5 | rounded-full shrink-0" style={metricColorStyle} />
                                                 <span className="auto-scroll font-medium">{chartConfig[selectedChart.metricType]?.label}</span>
                                             </div>
-                                            <span className="text-neutral-400/80">•</span>
-                                            <span className="auto-scroll text-neutral-400/80">{periodLabel}</span>
+                                            <span className="text-neutral-600/80 dark:text-neutral-400/80">•</span>
+                                            <span className="auto-scroll text-neutral-600/80 dark:text-neutral-400/80">{periodLabel}</span>
                                         </div>
                                     </>
                                 )}
@@ -527,17 +552,17 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                 return (
                                     <React.Fragment key={chart.id}>
                                         {/* Left edge divider - only before first chart */}
-                                        {isFirst && (
+                                        {allowChartEditing && isFirst && (
                                             <AddChartDivider onAdd={addChart} index={0} isEdge disabled={charts.length >= MAX_CHARTS} tooltipLabel={labels.add_chart} />
                                         )}
-                                        
+
                                         {/* Chart container */}
-                                        <div 
+                                        <div
                                             className={cn("flex items-stretch grow shrink", compact && "min-h-0")}
                                             style={{ minWidth: '280px', flexBasis: '280px' }}
                                         >
                                             <ChartDisplay
-                                                instance={chart} index={index} totalCharts={charts.length} chartData={chartData}
+                                                instance={chart} index={index} totalCharts={visibleCharts.length} chartData={chartData}
                                                 isLoading={isLoading} loadingText={loadingText}
                                                 isHorizontal={true}
                                                 isSelected={selectedChartIdForControls === chart.id}
@@ -548,51 +573,60 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                                 compact={compact}
                                             />
                                         </div>
-                                        
+
                                         {/* Right divider - between charts or edge after last */}
-                                        <AddChartDivider onAdd={addChart} index={index + 1} isEdge={isLast} disabled={charts.length >= MAX_CHARTS} tooltipLabel={labels.add_chart} />
+                                        {allowChartEditing && (
+                                            <AddChartDivider onAdd={addChart} index={index + 1} isEdge={isLast} disabled={charts.length >= MAX_CHARTS} tooltipLabel={labels.add_chart} />
+                                        )}
                                     </React.Fragment>
                                 )
                             })}
                         </div>
 
-                        <div className={compact ? "flex shrink-0 justify-end items-center gap-2 pt-3" : "flex justify-end items-center gap-2 pt-4"}>
+                        {!compact && (
+                        <div className="flex justify-end items-center gap-2 pt-4">
                             <div className="flex items-center gap-2">
-                                <div className={`inline-flex items-center rounded-md h-8 divide-x divide-border/50 ${prismControlSurface}`}>
+                                <TabSwitcher ariaLabel={labels.chart_type ?? "Chart style"}>
                                     {DISPLAY_MODES.map(mode => {
                                         const Icon = DISPLAY_MODE_ICONS[mode]
                                         const modeLabel = getLabelWithFallback(labels, mode)
                                         return (
                                             <Tooltip key={mode}>
                                                 <TooltipTrigger asChild>
-                                                    <button onClick={() => handleDisplayModeChange(mode)} className={`h-full px-3 cursor-pointer transition-colors ${selectedChart.displayMode === mode ? 'bg-black/12 dark:bg-white/12' : `bg-transparent ${prismControlHover}`}`}>
+                                                    <TabSwitcherIconButton
+                                                        isActive={selectedChart.displayMode === mode}
+                                                        onClick={() => handleDisplayModeChange(mode)}
+                                                        aria-label={modeLabel}
+                                                    >
                                                         <Icon className="w-4 h-4" />
-                                                    </button>
+                                                    </TabSwitcherIconButton>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top"><p>{modeLabel}</p></TooltipContent>
                                             </Tooltip>
                                         )
                                     })}
-                                </div>
+                                </TabSwitcher>
                                 <div className="flex items-center gap-2">
                                     <div className="w-px h-6 bg-border" />
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button onClick={() => deleteChart(selectedChartId)} variant="glass" size="sm" className="px-2" disabled={charts.length <= 1}><Minus className="w-4 h-4" /></Button>
+                                            <Button onClick={() => deleteChart(selectedChartId)} variant="glass" size="sm" className="rounded-full px-2" disabled={charts.length <= 1}><Minus className="w-4 h-4" /></Button>
                                         </TooltipTrigger>
                                         <TooltipContent side="top" disabled={charts.length <= 1}><p>{labels.remove_chart ?? "Remove chart"}</p></TooltipContent>
                                     </Tooltip>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button onClick={() => addChart()} variant="glass" size="sm" className="px-2" disabled={charts.length >= MAX_CHARTS}><Plus className="w-4 h-4" /></Button>
+                                            <Button onClick={() => addChart()} variant="glass" size="sm" className="rounded-full px-2" disabled={charts.length >= MAX_CHARTS}><Plus className="w-4 h-4" /></Button>
                                         </TooltipTrigger>
                                         <TooltipContent side="top" disabled={charts.length >= MAX_CHARTS}><p>{labels.add_chart ?? "Add chart"}</p></TooltipContent>
                                     </Tooltip>
                                 </div>
                             </div>
                         </div>
+                        )}
                     </CardContent>
                         </ContextMenuTrigger>
+                        {!compact && (
                         <ContextMenuContent>
 
                             <ContextMenuItem onClick={handleCopyTotal}>
@@ -609,9 +643,11 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                 {locale.startsWith("pt") ? "Personalizar" : "Customize"}
                             </ContextMenuItem>
                         </ContextMenuContent>
+                        )}
                     </ContextMenu>
                 </div>
 
+                {!compact && (
                 <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
                     <SheetContent className="sm:max-w-md p-0 flex flex-col">
                         <SheetHeader className="px-6 pt-6 pb-4 border-b border-black/6 dark:border-white/8">
@@ -628,7 +664,7 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                             const isIncome = type === "income"
                                             const typeLabel = getLabelWithFallback(labels, type)
                                             return (
-                                                <button
+                                                <Button variant="ghost"
                                                     key={type}
                                                     onClick={() => updateSelectedChart({ metricType: type, selectedCategories: [], showTotal: true })}
                                                     className={cn(
@@ -639,7 +675,7 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                                 >
                                                     <span className={cn("w-2 h-2 rounded-full shrink-0", isIncome ? "bg-positive" : "bg-negative")} />
                                                     <span>{typeLabel}</span>
-                                                </button>
+                                                </Button>
                                             )
                                         })}
                                     </div>
@@ -652,7 +688,7 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                             const isSelected = selectedChart.displayMode === mode
                                             const modeLabel = getLabelWithFallback(labels, mode)
                                             return (
-                                                <button
+                                                <Button variant="ghost"
                                                     key={mode}
                                                     onClick={() => updateSelectedChart({ displayMode: mode })}
                                                     className={cn(
@@ -663,7 +699,7 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                                 >
                                                     <Icon className="w-5 h-5" />
                                                     <span>{modeLabel}</span>
-                                                </button>
+                                                </Button>
                                             )
                                         })}
                                     </div>
@@ -672,8 +708,8 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                                     <div className="flex justify-between items-center">
                                         <Label className="text-[12px] font-semibold tracking-wide text-neutral-400">{labels.filter ?? "Categories"}</Label>
                                         <div className="flex gap-1.5">
-                                            <button onClick={handleSelectAll} className="text-[12px] px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 font-medium transition-colors">{labels.select_all ?? "All"}</button>
-                                            <button onClick={handleClearAll} className={cn("text-[12px] px-2 py-1 rounded-md font-medium transition-colors", PRISM.cardSurface, PRISM.cardHover, PRISM.muted)}>{labels.clear ?? "Clear"}</button>
+                                            <Button variant="ghost" onClick={handleSelectAll} className="text-[12px] px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 font-medium transition-colors">{labels.select_all ?? "All"}</Button>
+                                            <Button variant="ghost" onClick={handleClearAll} className={cn("text-[12px] px-2 py-1 rounded-md font-medium transition-colors", PRISM.cardSurface, PRISM.cardHover, PRISM.muted)}>{labels.clear ?? "Clear"}</Button>
                                         </div>
                                     </div>
                                     <div className={cn(PRISM.cardSurface, "overflow-hidden p-0")}>
@@ -708,6 +744,7 @@ export function ChartAreaInteractive({ accountIds, compact = false }: ChartAreaI
                         </div>
                     </SheetContent>
                 </Sheet>
+                )}
 
                 {/* Expanded Chart View - lazy loaded */}
                 {expandedChartId && (

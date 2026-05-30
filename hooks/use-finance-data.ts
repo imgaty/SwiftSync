@@ -1,3 +1,12 @@
+//
+//  use-finance-data.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides the use finance data React hook for Argent, encapsulating reusable state,
+//  effects, or data-access behavior for consuming components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -50,16 +59,16 @@ async function fetchFinanceData(): Promise<FetchResult> {
   // At least one endpoint succeeded — mark partial if any failed so the UI can warn.
   const partial = dataEndpoints.some((r) => !r || !r.ok)
 
-  const safeJson = async (res: Response | null, fallback: unknown): Promise<any> => {
+  const safeJson = async <T,>(res: Response | null, fallback: T): Promise<T> => {
     if (!res || !res.ok) return fallback
-    try { return await res.json() } catch { return fallback }
+    try { return await res.json() as T } catch { return fallback }
   }
 
   const [accounts, transactions, budgets, bills] = await Promise.all([
-    safeJson(accountsRes, []),
-    safeJson(transactionsRes, []),
-    safeJson(budgetsRes, []),
-    safeJson(billsRes, []),
+    safeJson<DataFile["accounts"]>(accountsRes, []),
+    safeJson<DataFile["transactions"]>(transactionsRes, []),
+    safeJson<DataFile["budgets"]>(budgetsRes, []),
+    safeJson<DataFile["bills"]>(billsRes, []),
   ])
 
   let startDate = ''

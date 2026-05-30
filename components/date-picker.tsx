@@ -1,3 +1,12 @@
+//
+//  date-picker.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Date picker React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -17,6 +26,8 @@ import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
+import { Button } from "@/components/ui/button"
+import { TabSwitcher, TabSwitcherItem } from "@/components/ui/tab-switcher"
 import {
   Dialog,
   DialogContent,
@@ -294,7 +305,7 @@ export function DatePicker({
           {trigger}
         </div>
       ) : (
-        <button
+        <Button variant="ghost"
           type="button"
           disabled={disabled}
           onClick={() => !disabled && setOpen(true)}
@@ -329,7 +340,7 @@ export function DatePicker({
           <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
             <CalendarIcon className="shrink-0 size-4 text-neutral-400" />
           </span>
-        </button>
+        </Button>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -362,7 +373,7 @@ export function DatePicker({
           <div className="p-3">
           {/* Navigation header */}
           <div className="flex items-center justify-between mb-3">
-            <button
+            <Button variant="ghost"
               type="button"
               onClick={() => {
                 if (view === 'date') setDisplayMonth(subMonths(displayMonth, 1))
@@ -372,9 +383,9 @@ export function DatePicker({
               className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+            </Button>
 
-            <button
+            <Button variant="ghost"
               type="button"
               onClick={() => {
                 if (view === 'date') setView('month')
@@ -385,9 +396,9 @@ export function DatePicker({
               {view === 'date' && `${format(displayMonth, "MMMM", { locale: loc })} ${formatYear(displayMonth.getFullYear())}`}
               {view === 'month' && formatYear(displayMonth.getFullYear())}
               {view === 'year' && years.length > 0 && `${formatYear(years[0])} – ${formatYear(years[years.length - 1])}`}
-            </button>
+            </Button>
 
-            <button
+            <Button variant="ghost"
               type="button"
               disabled={!!forwardDisabled}
               onClick={() => {
@@ -404,41 +415,22 @@ export function DatePicker({
               )}
             >
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
 
           {/* View mode tabs */}
-          <div className="flex items-center justify-center gap-1 mb-3">
-            <button
-              type="button"
-              onClick={() => setView('date')}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                view === 'date' ? "bg-black dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
-              )}
-            >
-              Day
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('month')}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                view === 'month' ? "bg-black dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
-              )}
-            >
-              Month
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('year')}
-              className={cn(
-                "px-3 py-1 text-xs font-medium rounded-lg transition-colors",
-                view === 'year' ? "bg-black dark:bg-white text-white dark:text-black" : "text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
-              )}
-            >
-              Year
-            </button>
+          <div className="mb-3 flex justify-center">
+            <TabSwitcher ariaLabel="Calendar view">
+              <TabSwitcherItem isActive={view === 'date'} onClick={() => setView('date')} className="px-3">
+                Day
+              </TabSwitcherItem>
+              <TabSwitcherItem isActive={view === 'month'} onClick={() => setView('month')} className="px-3">
+                Month
+              </TabSwitcherItem>
+              <TabSwitcherItem isActive={view === 'year'} onClick={() => setView('year')} className="px-3">
+                Year
+              </TabSwitcherItem>
+            </TabSwitcher>
           </div>
 
           {/* Days view */}
@@ -460,7 +452,7 @@ export function DatePicker({
                   const today = isTodayDate(day)
                   return (
                     <div key={i} className="relative h-8 flex items-center justify-center">
-                      <button
+                      <Button variant="ghost"
                         type="button"
                         onClick={() => { if (!disabled) handleSelect(day) }}
                         disabled={disabled}
@@ -474,7 +466,7 @@ export function DatePicker({
                         )}
                       >
                         {day.getDate()}
-                      </button>
+                      </Button>
                     </div>
                   )
                 })}
@@ -491,7 +483,7 @@ export function DatePicker({
                   (displayMonth.getFullYear() === CURRENT_YEAR && i > CURRENT_MONTH)
                 )
                 return (
-                  <button
+                  <Button variant="ghost"
                     key={m}
                     type="button"
                     disabled={!!isFutureMonth}
@@ -511,7 +503,7 @@ export function DatePicker({
                     }}
                   >
                     {m}
-                  </button>
+                  </Button>
                 )
               })}
             </div>
@@ -524,7 +516,7 @@ export function DatePicker({
                 const isFutureYear = dobMode && y > CURRENT_YEAR
                 return (
                   <div key={y} className="relative flex items-center justify-center">
-                    <button
+                    <Button variant="ghost"
                       type="button"
                       disabled={isFutureYear}
                       className={cn(
@@ -543,7 +535,7 @@ export function DatePicker({
                       }}
                     >
                       {formatYear(y)}
-                    </button>
+                    </Button>
                   </div>
                 )
               })}
@@ -554,22 +546,22 @@ export function DatePicker({
           <div className="mt-3 pt-3 border-t border-black/8 dark:border-white/8 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               {!dobMode && view === 'date' && (
-                <button
+                <Button variant="ghost"
                   type="button"
                   className="px-3 h-8 text-xs font-medium rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
                   onClick={() => handleSelect(new Date())}
                 >
                   Today
-                </button>
+                </Button>
               )}
               {selected && (
-                <button
+                <Button variant="ghost"
                   type="button"
                   className="px-3 h-8 text-xs font-medium rounded-lg text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black dark:hover:text-white transition-colors"
                   onClick={() => { onChange?.(''); setOpen(false) }}
                 >
                   Clear
-                </button>
+                </Button>
               )}
               {view === 'year' && (
                 <div className="flex items-center gap-1.5">
@@ -581,24 +573,24 @@ export function DatePicker({
                     placeholder="Jump to year"
                     className="w-28 px-2.5 h-8 text-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg outline-none focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-blue-500/30 text-black dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-400"
                   />
-                  <button
+                  <Button variant="ghost"
                     type="button"
                     onClick={() => handleYearJump(yearJumpInput)}
                     disabled={!yearJumpInput}
                     className="px-2.5 h-8 text-xs font-medium bg-black/5 dark:bg-white/5 text-black dark:text-white rounded-lg hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                   >
                     Go
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
-            <button
+            <Button variant="ghost"
               type="button"
               className="px-4 h-8 text-xs font-medium rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors shrink-0"
               onClick={() => setOpen(false)}
             >
               Done
-            </button>
+            </Button>
           </div>
         </div>
           )}

@@ -1,6 +1,12 @@
-// File reviewed on 06.04.2026 | 19:54
-
-
+//
+//  dialog.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the reusable Dialog UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -48,7 +54,7 @@ function DialogOverlay({
             className={cn(
                 "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
                 "fixed inset-0 z-50",
-                "bg-black/12 dark:bg-black/25 backdrop-blur-[3px]",
+                PRISM.overlay,
                 className,
             )}
             {...props}
@@ -65,9 +71,11 @@ function DialogContent({
     className,
     children,
     showCloseButton = true,
+    variant = "default",
     ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
     showCloseButton?: boolean
+    variant?: "default" | "form"
 }) {
     return (
         <DialogPortal>
@@ -78,13 +86,17 @@ function DialogContent({
                     "data-[state=open]:animate-in data-[state=closed]:animate-out",
                     "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
                     "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
-                    "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
-                    "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-                    "fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50",
-                    "w-[min(calc(100vw-2rem),440px)] max-h-[calc(100vh-2rem)] overflow-y-auto",
+                    "fixed left-1/2 top-[50dvh] -translate-x-1/2 -translate-y-1/2 z-50",
                     "flex flex-col gap-4",
-                    PRISM.container, "p-6 duration-200",
-                    DIALOG_GLOW,
+                    variant === "default" && [
+                        "w-[min(calc(100vw-2rem),440px)] max-h-[calc(100dvh-2rem)] overflow-y-auto",
+                        PRISM.container, "p-6 duration-200",
+                        DIALOG_GLOW,
+                    ],
+                    variant === "form" && [
+                        "w-full max-h-[calc(100dvh-2rem)] overflow-y-auto",
+                        "p-0 text-foreground outline-none focus:outline-none focus-visible:outline-none",
+                    ],
                     className,
                 )}
                 {...props}

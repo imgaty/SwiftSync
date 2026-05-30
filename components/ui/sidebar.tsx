@@ -1,5 +1,12 @@
-// DONE
-
+//
+//  sidebar.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Sidebar UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -326,7 +333,7 @@ const SidebarTrigger = React.forwardRef<
         : (t.sidebar?.toggle_expand || 'Expand Sidebar (%shortcut)').replace("%shortcut", `${modKey} B`)
 
     return (
-        <SmartTooltip text={tooltipText} group="sidebar">
+        <SmartTooltip text={tooltipText} group="sidebar" cursorAnchor>
             <Button
                 ref = {ref}
                 data-sidebar = "trigger"
@@ -435,8 +442,9 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
 
 
     return (
-        <SmartTooltip text={railTooltipText} group="sidebar" forceSide={side === "left" ? "right" : "left"}>
+        <SmartTooltip text={railTooltipText} group="sidebar" cursorAnchor forceSide={side === "left" ? "right" : "left"}>
             <button
+                type = "button"
                 data-sidebar = "rail"
                 aria-label = "Toggle Sidebar"
                 tabIndex = {-1}
@@ -444,7 +452,8 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
                 onMouseDown = {handleMouseDown}
 
                 className = {cn(
-                    "absolute top-0 bottom-0 | cursor-grab | z-50",
+                    "absolute top-0 bottom-0 | w-3 p-0 | cursor-grab touch-none | z-50",
+                    "bg-transparent outline-hidden",
                     "after:absolute after:top-6 after:bottom-6 | after:w-0.5 | after:rounded-full",
 
                     "hover:after:bg-[rgba(0,0,0,0.125)]",
@@ -454,8 +463,8 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
                     !isResizing && "transition-[left,right] duration-200 ease-linear",
 
                     side === "left" 
-                        ? "after:left-px after:-translate-x-1/2" 
-                        : "after:right-px after:translate-x-1/2"
+                        ? "-translate-x-1/2 after:left-1/2 after:-translate-x-1/2"
+                        : "translate-x-1/2 after:right-1/2 after:translate-x-1/2"
                 )}
 
                 style = {finalRailPosition}
@@ -510,7 +519,7 @@ function componentFactory<T extends React.ElementType>(
 // ==============================================================================
 
 const SidebarInset = componentFactory("main", [
-    "relative | flex flex-col flex-1 | w-full h-svh",
+    "relative | flex min-w-0 flex-col flex-1 | w-full h-svh",
     "text-foreground | order-1 | overflow-y-auto",
 
     "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 | md:peer-data-[variant=inset]:h-[calc(100svh-16px)]",
@@ -591,7 +600,7 @@ const sidebarMenuButtonVariants = cva(
         "data-[active=true]:bg-black/[0.06] dark:data-[active=true]:bg-white/[0.12] data-[active=true]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
         "data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
         "group-data-[collapsible=icon]:size-8! | group-data-[collapsible=icon]:p-2! group-has-data-[sidebar=menu-action]/menu-item:pr-8",
-        "data-[state=open]:hover:bg-black/[0.06] dark:data-[state=open]:hover:bg-white/[0.12] data-[state=open]:hover:text-sidebar-accent-foreground",
+        "data-[state=open]:bg-black/[0.06] dark:data-[state=open]:bg-white/[0.12] data-[state=open]:text-sidebar-accent-foreground data-[state=open]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
         "hover:[&>svg]:scale-110"
     ],
     
@@ -645,7 +654,7 @@ const CollapsedTooltip = React.forwardRef<
         if (!tooltip || state !== "collapsed" || isMobile) return button        // Only show tooltip when collapsed, has tooltip content, and is not on mobile
 
         return (
-            <SmartTooltip text={tooltip} group="sidebar" forceSide="right">
+            <SmartTooltip text={tooltip} group="sidebar" cursorAnchor forceSide="right">
                 {button}
             </SmartTooltip>
         )
@@ -768,5 +777,6 @@ export {
     SidebarProvider,            // Context provider (wrap your app)
     SidebarSeparator,           // Divider line9
     SidebarTrigger,             // Toggle button
+    sidebarMenuButtonVariants,  // Shared sidebar navigation item styling
     useSidebar,                 // Hook to access sidebar state
 }

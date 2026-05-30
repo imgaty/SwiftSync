@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin/notifications route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -29,9 +38,12 @@ import {
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
-} from "@/components/ui/dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
@@ -288,19 +300,31 @@ function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; 
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-            <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                    <DialogTitle>{np.send || "Send Notification"}</DialogTitle>
-                    <DialogDescription>{np.send_description || "Send a notification to all users or specific users."}</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-2">
+            <FormDialogContent maxWidth="430px">
+                <FormDialogHeader
+                    title={np.send || "Send Notification"}
+                    description={np.send_description || "Send a notification to all users or specific users."}
+                />
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        handleSend()
+                    }}
+                    className="flex flex-col gap-4"
+                >
                     <div className="space-y-1.5">
                         <Label>{np.title_label || "Title"}</Label>
                         <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Notification title" />
                     </div>
                     <div className="space-y-1.5">
                         <Label>{np.message_label || "Message"}</Label>
-                        <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Notification message" rows={3} />
+                        <Textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Notification message"
+                            rows={3}
+                            className="rounded-xl bg-[var(--surface)] px-4 py-3 text-[15px] shadow-[var(--shadow-subtle)] focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        />
                     </div>
                     <div className="space-y-1.5">
                         <Label>{np.type_label || "Type"}</Label>
@@ -332,11 +356,11 @@ function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; 
                             {foundUsers.length > 0 && (
                                 <div className="max-h-32 overflow-y-auto rounded border border-black/10 dark:border-white/10 divide-y divide-black/5 dark:divide-white/5">
                                     {foundUsers.filter(u => !selectedUsers.find(s => s.id === u.id)).map(u => (
-                                        <button key={u.id} className="w-full text-left px-3 py-2 text-sm hover:bg-black/3 dark:hover:bg-white/3"
+                                        <Button type="button" variant="ghost" key={u.id} className="w-full text-left px-3 py-2 text-sm hover:bg-black/3 dark:hover:bg-white/3"
                                             onClick={() => { setSelectedUsers(prev => [...prev, u]); setFoundUsers([]); setUserSearch("") }}>
                                             <span className="font-medium">{u.name}</span>{" "}
                                             <span className="text-neutral-400">{u.email}</span>
-                                        </button>
+                                        </Button>
                                     ))}
                                 </div>
                             )}
@@ -345,23 +369,23 @@ function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; 
                                     {selectedUsers.map(u => (
                                         <Badge key={u.id} variant="secondary" className="gap-1">
                                             {u.name}
-                                            <button onClick={() => setSelectedUsers(prev => prev.filter(s => s.id !== u.id))}>
+                                            <Button type="button" variant="ghost" size="icon-sm" onClick={() => setSelectedUsers(prev => prev.filter(s => s.id !== u.id))}>
                                                 <X className="size-3" />
-                                            </button>
+                                            </Button>
                                         </Badge>
                                     ))}
                                 </div>
                             )}
                         </div>
                     )}
-                </div>
-                <DialogFooter>
-                    <Button variant="glass" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleSend} disabled={sending}>
+                    <FormDialogActions>
+                    <Button type="submit" variant="solid" size="lg" className="w-full" disabled={sending}>
                         {sending ? "Sending..." : (np.send || "Send Notification")}
                     </Button>
-                </DialogFooter>
-            </DialogContent>
+                    <Button type="button" variant="glass" size="lg" className="w-full" onClick={onClose}>Cancel</Button>
+                    </FormDialogActions>
+                </form>
+            </FormDialogContent>
         </Dialog>
     )
 }

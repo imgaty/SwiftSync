@@ -1,18 +1,25 @@
+//
+//  diagnose-tags.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the diagnose tags maintenance script for Argent, automating operational or
+//  data-repair work that supports local development and administration.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /**
  * Read-only diagnostic: where do current transactions come from, and how are
  * they tagged? Prints distribution to help decide what the categorization
  * pipeline should look like before any schema changes.
  *
- * Run: npx tsx scripts/diagnose-tags.ts
+ * Run: pnpm run diagnose:tags
  */
 
 import 'dotenv/config';
-import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../lib/generated/prisma/client';
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 // ---------------------------------------------------------------------------

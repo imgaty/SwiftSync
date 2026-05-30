@@ -1,3 +1,12 @@
+//
+//  nav-pages.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Implements the Nav pages React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -9,6 +18,7 @@ import {
     MoreHorizontal,
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useSettings } from "@/hooks/use-settings"
 import type { SidebarPageDefinition, SidebarPageId } from "@/lib/sidebar-pages"
 
@@ -47,7 +57,13 @@ export function NavPages({
     const { isMobile, side, setOpenMobile } = useSidebar()
     const { open } = useSettings()
     const { t } = useLanguage()
+    const pathname = usePathname()
     const nav = (t as { nav?: Record<string, string> }).nav || {}
+
+    const isPageActive = React.useCallback((item: SidebarPageDefinition) => (
+        pathname === item.url || (item.url !== "/" && pathname.startsWith(`${item.url}/`))
+    ), [pathname])
+
     const handleNavClick = React.useCallback(() => {
         if (isMobile) setOpenMobile(false)
     }, [isMobile, setOpenMobile])
@@ -72,56 +88,64 @@ export function NavPages({
     return (
         <SidebarGroup className="px-2 pt-1 pb-2">
             <SidebarMenu>
-                {pages.map((item) => (
-                    <SidebarMenuItem key={item.url}>
-                        <CollapsedTooltip asChild tooltip={item.name}>
-                            <Link href={item.url} onClick={handleNavClick}>
-                                <item.icon />
-                                <span>{item.name}</span>
-                            </Link>
-                        </CollapsedTooltip>
+                {pages.map((item) => {
+                    const isActive = isPageActive(item)
 
-                        <Dropdown>
-                            <DropdownTrigger asChild>
-                                <SidebarActionDropdown showOnHover>
-                                    <MoreHorizontal />
-                                    <span className="sr-only">More</span>
-                                </SidebarActionDropdown>
-                            </DropdownTrigger>
+                    return (
+                        <SidebarMenuItem key={item.url}>
+                            <CollapsedTooltip
+                                asChild
+                                tooltip={item.name}
+                                isActive={isActive}
+                            >
+                                <Link href={item.url} onClick={handleNavClick} aria-current={isActive ? "page" : undefined}>
+                                    <item.icon />
+                                    <span>{item.name}</span>
+                                </Link>
+                            </CollapsedTooltip>
 
-                            <DropdownContent className="w-48" side={isMobile ? "bottom" : side === "left" ? "right" : "left"} align={isMobile ? "end" : "start"}>
-                                <DropdownItem
-                                    onSelect={() => onMovePage(item.id, "up")}
-                                    disabled={allPages.findIndex((p) => p.id === item.id) === 0}
-                                >
-                                    <ArrowUp className="text-neutral-400" />
-                                    <span>{nav.move_up || "Move up"}</span>
-                                </DropdownItem>
-                                <DropdownItem
-                                    onSelect={() => onMovePage(item.id, "down")}
-                                    disabled={allPages.findIndex((p) => p.id === item.id) === allPages.length - 1}
-                                >
-                                    <ArrowDown className="text-neutral-400" />
-                                    <span>{nav.move_down || "Move down"}</span>
-                                </DropdownItem>
+                            <Dropdown>
+                                <DropdownTrigger asChild>
+                                    <SidebarActionDropdown showOnHover>
+                                        <MoreHorizontal />
+                                        <span className="sr-only">More</span>
+                                    </SidebarActionDropdown>
+                                </DropdownTrigger>
 
-                                <DropdownSeparator />
+                                <DropdownContent className="w-48" side={isMobile ? "bottom" : side === "left" ? "right" : "left"} align={isMobile ? "end" : "start"}>
+                                    <DropdownItem
+                                        onSelect={() => onMovePage(item.id, "up")}
+                                        disabled={allPages.findIndex((p) => p.id === item.id) === 0}
+                                    >
+                                        <ArrowUp className="text-muted-foreground" />
+                                        <span>{nav.move_up || "Move up"}</span>
+                                    </DropdownItem>
+                                    <DropdownItem
+                                        onSelect={() => onMovePage(item.id, "down")}
+                                        disabled={allPages.findIndex((p) => p.id === item.id) === allPages.length - 1}
+                                    >
+                                        <ArrowDown className="text-muted-foreground" />
+                                        <span>{nav.move_down || "Move down"}</span>
+                                    </DropdownItem>
 
-                                <DropdownItem onSelect={() => onTogglePageHidden(item.id, true)}>
-                                    <EyeOff className="text-neutral-400" />
-                                    <span>{nav.hide_page || "Hide page"}</span>
-                                </DropdownItem>
+                                    <DropdownSeparator />
 
-                                <DropdownSeparator />
+                                    <DropdownItem onSelect={() => onTogglePageHidden(item.id, true)}>
+                                        <EyeOff className="text-muted-foreground" />
+                                        <span>{nav.hide_page || "Hide page"}</span>
+                                    </DropdownItem>
 
-                                <DropdownItem onSelect={() => open("customization")}>
-                                    <ListTree className="text-neutral-400" />
-                                    <span>{nav.manage_pages || "Manage pages"}</span>
-                                </DropdownItem>
-                            </DropdownContent>
-                        </Dropdown>
-                    </SidebarMenuItem>
-                ))}
+                                    <DropdownSeparator />
+
+                                    <DropdownItem onSelect={() => open("customization")}>
+                                        <ListTree className="text-muted-foreground" />
+                                        <span>{nav.manage_pages || "Manage pages"}</span>
+                                    </DropdownItem>
+                                </DropdownContent>
+                            </Dropdown>
+                        </SidebarMenuItem>
+                    )
+                })}
 
             </SidebarMenu>
         </SidebarGroup>

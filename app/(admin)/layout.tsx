@@ -1,3 +1,12 @@
+//
+//  layout.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the home route layout in Argent, providing shared structure, providers, and
+//  navigation context for nested screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
@@ -6,6 +15,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { CanvasBackground } from "@/components/canvas-background"
+import { sessionVersionMatches } from "@/lib/session"
 
 export default async function AdminLayout({
     children,
@@ -27,10 +37,13 @@ export default async function AdminLayout({
 
     const user = await prisma.user.findUnique({
         where: { id: session.uid },
-        select: { id: true, name: true, email: true, avatar: true, role: true, status: true },
+        select: { id: true, name: true, email: true, avatar: true, role: true, status: true, sessionVersion: true },
     })
 
     if (!user || user.status !== "active") {
+        redirect("/login?callbackUrl=/admin")
+    }
+    if (!sessionVersionMatches(session, user.sessionVersion)) {
         redirect("/login?callbackUrl=/admin")
     }
 

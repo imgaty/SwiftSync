@@ -1,3 +1,12 @@
+//
+//  proxy.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Defines the Next.js proxy entry point for Argent, applying request-time routing and
+//  access behavior before pages and API handlers run.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { verifySessionToken } from "@/lib/session"
@@ -10,8 +19,6 @@ const PUBLIC_PREFIXES = [
   "/docs",
 ]
 
-const AUTH_PAGES = ["/login", "/register"]
-
 function isPublic(pathname: string): boolean {
   if (pathname === "/") return false
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
@@ -22,10 +29,6 @@ export async function proxy(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value
   const session = token ? await verifySessionToken(token) : null
   const isAuthenticated = !!session
-
-  if (isAuthenticated && AUTH_PAGES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    return NextResponse.redirect(new URL("/", request.url))
-  }
 
   if (isPublic(pathname)) return NextResponse.next()
 

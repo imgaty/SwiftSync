@@ -1,3 +1,12 @@
+//
+//  auth-shell.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Auth shell auth component for Argent, supporting sign-in, registration,
+//  recovery, or security flows with reusable presentation logic.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import Image from 'next/image'
 import { type ReactNode, useSyncExternalStore } from 'react'
 import { Globe2, Moon, Sun } from 'lucide-react'
@@ -18,7 +27,7 @@ const getServerSnapshot = () => false
 
 type LanguageCode = 'en' | 'pt'
 
-export function AuthShell({ children, maxWidth = '350px' }: { children: ReactNode; maxWidth?: string }) {
+export function AuthShell({ children, maxWidth = '390px' }: { children: ReactNode; maxWidth?: string }) {
     const { t, language, setLanguage } = useLanguage()
     const { resolvedTheme, setTheme } = useTheme()
     const mounted = useSyncExternalStore(subscribeToMount, getClientSnapshot, getServerSnapshot)
@@ -26,11 +35,11 @@ export function AuthShell({ children, maxWidth = '350px' }: { children: ReactNod
     const nextTheme = isDark ? 'light' : 'dark'
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col">
+        <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
             <div className="absolute top-5 right-5 z-20 flex items-center gap-2">
                 <Button
                     type="button"
-                    variant="ghost"
+                    variant="glass"
                     size="icon"
                     aria-label="Toggle theme"
                     onClick={() => setTheme(nextTheme)}
@@ -42,7 +51,7 @@ export function AuthShell({ children, maxWidth = '350px' }: { children: ReactNod
                     <DropdownTrigger asChild>
                         <Button
                             type="button"
-                            variant="ghost"
+                            variant="glass"
                             size="icon"
                             aria-label="Change language"
                         >
@@ -60,12 +69,12 @@ export function AuthShell({ children, maxWidth = '350px' }: { children: ReactNod
                 </Dropdown>
             </div>
 
-            <main className="flex flex-1 items-center justify-center p-4 sm:p-8">
+            <main className="flex flex-1 items-center justify-center p-4 pt-24 sm:p-8">
                 <div
                     className="relative z-10 flex w-full flex-col gap-4 animate-slide-in-right"
-                    style={{ maxWidth }}
+                    style={{ maxWidth: `min(${maxWidth}, calc(100vw - 2rem))` }}
                 >
-                    <div className="flex items-center justify-center mb-8">
+                    <div className="flex items-center justify-center mb-5">
                         <Image
                             src="/full-icon-black.svg"
                             alt="Argent"
@@ -89,7 +98,7 @@ export function AuthShell({ children, maxWidth = '350px' }: { children: ReactNod
             </main>
 
             <footer className="relative z-10 px-4 pb-4 pt-2 text-center animate-slide-in-right">
-                <p className="text-xs text-neutral-400">
+                <p className="text-xs text-muted-foreground">
                     {t.auth_page?.footer?.replace('%{CURRENT_YEAR}', String(YEAR))}
                 </p>
             </footer>
@@ -104,8 +113,8 @@ export function AuthHeader({ page: pageKey, registerSubtitleKey }: { page: strin
 
     return (
         <div className = "flex flex-col gap-2 | pb-4 | text-center">
-            <h1 className = "text-black dark:text-white | text-2xl font-bold">{page?.title}</h1>
-            <p className = "text-neutral-400 | text-sm">{page?.[registerSubtitleKey ?? 'subtitle']}</p>
+            <h1 className = "text-foreground | text-[1.75rem] font-semibold leading-tight tracking-tight">{page?.title}</h1>
+            <p className = "text-muted-foreground | text-sm leading-5">{page?.[registerSubtitleKey ?? 'subtitle']}</p>
         </div>
     )
 }

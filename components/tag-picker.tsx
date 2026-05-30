@@ -1,3 +1,12 @@
+//
+//  tag-picker.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Tag picker React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 // Tag picker popover.
@@ -48,6 +57,7 @@ import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
+import { Button } from "@/components/ui/button"
 import {
     Popover,
     PopoverContent,
@@ -337,14 +347,15 @@ export function TagPicker({
                                     const checked = value.includes(t.slug)
                                     const Icon = getIconComponent(t.icon)
                                     return (
-                                        <button
+                                        <Button variant="ghost"
                                             key={t.id}
                                             type="button"
+                                            data-glide-item={`tag-picker-${t.id}`}
                                             onClick={() => toggle(t.slug)}
                                             className={cn(
                                                 PRISM.item,
-                                                PRISM.itemFocus,
-                                                PRISM.itemHover,
+                                                PRISM.glideItem,
+                                                PRISM.itemIcon,
                                                 "w-full justify-start cursor-pointer",
                                             )}
                                         >
@@ -355,24 +366,26 @@ export function TagPicker({
                                             />
                                             <span className="flex-1 text-left truncate">{t.name}</span>
                                             {checked && <Check className="size-3.5 text-neutral-400" />}
-                                        </button>
+                                        </Button>
                                     )
                                 })
                             )}
                         </div>
                         <div className="border-t border-black/8 dark:border-white/8 p-1">
-                            <button
+                            <Button variant="ghost"
                                 type="button"
+                                data-glide-item="tag-picker-new"
                                 onClick={() => setCreating(true)}
                                 className={cn(
                                     PRISM.item,
-                                    PRISM.itemHover,
+                                    PRISM.glideItem,
+                                    PRISM.itemIcon,
                                     "w-full justify-start cursor-pointer text-neutral-400",
                                 )}
                             >
                                 <Plus className="size-3.5 shrink-0" />
                                 <span className="flex-1 text-left">New tag</span>
-                            </button>
+                            </Button>
                         </div>
                     </>
                 )}
@@ -390,7 +403,7 @@ function DefaultTrigger({
     selected: { slug: string; name: string; color?: string }[]
 }) {
     return (
-        <button
+        <Button variant="ghost"
             type="button"
             className={cn(
                 "group inline-flex items-center gap-1.5 max-w-full",
@@ -422,7 +435,7 @@ function DefaultTrigger({
                     "transition-colors duration-150",
                 )}
             />
-        </button>
+        </Button>
     )
 }
 
@@ -476,14 +489,14 @@ function NewTagForm({
         <form onSubmit={handleSubmit} className="p-3 space-y-3">
             <div className="flex items-center justify-between">
                 <span className="text-[13px] font-semibold">New tag</span>
-                <button
+                <Button variant="ghost"
                     type="button"
                     onClick={onCancel}
                     className="p-1 -m-1 rounded text-neutral-400 hover:text-black dark:hover:text-white"
                     aria-label="Cancel"
                 >
                     <X className="size-3.5" />
-                </button>
+                </Button>
             </div>
 
             <div className="space-y-1.5">
@@ -507,7 +520,7 @@ function NewTagForm({
                 <label className="text-[11px] text-neutral-400">Color</label>
                 <div className="flex flex-wrap gap-1.5">
                     {TAG_COLOR_PALETTE.map((c) => (
-                        <button
+                        <Button variant="ghost"
                             key={c}
                             type="button"
                             onClick={() => setColor(c)}
@@ -527,7 +540,7 @@ function NewTagForm({
                 <label className="text-[11px] text-neutral-400">Icon</label>
                 <div className="grid grid-cols-9 gap-1">
                     {TAG_ICON_OPTIONS.map(({ name: iconName, Icon }) => (
-                        <button
+                        <Button variant="ghost"
                             key={iconName}
                             type="button"
                             onClick={() => setIcon(iconName)}
@@ -540,7 +553,7 @@ function NewTagForm({
                             )}
                         >
                             <Icon className="size-3.5" />
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>
@@ -558,15 +571,15 @@ function NewTagForm({
                     {name.trim() || "Preview"}
                 </span>
                 <div className="flex-1" />
-                <button
+                <Button variant="ghost"
                     type="button"
                     onClick={onCancel}
                     disabled={submitting}
                     className="px-2.5 py-1 text-[12px] rounded-md text-neutral-400 hover:text-black dark:hover:text-white"
                 >
                     Cancel
-                </button>
-                <button
+                </Button>
+                <Button variant="ghost"
                     type="submit"
                     disabled={submitting || !name.trim()}
                     className={cn(
@@ -576,7 +589,7 @@ function NewTagForm({
                     )}
                 >
                     {submitting ? "Creating…" : "Create"}
-                </button>
+                </Button>
             </div>
         </form>
     )

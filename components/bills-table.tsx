@@ -1,3 +1,12 @@
+//
+//  bills-table.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Bills table React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -50,11 +59,9 @@ import {
 } from "@/components/ui/table"
 import { EmptyStateInline } from "@/components/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { SmartTooltip } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
 import { useCurrency } from "@/components/currency-provider"
 import { MobileCard, MobileCardList, useIsMobileView } from "@/components/mobile-card"
 
@@ -88,11 +95,11 @@ const categoryConfig: Record<string, { color: string; icon: string }> = {
 export function BillsTable({ data: initialData, isLoading = false, onAddBill, onEditBill, onDeleteBill, onMarkPaid }: { data: Bill[]; isLoading?: boolean; onAddBill?: () => void; onEditBill?: (bill: Bill) => void; onDeleteBill?: (bill: Bill) => void; onMarkPaid?: (bill: Bill) => void }) {
     const { t, isLoading: isLangLoading } = useLanguage()
     const { formatCurrency } = useCurrency()
-    const f = (t.finance || {}) as Record<string, unknown>
-    const bl = (f.bills_table || {}) as Record<string, string>
-    const fTable = (f.table || {}) as Record<string, string>
-    const fActions = (f.actions || {}) as Record<string, string>
-    const fFilters = (f.filters || {}) as Record<string, string>
+    const f = React.useMemo(() => (t.finance || {}) as Record<string, unknown>, [t.finance])
+    const bl = React.useMemo(() => (f.bills_table || {}) as Record<string, string>, [f])
+    const fTable = React.useMemo(() => (f.table || {}) as Record<string, string>, [f])
+    const fActions = React.useMemo(() => (f.actions || {}) as Record<string, string>, [f])
+    const fFilters = React.useMemo(() => (f.filters || {}) as Record<string, string>, [f])
 
     const [data, setData] = React.useState(() => initialData)
 
@@ -100,12 +107,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
         setData(initialData)
     }, [initialData])
 
-    // Show loading state while translations are loading
-    if (isLangLoading) {
-        return <div className="flex items-center justify-center p-8">Loading...</div>
-    }
-
-    const statusConfig = {
+    const statusConfig = React.useMemo(() => ({
         paid: {
             label: bl.paid,
             icon: CheckCircle,
@@ -126,15 +128,15 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
             icon: Calendar,
             className: "bg-blue-500/10 text-blue-600 border-blue-200",
         },
-    }
+    }), [bl])
 
-    const frequencyLabels: Record<string, string> = {
+    const frequencyLabels: Record<string, string> = React.useMemo(() => ({
         weekly: bl.weekly,
         monthly: bl.monthly,
         quarterly: bl.quarterly,
         yearly: bl.yearly,
         one_time: bl.one_time,
-    }
+    }), [bl])
 
     const columns: ColumnDef<Bill>[] = React.useMemo(() => [
         {
@@ -305,7 +307,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                 </TableActionsCell>
             ),
         },
-    ], [t, f, bl, statusConfig, frequencyLabels, formatCurrency, fActions, onEditBill, onDeleteBill, onMarkPaid])
+    ], [bl, statusConfig, frequencyLabels, formatCurrency, fTable, fActions, onEditBill, onDeleteBill, onMarkPaid])
 
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -313,6 +315,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table owns internal mutable row helpers.
     const table = useReactTable({
         data,
         columns,
@@ -355,6 +358,11 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
         }
         return { totalMonthly, totalPending, overdueCount, upcomingCount }
     }, [data])
+
+    // Show loading state while translations are loading
+    if (isLangLoading) {
+        return <div className="flex items-center justify-center p-8">Loading...</div>
+    }
 
     // Loading skeleton
     if (isLoading) {

@@ -1,3 +1,12 @@
+//
+//  avatar.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides shared avatar logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 const SVG_SIZE = 256
 const BACKGROUND_COLOR = "#111113"
 const TEXT_COLOR = "#F5F5F5"

@@ -1,8 +1,18 @@
+//
+//  add-chart-divider.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Add chart divider React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { Plus } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 // ==============================================================================
@@ -51,7 +61,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                 {!isCenterHovered && <div className={`absolute left-1/2 -translate-x-1/2 top-1/2 h-px w-px transition-all duration-200 ${isHovered ? 'bg-border/40' : 'bg-transparent'}`} />}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <button
+                        <Button variant="ghost"
                             onClick={handleClick}
                             disabled={disabled}
                             onMouseEnter={() => setIsCenterHovered(true)}
@@ -65,7 +75,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                                 }`}
                         >
                             <Plus className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                     </TooltipTrigger>
                     <TooltipContent side="right" disabled={disabled}>
                         <p>{tooltipLabel}</p>
@@ -108,7 +118,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                 {!isCenterHovered && <div className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-px h-px transition-all duration-200 ${isHovered ? 'bg-border/50' : 'bg-transparent'}`} />}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <button
+                        <Button variant="ghost"
                             onClick={handleClick}
                             disabled={disabled}
                             onMouseEnter={() => setIsCenterHovered(true)}
@@ -122,7 +132,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                                 }`}
                         >
                             <Plus className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                     </TooltipTrigger>
                     <TooltipContent side={edgeSide === 'left' ? 'right' : 'left'} disabled={disabled}>
                         <p>{tooltipLabel}</p>
@@ -151,7 +161,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
             {!isCenterHovered && <div className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-px h-px transition-all duration-200 ${isHovered ? 'bg-border/50' : 'bg-transparent'}`} />}
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <button
+                    <Button variant="ghost"
                         onClick={handleClick}
                         disabled={disabled}
                         onMouseEnter={() => setIsCenterHovered(true)}
@@ -165,7 +175,7 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                             }`}
                     >
                         <Plus className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" disabled={disabled}>
                     <p>{tooltipLabel}</p>

@@ -1,3 +1,12 @@
+//
+//  app-sidebar.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Implements the App sidebar React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import Image from "next/image"
@@ -18,8 +27,32 @@ import {
 } from "@/components/ui/sidebar"
 
 import { useLanguage } from "@/components/language-provider"
+import { useAuth } from "@/components/auth-provider"
 import { getSidebarPageDefinitions } from "@/lib/sidebar-pages"
 import { useSidebarPagePreferences } from "@/hooks/use-sidebar-page-preferences"
+
+function ArgentMarkIcon({ className }: { className?: string }) {
+    const maskId = React.useId()
+
+    return (
+        <svg
+            aria-hidden
+            focusable="false"
+            viewBox="0 0 151 131"
+            fill="none"
+            className={className}
+        >
+            <mask id={maskId} maskUnits="userSpaceOnUse" x="-5" y="-4" width="161" height="142">
+                <path d="M151 0.273399H0V130.273H151V0.273399Z" fill="white" />
+                <path d="M0 130.273L151 2.2734" stroke="black" strokeWidth="15" />
+                <path d="M0 130.273L151 78.2734" stroke="black" strokeWidth="15" />
+            </mask>
+            <g mask={`url(#${maskId})`}>
+                <path d="M0 130.273L75.214 0L150.428 130.273H0Z" fill="currentColor" />
+            </g>
+        </svg>
+    )
+}
 
 interface UserProfile {
     id: string;
@@ -34,6 +67,7 @@ interface UserProfile {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { t, language } = useLanguage()
+    const { logout } = useAuth()
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
     const [isLoadingUser, setIsLoadingUser] = useState(true)
 
@@ -52,6 +86,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 const data = await response.json()
                 setUserProfile(data)
                 return true
+            } else if (response.status === 401) {
+                await logout()
+                return false
             } else {
                 setUserProfile(null)
                 return false
@@ -63,7 +100,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         } finally {
             setIsLoadingUser(false)
         }
-    }, [])
+    }, [logout])
 
     const fetchProfileWithRetry = React.useCallback(async () => {
         setIsLoadingUser(true)
@@ -142,45 +179,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarHeader className="px-2 pt-2 pb-1">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <CollapsedTooltip asChild size="lg" tooltip="Argent">
+                        <CollapsedTooltip asChild size="lg" tooltip="Argent" className="group-data-[collapsible=icon]:p-2!">
                             <Link href="/" aria-label="Argent">
-                                <span className="flex min-w-0 flex-1 items-center justify-start group-data-[collapsible=icon]:hidden">
+                                <span className="flex min-w-0 flex-1 items-center justify-start text-sidebar-foreground group-data-[collapsible=icon]:hidden">
                                     <Image
                                         src="/full-icon-black.svg"
-                                        alt="Argent"
-                                        width={20}
-                                        height={100}
-                                        priority
-                                        className="h-8 w-auto max-w-full dark:hidden"
-                                    />
-                                    <Image
-                                        src="/full-icon-white.svg"
                                         alt=""
-                                        width={20}
-                                        height={100}
+                                        width={632}
+                                        height={167}
                                         priority
                                         aria-hidden
-                                        className="hidden h-7 w-auto max-w-full dark:block"
+                                        draggable={false}
+                                        className="h-8 w-[121px] max-w-full shrink-0 object-contain dark:invert"
                                     />
                                 </span>
-                                <span className="hidden aspect-square size-8 shrink-0 items-center justify-center text-sidebar-foreground group-data-[collapsible=icon]:flex">
-                                    <Image
-                                        src="/icon-black.svg"
-                                        alt=""
-                                        width={151}
-                                        height={131}
-                                        priority
-                                        className="size-5 object-contain dark:hidden"
-                                    />
-                                    <Image
-                                        src="/icon-white.svg"
-                                        alt=""
-                                        width={151}
-                                        height={131}
-                                        priority
-                                        aria-hidden
-                                        className="hidden size-5 object-contain dark:block"
-                                    />
+                                <span className="hidden shrink-0 items-center justify-start text-sidebar-foreground group-data-[collapsible=icon]:flex">
+                                    <ArgentMarkIcon className="block size-4 shrink-0 text-current" />
                                 </span>
                             </Link>
                         </CollapsedTooltip>

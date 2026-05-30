@@ -1,3 +1,12 @@
+//
+//  backfill-tags.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the backfill tags maintenance script for Argent, automating operational or
+//  data-repair work that supports local development and administration.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /**
  * Backfill the Tag table from existing Transaction.tags[] arrays.
  *
@@ -7,16 +16,14 @@
  *
  * Idempotent. Safe to re-run.
  *
- * Run: npx tsx scripts/backfill-tags.ts
+ * Run: pnpm run backfill:tags
  */
 
 import 'dotenv/config';
-import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../lib/generated/prisma/client';
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 // ---------------------------------------------------------------------------

@@ -170,11 +170,9 @@
         "no_account": "Don't have an account?",
         "create_one": "Create one",
         "two_factor_title": "Two-factor authentication",
-        "two_factor_subtitle": "A code was sent to your inbox",
-        "two_factor_hint": "Check your inbox",
+        "two_factor_subtitle": "Enter the code from your authenticator app",
+        "two_factor_hint": "Use your authenticator app",
         "trust_device": "Trust this device for 30 days",
-        "resend_code": "Resend code",
-        "resending_code": "Resending...",
         "error_fields_required": "Email and password are required",
         "error_no_account": "No account found with this email.",
         "error_no_account_link": "Create one",
@@ -223,6 +221,48 @@
         "unknown": {
             "title": "Error",
             "message": "An unexpected error occurred."
+        }
+    },
+    "empty_states": {
+        "nothing": {
+            "title": "Nothing to show here yet",
+            "description": "When there is something to show, it will appear here."
+        },
+        "no_data": {
+            "title": "Nothing to show here yet",
+            "description": "There's no data to display at the moment."
+        },
+        "no_results": {
+            "title": "No results found",
+            "description": "Try adjusting your search or filter criteria."
+        },
+        "empty_inbox": {
+            "title": "Your inbox is empty",
+            "description": "No messages or notifications yet."
+        },
+        "no_transactions": {
+            "title": "No transactions yet",
+            "description": "Start by adding your first transaction to track your finances."
+        },
+        "no_budgets": {
+            "title": "No budgets created",
+            "description": "Create a budget to start managing your spending."
+        },
+        "no_bills": {
+            "title": "No bills recorded",
+            "description": "Add your recurring bills to stay on top of payments."
+        },
+        "no_accounts": {
+            "title": "No accounts added",
+            "description": "Connect your bank accounts to see all your finances in one place."
+        },
+        "no_events": {
+            "title": "No upcoming events",
+            "description": "Your calendar is clear for now."
+        },
+        "filtered": {
+            "title": "No matching items",
+            "description": "No items match your current filters. Try changing or clearing filters."
         }
     },
     "time_range": {
@@ -441,13 +481,33 @@
         "cat_other": "Other"
     },
     "calendar_page": {
+        "title": "Cash calendar",
         "today": "Today",
+        "prev_month": "Previous month",
+        "next_month": "Next month",
         "description": "Financial calendar view",
         "monthly_income": "Monthly Income",
         "monthly_expenses": "Monthly Expenses",
+        "net_flow": "Net Flow",
         "upcoming_bills": "Upcoming Bills",
+        "active_days_change": "%count active days",
+        "income": "Income",
+        "expenses": "Expenses",
+        "net": "Net",
+        "due": "Due",
+        "total_due": "Total due",
+        "daily_summary": "Daily summary",
+        "transactions": "Transactions",
+        "selected_day": "Selected day",
+        "month_at_a_glance": "Month at a glance",
+        "activity": "Activity",
         "bills_due": "Bills Due",
         "no_transactions": "No transactions on this day.",
+        "no_activity": "No activity this month.",
+        "select_day_hint": "Daily transactions and bills appear here.",
+        "transaction_count": "%count txns",
+        "bill_count": "%count bills",
+        "more_items": "+%count more",
         "months": [
             "January",
             "February",
@@ -651,10 +711,13 @@
     "login_page_extra": {
         "error_network_request": "Network error — check your internet connection.",
         "error_server_no_json": "Server returned an error with no JSON body.",
-        "error_resend_unknown": "Unknown error while resending code.",
         "error_login_unknown": "Unknown error during login.",
         "error_2fa_unknown": "Unknown error during 2FA verification.",
-        "back_to_login": "Back to login"
+        "back_to_login": "Back to login",
+        "backup_code": "Backup code",
+        "backup_code_subtitle": "Enter one of your saved backup codes",
+        "use_backup_code": "Use backup code",
+        "use_authenticator_code": "Use authenticator code"
     },
     "register_page_extra": {
         "error_enter_email": "Please enter your email address.",

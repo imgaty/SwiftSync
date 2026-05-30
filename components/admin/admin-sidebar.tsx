@@ -1,3 +1,12 @@
+//
+//  admin-sidebar.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Admin sidebar admin component for Argent, supporting administrative
+//  navigation, reporting, and management screens with shared UI structure.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -34,8 +43,8 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/language-provider"
+import { getTranslations, type LooseTranslations } from "@/lib/translation-utils"
 
 interface AdminUser {
     id: string
@@ -51,14 +60,14 @@ interface NavItem {
     icon: LucideIcon
 }
 
-function getMainNav(a: Record<string, any>): NavItem[] {
+function getMainNav(a: LooseTranslations): NavItem[] {
     return [
         { name: a.dashboard || "Dashboard", url: "/admin", icon: LayoutDashboard },
         { name: a.users || "Users", url: "/admin/users", icon: Users },
     ]
 }
 
-function getDataNav(a: Record<string, any>): NavItem[] {
+function getDataNav(a: LooseTranslations): NavItem[] {
     return [
         { name: a.transactions || "Transactions", url: "/admin/transactions", icon: ArrowLeftRight },
         { name: a.bills || "Bills", url: "/admin/bills", icon: Receipt },
@@ -68,7 +77,7 @@ function getDataNav(a: Record<string, any>): NavItem[] {
     ]
 }
 
-function getSystemNav(a: Record<string, any>): NavItem[] {
+function getSystemNav(a: LooseTranslations): NavItem[] {
     return [
         { name: a.notifications || "Notifications", url: "/admin/notifications", icon: Bell },
         { name: a.announcements || "Announcements", url: "/admin/announcements", icon: Megaphone },
@@ -93,12 +102,10 @@ function NavSection({ label, items }: { label: string; items: NavItem[] }) {
 
                     return (
                         <SidebarMenuItem key={item.url}>
-                            <CollapsedTooltip asChild tooltip={item.name}>
+                            <CollapsedTooltip asChild tooltip={item.name} isActive={isActive}>
                                 <Link
                                     href={item.url}
-                                    className={cn(
-                                        isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                                    )}
+                                    aria-current={isActive ? "page" : undefined}
                                 >
                                     <item.icon />
                                     <span>{item.name}</span>
@@ -114,7 +121,7 @@ function NavSection({ label, items }: { label: string; items: NavItem[] }) {
 
 export function AdminSidebar({ user }: { user: AdminUser }) {
     const { t } = useLanguage()
-    const a = (t as any).admin || {} as Record<string, any>
+    const a = React.useMemo(() => getTranslations(t, "admin"), [t])
     const mainNav = React.useMemo(() => getMainNav(a), [a])
     const dataNav = React.useMemo(() => getDataNav(a), [a])
     const systemNav = React.useMemo(() => getSystemNav(a), [a])
@@ -158,7 +165,7 @@ export function AdminSidebar({ user }: { user: AdminUser }) {
                     {/* Back to main app link */}
                     <SidebarMenuItem>
                         <CollapsedTooltip asChild tooltip={a.back_to_app || "Back to App"}>
-                            <Link href="/" className="text-neutral-400 hover:text-foreground">
+                            <Link href="/">
                                 <LogOut className="h-4 w-4 rotate-180" />
                                 <span>{a.back_to_app || "Back to App"}</span>
                             </Link>

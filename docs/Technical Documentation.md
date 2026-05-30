@@ -1,5 +1,5 @@
 # **Argent Technical Documentation**
-Last update: 14.04.2026
+Last update: 30.05.2026
 
 <br>
 
@@ -63,22 +63,32 @@ The project follows the Next.js App Router convention. Server logic in `lib/` an
 
 ```text
 lib/                                    # Server-side logic (never sent to the browser)
-  ├── adaptive-encryption.ts            #   Password hashing & generation rotation
+  ├── prisma.ts                         #   Prisma client singleton using the PostgreSQL adapter
   ├── session.ts                        #   HMAC session token creation & verification
   ├── auth-helpers.ts                   #   getAuthUserId() — extracts user from cookies
+  ├── auth-backup-codes.ts              #   2FA backup-code hashing and verification
+  ├── auth-pending-2fa.ts               #   Short-lived pending 2FA login state
+  ├── auth-redirect.ts                  #   Auth callback/redirect normalization
+  ├── password.ts                       #   Password hashing and rehash checks
+  ├── encryption-v2.ts                  #   Server-only encryption helpers
   ├── salt-edge.ts                      #   Salt Edge Open Banking API client
   ├── bank-api.ts                       #   Card/IBAN lookup (Luhn, BIN, IBAN parsing)
-  ├── PACE.ts                           #   PACE rule system (regex + keyword matching)
+  ├── PACE.ts                           #   Shared PACE rule types and evaluators
+  ├── PACE.server.ts                    #   Server-side PACE execution against Prisma data
   ├── PRISM.ts                          #   Shared overlay styling tokens (glass morphism)
   ├── data-access.ts                    #   Personal user-scoping helpers
   ├── permissions.ts                    #   Permission labels used by route guards
   ├── spreadsheet-utils.ts              #   Spreadsheet calculation engine and cell utilities
+  ├── spreadsheet-schema.ts             #   Spreadsheet content validation
+  ├── spreadsheet-clipboard.ts          #   Spreadsheet clipboard serialization
+  ├── spreadsheet-number-format.ts      #   Spreadsheet number format helpers
   ├── admin-auth.ts                     #   requireAdmin() — role-based access guard
   ├── admin-audit.ts                    #   Audit log writer (logAdminAction)
   ├── email.ts                          #   Resend integration (password reset emails)
-  ├── db.ts                             #   Database helper functions
-  ├── prisma.ts                         #   Prisma client singleton
-  └── logger.ts                         #   Application logging
+  ├── query-keys.ts                     #   TanStack Query key helpers
+  ├── query-utils.ts                    #   API fetch and cache helpers
+  ├── validation.ts                     #   Shared request/input validation
+  └── types.ts                          #   Shared finance domain types
 
 app/
   ├── (auth)/                           # Public pages: login, register, forgot/reset password
@@ -104,9 +114,10 @@ components/
   └── auth/                             # Auth-specific components (OAuth buttons, login forms)
 
 prisma/
-  └── schema.prisma                     # Database schema (all models, relations, indexes)
+  ├── schema.prisma                     # Database schema (all models, relations, indexes)
+  └── migrations/                       # Committed migration history
 
-middleware.ts                           # Route protection (redirects based on auth state)
+proxy.ts                                # Route protection (redirects based on auth state)
 ```
 
 #
@@ -115,10 +126,11 @@ middleware.ts                           # Route protection (redirects based on a
 
 **Notable Boundaries**
 
-- `lib/` is server-only. It uses `require('server-only')` where needed to prevent accidental bundling into client code.
+- `lib/` contains server-only modules and shared pure helpers. Sensitive server modules use `import "server-only"` to prevent accidental bundling into client code.
 - `app/api/` routes are the only entry points for data mutations. Every route starts by calling `getAuthUserId()` (or `requireAdmin()` for admin routes) and returns 401 if the user is not authenticated.
-- `middleware.ts` handles route-level redirects (page access), but does not protect API routes, they protect themselves.
+- `proxy.ts` handles route-level redirects (page access), but does not protect API routes, they protect themselves.
 - Route groups `(auth)`, `(main)`, and `(admin)` share the same layout system but are logically separated by access level.
+- `lib/generated/` is not source-owned. It is regenerated from `prisma/schema.prisma` by `prisma generate` during `pnpm run build`.
 
 <br>
 
@@ -211,6 +223,7 @@ User
 | 9   | [Future Implementation](Future%20Implementation.md)             | Planned improvements and currently unimplemented items.                       |
 | 10  | [Setup Guide](Setup%20Guide.md)                                 | Local setup and environment configuration.                                    |
 | 11  | [Visual Identity & Styling](Visual%20Identity%20%26%20Styling.md) | Design system, PRISM tokens, button variants, and glass morphism guide.     |
+| 12  | [Squircles](Squircles.md)                                      | Global squircle corner geometry, fallback behavior, and usage rules.         |
 
 <br>
 

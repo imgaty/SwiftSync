@@ -1,3 +1,12 @@
+//
+//  border-dropdown.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Border dropdown spreadsheet component for Argent, supporting workbook
+//  editing controls, cell-level actions, and spreadsheet workspace interactions.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -23,7 +32,7 @@ function BorderStyleIcon({ style, className = "h-3 w-8" }: { style: BorderStyle;
     const strokeW = style === "thick" ? 2.5 : style === "medium" ? 1.8 : 1
     const dashArray = style === "dashed" ? "4 3" : style === "dotted" ? "1.5 2" : "none"
     return (
-        <svg viewBox="0 0 56 14" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 56 14" className={className} data-rounded-icon fill="none" xmlns="http://www.w3.org/2000/svg">
             <line x1="0" y1="7" x2="56" y2="7" stroke="currentColor" strokeWidth={strokeW} strokeDasharray={dashArray} />
         </svg>
     )
@@ -83,7 +92,7 @@ export function BorderDropdown({
             <DropdownContent width={320} align="start" className="p-2">
                 <div className="mb-2 grid grid-cols-4 gap-1">
                     {placements.map((p) => (
-                        <button
+                        <Button variant="ghost"
                             key={p.type}
                             type="button"
                             onClick={() => onApply(p.type, selectedStyle, selectedColor)}
@@ -92,7 +101,7 @@ export function BorderDropdown({
                         >
                             {p.icon}
                             <span className="leading-none">{p.label}</span>
-                        </button>
+                        </Button>
                     ))}
                 </div>
 
@@ -102,7 +111,7 @@ export function BorderDropdown({
                     <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Border style</div>
                     <div className="flex gap-1">
                     {BORDER_STYLES.map((s) => (
-                        <button
+                        <Button variant="ghost"
                             key={s.value}
                             type="button"
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedStyle(s.value) }}
@@ -115,14 +124,14 @@ export function BorderDropdown({
                             )}
                         >
                             <BorderStyleIcon style={s.value} />
-                        </button>
+                        </Button>
                     ))}
                 </div>
 
                     <div className="mt-3 mb-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Border color</div>
                     <div className="grid grid-cols-10 gap-1">
                         {COLOR_PRESETS.slice(0, 40).map((c) => (
-                            <button
+                            <Button variant="ghost"
                                 key={c}
                                 type="button"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedColor(c) }}

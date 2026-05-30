@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/auth/[action] API endpoint for Argent, keeping request parsing,
+//  business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /* Multi-action auth router.
  *
  * One catch-all handler for every session-touching auth verb: login, register,
@@ -10,15 +19,21 @@
 
 import { cookies, headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { randomBytes, randomInt, createHash, createHmac, timingSafeEqual } from 'crypto';
+import { randomBytes, createHash, createHmac } from 'crypto';
+import type { User } from '@/lib/generated/prisma/client';
 import * as OTPAuth from 'otpauth';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, hashPassword, passwordNeedsRehash } from '@/lib/password';
-import { send2FACode } from '@/lib/email';
-import { decrypt } from '@/lib/encryption-v2';
-import { createSessionToken, verifySessionToken } from '@/lib/session';
+import { decrypt, encrypt } from '@/lib/encryption-v2';
+import { createSessionToken, sessionVersionMatches, verifySessionToken } from '@/lib/session';
 import { EMAIL_RE } from '@/lib/validation';
 import { generateDefaultAvatarDataUrl } from '@/lib/avatar';
+import { clientIp } from '@/lib/rate-limit';
+import { consumeEncryptedBackupCode } from '@/lib/auth-backup-codes';
+import {
+    replacePendingTwoFactorSession,
+    type PendingTwoFactorSession,
+} from '@/lib/auth-pending-2fa';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +56,7 @@ const TEN_MIN = 10 * 60 * 1000;
 
 // --- In-memory stores --------------------------------------------------------
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
-const pending2FA = new Map<string, { userId: string; expiresAt: number; attempts: number }>();
+const pending2FA = new Map<string, PendingTwoFactorSession>();
 
 // --- Tiny helpers ------------------------------------------------------------
 const ok = (data: object, status = 200) => NextResponse.json(data, { status });
@@ -70,28 +85,46 @@ const logId = (userId: string) =>
     ).slice(0, 12);
 const token = () => randomBytes(32).toString('hex');
 
+function validateTotpCode(user: { name: string; email: string; twoFactorSecret: string | null }, code: string) {
+    if (!user.twoFactorSecret) return false;
+    const secret = decrypt(user.twoFactorSecret);
+    const totp = new OTPAuth.TOTP({
+        issuer: 'Argent',
+        label: user.name || user.email,
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: OTPAuth.Secret.fromBase32(secret),
+    });
+    return totp.validate({ token: code.trim(), window: 1 }) !== null;
+}
+
 let _dummy: string | null = null;
 const dummyHash = () => (_dummy ??= hashPassword(randomBytes(16).toString('hex')));
 
 function ip(req: Request) {
-    return req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+    return clientIp(req);
 }
 
-function rateOk(key: string): number | true {
+function rateOk(key: string, maxAttempts = MAX_LOGIN_ATTEMPTS): number | true {
     const now = Date.now();
     const e = rateLimits.get(key);
     
     if (!e || now > e.resetAt) return true;
     
-    return e.count >= MAX_LOGIN_ATTEMPTS ? Math.ceil((e.resetAt - now) / 1000) : true;
+    return e.count >= maxAttempts ? Math.ceil((e.resetAt - now) / 1000) : true;
 }
 
-function rateFail(key: string) {
+function rateFail(key: string, windowMs = LOGIN_WINDOW_MS) {
     const now = Date.now();
     const e = rateLimits.get(key);
     
-    if (!e || now > e.resetAt) rateLimits.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    if (!e || now > e.resetAt) rateLimits.set(key, { count: 1, resetAt: now + windowMs });
     else e.count++;
+}
+
+function twoFactorRateKey(userId: string, clientIp: string) {
+    return `2fa:${userId}:${clientIp}`;
 }
 
 function cleanup() {
@@ -120,7 +153,7 @@ function validatePw(pw: string): string | null {
     return null;
 }
 
-async function getAuth<T extends Record<string, boolean>>(select?: T) {
+async function getAuth<T extends Record<string, boolean>>(select?: T): Promise<User | null> {
     const cs = await cookies();
     const tok = cs.get('auth-token')?.value;
 
@@ -129,25 +162,71 @@ async function getAuth<T extends Record<string, boolean>>(select?: T) {
     const session = await verifySessionToken(tok);
     if (!session) return null;
     
-    return prisma.user.findUnique({ where: { id: session.uid }, select: select as T });
+    const requestedSelect = select ?? ({} as T);
+    const user = await prisma.user.findUnique({
+        where: { id: session.uid },
+        select: { ...requestedSelect, status: true, sessionVersion: true } as T & { status: true, sessionVersion: true },
+    });
+    const authUser = user as ({ status: string; sessionVersion: number } & Record<string, unknown>) | null;
+    if (!authUser || authUser.status !== 'active' || !sessionVersionMatches(session, authUser.sessionVersion)) return null;
+
+    return user as User;
 }
 
-async function setAuth(userId: string) {
+async function setAuth(userId: string, sessionVersion?: number) {
     const cs = await cookies();
-    const sessionToken = await createSessionToken(userId, SESSION_MAX_AGE);
+    const resolvedSessionVersion = sessionVersion ?? (await prisma.user.findUnique({
+        where: { id: userId },
+        select: { sessionVersion: true },
+    }))?.sessionVersion ?? 0;
+    const sessionToken = await createSessionToken(userId, SESSION_MAX_AGE, resolvedSessionVersion);
 
     cs.set('auth-token', sessionToken, { httpOnly: true, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
-    cs.set('user-session', JSON.stringify({ id: userId }), { httpOnly: true, ...COOKIE_OPTS, maxAge: SESSION_MAX_AGE });
+    cs.delete('user-session');
 }
 
-async function finishAuthenticatedSession(userId: string, role?: string, message = 'Login successful') {
-    await setAuth(userId);
+async function finishAuthenticatedSession(userId: string, role?: string, message = 'Login successful', request?: Request) {
+    const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            lastLoginAt: new Date(),
+            ...(request ? { lastLoginIp: ip(request) } : {}),
+        },
+        select: { sessionVersion: true },
+    });
+
+    await setAuth(userId, user.sessionVersion);
 
     return ok({
         success: true,
         message,
         userId,
         role,
+    });
+}
+
+async function consumeBackupCodeForUser(userId: string, submittedCode: string) {
+    return prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
+
+        const user = await tx.user.findUnique({
+            where: { id: userId },
+            select: { twoFactorBackupCodes: true },
+        });
+        const backupCodesAfterUse = consumeEncryptedBackupCode(
+            user?.twoFactorBackupCodes ?? null,
+            submittedCode,
+            decrypt,
+        );
+
+        if (!backupCodesAfterUse) return false;
+
+        await tx.user.update({
+            where: { id: userId },
+            data: { twoFactorBackupCodes: encrypt(JSON.stringify(backupCodesAfterUse)) },
+        });
+
+        return true;
     });
 }
 
@@ -194,7 +273,7 @@ async function handleLogin(request: Request) {
 
         const user = await prisma.user.findFirst({
             where: { email: { equals: email, mode: 'insensitive' } },
-            select: { id: true, email: true, password: true, twoFactorEnabled: true, role: true },
+            select: { id: true, email: true, password: true, twoFactorEnabled: true, twoFactorSecret: true, role: true, status: true },
         });
 
         // Single error message for both branches (no email + wrong password) to
@@ -210,6 +289,9 @@ async function handleLogin(request: Request) {
             rateFail(clientIp);
             return err('Invalid email or password', 401);
         }
+        if (user.status !== 'active') {
+            return err('Account is not active', 403);
+        }
 
         rateLimits.delete(clientIp);
 
@@ -218,6 +300,10 @@ async function handleLogin(request: Request) {
 
         // 2FA path
         if (user.twoFactorEnabled) {
+            if (!user.twoFactorSecret) {
+                return err('2FA is enabled but not fully configured. Please reset 2FA from settings or contact support.', 400);
+            }
+
             const cs = await cookies();
             const raw = cs.get(TRUST_COOKIE)?.value;
 
@@ -230,75 +316,41 @@ async function handleLogin(request: Request) {
                         console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
                     }
 
-                    return finishAuthenticatedSession(user.id, user.role, 'Login successful (trusted device)');
+                    return finishAuthenticatedSession(user.id, user.role, 'Login successful (trusted device)', request);
                 }
 
                 if (td) await prisma.trustedDevice.delete({ where: { id: td.id } }).catch((e) => { console.error('Trusted device delete (mismatch) failed:', e); });
                 cs.delete(TRUST_COOKIE);
             }
 
-            const code = randomInt(100000, 999999).toString();
-
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { ...upgrade, twoFactorCode: sha256(code), twoFactorCodeExpiry: new Date(Date.now() + TEN_MIN) },
-            });
-
-            if (needsUpgrade) console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
-
-            try { await send2FACode(user.email, code); }
-            catch (e) {
-              console.error('Failed to send 2FA email:', e);
-
-              const details = e instanceof Error ? e.message : String(e);
-              const isResendTestMode = /testing emails to your own email address|verify a domain/i.test(details);
-
-              cleanup();
-
-              if (pending2FA.size >= MAX_PENDING) {
-                const k = pending2FA.keys().next().value;
-                if (k) pending2FA.delete(k);
-              }
-
-              const tmp = token();
-              pending2FA.set(tmp, {
-                userId: user.id,
-                expiresAt: Date.now() + TEN_MIN,
-                attempts: 0,
-              });
-
-              if (process.env.NODE_ENV !== 'production' && isResendTestMode) {
-                return ok({
-                  success: true,
-                  needs_2fa: true,
-                  tempToken: tmp,
-                  dev2FACode: code,
-                  message: 'Email delivery unavailable in local test mode. Use the temporary code below.',
-                });
-              }
-
-              return err('Failed to send verification code', 500);
+            if (needsUpgrade) {
+                await prisma.user.update({ where: { id: user.id }, data: upgrade });
+                console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
             }
 
             cleanup();
-            
-            if (pending2FA.size >= MAX_PENDING) {
-                const k = pending2FA.keys().next().value;
-                if (k) pending2FA.delete(k);
+
+            const twoFactorLimit = rateOk(twoFactorRateKey(user.id, clientIp), MAX_2FA_ATTEMPTS);
+            if (twoFactorLimit !== true) {
+                const res = err(`Too many verification attempts. Try again in ${twoFactorLimit} seconds.`, 429);
+                res.headers.set('Retry-After', twoFactorLimit.toString());
+
+                return res;
             }
 
             const tmp = token();
-            pending2FA.set(tmp, {
+            replacePendingTwoFactorSession(pending2FA, tmp, {
                 userId: user.id,
                 expiresAt: Date.now() + TEN_MIN,
-                attempts: 0
+                attempts: 0,
+                maxPending: MAX_PENDING,
             });
 
             return ok({
                 success: true,
                 needs_2fa: true,
                 tempToken: tmp,
-                message: 'A verification code has been sent to your email'
+                message: 'Enter the 6-digit code from your authenticator app or a backup code'
             });
         }
 
@@ -311,7 +363,7 @@ async function handleLogin(request: Request) {
             console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
         }
         
-        return finishAuthenticatedSession(user.id, user.role);
+        return finishAuthenticatedSession(user.id, user.role, 'Login successful', request);
 
     } catch (e) {
         console.error('Login error:', e); return err('Something went wrong while signing in. Please try again.', 500);
@@ -322,42 +374,55 @@ async function handleLogin(request: Request) {
 async function handle2FALogin(request: Request) {
   try {
     const { tempToken, code, trustDevice } = await request.json();
-    if (!tempToken || !code) return err('Temporary token and verification code are required', 400);
+    const submittedCode = String(code || '').trim();
+    if (!tempToken || !submittedCode) return err('Temporary token and verification code are required', 400);
 
     cleanup();
     const session = pending2FA.get(tempToken);
     if (!session) return err('Session expired. Please log in again.', 401);
     if (session.attempts >= MAX_2FA_ATTEMPTS) { pending2FA.delete(tempToken); return err('Too many attempts. Please log in again.', 429); }
+    pending2FA.delete(tempToken);
+
+    const clientIp = ip(request);
+    const twoFactorKey = twoFactorRateKey(session.userId, clientIp);
+    const limit = rateOk(twoFactorKey, MAX_2FA_ATTEMPTS);
+    if (limit !== true) {
+      return err(`Too many verification attempts. Try again in ${limit} seconds.`, 429);
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, twoFactorCode: true, twoFactorCodeExpiry: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        twoFactorSecret: true,
+      },
     });
-    if (!user?.twoFactorCode || !user.twoFactorCodeExpiry) { pending2FA.delete(tempToken); return err('No verification code found. Please log in again.', 400); }
-    if (new Date() > user.twoFactorCodeExpiry) {
-      pending2FA.delete(tempToken);
-      await prisma.user.update({ where: { id: user.id }, data: { twoFactorCode: null, twoFactorCodeExpiry: null } });
-      return err('Code expired. Please log in again.', 401);
+    if (!user?.twoFactorSecret) {
+      return err('2FA is not configured for this account. Please log in again.', 400);
+    }
+    if (user.status !== 'active') {
+      return err('Account is not active', 403);
     }
 
-    const submitted = Buffer.from(sha256(code));
-    const stored = Buffer.from(user.twoFactorCode);
-    if (submitted.length !== stored.length || !timingSafeEqual(submitted, stored)) {
-      // Invalidate the stored code AND the pending session on every failed attempt:
-      // a leaked code can't be replayed, and the user gets a truthful "session
-      // expired" message on retry instead of a confusing "invalid code" when they
-      // type the right code on the second try.
-      pending2FA.delete(tempToken);
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { twoFactorCode: null, twoFactorCodeExpiry: null },
-      }).catch((e) => { console.error('2FA code invalidation failed:', e); });
-      return err('Invalid verification code. Please log in again.', 401);
+    const isTotpValid = /^\d{6}$/.test(submittedCode) && validateTotpCode(user, submittedCode);
+    const isBackupCodeValid = isTotpValid ? false : await consumeBackupCodeForUser(user.id, submittedCode);
+
+    if (!isTotpValid && !isBackupCodeValid) {
+      const nextAttempts = session.attempts + 1;
+      rateFail(twoFactorKey, TEN_MIN);
+      const limited = rateOk(twoFactorKey, MAX_2FA_ATTEMPTS);
+      if (nextAttempts >= MAX_2FA_ATTEMPTS || limited !== true) {
+        return err('Too many attempts. Please log in again.', 429);
+      }
+      pending2FA.set(tempToken, { ...session, attempts: nextAttempts });
+      return err('Invalid verification code', 401);
     }
 
-    pending2FA.delete(tempToken);
-    const fullUser = await prisma.user.findUnique({ where: { id: session.userId }, select: { role: true } });
-    await prisma.user.update({ where: { id: user.id }, data: { twoFactorCode: null, twoFactorCodeExpiry: null } });
+    rateLimits.delete(twoFactorKey);
 
     if (trustDevice) {
       const raw = token();
@@ -372,7 +437,7 @@ async function handle2FALogin(request: Request) {
       cs.set(TRUST_COOKIE, raw, { httpOnly: true, ...COOKIE_OPTS, maxAge: TRUST_DEVICE_MAX_AGE });
     }
 
-    return finishAuthenticatedSession(session.userId, fullUser?.role);
+    return finishAuthenticatedSession(session.userId, user.role, 'Login successful', request);
   } catch (e) { console.error('2FA login error:', e); return err('Something went wrong while verifying your code. Please try again.', 500); }
 }
 
@@ -416,16 +481,16 @@ async function handleRegister(request: Request) {
           dateOfBirth,
           ...(recoveryEmail ? { recoveryEmail } : {}),
         },
-        select: { id: true },
+        select: { id: true, sessionVersion: true },
       });
 
       createdUserId = user.id;
+      await setAuth(user.id, user.sessionVersion);
     } catch (e: unknown) {
       if (e && typeof e === 'object' && 'code' in e && e.code === 'P2002') return err('User already exists', 409);
       throw e;
     }
 
-    await setAuth(createdUserId);
     return ok({
       success: true,
       message: 'Registration successful',
@@ -456,8 +521,8 @@ async function handleVerify() {
     const session = await verifySessionToken(tok.value);
     if (!session) { cs.delete('auth-token'); cs.delete('user-session'); return ok({ authenticated: false }, 401); }
 
-    const user = await prisma.user.findUnique({ where: { id: session.uid }, select: { id: true } });
-    if (!user) { cs.delete('auth-token'); cs.delete('user-session'); return ok({ authenticated: false }, 401); }
+    const user = await prisma.user.findUnique({ where: { id: session.uid }, select: { id: true, status: true, sessionVersion: true } });
+    if (!user || user.status !== 'active' || !sessionVersionMatches(session, user.sessionVersion)) { cs.delete('auth-token'); cs.delete('user-session'); return ok({ authenticated: false }, 401); }
 
     return ok({ authenticated: true, userId: user.id });
   } catch (e) { console.error('Verification error:', e); return ok({ authenticated: false }, 500); }
@@ -493,7 +558,8 @@ async function handleUpdate(request: Request) {
     if (!user) return err('Not authenticated', 401);
 
     const { name, email, dateOfBirth, recoveryEmail, currentPassword, newPassword } = await request.json();
-    const updates: Record<string, string | number | null> = {};
+    const updates: Record<string, unknown> = {};
+    let passwordChanged = false;
 
     if (name !== undefined) updates.name = name.trim() || '';
 
@@ -529,7 +595,10 @@ async function handleUpdate(request: Request) {
       if (!verifyPassword(currentPassword, user.password)) return err('Current password is incorrect', 400);
     }
 
-    if (emailChange) updates.email = emailChange;
+    if (emailChange) {
+      updates.email = emailChange;
+      updates.emailVerified = false;
+    }
     if (recoveryEmailChange !== undefined) updates.recoveryEmail = recoveryEmailChange;
 
     if (currentPassword && newPassword) {
@@ -537,11 +606,20 @@ async function handleUpdate(request: Request) {
       const pwValidation = validatePw(newPassword);
       if (pwValidation) return err(pwValidation, 400);
       updates.password = hashPassword(newPassword);
+      passwordChanged = true;
     }
 
     if (!Object.keys(updates).length) return err('No updates provided', 400);
 
-    await prisma.user.update({ where: { id: user.id }, data: updates });
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        ...updates,
+        ...(passwordChanged ? { sessionVersion: { increment: 1 } } : {}),
+      },
+      select: { sessionVersion: true },
+    });
+    if (passwordChanged) await setAuth(user.id, updated.sessionVersion);
     return ok({ success: true, message: 'Profile updated successfully' });
   } catch (e) { console.error('Update error:', e); return err('Could not update your profile. Please try again.', 500); }
 }
@@ -609,7 +687,14 @@ async function handleTrustedDevices(request: Request) {
 
     const session = await verifySessionToken(tok);
     if (!session) return err('Not authenticated', 401);
-    const userId = session.uid;
+    const user = await prisma.user.findUnique({
+      where: { id: session.uid },
+      select: { id: true, status: true, sessionVersion: true },
+    });
+    if (!user || user.status !== 'active' || !sessionVersionMatches(session, user.sessionVersion)) {
+      return err('Not authenticated', 401);
+    }
+    const userId = user.id;
 
     const { action: act, deviceId } = (await request.json().catch(() => ({}))) as { action?: string; deviceId?: string };
 
@@ -618,9 +703,14 @@ async function handleTrustedDevices(request: Request) {
       return ok({ success: true, message: 'Device revoked' });
     }
     if (act === 'revoke-all') {
-      await prisma.trustedDevice.deleteMany({ where: { userId } });
+      await Promise.all([
+        prisma.trustedDevice.deleteMany({ where: { userId } }),
+        prisma.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } }),
+      ]);
       cs.delete(TRUST_COOKIE);
-      return ok({ success: true, message: 'All devices revoked' });
+      cs.delete('auth-token');
+      cs.delete('user-session');
+      return ok({ success: true, message: 'All devices and sessions revoked' });
     }
 
     const curHash = cs.get(TRUST_COOKIE)?.value ? deviceTokenHash(cs.get(TRUST_COOKIE)!.value) : null;

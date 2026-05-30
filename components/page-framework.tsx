@@ -1,3 +1,12 @@
+//
+//  page-framework.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Page framework React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 /**
@@ -29,6 +38,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationButton } from "@/components/notification-button"
 import { SmartTooltip } from "@/components/ui/tooltip"
+import { PRISM } from "@/lib/PRISM"
 import { cn } from "@/lib/utils"
 import { ClipboardCopy } from "lucide-react"
 import { toast } from "sonner"
@@ -44,7 +54,7 @@ interface PageShellProps {
 export function PageShell({ children, className }: PageShellProps) {
     return (
         <div className={cn(
-            "@container/main flex flex-col flex-1 gap-6 p-4 md:p-6",
+            "@container/main flex min-h-0 min-w-0 flex-col flex-1 gap-4 p-4 md:p-6",
             className
         )}>
             {children}
@@ -82,10 +92,7 @@ function normalizeBreadcrumbLabel(label: string, href: string): string {
     return text
 }
 
-// Shared topline button styling — same as NotificationButton / ThemeToggle / SidebarTrigger
-const TOPLINE_BTN = "rounded-full"
-
-/** Recursively inject topline button styling onto every <Button> in the actions tree.
+/** Recursively normalize every <Button> in the actions tree to the shared icon button API.
  *  Also wraps elements that carry a `title` prop in a SmartTooltip (removes native title). */
 function injectToplineStyle(node: React.ReactNode): React.ReactNode {
     return React.Children.map(node, (child) => {
@@ -114,7 +121,7 @@ function injectToplineStyle(node: React.ReactNode): React.ReactNode {
         const styled = React.cloneElement(el, {
             variant: "ghost",
             size: "icon",
-            className: cn(TOPLINE_BTN, el.props.className as string | undefined),
+            className: el.props.className as string | undefined,
             ...(title ? { title: undefined } : {}),
         })
 
@@ -131,7 +138,7 @@ export function PageHeader({ breadcrumbs, isLoading = false, actions }: PageHead
     return (
         <header className = "animate-fade-in-down" style={{ animationDuration: "0.2s" }}>
             <div className="flex min-w-0 items-center gap-3">
-                <SidebarTrigger className={TOPLINE_BTN} />
+                <SidebarTrigger />
 
                 <Separator orientation="vertical" className="data-[orientation=vertical]:h-4 mx-1" />
 
@@ -214,9 +221,8 @@ const TREND_STYLES: Record<NonNullable<StatCardData["trend"]>, { badge: string; 
 
 const StatCardSkeleton = React.memo(function StatCardSkeleton() {
     return (
-        <div className="relative min-h-[148px] overflow-hidden rounded-3xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm">
-            <div className="pointer-events-none absolute -right-10 top-[-18px] h-20 w-40 rotate-18 bg-white/8 blur-2xl dark:bg-white/10" />
-            <div className="pointer-events-none absolute inset-0 rounded-3xl bg-linear-to-br from-muted/35 via-transparent to-transparent" />
+        <div className={cn(PRISM.cardSurface, "relative min-h-[148px] overflow-hidden p-5")}>
+            <div className="pointer-events-none absolute inset-0 rounded-xl bg-linear-to-br from-white/[0.035] via-transparent to-transparent dark:from-white/[0.025]" />
             <div className="relative z-10 flex items-start justify-between gap-3">
                 <div className="space-y-2">
                     <Skeleton className="h-6 w-20 rounded-full" />
@@ -243,12 +249,11 @@ const StatCardItem = React.memo(function StatCardItem({ stat }: { stat: StatCard
             <ContextMenuTrigger asChild>
                 <div
                     className={cn(
-                        "relative min-h-[148px] overflow-hidden rounded-3xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm",
-                        "group transition-all duration-200 hover:border-primary/15 hover:bg-card/80 hover:shadow-md"
+                        PRISM.cardSurface,
+                        "relative min-h-[148px] overflow-hidden p-5 transition-all duration-200"
                     )}
                 >
-                    <div className="pointer-events-none absolute -right-10 top-[-18px] h-20 w-40 rotate-18 bg-white/8 blur-2xl dark:bg-white/10" />
-                    <div className="pointer-events-none absolute inset-0 rounded-3xl bg-linear-to-br from-muted/35 via-transparent to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 rounded-xl bg-linear-to-br from-white/[0.035] via-transparent to-transparent dark:from-white/[0.025]" />
 
                     <div className="relative z-10 flex items-start justify-between gap-3">
                         <div className="space-y-2">
@@ -260,7 +265,7 @@ const StatCardItem = React.memo(function StatCardItem({ stat }: { stat: StatCard
                             </p>
                         </div>
                         {stat.icon && (
-                            <div className="flex size-10 items-center justify-center rounded-2xl border border-border/50 bg-background/80 text-neutral-400/80 transition-colors group-hover:text-foreground [&>svg]:size-5">
+                            <div className="flex size-10 items-center justify-center rounded-xl border border-black/6 bg-black/2 text-neutral-400/80 dark:border-white/8 dark:bg-white/3 [&>svg]:size-5">
                                 {stat.icon}
                             </div>
                         )}
@@ -296,7 +301,7 @@ const StatCardItem = React.memo(function StatCardItem({ stat }: { stat: StatCard
 export const StatCards = React.memo(function StatCards({ stats, isLoading = false, className }: StatCardsProps) {
     return (
         <div
-            className={cn("grid gap-4 xl:gap-5 animate-fade-in-up stagger-2", className)}
+            className={cn("grid gap-4 animate-fade-in-up stagger-2", className)}
             style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))" }}
         >
             {isLoading
@@ -328,7 +333,7 @@ interface PageSectionProps {
 
 export function PageSection({ children, stagger = 3, actions, glass = false, fill = false, className }: PageSectionProps) {
     const content = glass ? (
-        <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-5 shadow-sm md:p-6">
+        <div className={cn(PRISM.cardSurface, "p-5 md:p-6")}>
             {children}
         </div>
     ) : children

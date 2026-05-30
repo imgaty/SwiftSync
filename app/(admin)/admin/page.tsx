@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin route in Argent, composing page-level layout, data dependencies, and
+//  feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import { useEffect, useState } from "react"
@@ -6,6 +15,7 @@ import { AdminHeader } from "@/components/admin/admin-header"
 import { UserGrowthChart } from "@/components/admin/user-growth-chart"
 import { useLanguage } from "@/components/language-provider"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getTranslations, type LooseTranslations } from "@/lib/translation-utils"
 import {
     Users,
     ArrowLeftRight,
@@ -71,7 +81,7 @@ interface DashboardData {
 }
 
 // --- Helpers ---
-function timeAgo(dateStr: string, a: Record<string, any>): string {
+function timeAgo(dateStr: string, a: LooseTranslations): string {
     const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
     if (seconds < 60) return a.just_now || "just now"
     const minutes = Math.floor(seconds / 60)
@@ -152,7 +162,11 @@ function StatCardSkeleton() {
 // --- Main Page ---
 export default function AdminDashboardPage() {
     const { t } = useLanguage()
-    const ad = (t as any).admin || {} as Record<string, any>
+    const ad = getTranslations(t, "admin")
+    const healthPage = getTranslations(ad, "health_page")
+    const accountsPage = getTranslations(ad, "accounts_page")
+    const usersPage = getTranslations(ad, "users_page")
+    const auditPage = getTranslations(ad, "audit_page")
     const [data, setData] = useState<DashboardData | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -172,7 +186,7 @@ export default function AdminDashboardPage() {
             <AdminHeader title={ad.dashboard || "Dashboard"} />
 
             <div className="flex-1 overflow-auto">
-                <div className="p-4 lg:p-6 space-y-6">
+                <div className="p-4 lg:p-6 space-y-4">
                     {/* Primary Stats */}
                     <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                         {loading ? (
@@ -193,16 +207,16 @@ export default function AdminDashboardPage() {
                                     trend={a?.transactionsThisWeek ? { value: a.transactionsThisWeek, label: "this week" } : undefined}
                                 />
                                 <StatCard
-                                    title={ad.health_page?.logins_today || "Active Today"}
+                                    title={healthPage.logins_today || "Active Today"}
                                     value={a?.loginsToday ?? 0}
                                     icon={LogIn}
-                                    description={`${a?.loginsThisWeek ?? 0} ${ad.health_page?.logins_week ? ad.health_page.logins_week.toLowerCase() : "this week"}`}
+                                    description={`${a?.loginsThisWeek ?? 0} ${healthPage.logins_week ? healthPage.logins_week.toLowerCase() : "this week"}`}
                                 />
                                 <StatCard
-                                    title={ad.health_page?.new_users_today || "New Today"}
+                                    title={healthPage.new_users_today || "New Today"}
                                     value={a?.newUsersToday ?? 0}
                                     icon={UserPlus}
-                                    description={`${a?.newUsersThisWeek ?? 0} ${ad.health_page?.new_users_week ? ad.health_page.new_users_week.toLowerCase() : "this week"}`}
+                                    description={`${a?.newUsersThisWeek ?? 0} ${healthPage.new_users_week ? healthPage.new_users_week.toLowerCase() : "this week"}`}
                                 />
                             </>
                         )}
@@ -214,7 +228,7 @@ export default function AdminDashboardPage() {
                             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
                         ) : (
                             <>
-                                <StatCard title={ad.accounts_page?.total_accounts || "Bank Accounts"} value={c?.totalAccounts ?? 0} icon={Wallet} />
+                                <StatCard title={accountsPage.total_accounts || "Bank Accounts"} value={c?.totalAccounts ?? 0} icon={Wallet} />
                                 <StatCard title={ad.bills || "Bills"} value={c?.totalBills ?? 0} icon={Receipt} />
                                 <StatCard title={ad.budgets || "Budgets"} value={c?.totalBudgets ?? 0} icon={PiggyBank} />
                                 <StatCard title={ad.goals || "Goals"} value={c?.totalGoals ?? 0} icon={Target} />
@@ -227,7 +241,7 @@ export default function AdminDashboardPage() {
                         {/* Account Status Breakdown */}
                         <div className="lg:col-span-2 rounded-xl border bg-card shadow-sm">
                             <div className="p-4 border-b">
-                                <h3 className="font-semibold">{ad.users_page?.status || "Account Status"}</h3>
+                                <h3 className="font-semibold">{usersPage.status || "Account Status"}</h3>
                                 <p className="text-sm text-neutral-400">{"User distribution by status"}</p>
                             </div>
                             <div className="p-4 space-y-3">
@@ -263,7 +277,7 @@ export default function AdminDashboardPage() {
                         {/* User Growth Chart */}
                         <div className="lg:col-span-3 rounded-xl border bg-card shadow-sm">
                             <div className="p-4 border-b">
-                                <h3 className="font-semibold">{ad.chart?.total_users ? "User Growth" : "User Growth"}</h3>
+                                <h3 className="font-semibold">User Growth</h3>
                                 <p className="text-sm text-neutral-400">{"Signups & total users — last 30 days"}</p>
                             </div>
                             <div className="p-4">
@@ -341,7 +355,7 @@ export default function AdminDashboardPage() {
                         <div className="rounded-xl border bg-card shadow-sm">
                             <div className="p-4 border-b flex items-center justify-between">
                                 <div>
-                                    <h3 className="font-semibold">{ad.audit_page?.title || "Recent Admin Activity"}</h3>
+                                    <h3 className="font-semibold">{auditPage.title || "Recent Admin Activity"}</h3>
                                     <p className="text-sm text-neutral-400">{"Latest audit log entries"}</p>
                                 </div>
                                 <Link

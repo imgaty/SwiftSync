@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/admin/users/[id] API endpoint for Argent, keeping request parsing,
+//  business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /* Admin actions on a single user.
  *
  * GET returns the admin detail view; PATCH performs a privileged action

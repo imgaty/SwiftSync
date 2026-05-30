@@ -1,3 +1,12 @@
+//
+//  propagate-modal.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Propagate modal transaction component for Argent, supporting transaction
+//  review, tagging, editing, and related money-management workflows.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 // "Apply tag to similar transactions?" modal.

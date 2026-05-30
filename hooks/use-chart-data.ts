@@ -1,3 +1,12 @@
+//
+//  use-chart-data.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides the use chart data React hook for Argent, encapsulating reusable state,
+//  effects, or data-access behavior for consuming components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -19,7 +28,7 @@ interface UseChartDataReturn {
     minDate: Date | null
 }
 
-interface APITransaction {
+export interface APITransaction {
     id: string
     date: string
     type: 'in' | 'out'
@@ -90,7 +99,12 @@ function processTransactions(
     return { data: processed, minDate }
 }
 
-export function useChartData(accountIds?: string[]): UseChartDataReturn {
+export function useChartData(
+    accountIds?: string[],
+    providedTransactions?: APITransaction[] | null,
+): UseChartDataReturn {
+    const hasProvidedTransactions = providedTransactions !== undefined
+
     // Stable stringified key for accountIds to avoid re-processing on every render
     const accountKey = React.useMemo(() =>
         accountIds && accountIds.length > 0 ? accountIds.slice().sort().join(",") : "",
@@ -100,17 +114,25 @@ export function useChartData(accountIds?: string[]): UseChartDataReturn {
     const { data: transactions, isLoading, error } = useQuery({
         queryKey: queryKeys.transactions,
         queryFn: fetchTransactions,
+        enabled: !hasProvidedTransactions,
         staleTime: 2 * 60 * 1000,
     })
 
-    const result = React.useMemo(() => {
-        if (!transactions) return { data: [] as DailyData[], minDate: null }
-        return processTransactions(transactions, accountKey)
-    }, [transactions, accountKey])
+    const sourceTransactions = hasProvidedTransactions ? providedTransactions : transactions
 
-    const errorInfo = error
+    const result = React.useMemo(() => {
+        if (!sourceTransactions) return { data: [] as DailyData[], minDate: null }
+        return processTransactions(sourceTransactions, accountKey)
+    }, [sourceTransactions, accountKey])
+
+    const errorInfo = !hasProvidedTransactions && error
         ? { type: 'UNKNOWN' as keyof typeof AppErrors, details: error instanceof Error ? error.message : String(error) }
         : null
 
-    return { data: result.data, isLoading, errorInfo, minDate: result.minDate }
+    return {
+        data: result.data,
+        isLoading: hasProvidedTransactions ? providedTransactions === null : isLoading,
+        errorInfo,
+        minDate: result.minDate,
+    }
 }

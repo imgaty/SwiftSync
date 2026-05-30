@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin/users route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -37,10 +46,12 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
     DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog, DialogContent, DialogDescription, DialogFooter,
-    DialogHeader, DialogTitle,
-} from "@/components/ui/dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
@@ -301,7 +312,7 @@ export default function AdminUsersPage() {
 
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
                         <div className="flex items-center gap-2 text-sm text-neutral-400">
                             <Users className="size-4" /> {up.total_users || "Total Users"}
@@ -502,37 +513,44 @@ export default function AdminUsersPage() {
 
             {/* Action Confirmation Dialog */}
             <Dialog open={actionDialog.open} onOpenChange={open => setActionDialog(prev => ({ ...prev, open }))}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{actionDialog.title}</DialogTitle>
-                        <DialogDescription>{actionDialog.description}</DialogDescription>
-                    </DialogHeader>
-                    {actionDialog.needsReason && (
-                        <div className="space-y-2">
-                            <Label htmlFor="reason">{up.reason_optional || "Reason (optional)"}</Label>
-                            <Input
-                                id="reason"
-                                label={up.reason_label || "Reason"}
-                                placeholder={up.reason_placeholder || "Provide a reason..."}
-                                value={actionReason}
-                                onChange={e => setActionReason(e.target.value)}
-                            />
-                        </div>
-                    )}
-                    <DialogFooter>
-                        <Button variant="glass" onClick={() => setActionDialog(prev => ({ ...prev, open: false }))}>
-                            {up.cancel || "Cancel"}
-                        </Button>
+                <FormDialogContent>
+                    <FormDialogHeader title={actionDialog.title} description={actionDialog.description} />
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            executeAction()
+                        }}
+                        className="flex flex-col gap-4"
+                    >
+                        {actionDialog.needsReason && (
+                            <div className="space-y-2">
+                                <Label htmlFor="reason">{up.reason_optional || "Reason (optional)"}</Label>
+                                <Input
+                                    id="reason"
+                                    label={up.reason_label || "Reason"}
+                                    placeholder={up.reason_placeholder || "Provide a reason..."}
+                                    value={actionReason}
+                                    onChange={e => setActionReason(e.target.value)}
+                                />
+                            </div>
+                        )}
+                    <FormDialogActions>
                         <Button
+                            type="submit"
                             variant={actionDialog.action === "ban" ? "solid-destructive" : "solid"}
-                            onClick={executeAction}
+                            size="lg"
+                            className="w-full"
                             disabled={actionLoading}
                         >
                             {actionLoading ? <RefreshCw className="size-4 animate-spin mr-2" /> : null}
                             {up.confirm || "Confirm"}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
+                        <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setActionDialog(prev => ({ ...prev, open: false }))}>
+                            {up.cancel || "Cancel"}
+                        </Button>
+                    </FormDialogActions>
+                    </form>
+                </FormDialogContent>
             </Dialog>
         </>
     )

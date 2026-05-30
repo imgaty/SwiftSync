@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/bank/connections/[id] API endpoint for Argent, keeping request parsing,
+//  business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { NextRequest, NextResponse } from "next/server"
 import { getConnection, removeConnection } from "@/lib/salt-edge"
 import { getAuthContext } from "@/lib/auth-helpers"
@@ -78,10 +87,21 @@ export async function DELETE(
 
     const result = await removeConnection(connectionId)
 
+    await prisma.$transaction([
+      prisma.bankAccount.updateMany({
+        where: { ...scopeFilter(ctx), connectionId: owned.id },
+        data: { connectionId: null },
+      }),
+      prisma.saltEdgeConnection.deleteMany({
+        where: { ...scopeFilter(ctx), id: owned.id },
+      }),
+    ])
+
     return NextResponse.json({
       success: true,
       connectionId: result.id,
       removed: result.removed,
+      removedLocal: true,
     })
   } catch (error) {
     console.error("Salt Edge disconnect error:", error)

@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin/users/[id] route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -19,10 +28,12 @@ import { Label } from "@/components/ui/label"
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog, DialogContent, DialogDescription, DialogFooter,
-    DialogHeader, DialogTitle,
-} from "@/components/ui/dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow, UniversalTable,
 } from "@/components/ui/table"
@@ -238,9 +249,9 @@ export default function AdminUserDetailPage() {
                 }
             />
 
-            <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
+            <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {/* --- Top: Profile + Quick Actions --- */}
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-4 lg:grid-cols-3">
                     {/* Profile Card */}
                     <div className="lg:col-span-2 rounded-xl border border-black/10 dark:border-white/10 p-5">
                         <div className="flex items-start justify-between">
@@ -369,7 +380,7 @@ export default function AdminUserDetailPage() {
                 {/* --- Financial Overview --- */}
                 <div>
                     <h3 className="text-sm font-semibold mb-3">{ud.financial_summary || "Financial Overview"}</h3>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
                         <StatCard icon={<CreditCard className="size-4" />} label={ud.stat_accounts || "Accounts"} value={user._count.bankAccounts} />
                         <StatCard icon={<FileText className="size-4" />} label={ud.total_transactions || "Transactions"} value={user._count.transactions} />
                         <StatCard icon={<Receipt className="size-4" />} label={ud.stat_bills || "Bills"} value={user._count.bills} />
@@ -377,7 +388,7 @@ export default function AdminUserDetailPage() {
                         <StatCard icon={<Target className="size-4" />} label={ud.stat_goals || "Goals"} value={user._count.financialGoals} />
                     </div>
                     {financial && (
-                        <div className="grid grid-cols-3 gap-3 mt-3">
+                        <div className="grid grid-cols-3 gap-4 mt-3">
                             <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
                                 <p className="text-xs text-neutral-400 flex items-center gap-1">
                                     <ArrowUpRight className="size-3 text-emerald-500" /> {ud.total_income || "Total Income"}
@@ -504,44 +515,58 @@ export default function AdminUserDetailPage() {
 
             {/* --- Action Confirmation Dialog --- */}
             <Dialog open={actionDialog.open} onOpenChange={open => setActionDialog(prev => ({ ...prev, open }))}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{actionDialog.title}</DialogTitle>
-                        <DialogDescription>{actionDialog.description}</DialogDescription>
-                    </DialogHeader>
-                    {actionDialog.needsReason && (
-                        <div className="space-y-2">
-                            <Label htmlFor="action-reason">{ud.reason_optional || "Reason (optional)"}</Label>
-                            <Input
-                                id="action-reason"
-                                label={ud.reason || "Reason"}
-                                placeholder={ud.provide_reason || "Provide a reason..."}
-                                value={actionReason}
-                                onChange={e => setActionReason(e.target.value)}
-                            />
-                        </div>
-                    )}
-                    <DialogFooter>
-                        <Button variant="glass" onClick={() => setActionDialog(prev => ({ ...prev, open: false }))}>{ud.cancel || "Cancel"}</Button>
+                <FormDialogContent>
+                    <FormDialogHeader title={actionDialog.title} description={actionDialog.description} />
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            executeAction(actionDialog.action)
+                        }}
+                        className="flex flex-col gap-4"
+                    >
+                        {actionDialog.needsReason && (
+                            <div className="space-y-2">
+                                <Label htmlFor="action-reason">{ud.reason_optional || "Reason (optional)"}</Label>
+                                <Input
+                                    id="action-reason"
+                                    label={ud.reason || "Reason"}
+                                    placeholder={ud.provide_reason || "Provide a reason..."}
+                                    value={actionReason}
+                                    onChange={e => setActionReason(e.target.value)}
+                                />
+                            </div>
+                        )}
+                    <FormDialogActions>
                         <Button
+                            type="submit"
                             variant={actionDialog.action === "ban" || actionDialog.action === "delete" ? "solid-destructive" : "solid"}
-                            onClick={() => executeAction(actionDialog.action)}
+                            size="lg"
+                            className="w-full"
                             disabled={actionLoading}
                         >
                             {actionLoading && <RefreshCw className="size-4 animate-spin mr-2" />}
                             {ud.confirm || "Confirm"}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
+                        <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setActionDialog(prev => ({ ...prev, open: false }))}>{ud.cancel || "Cancel"}</Button>
+                    </FormDialogActions>
+                    </form>
+                </FormDialogContent>
             </Dialog>
 
             {/* --- Role Change Dialog --- */}
             <Dialog open={roleDialog} onOpenChange={setRoleDialog}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{ud.change_role || "Change Role"}</DialogTitle>
-                        <DialogDescription>{ud.change_role_desc || "Change the role for"} {user.name}. {ud.affects_permissions || "This affects their access permissions."}</DialogDescription>
-                    </DialogHeader>
+                <FormDialogContent>
+                    <FormDialogHeader
+                        title={ud.change_role || "Change Role"}
+                        description={`${ud.change_role_desc || "Change the role for"} ${user.name}. ${ud.affects_permissions || "This affects their access permissions."}`}
+                    />
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            executeAction("change_role", { role: newRole })
+                        }}
+                        className="flex flex-col gap-4"
+                    >
                     <div className="space-y-2">
                         <Label>{ud.new_role || "New Role"}</Label>
                         <Select value={newRole} onValueChange={setNewRole}>
@@ -555,17 +580,21 @@ export default function AdminUserDetailPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <DialogFooter>
-                        <Button variant="glass" onClick={() => setRoleDialog(false)}>{ud.cancel || "Cancel"}</Button>
+                    <FormDialogActions>
                         <Button
-                            onClick={() => executeAction("change_role", { role: newRole })}
+                            type="submit"
+                            variant="solid"
+                            size="lg"
+                            className="w-full"
                             disabled={actionLoading || newRole === user.role}
                         >
                             {actionLoading && <RefreshCw className="size-4 animate-spin mr-2" />}
                             {ud.update_role || "Update Role"}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
+                        <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setRoleDialog(false)}>{ud.cancel || "Cancel"}</Button>
+                    </FormDialogActions>
+                    </form>
+                </FormDialogContent>
             </Dialog>
         </>
     )
@@ -599,8 +628,8 @@ function DetailSkeleton({ ad = {} }: { ad?: Record<string, string | undefined> }
     return (
         <>
             <AdminHeader title={ad.loading || "Loading..."} breadcrumbs={[{ label: ad.users || "Users", href: "/admin/users" }, { label: "..." }]} />
-            <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-                <div className="grid gap-6 lg:grid-cols-3">
+            <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+                <div className="grid gap-4 lg:grid-cols-3">
                     <div className="lg:col-span-2 rounded-xl border border-black/10 dark:border-white/10 p-5">
                         <div className="flex items-center gap-4">
                             <Skeleton className="size-14 rounded-full" />
@@ -631,7 +660,7 @@ function DetailSkeleton({ ad = {} }: { ad?: Record<string, string | undefined> }
                         {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-8 w-full mb-2" />)}
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
                     {[...Array(5)].map((_, i) => (
                         <div key={i} className="rounded-xl border border-black/10 dark:border-white/10 p-3">
                             <Skeleton className="h-3 w-16 mb-2" />

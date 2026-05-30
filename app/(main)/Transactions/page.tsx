@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /Transactions route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -20,7 +29,8 @@ export default function TransactionsPage() {
     const isPt = (t.config?.locale || "en-US").startsWith("pt")
     const { data, isLoading } = useFinanceData()
     const qc = useQueryClient()
-    const transactionsData = (data?.transactions || []) as Transaction[]
+    const transactionsData = React.useMemo(() => (data?.transactions ?? []) as Transaction[], [data?.transactions])
+    const hasTransactions = transactionsData.length > 0
     const accountsList = data?.accounts ?? []
     const accountsCount = accountsList.length
 
@@ -75,7 +85,7 @@ export default function TransactionsPage() {
     }, [transactionsData, isLoading, formatCurrency])
 
     return (
-        <PageShell>
+        <PageShell className="gap-4 p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -84,12 +94,24 @@ export default function TransactionsPage() {
                 isLoading={isLoading}
             />
 
-            <StatCards stats={stats} isLoading={isLoading} />
-
-            {!isLoading && transactionsData.length === 0 ? (
+            {isLoading ? (
+                <>
+                    <StatCards stats={stats} isLoading />
+                    <PageSection stagger={3} fill>
+                        <TransactionsTable
+                            data={transactionsData}
+                            accounts={accountsList}
+                            isLoading
+                            onAddTransaction={handleAdd}
+                            onEditTransaction={handleEdit}
+                            onDeleteTransaction={handleDelete}
+                        />
+                    </PageSection>
+                </>
+            ) : !hasTransactions ? (
                 <EmptyState
                     variant="no-transactions"
-                    fullPage
+                    placement="page"
                     title={isPt ? "Nada para mostrar aqui" : "Nothing to show here yet"}
                     description={
                         accountsCount === 0
@@ -109,16 +131,19 @@ export default function TransactionsPage() {
                     }
                 />
             ) : (
-                <PageSection stagger={3} fill>
-                    <TransactionsTable
-                        data={transactionsData}
-                        accounts={accountsList}
-                        isLoading={isLoading}
-                        onAddTransaction={handleAdd}
-                        onEditTransaction={handleEdit}
-                        onDeleteTransaction={handleDelete}
-                    />
-                </PageSection>
+                <>
+                    <StatCards stats={stats} isLoading={false} />
+                    <PageSection stagger={3} fill>
+                        <TransactionsTable
+                            data={transactionsData}
+                            accounts={accountsList}
+                            isLoading={false}
+                            onAddTransaction={handleAdd}
+                            onEditTransaction={handleEdit}
+                            onDeleteTransaction={handleDelete}
+                        />
+                    </PageSection>
+                </>
             )}
 
             <TransactionEditDialog

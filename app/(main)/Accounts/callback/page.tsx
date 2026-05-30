@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /Accounts/callback route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import { useEffect, useState } from "react"
@@ -7,6 +16,7 @@ import { Loader2, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { queryKeys } from "@/lib/query-keys"
 import { useLanguage } from "@/components/language-provider"
+import { getTranslations } from "@/lib/translation-utils"
 
 /**
  * Callback page after Salt Edge Connect widget.
@@ -23,7 +33,7 @@ export default function BankCallbackPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { t } = useLanguage()
-  const bc = (t as any).bank_callback || {} as Record<string, string>
+  const bc = getTranslations(t, "bank_callback")
   const [status, setStatus] = useState<"loading" | "importing" | "success" | "error">("loading")
   const [message, setMessage] = useState(bc.connecting || "Connecting to your bank...")
   const [importedCount, setImportedCount] = useState(0)
@@ -123,7 +133,7 @@ export default function BankCallbackPage() {
       controller.abort()
       if (redirectTimer) clearTimeout(redirectTimer)
     }
-  }, [connectionId, errorClass, errorMsg, router, redirectTo, queryClient])
+  }, [connectionId, errorClass, errorMsg, router, redirectTo, queryClient, bc])
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">

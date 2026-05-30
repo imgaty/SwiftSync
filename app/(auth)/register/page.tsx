@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /register route in Argent, composing page-level layout, data dependencies,
+//  and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client'
 
 import { useState, useCallback } from 'react'
@@ -17,8 +26,6 @@ import {
   ErrorAlert,
   PasswordStrength,
   usePasswordStrength,
-  BTN_PRIMARY,
-  BTN_OUTLINE,
 } from '@/components/auth'
 import { PRISM } from '@/lib/PRISM'
 import { cn } from '@/lib/utils'
@@ -42,11 +49,11 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
         <div
           key={i}
           className={cn(
-            "h-[5px] rounded-full transition-all duration-400 ease-out",
+            "h-[5px] rounded-full transition-all duration-300 ease-out",
             i <= current ? "w-10" : "w-6",
-            i < current && "bg-black dark:bg-white",
-            i === current && "bg-black dark:bg-white",
-            i > current && "bg-black/8 dark:bg-white/8",
+            i < current && "bg-primary",
+            i === current && "bg-primary",
+            i > current && "bg-muted",
           )}
         />
       ))}
@@ -139,7 +146,7 @@ export default function RegisterPage() {
   }, [currentStep, email, name, dateOfBirth, password, confirmPassword, allPassed, goNext, re])
 
   /* ── Final submit (security step) ─────────────────────────────────── */
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -173,7 +180,7 @@ export default function RegisterPage() {
     } finally {
       setLoading(false)
     }
-  }, [name, email, dateOfBirth, password, recoveryEmail, enableRecoveryEmail, enable2FA, re])
+  }
 
   /* ── 2FA setup handlers ──────────────────────────────────────────── */
   const start2FASetup = useCallback(async () => {
@@ -197,7 +204,7 @@ export default function RegisterPage() {
       toast.error(re.error_2fa_setup || 'Failed to set up 2FA')
       setSetupState('idle')
     }
-  }, [])
+  }, [re.error_2fa_setup])
 
   const handleVerify2FA = useCallback(async () => {
     if (!verifyCode || verifyCode.length < 6) { toast.error('Please enter the 6-digit code'); return }
@@ -212,7 +219,7 @@ export default function RegisterPage() {
       toast.error(re.error_2fa_enable || 'Failed to enable 2FA')
       setIs2FAVerifying(false)
     }
-  }, [verifyCode])
+  }, [verifyCode, re.error_2fa_enable, re.twofa_enabled])
 
   const copySecret = useCallback(() => {
     navigator.clipboard.writeText(secret)
@@ -236,12 +243,12 @@ export default function RegisterPage() {
         throw new Error(data.error || (re.error_connect_session || 'Failed to create connect session'))
       }
 
-      window.location.href = data.connectUrl
+      window.location.assign(data.connectUrl)
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : (re.error_connection_failed || 'Connection failed'))
       setIsConnectingBank(false)
     }
-  }, [])
+  }, [re.error_connect_session, re.error_connection_failed])
 
   /* ── Slide animation class ──────────────────────────────────────── */
   const slideClass =
@@ -311,15 +318,16 @@ export default function RegisterPage() {
                     type="button"
                     variant="glass"
                     size="lg"
-                    className={`flex-1 ${BTN_OUTLINE}`}
+                    className="flex-1"
                     onClick={() => { setTwoFAStep(false); setBankStep(true) }}
                   >
                     Skip
                   </Button>
                   <Button
                     type="button"
+                    variant="solid"
                     size="lg"
-                    className="flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
+                    className="flex-1"
                     onClick={handleVerify2FA}
                     disabled={is2FAVerifying || verifyCode.length < 6}
                   >
@@ -336,10 +344,10 @@ export default function RegisterPage() {
             <div className="space-y-3">
               <p className="text-sm text-center text-neutral-400">Something went wrong setting up 2FA.</p>
               <div className="flex gap-2">
-                <Button type="button" variant="glass" size="lg" className={`flex-1 ${BTN_OUTLINE}`} onClick={() => { setTwoFAStep(false); setBankStep(true) }}>
+                <Button type="button" variant="glass" size="lg" className="flex-1" onClick={() => { setTwoFAStep(false); setBankStep(true) }}>
                   Skip
                 </Button>
-                <Button type="button" variant="solid" size="lg" className={`flex-1 ${BTN_PRIMARY}`} onClick={start2FASetup}>
+                <Button type="button" variant="solid" size="lg" className="flex-1" onClick={start2FASetup}>
                   Try again
                 </Button>
               </div>
@@ -384,12 +392,12 @@ export default function RegisterPage() {
           <ErrorAlert message={connectError} />
 
           <div className="space-y-4 pt-2">
-            <Button type="button" variant="solid" size="lg" className={`${BTN_PRIMARY} gap-2`} disabled={isConnectingBank} onClick={handleBankConnect}>
+            <Button type="button" variant="solid" size="lg" className="w-full gap-2" disabled={isConnectingBank} onClick={handleBankConnect}>
               {isConnectingBank ? <><Loader2 className="w-5 h-5 animate-spin" />Connecting...</> : <><Building2 className="w-5 h-5" />Connect Your Bank</>}
             </Button>
-            <button type="button" onClick={() => router.push('/')} className="w-full h-10 text-[13px] font-medium text-neutral-400 hover:text-black dark:hover:text-neutral-400 transition-colors cursor-pointer">
+            <Button variant="ghost" type="button" onClick={() => router.push('/')} className="w-full h-10 text-[13px] font-medium text-neutral-400 hover:text-black dark:hover:text-neutral-400 transition-colors cursor-pointer">
               Skip for now — I&apos;ll add accounts later
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -420,7 +428,7 @@ export default function RegisterPage() {
                     required
                   />
 
-                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
                     {loading
                       ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Checking...</>
                       : <>Continue<ArrowRight className="w-4 h-4" /></>}
@@ -465,7 +473,7 @@ export default function RegisterPage() {
                     dobMode
                   />
 
-                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
                     Continue
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -508,7 +516,7 @@ export default function RegisterPage() {
                     )}
                   </div>
 
-                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading || (!!password && !allPassed)}>
+                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading || (!!password && !allPassed)}>
                     Continue
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -609,7 +617,7 @@ export default function RegisterPage() {
                     </AccordionItem>
                   </Accordion>
 
-                  <Button type="submit" variant="solid" size="lg" className={BTN_PRIMARY} disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
                     {loading
                       ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Creating account...</>
                       : <>Create account<ArrowRight className="w-4 h-4" /></>}

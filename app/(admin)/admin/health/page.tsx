@@ -1,3 +1,12 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /admin/health route in Argent, composing page-level layout, data
+//  dependencies, and feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -10,6 +19,7 @@ import {
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
 import { PRISM } from "@/lib/PRISM"
+import { getTranslations } from "@/lib/translation-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -39,8 +49,8 @@ function formatUptime(seconds: number): string {
 
 export default function AdminHealthPage() {
     const { t } = useLanguage()
-    const ad = (t as any).admin || {} as Record<string, any>
-    const hp = ad.health_page || {} as Record<string, string>
+    const ad = getTranslations(t, "admin")
+    const hp = getTranslations(ad, "health_page")
 
     const [data, setData] = React.useState<HealthData | null>(null)
     const [loading, setLoading] = React.useState(true)
@@ -78,7 +88,7 @@ export default function AdminHealthPage() {
                 }
             />
 
-            <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
+            <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {loading && !data ? <HealthSkeleton /> : data && (
                     <>
                         {/* Status Banner */}
@@ -104,7 +114,7 @@ export default function AdminHealthPage() {
                                     <h3 className="font-semibold">{hp.database || "Database"}</h3>
                                     <Badge variant="outline" className="ml-auto border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs">{hp.connected || "Connected"}</Badge>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
                                     <MetricRow icon={<Zap className="size-4" />} label={hp.query_latency || "Query Latency"} value={`${data.database.latencyMs}ms`}
                                         status={data.database.latencyMs < 100 ? "good" : data.database.latencyMs < 500 ? "warn" : "bad"} />
                                     <MetricRow icon={<Users className="size-4" />} label={hp.user_records || "User Records"} value={data.database.totalRecords.toLocaleString()} />
@@ -117,7 +127,7 @@ export default function AdminHealthPage() {
                                     <Server className="size-5 text-purple-500" />
                                     <h3 className="font-semibold">{hp.runtime || "Runtime"}</h3>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
                                     <MetricRow icon={<Globe className="size-4" />} label={hp.nodejs || "Node.js"} value={data.runtime.nodeVersion} />
                                     <MetricRow icon={<Clock className="size-4" />} label={hp.uptime || "Uptime"} value={formatUptime(data.runtime.uptime)} />
                                     <MetricRow icon={<HardDrive className="size-4" />} label={hp.heap_used || "Heap Used"} value={`${data.runtime.memory.heapUsed} MB`}
@@ -186,7 +196,7 @@ export default function AdminHealthPage() {
                                 <Database className="size-5 text-sky-500" />
                                 <h3 className="font-semibold">{hp.data_volumes || "Data Volumes"}</h3>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
                                 <TableCount icon={<Users className="size-4" />} label={ad.users || "Users"} count={data.tables.users} active={data.tables.activeUsers} />
                                 <TableCount icon={<ArrowLeftRight className="size-4" />} label={ad.transactions || "Transactions"} count={data.tables.transactions} />
                                 <TableCount icon={<Wallet className="size-4" />} label={ad.accounts || "Accounts"} count={data.tables.accounts} />
@@ -239,7 +249,7 @@ function TableCount({ icon, label, count, active }: {
 
 function HealthSkeleton() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <Skeleton className="h-16 w-full rounded-xl" />
             <div className="grid gap-4 lg:grid-cols-2">
                 <Skeleton className="h-40 rounded-xl" />

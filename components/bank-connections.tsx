@@ -1,3 +1,12 @@
+//
+//  bank-connections.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Bank connections React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -27,6 +36,7 @@ import { Badge } from "@/components/ui/badge"
 import { notify } from "@/lib/notify"
 import { useLanguage } from "@/components/language-provider"
 import { PRISM } from "@/lib/PRISM"
+import { getTranslations } from "@/lib/translation-utils"
 
 interface BankConnection {
     id: string
@@ -41,8 +51,8 @@ interface BankConnection {
 export function BankConnections() {
     const queryClient = useQueryClient()
     const { t } = useLanguage()
-    const bk = (t as any).bank_connections || {} as Record<string, string>
-    const common = (t as any).common || {} as Record<string, string>
+    const bk = getTranslations(t, "bank_connections")
+    const common = getTranslations(t, "common")
     const { data: connections = [], isLoading, error: fetchError } = useQuery({
         queryKey: queryKeys.bankConnections,
         queryFn: async () => {

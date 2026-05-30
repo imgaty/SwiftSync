@@ -1,3 +1,12 @@
+//
+//  table.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Defines the reusable Table UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -21,6 +30,7 @@ import type { Column, Table as TanstackTable } from "@tanstack/react-table"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/empty-state"
 import {
     Dropdown,
     DropdownCheckboxItem,
@@ -48,10 +58,9 @@ function TableShell({ className, ...props }: React.ComponentProps<"div">) {
             data-slot="table-shell"
             className={cn(
                 "relative w-full flex min-h-0 flex-col overflow-hidden rounded-lg",
-                "border border-black/[0.08] dark:border-white/[0.10]",
-                "bg-white/72 dark:bg-neutral-950/28",
-                "shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_30px_rgba(0,0,0,0.04)]",
-                "dark:shadow-[0_1px_2px_rgba(0,0,0,0.25),0_12px_32px_rgba(0,0,0,0.18)]",
+                "border border-border",
+                "bg-card",
+                "shadow-[var(--shadow-subtle)]",
                 "backdrop-blur-md",
                 className,
             )}
@@ -79,8 +88,7 @@ function TableScrollArea({
                 // and scrolls internally. `min-h-0` is required so flex layout
                 // doesn't stretch us beyond the parent height.
                 "relative w-full flex-1 min-h-0 overflow-auto",
-                "bg-gradient-to-b from-transparent via-transparent to-black/[0.015]",
-                "dark:to-white/[0.018]",
+                "bg-gradient-to-b from-transparent via-transparent to-muted/40",
                 "[scrollbar-width:thin] [scrollbar-color:rgba(120,120,120,0.35)_transparent]",
                 className,
             )}
@@ -109,10 +117,9 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
             data-slot="table-header"
             className={cn(
                 "sticky top-0 z-10",
-                "bg-neutral-50/90 dark:bg-neutral-950/82 backdrop-blur-md",
-                "supports-[backdrop-filter]:bg-neutral-50/74 supports-[backdrop-filter]:dark:bg-neutral-950/66",
+                "bg-[var(--surface-elevated)] backdrop-blur-md",
                 "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px",
-                "after:bg-gradient-to-r after:from-transparent after:via-black/[0.12] after:to-transparent dark:after:via-white/[0.12]",
+                "after:bg-gradient-to-r after:from-transparent after:via-border-strong after:to-transparent",
                 "[&_tr]:hover:bg-transparent",
                 className,
             )}
@@ -155,8 +162,8 @@ function TableRow({ className, onClick, ...props }: React.ComponentProps<"tr">) 
             className={cn(
                 "group/row",
                 "transition-colors duration-150",
-                "hover:bg-black/[0.032] dark:hover:bg-white/[0.052]",
-                "data-[state=selected]:bg-primary/[0.055] dark:data-[state=selected]:bg-primary/[0.11]",
+                "hover:bg-accent",
+                "data-[state=selected]:bg-muted",
                 onClick && "cursor-pointer",
                 className,
             )}
@@ -172,7 +179,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
             className={cn(
                 "h-10 px-4 text-left align-middle whitespace-nowrap",
                 "text-[11px] font-semibold uppercase tracking-[0.05em]",
-                "text-neutral-500 dark:text-neutral-400",
+                "text-muted-foreground",
                 "[&:has([role=checkbox])]:px-4 *:[[role=checkbox]]:translate-y-0.5",
                 "select-none",
                 className,
@@ -188,8 +195,8 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
             data-slot="table-cell"
             className={cn(
                 "h-11 px-4 py-2 align-middle whitespace-nowrap text-[13px] leading-tight",
-                "text-neutral-800 dark:text-neutral-200",
-                "border-b border-black/[0.05] dark:border-white/[0.065]",
+                "text-foreground",
+                "border-b border-border",
                 "[&:has([role=checkbox])]:px-4 *:[[role=checkbox]]:translate-y-0.5",
                 className,
             )}
@@ -205,7 +212,7 @@ function TableCaption({
     return (
         <caption
             data-slot="table-caption"
-            className={cn("text-neutral-400 mt-4 text-sm", className)}
+            className={cn("text-muted-foreground mt-4 text-sm", className)}
             {...props}
         />
     )
@@ -228,7 +235,7 @@ function TableToolbar({
                 "flex flex-wrap items-center justify-between gap-2 max-sm:flex-col max-sm:items-stretch",
                 "relative px-3 py-2.5",
                 "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px",
-                "after:bg-gradient-to-r after:from-transparent after:via-black/[0.15] after:to-transparent dark:after:via-white/[0.14]",
+                "after:bg-gradient-to-r after:from-transparent after:via-border-strong after:to-transparent",
                 className,
             )}
             {...props}
@@ -290,13 +297,13 @@ function TableSortHeader({
     const Icon = direction === "asc" ? ArrowUp : direction === "desc" ? ArrowDown : ArrowUpDown
 
     return (
-        <button
+        <Button variant="ghost"
             type="button"
             onClick={onClick}
             className={cn(
                 "inline-flex w-full items-center gap-1.5 rounded-md text-inherit",
-                "transition-colors hover:text-neutral-900 dark:hover:text-neutral-100",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                "transition-colors hover:text-foreground",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70",
                 align === "right" && "justify-end text-right",
                 align === "center" && "justify-center text-center",
                 align === "left" && "justify-start text-left",
@@ -308,10 +315,10 @@ function TableSortHeader({
             <Icon
                 className={cn(
                     "size-3.5 shrink-0",
-                    direction ? "text-neutral-800 dark:text-neutral-200" : "text-neutral-400/75",
+                    direction ? "text-foreground" : "text-muted-foreground",
                 )}
             />
-        </button>
+        </Button>
     )
 }
 
@@ -332,15 +339,14 @@ function TableEmptyRow({
         <TableRow className="hover:bg-transparent">
             <TableCell colSpan={colSpan} className={cn("h-48 whitespace-normal", className)}>
                 {children ?? (
-                    <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-1.5 text-center">
-                        <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-black/[0.04] text-neutral-400 dark:bg-white/[0.06]">
-                            <Search className="size-4" />
-                        </div>
-                        <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">{title}</p>
-                        {description && (
-                            <p className="text-xs leading-relaxed text-neutral-400">{description}</p>
-                        )}
-                    </div>
+                    <EmptyState
+                        variant="no-results"
+                        placement="card"
+                        title={title}
+                        description={description}
+                        icon={<Search className="size-4" />}
+                        className="min-h-44 py-6"
+                    />
                 )}
             </TableCell>
         </TableRow>
@@ -365,7 +371,7 @@ function TableSkeletonRows({
                         return (
                             <TableCell key={columnIndex}>
                                 <div
-                                    className="h-3.5 rounded-md bg-black/[0.055] dark:bg-white/[0.07] animate-pulse"
+                                    className="h-3.5 rounded-md bg-muted animate-pulse"
                                     style={{ width }}
                                 />
                             </TableCell>
@@ -412,11 +418,11 @@ function TablePaginationBar({
             data-slot="table-pagination"
             className={cn(
                 "flex flex-wrap items-center justify-between gap-3",
-                "border-t border-black/[0.06] px-3 py-2.5 dark:border-white/[0.08]",
+                "border-t border-border px-3 py-2.5",
                 className,
             )}
         >
-            <p className="text-xs text-neutral-400 tabular-nums">
+            <p className="text-xs text-muted-foreground tabular-nums">
                 {label} {start}-{end} {ofLabel} {total}
             </p>
             <div className="ml-auto flex items-center gap-1">
@@ -426,7 +432,7 @@ function TablePaginationBar({
                 <Button variant="glass" size="icon" disabled={previousDisabled} onClick={onPrevious} aria-label="Previous page">
                     <ChevronLeft className="size-4" />
                 </Button>
-                <span className="min-w-16 px-2 text-center text-xs text-neutral-400 tabular-nums">
+                <span className="min-w-16 px-2 text-center text-xs text-muted-foreground tabular-nums">
                     {page} / {totalPages || 1}
                 </span>
                 <Button variant="glass" size="icon" disabled={nextDisabled} onClick={onNext} aria-label="Next page">
@@ -487,7 +493,7 @@ function TableSearchControl<T>({
     }
     return (
         <div className={cn("relative inline-flex items-center", className)} style={{ width }}>
-            <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+            <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
                 type="search"
                 value={current}
@@ -495,26 +501,25 @@ function TableSearchControl<T>({
                 onChange={(e) => update(e.target.value)}
                 className={cn(
                     "h-8 w-full rounded-lg pl-8 text-[13px]",
-                    "bg-black/4 dark:bg-white/5",
-                    "border border-black/8 dark:border-white/8",
-                    "text-foreground placeholder:text-neutral-400/70",
-                    "hover:bg-black/6 dark:hover:bg-white/7",
-                    "focus:outline-none focus:bg-white dark:focus:bg-white/8",
-                    "focus:border-black/15 dark:focus:border-white/15",
-                    "focus:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] dark:focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)]",
+                    "bg-[var(--surface)]",
+                    "border border-[color:var(--input)]",
+                    "text-foreground placeholder:text-muted-foreground/70",
+                    "hover:border-[color:var(--border-strong)]",
+                    "focus:outline-none focus:bg-[var(--surface-elevated)]",
+                    "focus:border-transparent focus:ring-2 focus:ring-focus/70 focus:ring-offset-1 focus:ring-offset-background",
                     "transition-all duration-150",
                     current ? "pr-8" : "pr-3",
                 )}
             />
             {current && (
-                <button
+                <Button variant="ghost"
                     type="button"
                     aria-label="Clear search"
                     onClick={() => update("")}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex size-6 items-center justify-center rounded-md text-neutral-500 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
                     <X className="size-3.5" />
-                </button>
+                </Button>
             )}
         </div>
     )
@@ -802,16 +807,6 @@ function TableActionButton({
     )
 }
 
-/**
- * TablePagination — DEPRECATED no-op kept so existing imports don't break.
- * Tables now scroll instead of paginating; remove the component when done
- * cleaning up consumers.
- */
-function TablePagination<T>(_props: { table: TanstackTable<T>; [key: string]: unknown }) {
-    void _props
-    return null
-}
-
 export {
     TableShell,
     TableScrollArea,
@@ -839,5 +834,4 @@ export {
     TableInlineInput,
     TableActionsCell,
     TableActionButton,
-    TablePagination,
 }

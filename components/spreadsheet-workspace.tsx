@@ -1,3 +1,12 @@
+//
+//  spreadsheet-workspace.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Spreadsheet workspace React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -133,7 +142,9 @@ export function SpreadsheetWorkspace({
     initialTemplateName?: string
     onBack?: () => void
 }) {
-    const s = useSpreadsheet({ initialDoc, initialTemplateSheets, initialTemplateName, finance: data })
+    const gridRef = React.useRef<HTMLDivElement>(null)
+    const editRef = React.useRef<HTMLInputElement>(null)
+    const s = useSpreadsheet({ initialDoc, initialTemplateSheets, initialTemplateName, finance: data, gridRef, editRef })
     const [activeTab, setActiveTab] = React.useState<ToolbarTab>("home")
     const [showFormulaRef, setShowFormulaRef] = React.useState(false)
     const [findOpen, setFindOpen] = React.useState(false)
@@ -232,7 +243,7 @@ export function SpreadsheetWorkspace({
                 {/* Tab row */}
                 <div className="flex items-center gap-0 px-1">
                     {TAB_ITEMS.map((tab) => (
-                        <button
+                        <Button variant="ghost"
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
@@ -246,7 +257,7 @@ export function SpreadsheetWorkspace({
                             {activeTab === tab.id && (
                                 <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
                             )}
-                        </button>
+                        </Button>
                     ))}
                 </div>
 
@@ -871,7 +882,7 @@ export function SpreadsheetWorkspace({
                 <div className="border border-border/50 bg-card/30 p-3 rounded-lg mb-1 max-h-40 overflow-y-auto animate-fade-in-up">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
                         {FORMULA_FUNCTIONS.map((fn) => (
-                            <button
+                            <Button variant="ghost"
                                 key={fn.name}
                                 onClick={() => {
                                     s.startEdit(s.sel.col, s.sel.row, `=${fn.name}()`)
@@ -881,7 +892,7 @@ export function SpreadsheetWorkspace({
                             >
                                 <span className="text-[11px] font-semibold text-foreground">{fn.syntax}</span>
                                 <span className="text-[10px] text-neutral-400 leading-tight">{fn.desc}</span>
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
@@ -905,8 +916,8 @@ export function SpreadsheetWorkspace({
                             else { s.startEdit(s.sel.col, s.sel.row, e.target.value) }
                         }}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter") { s.commitEdit(); s.gridRef.current?.focus() }
-                            if (e.key === "Escape") { s.setEditing(null); s.gridRef.current?.focus() }
+                            if (e.key === "Enter") { s.commitEdit(); gridRef.current?.focus() }
+                            if (e.key === "Escape") { s.setEditing(null); gridRef.current?.focus() }
                         }}
                         className="flex-1 h-6 bg-transparent text-sm outline-none px-1"
                         placeholder="Enter a value or formula (e.g. =SUM(A1:A5))..."
@@ -915,7 +926,7 @@ export function SpreadsheetWorkspace({
 
                 {/* ═══ Virtualized Grid ══════════════════════════════════ */}
                 <div
-                    ref={s.gridRef}
+                    ref={gridRef}
                     className="flex-1 overflow-auto relative outline-none"
                     tabIndex={0}
                     onKeyDown={s.handleGridKeyDown}
@@ -1020,7 +1031,7 @@ export function SpreadsheetWorkspace({
                                         >
                                             {isEditingThis ? (
                                                 <input
-                                                    ref={s.editRef}
+                                                    ref={editRef}
                                                     value={s.editVal}
                                                     onChange={(e) => s.setEditVal(e.target.value)}
                                                     onBlur={s.commitEdit}
@@ -1162,7 +1173,7 @@ export function SpreadsheetWorkspace({
                                     >
                                         <div className="absolute inset-0 border-2 border-primary" />
                                         {!isEditing && !s.fillDrag && (
-                                            <button
+                                            <Button variant="ghost"
                                                 type="button"
                                                 data-fill-handle="true"
                                                 aria-label="Drag to fill"
@@ -1171,7 +1182,7 @@ export function SpreadsheetWorkspace({
                                                 onMouseDown={s.handleFillDragStart}
                                             >
                                                 <span className="block h-2 w-2 rounded-full border border-background bg-primary shadow-[0_1px_2px_rgba(0,0,0,0.18)]" />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 </>
@@ -1194,7 +1205,7 @@ export function SpreadsheetWorkspace({
                 <div className="flex items-center justify-between gap-3 border-t border-border/40 px-3 py-2 shrink-0">
                     <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
                         {s.wb.sheets.map((sh, i) => (
-                            <button
+                            <Button variant="ghost"
                                 key={i}
                                 className={`px-3 py-1.5 text-xs rounded-lg cursor-pointer select-none whitespace-nowrap transition-all duration-150 ${i === s.wb.activeSheet
                                     ? "bg-primary/10 text-primary font-semibold shadow-sm"
@@ -1204,7 +1215,7 @@ export function SpreadsheetWorkspace({
                                 onDoubleClick={() => s.renameSheet(i)}
                             >
                                 {sh.name}
-                            </button>
+                            </Button>
                         ))}
                         <Button variant="ghost" size="icon-sm" onClick={s.addSheet}>
                             <Plus className="h-3.5 w-3.5" />

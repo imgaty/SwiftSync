@@ -1,12 +1,17 @@
-// =============================================================================
-// ADMIN AUTHENTICATION & AUTHORIZATION HELPERS
-// =============================================================================
-// Used by admin API routes and server components to verify admin access.
-
+//
+//  admin-auth.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides shared admin auth logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { cookies, headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verifySessionToken } from "@/lib/session"
+import { clientIpFromHeaders } from "@/lib/rate-limit"
+import { sessionVersionMatches, verifySessionToken } from "@/lib/session"
 
 export type AdminRole = "admin" | "superadmin"
 const ADMIN_ROLES: AdminRole[] = ["admin", "superadmin"]
@@ -33,11 +38,12 @@ export async function getAdminUser(): Promise<AdminUser | null> {
 
     const user = await prisma.user.findUnique({
         where: { id: session.uid },
-        select: { id: true, email: true, name: true, role: true, status: true },
+        select: { id: true, email: true, name: true, role: true, status: true, sessionVersion: true },
     })
 
     if (!user) return null
     if (user.status !== "active") return null
+    if (!sessionVersionMatches(session, user.sessionVersion)) return null
     if (!ADMIN_ROLES.includes(user.role as AdminRole)) return null
 
     return user as AdminUser
@@ -80,10 +86,20 @@ export async function requireAdmin(
 
     const user = await prisma.user.findUnique({
         where: { id: session.uid },
-        select: { id: true, email: true, name: true, role: true, status: true },
+        select: { id: true, email: true, name: true, role: true, status: true, sessionVersion: true },
     })
 
     if (!user || user.status !== "active") {
+        return {
+            admin: null,
+            error: NextResponse.json(
+                { error: "Not authenticated" },
+                { status: 401 }
+            ),
+        }
+    }
+
+    if (!sessionVersionMatches(session, user.sessionVersion)) {
         return {
             admin: null,
             error: NextResponse.json(
@@ -122,9 +138,5 @@ export async function requireAdmin(
 // -----------------------------------------------------------------------------
 export async function getClientIp(): Promise<string> {
     const hdrs = await headers()
-    return (
-        hdrs.get("x-forwarded-for")?.split(",")[0].trim() ??
-        hdrs.get("x-real-ip") ??
-        "unknown"
-    )
+    return clientIpFromHeaders(hdrs)
 }

@@ -1,3 +1,12 @@
+//
+//  schema.prisma
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the Prisma data model for Argent, describing database entities, relationships,
+//  defaults, and generated client configuration.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 generator client {
     provider = "prisma-client"
     output   = "../lib/generated/prisma"
@@ -23,6 +32,8 @@ model User {
     lastLoginIp             String?
     resetToken              String?                 @unique
     resetTokenExpiry        DateTime?
+    sessionVersion          Int                     @default(0)
+    emailVerified           Boolean                 @default(false)
     twoFactorEnabled        Boolean                 @default(false)
     twoFactorSecret         String?
     twoFactorCode           String?

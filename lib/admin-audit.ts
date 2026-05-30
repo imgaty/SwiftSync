@@ -1,8 +1,12 @@
-// =============================================================================
-// ADMIN AUDIT LOGGER
-// =============================================================================
-// Logs every admin action to the AuditLog table for accountability and tracking.
-
+//
+//  admin-audit.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides shared admin audit logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { prisma } from "@/lib/prisma"
 import { getClientIp } from "@/lib/admin-auth"
 

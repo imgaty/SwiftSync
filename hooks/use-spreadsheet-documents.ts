@@ -1,3 +1,12 @@
+//
+//  use-spreadsheet-documents.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the use spreadsheet documents React hook for Argent, encapsulating reusable
+//  state, effects, or data-access behavior for consuming components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"

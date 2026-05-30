@@ -1,12 +1,22 @@
+//
+//  color-picker.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Color picker spreadsheet component for Argent, supporting workbook
+//  editing controls, cell-level actions, and spreadsheet workspace interactions.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { Dropdown, DropdownTrigger, DropdownContent } from "@/components/ui/dropdown"
+import { Button } from "@/components/ui/button"
 import { COLOR_PRESETS } from "@/lib/spreadsheet-utils"
 
 /**
  * Color picker dropdown. Renders the children as the trigger (Radix asChild)
- * — children must be a single ref-forwarding element (e.g. <button>, <Button>).
+ * — children must be a single ref-forwarding element, usually the shared Button.
  * The picker uses Radix portal so it never gets clipped by overflow ancestors.
  */
 export function ColorPickerPopover({
@@ -39,7 +49,7 @@ export function ColorPickerPopover({
             <DropdownTrigger asChild>{children}</DropdownTrigger>
             <DropdownContent width={width} align={align} className="p-2.5">
                 {showAutomatic && (
-                    <button
+                    <Button variant="ghost"
                         type="button"
                         className="mb-2 flex w-full items-center gap-2 rounded-md px-2 py-1 text-[12px] hover:bg-black/5 dark:hover:bg-white/5"
                         onClick={() => pick(automaticColor)}
@@ -49,13 +59,13 @@ export function ColorPickerPopover({
                             style={{ backgroundColor: automaticColor }}
                         />
                         {automaticLabel}
-                    </button>
+                    </Button>
                 )}
 
                 <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Palette</div>
                 <div className="grid grid-cols-10 gap-1">
                     {COLOR_PRESETS.slice(0, 40).map((c) => (
-                        <button
+                        <Button variant="ghost"
                             key={c}
                             type="button"
                             className={[
@@ -83,13 +93,13 @@ export function ColorPickerPopover({
                             pick(e.target.value)
                         }}
                     />
-                    <button
+                    <Button variant="ghost"
                         type="button"
                         className="cursor-pointer rounded px-1.5 py-0.5 text-[11px] text-neutral-500 hover:bg-black/5 hover:text-neutral-800 dark:hover:bg-white/5 dark:hover:text-neutral-200"
                         onClick={() => pick("")}
                     >
                         No color
-                    </button>
+                    </Button>
                 </div>
             </DropdownContent>
         </Dropdown>

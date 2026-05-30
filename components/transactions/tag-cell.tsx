@@ -1,3 +1,12 @@
+//
+//  tag-cell.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Tag cell transaction component for Argent, supporting transaction review,
+//  tagging, editing, and related money-management workflows.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 // In-row tag editor for the transactions table.

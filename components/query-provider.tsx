@@ -1,6 +1,12 @@
-// Revised on 10 Apr 2026 - 18h34
-// Purpose: Provides to every child component access to the shared React Query system.
-
+//
+//  query-provider.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Query provider React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"

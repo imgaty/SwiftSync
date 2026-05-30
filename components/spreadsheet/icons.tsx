@@ -1,3 +1,12 @@
+//
+//  icons.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Icons spreadsheet component for Argent, supporting workbook editing
+//  controls, cell-level actions, and spreadsheet workspace interactions.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import type { SVGProps } from "react"
 
 /**

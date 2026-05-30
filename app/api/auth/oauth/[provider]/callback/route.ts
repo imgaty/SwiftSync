@@ -1,9 +1,19 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/auth/oauth/[provider]/callback API endpoint for Argent, keeping request
+//  parsing, business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { cookies } from "next/headers"
 import { hashPassword } from "@/lib/password"
 import { createSessionToken } from "@/lib/session"
 import { generateDefaultAvatarDataUrl } from "@/lib/avatar"
+import { clientIp } from "@/lib/rate-limit"
 import { timingSafeEqual } from "crypto"
 
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60
@@ -91,9 +101,13 @@ export async function GET(
     } else {
       const existingUser = await prisma.user.findFirst({
         where: { email: { equals: normalizedEmail, mode: "insensitive" } },
+        select: { id: true, emailVerified: true },
       })
 
       if (existingUser) {
+        if (!existingUser.emailVerified) {
+          return NextResponse.redirect(new URL("/login?error=oauth_link_requires_verified_email", request.url))
+        }
         userId = existingUser.id
       } else {
         const randomPassword = hashPassword(crypto.randomUUID())
@@ -106,6 +120,7 @@ export async function GET(
             avatar: generateDefaultAvatarDataUrl(resolvedName),
             password: randomPassword,
             dateOfBirth: "",
+            emailVerified: true,
           },
         })
         userId = newUser.id
@@ -120,13 +135,24 @@ export async function GET(
       })
     }
 
+    const sessionUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { status: true, sessionVersion: true },
+    })
     // Refuse sign-in for suspended/banned/deleted accounts
-    const status = await prisma.user.findUnique({ where: { id: userId }, select: { status: true } })
-    if (!status || status.status !== "active") {
+    if (!sessionUser || sessionUser.status !== "active") {
       return NextResponse.redirect(new URL("/login?error=account_inactive", request.url))
     }
 
-    const sessionToken = await createSessionToken(userId, SESSION_MAX_AGE)
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        lastLoginAt: new Date(),
+        lastLoginIp: clientIp(request),
+      },
+    })
+
+    const sessionToken = await createSessionToken(userId, SESSION_MAX_AGE, sessionUser.sessionVersion)
     const cookieOpts = {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax" as const,
@@ -134,10 +160,7 @@ export async function GET(
       maxAge: SESSION_MAX_AGE,
     }
     cookieStore.set("auth-token", sessionToken, { httpOnly: true, ...cookieOpts })
-    cookieStore.set("user-session", JSON.stringify({ id: userId }), {
-      httpOnly: true,
-      ...cookieOpts,
-    })
+    cookieStore.delete("user-session")
 
     return NextResponse.redirect(new URL("/", request.url))
   } catch (error) {

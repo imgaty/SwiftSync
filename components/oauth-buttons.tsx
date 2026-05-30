@@ -1,3 +1,12 @@
+//
+//  oauth-buttons.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Oauth buttons React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -61,7 +70,7 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
   const { t } = useLanguage()
 
   const handleOAuth = (provider: string) => {
-    window.location.href = `/api/auth/oauth/${provider.toLowerCase()}`;
+    window.location.assign(`/api/auth/oauth/${provider.toLowerCase()}`);
   };
 
   const getOAuthLabel = (provider: ProviderKey) => {
@@ -83,7 +92,7 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
               type="button"
               onClick={() => handleOAuth(name)}
               aria-label={getOAuthLabel(key) ?? name}
-              className="w-full h-11 text-neutral-400"
+              className="h-11 w-full text-foreground-secondary hover:text-foreground"
             >
               <Icon />
             </Button>

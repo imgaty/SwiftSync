@@ -1,3 +1,12 @@
+//
+//  section-cards.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Implements the Section cards React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -13,7 +22,6 @@ import {
     TrendingUp,
 } from "lucide-react"
 
-import { Skeleton } from "@/components/ui/skeleton"
 import {
     ContextMenu,
     ContextMenuContent,
@@ -21,9 +29,12 @@ import {
     ContextMenuSeparator,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import {
+    DashboardMetricCard,
+    DashboardMetricCardSkeleton,
+} from "@/components/dashboard/dashboard-primitives"
 import { ErrorState } from "@/components/error-state"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
 import { useCurrency } from "@/components/currency-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -44,30 +55,25 @@ interface StatData {
 type StatKey = "income" | "expenses" | "savings" | "balance"
 type CardTone = "positive" | "negative" | "neutral"
 
-const PALETTES: Record<StatKey, { accent: string; iconBg: string; iconBgHover: string }> = {
-    income:   { accent: "#16a34a", iconBg: "rgba(22,163,74,0.08)",  iconBgHover: "rgba(22,163,74,0.14)"  },
-    expenses: { accent: "#dc2626", iconBg: "rgba(220,38,38,0.08)",  iconBgHover: "rgba(220,38,38,0.14)"  },
-    savings:  { accent: "#2563eb", iconBg: "rgba(37,99,235,0.08)",  iconBgHover: "rgba(37,99,235,0.14)"  },
-    balance:  { accent: "#8b5cf6", iconBg: "rgba(139,92,246,0.08)", iconBgHover: "rgba(139,92,246,0.14)" },
+const PALETTES: Record<StatKey, { accent: string }> = {
+    income:   { accent: "#16a34a" },
+    expenses: { accent: "#dc2626" },
+    savings:  { accent: "#2563eb" },
+    balance:  { accent: "#8b5cf6" },
 }
 
-const ICONS: Record<StatKey, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+const ICONS: Record<StatKey, React.ComponentType<{ className?: string }>> = {
     income:   ArrowUpRight,
     expenses: ArrowDownRight,
     savings:  PiggyBank,
     balance:  Landmark,
 }
 
-const SECTION_CARD_SURFACE_CLASS = cn(
-    "group relative overflow-hidden rounded-2xl p-5 transition-all duration-200",
-    PRISM.cardSurface,
-    PRISM.cardHover,
-)
-
 interface SectionCardsProps {
     data?: FinanceData | null
     isLoading?: boolean
     variant?: "default" | "dashboard"
+    className?: string
 }
 
 
@@ -159,7 +165,7 @@ function computeStats(data: FinanceData): Record<StatKey, StatData> {
 // MAIN COMPONENT
 // ==============================================================================
 
-export function SectionCards({ data: externalData, isLoading: externalLoading, variant = "default" }: SectionCardsProps = {}) {
+export function SectionCards({ data: externalData, isLoading: externalLoading, variant = "default", className }: SectionCardsProps = {}) {
     const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const [stats, setStats] = React.useState<Record<StatKey, StatData> | null>(null)
@@ -180,54 +186,29 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
     }, [externalData, externalLoading])
 
     const cards: { key: StatKey; label: string }[] = React.useMemo(() => [
+        { key: "balance",  label: t.data_type_labels?.balance  || "Balance"  },
         { key: "income",   label: t.data_type_labels?.income   || "Income"   },
         { key: "expenses", label: t.data_type_labels?.expenses || "Expenses" },
         { key: "savings",  label: t.data_type_labels?.savings  || "Savings"  },
-        { key: "balance",  label: t.data_type_labels?.balance  || "Balance"  },
     ], [t.data_type_labels])
 
     const isDashboard = variant === "dashboard"
 
     const gridClassName = isDashboard
-        ? "grid h-full auto-rows-fr grid-cols-2 gap-0 md:grid-cols-4"
+        ? "grid grid-cols-2 gap-4 @[1320px]/overview:grid-cols-4"
         : "grid grid-cols-1 @[380px]/main:grid-cols-2 @[900px]/main:grid-cols-4 gap-4"
 
-    const cardClassName = cn(
-        isDashboard
-            ? "group relative flex h-full min-h-24 flex-col justify-between overflow-hidden rounded-none bg-transparent p-3 transition-colors duration-150 hover:bg-black/[0.025] dark:hover:bg-white/[0.04]"
-            : SECTION_CARD_SURFACE_CLASS,
-    )
+    const cardClassName = cn("h-full min-h-[112px]", isDashboard && "min-h-[124px]")
 
     if (errorInfo) return <ErrorState type={errorInfo.type} details={errorInfo.details} />
 
     // — Loading skeletons —
     if (!stats || externalLoading) {
         return (
-            <div className={gridClassName}>
+            <div className={cn(gridClassName, className)}>
                 {[0, 1, 2, 3].map(i => (
-                    <div key={i} className="relative">
-                        {isDashboard && i < 3 && (
-                            <span
-                                aria-hidden
-                                className={cn(
-                                    PRISM.separatorVertical,
-                                    "pointer-events-none absolute -right-px top-3 bottom-3 z-10",
-                                    i === 1 && "hidden md:block",
-                                )}
-                            />
-                        )}
-                        <div className={cardClassName}>
-                            <div className={cn("flex items-center gap-2.5 mb-4", isDashboard && "mb-2")}>
-                                <Skeleton className="size-8 rounded-lg" />
-                                <Skeleton className="h-4 w-16" />
-                            </div>
-                            <Skeleton className="h-7 w-28" />
-                            <Skeleton className="h-3 w-24 mt-2" />
-                            <div className={cn("mt-4 flex items-center justify-between", isDashboard && "mt-3")}>
-                                <Skeleton className="h-5 w-20 rounded-md" />
-                                <Skeleton className="h-6 w-12" />
-                            </div>
-                        </div>
+                    <div key={i} className="relative h-full">
+                        <DashboardMetricCardSkeleton className={cardClassName} />
                     </div>
                 ))}
             </div>
@@ -235,8 +216,8 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
     }
 
     return (
-        <div className={gridClassName}>
-            {cards.map(({ key, label }, index) => {
+        <div className={cn(gridClassName, className)}>
+            {cards.map(({ key, label }) => {
                 const stat = stats[key]
                 const palette = PALETTES[key]
                 const Icon = ICONS[key]
@@ -259,8 +240,14 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
                 const toneClasses = tone === "positive"
                     ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/15"
                     : tone === "negative"
-                    ? `${PRISM.destructiveText} bg-red-500/10 dark:bg-red-500/15`
+                    ? "text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-500/15"
                     : "text-neutral-400 bg-muted/60"
+
+                const dashboardToneClasses = tone === "positive"
+                    ? "text-emerald-400"
+                    : tone === "negative"
+                    ? "text-red-400"
+                    : "text-muted-foreground"
 
                 const formattedValue = formatCurrency(stat.value)
                 const isPt = (t.config?.locale || "en-US").startsWith("pt")
@@ -280,50 +267,31 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
                 return (
                     <ContextMenu key={key}>
                         <ContextMenuTrigger asChild>
-                            <div className="relative h-full">
-                                {isDashboard && index < 3 && (
-                                    <span
-                                        aria-hidden
-                                        className={cn(
-                                            PRISM.separatorVertical,
-                                            "pointer-events-none absolute -right-px top-3 bottom-3 z-10",
-                                            index === 1 && "hidden md:block",
-                                        )}
-                                    />
+                            <DashboardMetricCard
+                                icon={Icon}
+                                label={label}
+                                value={formattedValue}
+                                detail={diffLabel ? `${diffLabel} ${isPt ? "vs mês anterior" : "vs last month"}` : undefined}
+                                tone={tone}
+                                valueClassName={cn("text-foreground", isDashboard ? "text-[1.05rem] sm:text-[1.12rem] 2xl:text-[1.2rem]" : "text-2xl")}
+                                className={cardClassName}
+                                action={isDashboard ? (
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1 font-semibold tabular-nums",
+                                        "text-[12px]",
+                                        dashboardToneClasses,
+                                    )}>
+                                        <TrendIcon className="size-3" />
+                                        {changeLabel}
+                                    </span>
+                                ) : <Sparkline trend={stat.trend} color={palette.accent} />}
+                                footer={!isDashboard && (
+                                    <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums", toneClasses)}>
+                                        <TrendIcon className="size-3" />
+                                        {changeLabel}
+                                    </span>
                                 )}
-                                <div className={cardClassName}>
-                                    <div className={cn("flex items-center gap-2.5 mb-4", isDashboard && "mb-3")}>
-                                        <div
-                                            className={cn("flex size-8 items-center justify-center rounded-lg transition-colors duration-200", isDashboard && "size-7 rounded-lg")}
-                                            style={{ backgroundColor: palette.iconBg, color: palette.accent }}
-                                        >
-                                            <Icon className={cn("size-4", isDashboard && "size-3.5")} style={{ strokeWidth: 2 }} />
-                                        </div>
-                                        <span className="truncate text-[12px] font-medium text-neutral-400">
-                                            {label}
-                                        </span>
-                                    </div>
-
-                                    <div>
-                                        <p className={cn("truncate text-2xl font-bold leading-none tracking-tight text-foreground tabular-nums", isDashboard && "text-[1.25rem]")}>
-                                            {formattedValue}
-                                        </p>
-                                        {diffLabel && (
-                                            <p className={cn("text-[11px] mt-1.5 tabular-nums text-neutral-400/60", isDashboard && "mt-1")}>
-                                                {diffLabel} {isPt ? "vs mês anterior" : "vs last month"}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className={cn("mt-4 flex items-center justify-between gap-3", isDashboard && "mt-2")}>
-                                        <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums", toneClasses)}>
-                                            <TrendIcon className="size-3" />
-                                            {changeLabel}
-                                        </span>
-                                        <Sparkline trend={stat.trend} color={palette.accent} />
-                                    </div>
-                                </div>
-                            </div>
+                            />
                         </ContextMenuTrigger>
                         <ContextMenuContent>
                             <ContextMenuItem onClick={handleCopyValue}>

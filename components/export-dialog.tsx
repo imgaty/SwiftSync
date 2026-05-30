@@ -1,15 +1,23 @@
+//
+//  export-dialog.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Export dialog React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { Download, FileSpreadsheet, FileJson } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-} from "@/components/ui/dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/date-picker"
 import {
@@ -72,20 +80,26 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md w-[calc(100vw-2rem)]">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Download className="h-5 w-5" />
-                        {language === "pt" ? "Exportar Dados" : "Export Data"}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {language === "pt"
-                            ? "Exporte os seus dados financeiros em CSV ou JSON"
-                            : "Export your financial data as CSV or JSON"}
-                    </DialogDescription>
-                </DialogHeader>
+            <FormDialogContent maxWidth="430px">
+                <FormDialogHeader
+                    icon={
+                        <div className="mb-1 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <Download className="size-6" />
+                        </div>
+                    }
+                    title={language === "pt" ? "Exportar Dados" : "Export Data"}
+                    description={language === "pt"
+                        ? "Exporte os seus dados financeiros em CSV ou JSON"
+                        : "Export your financial data as CSV or JSON"}
+                />
 
-                <div className="space-y-4">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        handleExport()
+                    }}
+                    className="flex flex-col gap-4"
+                >
                     <div>
                         <Label>{language === "pt" ? "Dados a exportar" : "Data to export"}</Label>
                         <Select value={entity} onValueChange={setEntity}>
@@ -127,7 +141,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                     </div>
 
                     {entity === "transactions" && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label>{language === "pt" ? "Data início" : "Start date"}</Label>
                                 <DatePicker
@@ -149,19 +163,19 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-2">
-                        <Button variant="glass" onClick={() => onOpenChange(false)}>
-                            {language === "pt" ? "Cancelar" : "Cancel"}
-                        </Button>
-                        <Button onClick={handleExport} disabled={isExporting}>
+                    <FormDialogActions>
+                        <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isExporting}>
                             <Download className="h-4 w-4 mr-2" />
                             {isExporting
                                 ? (language === "pt" ? "A exportar..." : "Exporting...")
                                 : (language === "pt" ? "Exportar" : "Export")}
                         </Button>
-                    </div>
-                </div>
-            </DialogContent>
+                        <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => onOpenChange(false)}>
+                            {language === "pt" ? "Cancelar" : "Cancel"}
+                        </Button>
+                    </FormDialogActions>
+                </form>
+            </FormDialogContent>
         </Dialog>
     )
 }

@@ -1,23 +1,33 @@
+//
+//  empty-state.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Empty state React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import Link from "next/link"
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import {
-    Search,
-    Inbox,
+    ArrowLeftRight,
+    Calendar,
     Database,
     Filter,
-    ArrowLeftRight,
+    Inbox,
     PiggyBank,
     Receipt,
+    Search,
     Wallet,
-    Calendar,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
 
-type EmptyStateVariant = 
+export type EmptyStateVariant =
+    | "nothing"
     | "no-data"
     | "no-results"
     | "empty-inbox"
@@ -28,7 +38,9 @@ type EmptyStateVariant =
     | "no-events"
     | "filtered"
 
-interface EmptyStateAction {
+export type EmptyStatePlacement = "page" | "section" | "card" | "dialog" | "popover" | "inline"
+
+export interface EmptyStateAction {
     label: string
     onClick?: () => void
     href?: string
@@ -36,15 +48,16 @@ interface EmptyStateAction {
     variant?: "solid" | "solid-destructive" | "glass" | "glass-destructive" | "ghost" | "ghost-destructive"
 }
 
-interface EmptyStateProps {
+export interface EmptyStateProps {
     variant?: EmptyStateVariant
-    title?: string
-    description?: string
+    title?: React.ReactNode
+    description?: React.ReactNode
     icon?: React.ReactNode
     action?: EmptyStateAction
     secondaryAction?: EmptyStateAction
     className?: string
     fullPage?: boolean
+    placement?: EmptyStatePlacement
 }
 
 const variantConfig: Record<EmptyStateVariant, {
@@ -54,11 +67,18 @@ const variantConfig: Record<EmptyStateVariant, {
     defaultTitle: string
     defaultDescription: string
 }> = {
+    "nothing": {
+        icon: Inbox,
+        titleKey: "empty_states.nothing.title",
+        descriptionKey: "empty_states.nothing.description",
+        defaultTitle: "Nothing to show here yet",
+        defaultDescription: "When there is something to show, it will appear here."
+    },
     "no-data": {
         icon: Database,
         titleKey: "empty_states.no_data.title",
         descriptionKey: "empty_states.no_data.description",
-        defaultTitle: "No data available",
+        defaultTitle: "Nothing to show here yet",
         defaultDescription: "There's no data to display at the moment."
     },
     "no-results": {
@@ -119,8 +139,93 @@ const variantConfig: Record<EmptyStateVariant, {
     }
 }
 
+const placementStyles: Record<EmptyStatePlacement, {
+    root: string
+    content: string
+    icon: string
+    iconSvg: string
+    title: string
+    description: string
+    actions: string
+    actionButton: string
+}> = {
+    page: {
+        root: "min-h-0 flex-1 px-4 py-12",
+        content: "max-w-md",
+        icon: "mb-4",
+        iconSvg: "size-8",
+        title: "text-lg",
+        description: "text-[13px]",
+        actions: "mt-5",
+        actionButton: "h-9 rounded-xl px-5 text-[13px]",
+    },
+    section: {
+        root: "min-h-[280px] px-4 py-12",
+        content: "max-w-sm",
+        icon: "mb-4",
+        iconSvg: "size-7",
+        title: "text-base",
+        description: "text-[13px]",
+        actions: "mt-5",
+        actionButton: "h-9 rounded-xl px-4 text-[13px]",
+    },
+    card: {
+        root: "min-h-[160px] px-4 py-8",
+        content: "max-w-xs",
+        icon: "mb-3",
+        iconSvg: "size-6",
+        title: "text-sm",
+        description: "text-xs",
+        actions: "mt-4",
+        actionButton: "h-8 rounded-lg px-3 text-xs",
+    },
+    dialog: {
+        root: "px-4 py-8",
+        content: "max-w-sm",
+        icon: "mb-3",
+        iconSvg: "size-6",
+        title: "text-sm",
+        description: "text-xs",
+        actions: "mt-4",
+        actionButton: "h-8 rounded-lg px-3 text-xs",
+    },
+    popover: {
+        root: "px-3 py-5",
+        content: "max-w-[18rem]",
+        icon: "mb-3",
+        iconSvg: "size-5",
+        title: "text-[13px]",
+        description: "text-xs",
+        actions: "mt-3",
+        actionButton: "h-8 rounded-lg px-3 text-xs",
+    },
+    inline: {
+        root: "px-3 py-3",
+        content: "max-w-full",
+        icon: "",
+        iconSvg: "size-5",
+        title: "text-sm",
+        description: "text-xs",
+        actions: "mt-3",
+        actionButton: "h-8 rounded-lg px-3 text-xs",
+    },
+}
+
+function getNestedTranslation(translations: unknown, key: string, fallback: string): string {
+    const keys = key.split(".")
+    let value: unknown = translations
+
+    for (const k of keys) {
+        if (!value || typeof value !== "object") return fallback
+        value = (value as Record<string, unknown>)[k]
+        if (value === undefined) return fallback
+    }
+
+    return typeof value === "string" ? value : fallback
+}
+
 export function EmptyState({
-    variant = "no-data",
+    variant = "nothing",
     title,
     description,
     icon,
@@ -128,37 +233,28 @@ export function EmptyState({
     secondaryAction,
     className,
     fullPage = false,
+    placement = "section",
 }: EmptyStateProps) {
     const { t } = useLanguage()
     const config = variantConfig[variant]
     const Icon = config.icon
+    const resolvedPlacement = fullPage ? "page" : placement
+    const styles = placementStyles[resolvedPlacement]
+    const titleId = React.useId()
 
-    // Helper to get nested translation values
-    const getNestedTranslation = (key: string, fallback: string): string => {
-        const keys = key.split(".")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let value: any = t
-        for (const k of keys) {
-            value = value?.[k]
-            if (value === undefined) return fallback
-        }
-        return typeof value === "string" ? value : fallback
-    }
-
-    const displayTitle = title || getNestedTranslation(config.titleKey, config.defaultTitle)
-    const displayDescription = description || getNestedTranslation(config.descriptionKey, config.defaultDescription)
+    const displayTitle = title ?? getNestedTranslation(t, config.titleKey, config.defaultTitle)
+    const displayDescription = description ?? getNestedTranslation(t, config.descriptionKey, config.defaultDescription)
+    const hasDescription = displayDescription !== "" && displayDescription !== null && displayDescription !== undefined
 
     const renderActionButton = (item: EmptyStateAction | undefined, isPrimary = false) => {
         if (!item) return null
 
-        const variant = item.variant || (isPrimary && fullPage ? "solid" : "glass")
-        const className = isPrimary
-            ? "rounded-xl px-5 h-9 text-[13px] font-medium"
-            : "rounded-xl px-5 h-9 text-[13px] font-medium"
+        const variant = item.variant || (isPrimary && resolvedPlacement === "page" ? "solid" : "glass")
+        const actionClassName = cn(styles.actionButton, "font-medium")
 
         if (item.href) {
             return (
-                <Button asChild variant={variant} className={className}>
+                <Button asChild variant={variant} className={actionClassName}>
                     <Link href={item.href}>
                         {item.icon}
                         {item.label}
@@ -168,7 +264,7 @@ export function EmptyState({
         }
 
         return (
-            <Button onClick={item.onClick} variant={variant} className={className}>
+            <Button onClick={item.onClick} variant={variant} className={actionClassName}>
                 {item.icon}
                 {item.label}
             </Button>
@@ -177,24 +273,53 @@ export function EmptyState({
 
     return (
         <div className={cn(
-            "flex flex-col items-center justify-center text-center animate-fade-in px-4",
-            fullPage ? "min-h-[56vh]" : "py-16",
+            "flex items-center justify-center animate-fade-in",
+            resolvedPlacement === "inline" ? "text-left" : "text-center",
+            styles.root,
             className
-        )}>
-            <div className="w-full max-w-md">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-neutral-400 animate-fade-in-scale">
-                    {icon || <Icon className="h-7 w-7" strokeWidth={1.5} />}
+        )}
+            data-empty-state={resolvedPlacement}
+            role="status"
+            aria-live="polite"
+            aria-labelledby={titleId}
+        >
+            <div className={cn(
+                "w-full",
+                styles.content,
+                resolvedPlacement === "inline"
+                    ? "flex items-center justify-center gap-3"
+                    : "mx-auto flex flex-col items-center",
+            )}>
+                <div
+                    className={cn(
+                        "flex shrink-0 items-center justify-center text-muted-foreground",
+                        "animate-fade-in-scale",
+                        styles.icon,
+                    )}
+                    aria-hidden="true"
+                >
+                    {icon || <Icon className={styles.iconSvg} strokeWidth={1.6} />}
                 </div>
 
-                <h3 className="text-lg font-semibold text-foreground mb-1.5 animate-fade-in-up stagger-1">
-                    {displayTitle}
-                </h3>
-                <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-neutral-400 animate-fade-in-up stagger-2">
-                    {displayDescription}
-                </p>
+                <div className={cn("min-w-0", resolvedPlacement !== "inline" && "w-full")}>
+                    {resolvedPlacement === "inline" ? (
+                        <p id={titleId} className={cn("font-semibold leading-snug text-foreground animate-fade-in-up stagger-1", styles.title)}>
+                            {displayTitle}
+                        </p>
+                    ) : (
+                        <h3 id={titleId} className={cn("mb-1.5 font-semibold leading-snug text-foreground animate-fade-in-up stagger-1", styles.title)}>
+                            {displayTitle}
+                        </h3>
+                    )}
+                    {hasDescription && (
+                        <p className={cn("mx-auto leading-relaxed text-muted-foreground animate-fade-in-up stagger-2", styles.description)}>
+                            {displayDescription}
+                        </p>
+                    )}
+                </div>
 
                 {(action || secondaryAction) && (
-                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2 animate-fade-in-up stagger-3">
+                    <div className={cn("flex flex-wrap items-center justify-center gap-2 animate-fade-in-up stagger-3", styles.actions)}>
                         {renderActionButton(action, true)}
                         {renderActionButton(secondaryAction)}
                     </div>
@@ -210,37 +335,14 @@ export function EmptyStateInline({
     title,
     description,
     className
-}: Omit<EmptyStateProps, "icon" | "action">) {
-    const { t } = useLanguage()
-    const config = variantConfig[variant]
-    const Icon = config.icon
-
-    const getNestedTranslation = (key: string, fallback: string): string => {
-        const keys = key.split(".")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let value: any = t
-        for (const k of keys) {
-            value = value?.[k]
-            if (value === undefined) return fallback
-        }
-        return typeof value === "string" ? value : fallback
-    }
-
-    const displayTitle = title || getNestedTranslation(config.titleKey, config.defaultTitle)
-    const displayDescription = description || getNestedTranslation(config.descriptionKey, config.defaultDescription)
-
+}: Omit<EmptyStateProps, "icon" | "action" | "secondaryAction" | "fullPage" | "placement">) {
     return (
-        <div className={cn(
-            "flex items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/20 py-8 px-4 text-neutral-400 animate-fade-in",
-            className
-        )}>
-            <Icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
-            <div className="text-left min-w-0">
-                <p className="auto-scroll text-sm font-medium">{displayTitle}</p>
-                {description !== "" && (
-                    <p className="auto-scroll text-xs text-neutral-400/70">{displayDescription}</p>
-                )}
-            </div>
-        </div>
+        <EmptyState
+            variant={variant}
+            title={title}
+            description={description}
+            placement="inline"
+            className={className}
+        />
     )
 }

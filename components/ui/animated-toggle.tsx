@@ -1,7 +1,17 @@
+//
+//  animated-toggle.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Defines the reusable Animated toggle UI primitive for Argent, centralizing styling,
+//  composition behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface AnimatedToggleProps {
@@ -94,7 +104,7 @@ export function AnimatedToggle({
     const iconState = animationPhase !== "idle" ? "dash" : (displayChecked ? "check" : "x")
 
     return (
-        <button
+        <Button variant="ghost"
             type="button"
             role="switch"
             aria-checked={checked}
@@ -193,6 +203,6 @@ export function AnimatedToggle({
                     )}
                 </AnimatePresence>
             </motion.div>
-        </button>
+        </Button>
     )
 }

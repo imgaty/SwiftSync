@@ -1,5 +1,12 @@
-/* Revised 11 Apr 2024 - 00h24 */
-
+/*
+ * globals.css
+ * Argent
+ *
+ * Created by Hilario Ferreira on 18 November 2025 at 14:49.
+ * Description: Defines the global styling foundation for Argent, including Tailwind setup, shared
+ * element behavior, theme-aware rules, and application-wide visual defaults.
+ * Last changed by hilario on 30 May 2026 at 19:35.
+ */
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -52,7 +59,7 @@ input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
     box-shadow: 0 0 0 1000px transparent inset !important;
-    -webkit-text-fill-color: #0a0a0a !important;
+    -webkit-text-fill-color: var(--foreground) !important;
     transition: background-color 5000s ease-in-out 0s !important;
     background-color: transparent !important;
     animation-name: onAutoFillStart !important;
@@ -78,13 +85,19 @@ input:not(:-webkit-autofill) {
 .dark input:-webkit-autofill:hover,
 .dark input:-webkit-autofill:focus,
 .dark input:-webkit-autofill:active {
-    -webkit-text-fill-color: #ffffff !important;
+    -webkit-text-fill-color: var(--foreground) !important;
 }
 
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --color-foreground-secondary: var(--foreground-secondary);
+    --color-surface: var(--surface);
+    --color-surface-subtle: var(--surface-subtle);
+    --color-surface-elevated: var(--surface-elevated);
+    --color-border-strong: var(--border-strong);
+    --color-focus: var(--focus);
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
     --font-mono: "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -174,43 +187,60 @@ input:not(:-webkit-autofill) {
     background-color: var(--sidebar);
     color-scheme: light;
 
-    --radius: 1.25rem;
-    --background: rgba(255, 255, 255, 1);
-    --foreground: rgba(36, 36, 36, 1);
-    --card: rgba(255, 255, 255, 1);
-    --card-foreground: rgba(36, 36, 36, 1);
-    --popover: rgba(255, 255, 255, 1);
-    --popover-foreground: rgba(36, 36, 36, 1);
-    --primary: rgba(50, 50, 50, 1);
-    --primary-foreground: rgba(250, 250, 250, 1);
-    --secondary: rgba(245, 245, 245, 1);
-    --secondary-foreground: rgba(50, 50, 50, 1);
-    --muted: rgba(245, 245, 245, 1);
-    --muted-foreground: rgba(115, 115, 115, 1);
-    --accent: rgba(245, 245, 245, 1);
-    --accent-foreground: rgba(50, 50, 50, 1);
+    --argent-bright-grey: #ebedf1;
+    --argent-shy-blunt: #d4d8df;
+    --argent-grey-timber-wolf: #acadb1;
+    --argent-smoked-pearl: #706f70;
+    --argent-jet-black: #353536;
+    --argent-reversed-grey: #080808;
+
+    --radius: 1.125rem;
+    --corner-shape: squircle;
+    --background: #ffffff;
+    --foreground: var(--argent-reversed-grey);
+    --foreground-secondary: var(--argent-smoked-pearl);
+    --surface-subtle: #f8f8f8;
+    --surface: #f3f3f3;
+    --surface-elevated: #fafafa;
+    --card: var(--surface);
+    --card-foreground: var(--foreground);
+    --popover: color-mix(in srgb, var(--surface-elevated) 86%, transparent);
+    --popover-foreground: var(--foreground);
+    --primary: var(--argent-reversed-grey);
+    --primary-foreground: var(--argent-bright-grey);
+    --secondary: var(--surface);
+    --secondary-foreground: var(--argent-jet-black);
+    --muted: var(--surface-subtle);
+    --muted-foreground: var(--argent-smoked-pearl);
+    --accent: var(--surface);
+    --accent-foreground: var(--argent-reversed-grey);
     --destructive: rgba(220, 53, 53, 1);
     --success: rgba(34, 197, 94, 1);
     --success-foreground: rgba(255, 255, 255, 1);
-    --border: rgba(229, 229, 229, 1);
-    --input: rgba(229, 229, 229, 1);
-    --ring: rgba(163, 163, 163, 1);
-    --selection-background: rgba(50, 50, 50, 0.34);
-    --selection-background-strong: rgba(50, 50, 50, 0.5);
-    --selection-foreground: rgba(255, 255, 255, 1);
+    --border: color-mix(in srgb, var(--argent-smoked-pearl) 18%, transparent);
+    --border-strong: color-mix(in srgb, var(--argent-smoked-pearl) 32%, transparent);
+    --input: color-mix(in srgb, var(--argent-smoked-pearl) 24%, transparent);
+    --ring: color-mix(in srgb, var(--argent-jet-black) 40%, transparent);
+    --focus: color-mix(in srgb, var(--argent-reversed-grey) 68%, transparent);
+    --shadow-subtle: 0 1px 2px rgba(8, 8, 8, 0.05), 0 16px 44px rgba(8, 8, 8, 0.06);
+    --shadow-elevated: 0 1px 2px rgba(8, 8, 8, 0.06), 0 22px 60px rgba(8, 8, 8, 0.10);
+    --selection-background: color-mix(in srgb, var(--foreground) 32%, transparent);
+    --selection-background-strong: color-mix(in srgb, var(--foreground) 46%, transparent);
+    --selection-foreground: var(--background);
     --chart-1: rgba(232, 121, 59, 1);
     --chart-2: rgba(42, 157, 143, 1);
     --chart-3: rgba(38, 70, 83, 1);
     --chart-4: rgba(233, 196, 106, 1);
     --chart-5: rgba(244, 162, 97, 1);
-    --sidebar: rgba(250, 250, 250, 1);
-    --sidebar-foreground: rgba(36, 36, 36, 1);
-    --sidebar-primary: rgba(50, 50, 50, 1);
-    --sidebar-primary-foreground: rgba(250, 250, 250, 1);
-    --sidebar-accent: rgba(245, 245, 245, 1);
-    --sidebar-accent-foreground: rgba(50, 50, 50, 1);
-    --sidebar-border: rgba(229, 229, 229, 1);
-    --sidebar-ring: rgba(163, 163, 163, 1);
+    --sidebar: #ffffff;
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--surface-elevated);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+    --spotlight-rgb: 147 197 253;
 
     /* Category colors for charts - these can be overridden by colorblind modes */
     --color-income: rgba(34, 197, 94, 1);
@@ -234,40 +264,49 @@ input:not(:-webkit-autofill) {
 .dark {
     color-scheme: dark;
 
-    --background: rgba(0, 0, 0, 1);
-    --foreground: rgba(250, 250, 250, 1);
-    --card: rgba(0, 0, 0, 1);
-    --card-foreground: rgba(250, 250, 250, 1);
-    --popover: rgba(23, 23, 26, 1);
-    --popover-foreground: rgba(250, 250, 250, 1);
-    --primary: rgba(250, 250, 250, 1);
-    --primary-foreground: rgba(9, 9, 11, 1);
-    --secondary: rgba(28, 28, 32, 1);
-    --secondary-foreground: rgba(250, 250, 250, 1);
-    --muted: rgba(28, 28, 32, 1);
-    --muted-foreground: rgba(161, 161, 170, 1);
-    --accent: rgba(28, 28, 32, 1);
-    --accent-foreground: rgba(250, 250, 250, 1);
+    --background: #000000;
+    --foreground: var(--argent-bright-grey);
+    --foreground-secondary: var(--argent-shy-blunt);
+    --surface-subtle: color-mix(in srgb, var(--argent-reversed-grey) 96%, var(--argent-jet-black));
+    --surface: color-mix(in srgb, var(--argent-reversed-grey) 94%, var(--argent-jet-black));
+    --surface-elevated: color-mix(in srgb, var(--argent-reversed-grey) 90%, var(--argent-jet-black));
+    --card: color-mix(in srgb, var(--background) 97%, var(--foreground));
+    --card-foreground: var(--foreground);
+    --popover: var(--surface-elevated);
+    --popover-foreground: var(--foreground);
+    --primary: var(--argent-bright-grey);
+    --primary-foreground: var(--argent-reversed-grey);
+    --secondary: var(--surface);
+    --secondary-foreground: var(--argent-bright-grey);
+    --muted: var(--surface-subtle);
+    --muted-foreground: var(--argent-grey-timber-wolf);
+    --accent: var(--surface-elevated);
+    --accent-foreground: var(--argent-bright-grey);
     --destructive: rgba(239, 68, 68, 1);
-    --border: rgba(255, 255, 255, 0.1);
-    --input: rgba(255, 255, 255, 0.1);
-    --ring: rgba(161, 161, 170, 1);
-    --selection-background: rgba(250, 250, 250, 0.44);
-    --selection-background-strong: rgba(250, 250, 250, 0.62);
-    --selection-foreground: rgba(9, 9, 11, 1);
+    --border: color-mix(in srgb, var(--argent-bright-grey) 13%, transparent);
+    --border-strong: color-mix(in srgb, var(--argent-bright-grey) 24%, transparent);
+    --input: color-mix(in srgb, var(--argent-bright-grey) 18%, transparent);
+    --ring: color-mix(in srgb, var(--argent-grey-timber-wolf) 42%, transparent);
+    --focus: color-mix(in srgb, var(--argent-bright-grey) 72%, transparent);
+    --shadow-subtle: 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 46px rgba(0, 0, 0, 0.35);
+    --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.05), 0 26px 72px rgba(0, 0, 0, 0.48);
+    --selection-background: color-mix(in srgb, var(--foreground) 34%, transparent);
+    --selection-background-strong: color-mix(in srgb, var(--foreground) 50%, transparent);
+    --selection-foreground: var(--background);
     --chart-1: rgba(99, 102, 241, 1);
     --chart-2: rgba(52, 211, 153, 1);
     --chart-3: rgba(251, 191, 36, 1);
     --chart-4: rgba(192, 132, 252, 1);
     --chart-5: rgba(248, 113, 113, 1);
-    --sidebar: rgba(0, 0, 0, 1);
-    --sidebar-foreground: rgba(250, 250, 250, 1);
-    --sidebar-primary: rgba(99, 102, 241, 1);
-    --sidebar-primary-foreground: rgba(250, 250, 250, 1);
-    --sidebar-accent: rgba(28, 28, 32, 1);
-    --sidebar-accent-foreground: rgba(250, 250, 250, 1);
-    --sidebar-border: rgba(255, 255, 255, 0.1);
-    --sidebar-ring: rgba(161, 161, 170, 1);
+    --sidebar: #000000;
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--surface-elevated);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+    --spotlight-rgb: 147 197 253;
 
 }
 
@@ -276,8 +315,25 @@ input:not(:-webkit-autofill) {
         @apply border-border outline-ring/50;
     }
 
+    :where(svg.lucide, svg[fill="none"][stroke="currentColor"], svg[data-rounded-icon]),
+    :where(svg.lucide, svg[fill="none"][stroke="currentColor"], svg[data-rounded-icon]) :where(path, line, polyline, polygon, circle, rect) {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        shape-rendering: geometricPrecision;
+    }
+
     body {
-        @apply bg-sidebar text-sidebar-foreground font-sans;
+        @apply bg-background text-foreground font-sans;
+    }
+}
+
+@layer base {
+    @supports (corner-shape: squircle) {
+        *,
+        *::before,
+        *::after {
+            corner-shape: var(--corner-shape);
+        }
     }
 }
 
@@ -355,6 +411,26 @@ input:not(:-webkit-autofill) {
     }
 }
 
+@keyframes argent-icon-fill {
+    0% {
+        transform: scaleX(0);
+    }
+    72%,
+    100% {
+        transform: scaleX(1);
+    }
+}
+
+@keyframes argent-loading-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
 /* Formula calculation flash animation */
 @keyframes formula-flash {
     0% {
@@ -405,8 +481,6 @@ input:not(:-webkit-autofill) {
     }
 }
 
-
-
 /* Animation utility classes */
 .animate-fade-in {
     animation: fade-in 0.2s ease-out forwards;
@@ -430,6 +504,32 @@ input:not(:-webkit-autofill) {
 
 .animate-slide-in-left {
     animation: slide-in-left 0.4s ease-out forwards;
+}
+
+.argent-icon-fill-layer {
+    transform: scaleX(0);
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.animate-argent-icon-fill {
+    animation: argent-icon-fill 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.animate-argent-loading-out {
+    animation: argent-loading-out 450ms ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-argent-icon-fill {
+        animation: none;
+        transform: scaleX(1);
+    }
+
+    .animate-argent-loading-out {
+        animation-duration: 1ms;
+    }
+
 }
 
 /* Staggered animation delays — uniform increments */
@@ -485,6 +585,226 @@ input:not(:-webkit-autofill) {
 
 .bg-negative-subtle {
     background-color: color-mix(in srgb, var(--destructive) 10%, transparent);
+}
+
+.spotlight-surface {
+    --spotlight-x: 50%;
+    --spotlight-y: 50%;
+    --spotlight-opacity: 0;
+    --spotlight-size: 12rem;
+
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.spotlight-surface:not([role="dialog"]):not([role="alertdialog"]) {
+    position: relative;
+}
+
+.spotlight-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--spotlight-opacity);
+    background:
+        radial-gradient(
+            circle var(--spotlight-size) at var(--spotlight-x) var(--spotlight-y),
+            rgb(var(--spotlight-rgb) / 0.105) 0%,
+            rgb(var(--spotlight-rgb) / 0.045) 32%,
+            rgb(var(--spotlight-rgb) / 0.014) 52%,
+            transparent 70%
+        );
+    transition: opacity 180ms ease;
+}
+
+.prism-glass {
+    background-color: rgb(255 255 255 / 0.18);
+    background-image:
+        linear-gradient(
+            180deg,
+            rgb(255 255 255 / 0.10) 0%,
+            transparent 44%
+        );
+    border-color: rgb(0 0 0 / 0.08);
+    -webkit-backdrop-filter: blur(12px) saturate(1.75) contrast(1.03) brightness(1.02);
+    backdrop-filter: blur(12px) saturate(1.75) contrast(1.03) brightness(1.02);
+    box-shadow:
+        0 10px 28px rgb(0 0 0 / 0.14),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.34);
+}
+
+.prism-glass.spotlight-surface::before {
+    display: none;
+}
+
+.dark .prism-glass {
+    background-color: rgb(10 10 10 / 0.12);
+    background-image:
+        linear-gradient(
+            180deg,
+            rgb(255 255 255 / 0.045) 0%,
+            transparent 44%
+        );
+    border-color: rgb(255 255 255 / 0.16);
+    box-shadow:
+        0 10px 28px rgb(0 0 0 / 0.22),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.18);
+}
+
+.dashboard-sidebar-scroll-wrap {
+    position: relative;
+    min-height: 0;
+    isolation: isolate;
+    --dashboard-sidebar-fade-size: clamp(3.5rem, 8vh, 5.25rem);
+}
+
+.dashboard-sidebar-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color:
+        color-mix(in srgb, var(--foreground) 28%, transparent)
+        transparent;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar {
+    width: 0.44rem;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-track {
+    margin-block: 0.55rem;
+    background: transparent;
+    box-shadow: none;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-thumb {
+    min-height: 2.75rem;
+    border: 0.11rem solid transparent;
+    border-radius: 999px;
+    background:
+        linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--surface-elevated) 88%, transparent) 0%,
+            color-mix(in srgb, var(--foreground) 24%, transparent) 100%
+        )
+        padding-box;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--foreground) 12%, transparent),
+        inset 0 1px 0 rgb(255 255 255 / 0.48),
+        0 2px 7px rgb(0 0 0 / 0.05);
+}
+
+.dashboard-sidebar-scroll:hover::-webkit-scrollbar-thumb {
+    background:
+        linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--surface-elevated) 94%, transparent) 0%,
+            color-mix(in srgb, var(--foreground) 36%, transparent) 100%
+        )
+        padding-box;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+@media (min-width: 900px) {
+    .dashboard-sidebar-scroll-wrap[data-scroll-top="true"] .dashboard-sidebar-scroll {
+        mask-image:
+            linear-gradient(
+                to bottom,
+                rgb(0 0 0 / 0) 0,
+                rgb(0 0 0 / 0.18) 0.65rem,
+                rgb(0 0 0 / 0.58) 1.65rem,
+                black var(--dashboard-sidebar-fade-size),
+                black 100%
+            );
+        -webkit-mask-image:
+            linear-gradient(
+                to bottom,
+                rgb(0 0 0 / 0) 0,
+                rgb(0 0 0 / 0.18) 0.65rem,
+                rgb(0 0 0 / 0.58) 1.65rem,
+                black var(--dashboard-sidebar-fade-size),
+                black 100%
+            );
+    }
+
+    .dashboard-sidebar-scroll-wrap[data-scroll-bottom="true"] .dashboard-sidebar-scroll {
+        mask-image:
+            linear-gradient(
+                to bottom,
+                black 0,
+                black calc(100% - var(--dashboard-sidebar-fade-size)),
+                rgb(0 0 0 / 0.58) calc(100% - 1.65rem),
+                rgb(0 0 0 / 0.18) calc(100% - 0.65rem),
+                rgb(0 0 0 / 0) 100%
+            );
+        -webkit-mask-image:
+            linear-gradient(
+                to bottom,
+                black 0,
+                black calc(100% - var(--dashboard-sidebar-fade-size)),
+                rgb(0 0 0 / 0.58) calc(100% - 1.65rem),
+                rgb(0 0 0 / 0.18) calc(100% - 0.65rem),
+                rgb(0 0 0 / 0) 100%
+            );
+    }
+
+    .dashboard-sidebar-scroll-wrap[data-scroll-top="true"][data-scroll-bottom="true"] .dashboard-sidebar-scroll {
+        mask-image:
+            linear-gradient(
+                to bottom,
+                rgb(0 0 0 / 0) 0,
+                rgb(0 0 0 / 0.18) 0.65rem,
+                rgb(0 0 0 / 0.58) 1.65rem,
+                black var(--dashboard-sidebar-fade-size),
+                black calc(100% - var(--dashboard-sidebar-fade-size)),
+                rgb(0 0 0 / 0.58) calc(100% - 1.65rem),
+                rgb(0 0 0 / 0.18) calc(100% - 0.65rem),
+                rgb(0 0 0 / 0) 100%
+            );
+        -webkit-mask-image:
+            linear-gradient(
+                to bottom,
+                rgb(0 0 0 / 0) 0,
+                rgb(0 0 0 / 0.18) 0.65rem,
+                rgb(0 0 0 / 0.58) 1.65rem,
+                black var(--dashboard-sidebar-fade-size),
+                black calc(100% - var(--dashboard-sidebar-fade-size)),
+                rgb(0 0 0 / 0.58) calc(100% - 1.65rem),
+                rgb(0 0 0 / 0.18) calc(100% - 0.65rem),
+                rgb(0 0 0 / 0) 100%
+            );
+    }
+}
+
+.spotlight-surface > :not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]) {
+    position: relative;
+}
+
+.spotlight-surface > * {
+    z-index: 1;
+}
+
+.spotlight-surface > [class*="absolute"] {
+    position: absolute;
+}
+
+.spotlight-surface > [class*="fixed"] {
+    position: fixed;
+}
+
+.spotlight-surface > [class*="sticky"] {
+    position: sticky;
+}
+
+@media (pointer: coarse) {
+    .spotlight-surface {
+        --spotlight-size: 10rem;
+    }
 }
 
 .border-negative {

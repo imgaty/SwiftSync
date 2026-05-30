@@ -1,3 +1,12 @@
+//
+//  language-provider.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 08 December 2025 at 19:38.
+//  Description: Implements the Language provider React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -65,8 +74,6 @@ interface Translations {
         two_factor_subtitle: string
         two_factor_hint: string
         trust_device: string
-        resend_code: string
-        resending_code: string
         error_fields_required: string
         error_login_failed: string
         error_generic: string
@@ -180,33 +187,37 @@ export function LanguageProvider({
 
     // Load translations for a language
     const loadTranslations = React.useCallback(async (lang: Language): Promise<Translations> => {
-        // Return cached version if available
-        if (translationCache[lang]) {
-            return translationCache[lang]!
-        }
+        const load = async (targetLang: Language): Promise<Translations> => {
+            // Return cached version if available
+            if (translationCache[targetLang]) {
+                return translationCache[targetLang]!
+            }
 
-        try {
-            const response = await fetch(`/lang/${lang}.json`)
-            if (!response.ok) {
-                console.warn(`Failed to load translations for "${lang}", falling back to "${DEFAULT_LANGUAGE}"`)
+            try {
+                const response = await fetch(`/lang/${targetLang}.json`)
+                if (!response.ok) {
+                    console.warn(`Failed to load translations for "${targetLang}", falling back to "${DEFAULT_LANGUAGE}"`)
+                    // Fallback to default language
+                    if (targetLang !== DEFAULT_LANGUAGE) {
+                        return load(DEFAULT_LANGUAGE)
+                    }
+                    return {} as Translations
+                }
+
+                const data = await response.json()
+                translationCache[targetLang] = data
+                return data as Translations
+            } catch (error) {
+                console.error(`Error loading translations for "${targetLang}":`, error)
                 // Fallback to default language
-                if (lang !== DEFAULT_LANGUAGE) {
-                    return loadTranslations(DEFAULT_LANGUAGE)
+                if (targetLang !== DEFAULT_LANGUAGE) {
+                    return load(DEFAULT_LANGUAGE)
                 }
                 return {} as Translations
             }
-            
-            const data = await response.json()
-            translationCache[lang] = data
-            return data as Translations
-        } catch (error) {
-            console.error(`Error loading translations for "${lang}":`, error)
-            // Fallback to default language
-            if (lang !== DEFAULT_LANGUAGE) {
-                return loadTranslations(DEFAULT_LANGUAGE)
-            }
-            return {} as Translations
         }
+
+        return load(lang)
     }, [])
 
     // Read cookie and load initial translations

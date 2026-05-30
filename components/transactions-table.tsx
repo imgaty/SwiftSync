@@ -1,3 +1,12 @@
+//
+//  transactions-table.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Transactions table React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -52,7 +61,6 @@ import {
 } from "@/components/ui/tabs"
 
 import { Skeleton } from "@/components/ui/skeleton"
-import { SmartTooltip } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 
 import { useLanguage } from "@/components/language-provider"
@@ -89,22 +97,6 @@ interface TransactionsTableProps {
     onAddTransaction?: () => void
 }
 
-const tagColors: Record<string, string> = {
-    food: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800",
-    transport: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-    housing: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800",
-    utilities: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-    subscriptions: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800",
-    entertainment: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800",
-    shopping: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-200 dark:border-pink-800",
-    health: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800",
-    insurance: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-    services: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
-    salary: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800",
-    freelance: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800",
-    other: "bg-neutral-500/10 text-neutral-400 border-neutral-200 dark:border-neutral-800",
-}
-
 // (DraggableRow removed: drag-and-drop disabled.)
 
 export function TransactionsTable({
@@ -122,12 +114,11 @@ export function TransactionsTable({
 }: TransactionsTableProps) {
     const { t, isLoading: isLangLoading } = useLanguage()
     const { formatCurrency } = useCurrency()
-    const f = (t.finance || {}) as Record<string, unknown>
-    const tt = (f.transactions_table || {}) as Record<string, string>
-    const fTable = (f.table || {}) as Record<string, string>
-    const fActions = (f.actions || {}) as Record<string, string>
-    const fFilter = (f.filter || {}) as Record<string, string>
-    const dataLabels = t.data_type_labels || {}
+    const f = React.useMemo(() => (t.finance || {}) as Record<string, unknown>, [t.finance])
+    const tt = React.useMemo(() => (f.transactions_table || {}) as Record<string, string>, [f])
+    const fTable = React.useMemo(() => (f.table || {}) as Record<string, string>, [f])
+    const fActions = React.useMemo(() => (f.actions || {}) as Record<string, string>, [f])
+    const fFilter = React.useMemo(() => (f.filter || {}) as Record<string, string>, [f])
     const isDashboard = variant === "dashboard"
     const selectEnabled = showSelectColumn ?? !isDashboard
     const actionsEnabled = showActionsColumn ?? !isDashboard
@@ -141,22 +132,6 @@ export function TransactionsTable({
     // Real tags from the user's Tag table — used by both the tag-filter
     // dropdown and to translate raw slugs to display names + colors.
     const availableTags = useAvailableTags()
-
-    const tagLabels: Record<string, string> = React.useMemo(() => ({
-        food: dataLabels.food || "Food",
-        transport: dataLabels.transport || "Transport",
-        housing: dataLabels.housing || "Housing",
-        utilities: dataLabels.utilities || "Utilities",
-        subscriptions: dataLabels.subscriptions || "Subscriptions",
-        entertainment: dataLabels.entertainment || "Entertainment",
-        shopping: dataLabels.shopping || "Shopping",
-        health: dataLabels.health || "Health",
-        insurance: dataLabels.insurance || "Insurance",
-        services: dataLabels.services || "Services",
-        salary: dataLabels.income || "Salary",
-        freelance: "Freelance",
-        other: dataLabels.other || "Other",
-    }), [dataLabels])
 
     const columns: ColumnDef<Transaction>[] = React.useMemo(() => {
         const baseColumns: ColumnDef<Transaction>[] = [
@@ -339,10 +314,13 @@ export function TransactionsTable({
         }
 
         return baseColumns
-    }, [t, fTable.select_all, fTable.select_row, fActions.actions, fActions.edit, fActions.delete, tt, tagLabels, formatCurrency, accountsById, selectEnabled, actionsEnabled, onEditTransaction, onDeleteTransaction])
+    }, [t, fTable.select_all, fTable.select_row, fActions.actions, fActions.edit, fActions.delete, tt, formatCurrency, accountsById, selectEnabled, actionsEnabled, onEditTransaction, onDeleteTransaction])
     const [data, setData] = React.useState<Transaction[]>(() => initialData)
     const [rowSelection, setRowSelection] = React.useState({})
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
+        if (!isDashboard) return {} as VisibilityState
+        return { tags: false, type: false }
+    })
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize })
@@ -350,6 +328,14 @@ export function TransactionsTable({
     React.useEffect(() => {
         setPagination((current) => current.pageSize === pageSize ? current : { pageIndex: 0, pageSize })
     }, [pageSize])
+    React.useEffect(() => {
+        if (!isDashboard) return
+        setColumnVisibility((current) => ({
+            ...current,
+            tags: false,
+            type: false,
+        }))
+    }, [isDashboard])
     const [globalFilter, setGlobalFilter] = React.useState("")
     const isMobile = useIsMobileView()
 
@@ -358,6 +344,8 @@ export function TransactionsTable({
         setData(initialData)
     }, [initialData])
 
+    // TanStack Table returns method-heavy state that React Compiler intentionally skips.
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
         columns,
@@ -452,7 +440,7 @@ export function TransactionsTable({
     }
 
     return (
-        <Tabs defaultValue="all" className={cn("flex flex-col justify-start w-full min-h-0 flex-1", isDashboard ? "h-full gap-2" : "gap-4")}>
+        <Tabs defaultValue="all" className={cn("flex flex-col justify-start w-full min-h-0 flex-1", isDashboard ? "h-full gap-4" : "gap-4")}>
             {showToolbar && (
             <TableToolbar className={cn(isDashboard && "border-b border-black/6 dark:border-white/8 pb-2") }>
                 <TableToolbarGroup className="flex-wrap">
@@ -510,7 +498,7 @@ export function TransactionsTable({
             </TableToolbar>
             )}
 
-            <TabsContent value="all" className={cn("relative flex flex-col min-h-0 flex-1", isDashboard ? "gap-2" : "gap-4")}>
+            <TabsContent value="all" className={cn("relative flex flex-col min-h-0 flex-1", isDashboard ? "gap-4" : "gap-4")}>
                 {isMobile ? (
                     <>
                     <MobileCardList>
@@ -563,7 +551,7 @@ export function TransactionsTable({
                     </MobileCardList>
                     </>
                 ) : (
-                <TableShell className={cn(isDashboard ? "h-full" : "flex-1")}>
+                <TableShell className={cn(isDashboard ? "h-full rounded-none border-0 bg-transparent shadow-none backdrop-blur-0 dark:bg-transparent dark:shadow-none" : "flex-1")}>
                     <TableScrollArea>
                     <Table className="w-full">
                         <TableHeader>

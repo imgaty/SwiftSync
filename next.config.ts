@@ -1,3 +1,12 @@
+//
+//  next.config.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 18 November 2025 at 14:49.
+//  Description: Configures Next.js for Argent, centralizing framework options that affect builds,
+//  routing behavior, and runtime integration.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import type { NextConfig } from "next"
 
 const isProd = process.env.NODE_ENV === "production"
@@ -23,7 +32,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://graph.microsoft.com https://www.saltedge.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://www.saltedge.com https://api.resend.com https://oauth2.googleapis.com https://login.microsoftonline.com https://github.com https://api.github.com https://www.googleapis.com https://graph.microsoft.com",
+      "connect-src 'self' https://www.saltedge.com https://api.resend.com https://open.er-api.com https://oauth2.googleapis.com https://login.microsoftonline.com https://github.com https://api.github.com https://www.googleapis.com https://graph.microsoft.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

@@ -9,6 +9,7 @@ Argent uses a **clean financial dashboard** aesthetic with **refracting glass ov
 - **Clarity first** — financial data must remain readable at a glance.
 - **Refracting overlays** — menus, popovers, tooltips, dialogs, and sheets should feel translucent and elevated.
 - **Consistent chrome** — border, blur, radius, spacing, and muted text treatment should stay uniform across floating UI.
+- **Squircle corners** — rounded surfaces use the global squircle enhancement documented in [Squircles](Squircles.md).
 - **Minimal duplication** — shared styling should come from tokens, not repeated ad-hoc class lists.
 
 ## Styling layers
@@ -33,6 +34,14 @@ The Button component uses three visual families, each with a destructive counter
 | `ghost-destructive`  | Transparent red with hover wash                                 |
 
 Sizes: `default`, `sm`, `lg`, `icon`, `icon-sm`, `icon-lg`.
+
+#### Corner geometry
+
+Rounded UI uses normal Tailwind/shadcn radius utilities (`rounded-lg`, `rounded-xl`, `rounded-full`) plus the global `corner-shape: squircle` enhancement in `app/globals.css`.
+
+Use existing radius utilities in component markup. Do not create SVG masks, `clip-path` paths, or one-off wrapper outlines to fake squircle corners.
+
+For implementation details and opt-out guidance, see [Squircles](Squircles.md).
 
 ### 2. Polished overlay surfaces
 Use `lib/PRISM.ts` and the exported `PRISM` token map for:

@@ -1,3 +1,12 @@
+//
+//  chart-settings.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements chart settings server actions for Argent, grouping mutations and server-side
+//  workflow code behind typed application entry points.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use server"
 
 import { cookies } from "next/headers"

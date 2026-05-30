@@ -1,3 +1,12 @@
+//
+//  cash-flow.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Provides shared cash flow logic for Argent, centralizing domain behavior, helpers, or
+//  integration code used by pages, routes, and components.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /**
  * Cash Flow Prediction Engine
  * Projects future balance based on recurring transactions, bills, and historical patterns.

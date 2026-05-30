@@ -1,3 +1,12 @@
+//
+//  error-alert.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Error alert auth component for Argent, supporting sign-in, registration,
+//  recovery, or security flows with reusable presentation logic.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { memo, type ReactNode } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { PRISM } from '@/lib/PRISM'

@@ -1,3 +1,12 @@
+//
+//  rules-panel.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Rules panel React component for Argent, encapsulating reusable interface
+//  structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 // Settings → Rules panel.
@@ -12,20 +21,16 @@ import { Plus, Trash2, Pencil, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AnimatedToggle } from "@/components/ui/animated-toggle"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    DialogDescription,
-    DialogPortal,
-    DialogOverlay,
-} from "@/components/ui/dialog"
-import * as DialogPrimitive from "@radix-ui/react-dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 
 import { SectionHeader, SettingsSection, SettingsDivider } from "./primitives"
 import {
@@ -188,7 +193,7 @@ function FilterRow({
                 <FilterValueInput filter={filter} onChange={(value) => onChange({ ...filter, value })} />
             </div>
 
-            <button
+            <Button variant="ghost"
                 type="button"
                 onClick={onRemove}
                 disabled={!canRemove}
@@ -201,7 +206,7 @@ function FilterRow({
                 )}
             >
                 <X className="size-4" />
-            </button>
+            </Button>
         </div>
     )
 }
@@ -378,27 +383,19 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPortal>
-                <DialogOverlay className={PRISM.overlay} />
-                <DialogPrimitive.Content
-                    className={cn(
-                        "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
-                        "w-[calc(100vw-2rem)] max-w-[640px] max-h-[calc(100vh-4rem)]",
-                        PRISM.container,
-                        "p-6 overflow-y-auto",
-                        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-                        "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-                        "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 duration-200",
-                    )}
-                >
-                    <DialogTitle className={PRISM.title}>
-                        {isEditing ? "Edit rule" : "New rule"}
-                    </DialogTitle>
-                    <DialogDescription className={cn(PRISM.description, "mt-1")}>
-                        Tag transactions automatically when all filters match.
-                    </DialogDescription>
+            <FormDialogContent maxWidth="520px">
+                <FormDialogHeader
+                    title={isEditing ? "Edit rule" : "New rule"}
+                    description="Tag transactions automatically when all filters match."
+                />
 
-                    <div className="mt-5 space-y-5">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        handleSave()
+                    }}
+                    className="flex flex-col gap-5"
+                >
                         {/* Name */}
                         <div className="space-y-1.5">
                             <label className="text-[13px] font-medium">Name</label>
@@ -431,14 +428,14 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
                                     />
                                 ))}
                             </div>
-                            <button
+                            <Button variant="ghost"
                                 type="button"
                                 onClick={() => setFilters((prev) => [...prev, newFilter()])}
                                 className="flex items-center gap-1.5 text-[13px] text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
                             >
                                 <Plus className="size-3.5" />
                                 Add filter
-                            </button>
+                            </Button>
                         </div>
 
                         {/* Tags */}
@@ -458,31 +455,28 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
                         <div className="flex items-center justify-between gap-4 py-1">
                             <div className="space-y-0.5">
                                 <p className="text-[13px] font-medium">Enabled</p>
-                                <p className="text-xs text-neutral-400">Disabled rules don't run.</p>
+                                <p className="text-xs text-neutral-400">Disabled rules do not run.</p>
                             </div>
                             <AnimatedToggle checked={enabled} onCheckedChange={setEnabled} />
                         </div>
-                    </div>
 
-                    <div className="mt-6 flex justify-end gap-2">
+                    <FormDialogActions>
+                        <Button type="submit" variant="solid" size="lg" className="w-full" disabled={saving}>
+                            {saving ? "Saving…" : isEditing ? "Save" : "Create"}
+                        </Button>
                         <Button
-                            variant="ghost"
+                            type="button"
+                            variant="glass"
+                            size="lg"
+                            className="w-full"
                             onClick={() => onOpenChange(false)}
                             disabled={saving}
                         >
                             Cancel
                         </Button>
-                        <Button onClick={handleSave} disabled={saving}>
-                            {saving ? "Saving…" : isEditing ? "Save" : "Create"}
-                        </Button>
-                    </div>
-
-                    <DialogPrimitive.Close className={cn("absolute right-4 top-4", PRISM.closeButton)}>
-                        <X className="size-4" />
-                        <span className="sr-only">Close</span>
-                    </DialogPrimitive.Close>
-                </DialogPrimitive.Content>
-            </DialogPortal>
+                    </FormDialogActions>
+                </form>
+            </FormDialogContent>
         </Dialog>
     )
 }
@@ -525,22 +519,22 @@ function RuleRow({
                 </p>
             </div>
             <AnimatedToggle checked={rule.enabled} onCheckedChange={onToggle} />
-            <button
+            <Button variant="ghost"
                 type="button"
                 onClick={onEdit}
                 aria-label="Edit rule"
                 className="p-1.5 rounded-md text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/6 dark:hover:bg-white/8 transition-colors"
             >
                 <Pencil className="size-4" />
-            </button>
-            <button
+            </Button>
+            <Button variant="ghost"
                 type="button"
                 onClick={onDelete}
                 aria-label="Delete rule"
                 className="p-1.5 rounded-md text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
             >
                 <Trash2 className="size-4" />
-            </button>
+            </Button>
         </div>
     )
 }

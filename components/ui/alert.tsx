@@ -1,3 +1,12 @@
+//
+//  alert.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Defines the reusable Alert UI primitive for Argent, centralizing styling, composition
+//  behavior, and accessibility-facing structure for consistent interfaces.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

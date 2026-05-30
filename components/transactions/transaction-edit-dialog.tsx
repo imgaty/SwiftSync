@@ -1,3 +1,12 @@
+//
+//  transaction-edit-dialog.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Transaction edit dialog transaction component for Argent, supporting
+//  transaction review, tagging, editing, and related money-management workflows.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 // Create / edit a transaction. Same dialog handles both — pass `initial` for
@@ -10,16 +19,16 @@
 import * as React from "react"
 import { useQueryClient } from "@tanstack/react-query"
 
-import { cn } from "@/lib/utils"
 import { notify } from "@/lib/notify"
 import { queryKeys } from "@/lib/query-keys"
 import { Button } from "@/components/ui/button"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    DialogDescription,
-} from "@/components/ui/dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
+import { Input } from "@/components/ui/input"
 import {
     Select,
     SelectContent,
@@ -146,21 +155,17 @@ export function TransactionEditDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[calc(100vw-2rem)] max-w-[440px]">
-                <div>
-                    <DialogTitle>
-                        {isEditing ? "Edit transaction" : "New transaction"}
-                    </DialogTitle>
-                    <DialogDescription className="mt-1">
-                        {isEditing
-                            ? "Update the details below."
-                            : "Tags will be auto-assigned by PACE if you leave them empty."}
-                    </DialogDescription>
-                </div>
+            <FormDialogContent maxWidth="430px">
+                <FormDialogHeader
+                    title={isEditing ? "Edit transaction" : "New transaction"}
+                    description={isEditing
+                        ? "Update the details below."
+                        : "Tags will be auto-assigned by PACE if you leave them empty."}
+                />
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         {/* Type + Amount */}
-                        <div className="grid grid-cols-[120px_1fr] gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[120px_1fr]">
                             <div className="space-y-1.5">
                                 <label className="text-[11px] text-neutral-400">Type</label>
                                 <Select value={type} onValueChange={(v) => setType(v as "in" | "out")}>
@@ -173,58 +178,35 @@ export function TransactionEditDialog({
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[11px] text-neutral-400">Amount</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0.00"
-                                    className={cn(
-                                        "w-full text-[13px] px-2 py-1.5 rounded-md outline-none tabular-nums",
-                                        "bg-black/5 dark:bg-white/5",
-                                        "border border-black/10 dark:border-white/10",
-                                        "focus:border-black/20 dark:focus:border-white/20",
-                                    )}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Description */}
-                        <div className="space-y-1.5">
-                            <label className="text-[11px] text-neutral-400">Description</label>
-                            <input
-                                type="text"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="e.g. Continente Lisboa"
-                                maxLength={200}
-                                className={cn(
-                                    "w-full text-[13px] px-2 py-1.5 rounded-md outline-none",
-                                    "bg-black/5 dark:bg-white/5",
-                                    "border border-black/10 dark:border-white/10",
-                                    "focus:border-black/20 dark:focus:border-white/20",
-                                )}
+                            <Input
+                                label="Amount"
+                                type="number"
+                                step="0.01"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="0.00"
+                                inputClassName="tabular-nums"
                             />
                         </div>
 
+                        {/* Description */}
+                        <Input
+                            label="Description"
+                            type="text"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="e.g. Continente Lisboa"
+                            maxLength={200}
+                        />
+
                         {/* Date + Account */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <label className="text-[11px] text-neutral-400">Date</label>
-                                <input
-                                    type="date"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className={cn(
-                                        "w-full text-[13px] px-2 py-1.5 rounded-md outline-none",
-                                        "bg-black/5 dark:bg-white/5",
-                                        "border border-black/10 dark:border-white/10",
-                                        "focus:border-black/20 dark:focus:border-white/20",
-                                    )}
-                                />
-                            </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <Input
+                                label="Date"
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                            />
                             <div className="space-y-1.5">
                                 <label className="text-[11px] text-neutral-400">Account</label>
                                 <Select value={accountId} onValueChange={setAccountId}>
@@ -257,7 +239,7 @@ export function TransactionEditDialog({
                         {/* Tags */}
                         <div className="space-y-1.5">
                             <label className="text-[11px] text-neutral-400">Tags</label>
-                            <div className="px-2 py-1.5 rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                            <div className="rounded-xl border border-[color:var(--input)] bg-[var(--surface)] px-2 py-1.5 shadow-[var(--shadow-subtle)]">
                                 <TagPicker value={tags} onChange={setTags} />
                             </div>
                             {!isEditing && tags.length === 0 && (
@@ -267,21 +249,23 @@ export function TransactionEditDialog({
                             )}
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-2">
+                        <FormDialogActions>
+                            <Button type="submit" variant="solid" size="lg" className="w-full" disabled={submitting}>
+                                {submitting ? "Saving..." : isEditing ? "Save" : "Create"}
+                            </Button>
                             <Button
                                 type="button"
-                                variant="ghost"
+                                variant="glass"
+                                size="lg"
+                                className="w-full"
                                 onClick={() => onOpenChange(false)}
                                 disabled={submitting}
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={submitting}>
-                                {submitting ? "Saving…" : isEditing ? "Save" : "Create"}
-                            </Button>
-                        </div>
+                        </FormDialogActions>
                     </form>
-            </DialogContent>
+            </FormDialogContent>
         </Dialog>
     )
 }

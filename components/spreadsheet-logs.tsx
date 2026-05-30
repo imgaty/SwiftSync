@@ -1,3 +1,12 @@
+//
+//  spreadsheet-logs.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Spreadsheet logs React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -7,6 +16,7 @@ import { apiFetch } from "@/lib/query-keys"
 import type { SpreadsheetDocument, SpreadsheetLog } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
+import { getTranslations } from "@/lib/translation-utils"
 
 /* ─── Action icon mapping ──────────────────────────────────────────── */
 function actionIcon(action: string) {
@@ -64,7 +74,7 @@ export function SpreadsheetLogs({
     onBack: () => void
 }) {
     const { t } = useLanguage()
-    const sp = (t as any).spreadsheets || {} as Record<string, string>
+    const sp = getTranslations(t, "spreadsheets")
 
     const { data: logs, isLoading } = useQuery({
         queryKey: ["spreadsheet-logs", doc.id],

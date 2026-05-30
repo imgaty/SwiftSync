@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/auth/reset-password API endpoint for Argent, keeping request parsing,
+//  business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 import { NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
@@ -68,19 +77,27 @@ export async function POST(request: Request) {
     // Hash the new password and clear the reset token
     const hashedPassword = hashPassword(password);
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
-    });
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          resetToken: null,
+          resetTokenExpiry: null,
+          sessionVersion: { increment: 1 },
+        },
+      }),
+      prisma.trustedDevice.deleteMany({ where: { userId: user.id } }),
+    ]);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Password has been reset successfully.',
     });
+    response.cookies.delete('auth-token');
+    response.cookies.delete('user-session');
+    response.cookies.delete('trusted-device');
+    return response;
   } catch (error) {
     console.error('Reset password error:', error);
     return NextResponse.json(

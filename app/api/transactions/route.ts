@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Handles the /api/transactions API endpoint for Argent, keeping request parsing, business
+//  operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /* Transactions collection endpoint.
  *
  * GET lists transactions in the caller's scope; POST creates one and runs
@@ -7,11 +16,25 @@
  */
 
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getAuthContext } from "@/lib/auth-helpers"
 import { scopeFilter, scopeCreateData, requirePermission } from "@/lib/data-access"
 import { runPACE, PACE_DEFAULT_RULES, mergePACERules } from "@/lib/PACE"
 import { runUserRules, loadAvailableTags, categorizeWithEmbedding } from "@/lib/PACE.server"
+
+const transactionCreateSchema = z.object({
+  date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+    const parsed = new Date(`${value}T00:00:00.000Z`)
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+  }, "Invalid date"),
+  type: z.enum(["in", "out"]),
+  amount: z.coerce.number().finite().positive(),
+  description: z.string().trim().min(1).max(500),
+  tags: z.array(z.string().trim().min(1).max(64)).max(25).optional(),
+  accountId: z.string().trim().min(1),
+  usePACE: z.boolean().optional(),
+})
 
 // GET /api/transactions — List all transactions for the authenticated user
 export async function GET() {
@@ -50,12 +73,11 @@ export async function POST(request: Request) {
   const permissionError = await requirePermission(ctx, "data:write")
   if (permissionError) return permissionError
 
-  const body = await request.json()
-  const { date, type, amount, description, tags, accountId, usePACE } = body
-
-  if (!date || !type || !amount || !description || !accountId) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+  const parsed = transactionCreateSchema.safeParse(await request.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid transaction payload" }, { status: 400 })
   }
+  const { date, type, amount, description, tags, accountId, usePACE } = parsed.data
 
   // Verify the target account belongs to the caller's scope before binding to it.
   const ownsAccount = await prisma.bankAccount.findFirst({
@@ -122,7 +144,7 @@ export async function POST(request: Request) {
   const transaction = await prisma.transaction.create({
     data: {
       ...scopeCreateData(ctx),
-      date: new Date(date),
+      date: new Date(`${date}T00:00:00.000Z`),
       type,
       amount,
       description,

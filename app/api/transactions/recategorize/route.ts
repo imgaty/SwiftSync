@@ -1,3 +1,12 @@
+//
+//  route.ts
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Handles the /api/transactions/recategorize API endpoint for Argent, keeping request
+//  parsing, business operations, and response formatting at the route boundary.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /* POST /api/transactions/recategorize
  *
  * Idempotent batch: finds transactions in the caller's scope whose tag list

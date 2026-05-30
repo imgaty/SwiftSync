@@ -1,274 +1,210 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the home route in Argent, composing page-level layout, data dependencies, and
+//  feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
-import Link from "next/link"
 import * as React from "react"
-import { PageShell, PageHeader, PageSection } from "@/components/page-framework"
-import { SectionCards } from "@/components/section-cards"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { TransactionsTable } from "@/components/transactions-table"
-import { ExportDialog } from "@/components/export-dialog"
-import { CashFlowCard } from "@/components/cash-flow-card"
+import { Download, ListChecks } from "lucide-react"
+
 import { AccountFilter } from "@/components/account-filter"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
+import { DashboardAnalyticsPanel } from "@/components/dashboard/dashboard-analytics-panel"
+import { DashboardFinancialFocus } from "@/components/dashboard/dashboard-financial-focus"
+import { DashboardModuleGrid, type DashboardModule } from "@/components/dashboard/dashboard-module-grid"
+import { DashboardOverview } from "@/components/dashboard/dashboard-overview"
+import {
+    DASHBOARD_ACTION_BUTTON_CLASS,
+    DASHBOARD_ACTION_ICON_CLASS,
+    DASHBOARD_GLASS_SURFACE,
+} from "@/components/dashboard/dashboard-primitives"
+import { DashboardPriorityBrief } from "@/components/dashboard/dashboard-priority-brief"
+import { DashboardRecentActivity } from "@/components/dashboard/dashboard-recent-activity"
+import { useDashboardData } from "@/components/dashboard/use-dashboard-data"
+import { ExportDialog } from "@/components/export-dialog"
+import { PageHeader, PageSection, PageShell } from "@/components/page-framework"
 import { Button } from "@/components/ui/button"
 import {
-    Download,
-    User,
-    TrendingUp,
-} from "lucide-react"
-import { useLanguage } from "@/components/language-provider"
-import { useFinanceData } from "@/hooks/use-finance-data"
-import type { FinanceData } from "@/lib/types"
-
-
-
-interface DashboardTranslations {
-    common?: {
-        personal?: string
-    }
-    dashboard?: {
-        export?: string
-        good_morning?: string
-        good_afternoon?: string
-        good_evening?: string
-    }
-}
-
-interface ProfileResponse {
-    name?: string
-    initials?: string
-}
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 
 export default function Dashboard() {
-    const { t, isLoading: isLanguageLoading } = useLanguage()
-    const text = t as typeof t & DashboardTranslations
-    const { data: financeData, isLoading: isDataLoading } = useFinanceData()
-    const personalLabel = text.common?.personal || "Personal"
-    const dashboardExportLabel = text.dashboard?.export || "Export"
-    const goodMorningLabel = text.dashboard?.good_morning || "Good morning"
-    const goodAfternoonLabel = text.dashboard?.good_afternoon || "Good afternoon"
-    const goodEveningLabel = text.dashboard?.good_evening || "Good evening"
-
+    const dashboard = useDashboardData()
     const [showExport, setShowExport] = React.useState(false)
-    const [showCashFlow, setShowCashFlow] = React.useState(false)
-    const [selectedAccountIds, setSelectedAccountIds] = React.useState<string[]>([])
-    const [now, setNow] = React.useState(() => new Date())
+    const [showPriorityBrief, setShowPriorityBrief] = React.useState(false)
 
-    const [userProfile, setUserProfile] = React.useState<{ name: string; initials: string } | null>(null)
+    const modules = React.useMemo<DashboardModule[]>(() => [
+        {
+            id: "analytics",
+            title: dashboard.dashboardLabels.analytics,
+            node: (
+                <PageSection stagger={2} className="flex h-full min-h-0 flex-col overflow-hidden">
+                    <DashboardAnalyticsPanel
+                        dashboardLabels={dashboard.dashboardLabels}
+                        formatCompactCurrency={dashboard.formatCompactCurrency}
+                        monthlySnapshot={dashboard.monthlySnapshot}
+                        selectedAccountIds={dashboard.selectedAccountIds}
+                        transactions={dashboard.isLoading ? null : dashboard.filteredFinanceData?.transactions ?? []}
+                    />
+                </PageSection>
+            ),
+        },
+        {
+            id: "recentActivity",
+            title: dashboard.dashboardLabels.recentActivity,
+            node: (
+                <PageSection stagger={3} className="flex h-full min-h-0 flex-col overflow-hidden">
+                    <DashboardRecentActivity
+                        accountsById={dashboard.accountsById}
+                        dashboardLabels={dashboard.dashboardLabels}
+                        formatCompactCurrency={dashboard.formatCompactCurrency}
+                        isLoading={dashboard.isLoading}
+                        isPortuguese={dashboard.isPortuguese}
+                        locale={dashboard.locale}
+                        recentTransactions={dashboard.recentTransactions}
+                        transactionsLabel={dashboard.transactionsLabel}
+                    />
+                </PageSection>
+            ),
+        },
+        {
+            id: "financialFocus",
+            title: dashboard.dashboardLabels.focus,
+            node: (
+                <PageSection stagger={4} className="flex h-full min-h-0 flex-col overflow-hidden">
+                    <DashboardFinancialFocus
+                        budgetPressure={dashboard.budgetPressure}
+                        dashboardLabels={dashboard.dashboardLabels}
+                        formatCompactCurrency={dashboard.formatCompactCurrency}
+                        isLoading={dashboard.isLoading}
+                        isPortuguese={dashboard.isPortuguese}
+                        locale={dashboard.locale}
+                        upcomingBills={dashboard.upcomingBills}
+                    />
+                </PageSection>
+            ),
+        },
+    ], [dashboard])
 
-    const isLoading = isLanguageLoading || isDataLoading
-
-    React.useEffect(() => {
-        const timer = window.setInterval(() => setNow(new Date()), 60_000)
-        return () => window.clearInterval(timer)
-    }, [])
-
-    React.useEffect(() => {
-        async function loadProfile() {
-            try {
-                const profileResponse = await fetch("/api/auth/profile", { credentials: "include" })
-
-                if (profileResponse.ok) {
-                    const profile = await profileResponse.json() as ProfileResponse
-                    setUserProfile({
-                        name: profile.name || "",
-                        initials: profile.initials || "",
-                    })
-                }
-            } catch {
-                setUserProfile(null)
-            }
-        }
-        loadProfile()
-    }, [])
-
-    const greeting = React.useMemo(() => {
-        const hour = now.getHours()
-        if (hour >= 5 && hour < 12) return goodMorningLabel
-        if (hour >= 12 && hour < 18) return goodAfternoonLabel
-        return goodEveningLabel
-    }, [now, goodMorningLabel, goodAfternoonLabel, goodEveningLabel])
-
-    const formattedDate = React.useMemo(() => {
-        return now.toLocaleString(t.config?.locale, {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        })
-    }, [now, t.config?.locale])
-
-    const accounts = React.useMemo(() => financeData?.accounts || [], [financeData?.accounts])
-
-    const selectedAccountIdSet = React.useMemo(
-        () => (selectedAccountIds.length > 0 ? new Set(selectedAccountIds) : null),
-        [selectedAccountIds],
-    )
-
-    const filteredTransactions = React.useMemo(() => {
-        const allTransactions = financeData?.transactions || []
-        if (!selectedAccountIdSet) return allTransactions
-        return allTransactions.filter((transaction) => selectedAccountIdSet.has(transaction.accountId))
-    }, [financeData?.transactions, selectedAccountIdSet])
-
-    const filteredBills = React.useMemo(() => {
-        const allBills = financeData?.bills || []
-        if (!selectedAccountIdSet) return allBills
-        return allBills.filter((bill) => selectedAccountIdSet.has(bill.accountId))
-    }, [financeData?.bills, selectedAccountIdSet])
-
-    const filteredAccounts = React.useMemo(() => {
-        if (!selectedAccountIdSet) return accounts
-        return accounts.filter((account) => selectedAccountIdSet.has(account.id))
-    }, [accounts, selectedAccountIdSet])
-
-    const filteredBudgets = React.useMemo(() => {
-        const allBudgets = financeData?.budgets || []
-        if (!selectedAccountIdSet) return allBudgets
-
-        const spentByTag = new Map<string, number>()
-        for (const transaction of filteredTransactions) {
-            if (transaction.type === "out") {
-                for (const tag of transaction.tags) {
-                    spentByTag.set(tag, (spentByTag.get(tag) || 0) + transaction.amount)
-                }
-            }
-        }
-
-        return allBudgets.map((budget) => ({
-            ...budget,
-            spentAmount: spentByTag.get(budget.tag) || 0,
-        }))
-    }, [financeData?.budgets, filteredTransactions, selectedAccountIdSet])
-
-    const filteredFinanceData = React.useMemo((): FinanceData | null => {
-        if (!financeData) return null
-        return {
-            ...financeData,
-            accounts: filteredAccounts,
-            transactions: filteredTransactions,
-            bills: filteredBills,
-            budgets: filteredBudgets,
-        }
-    }, [financeData, filteredAccounts, filteredTransactions, filteredBills, filteredBudgets])
+    const priorityReviewCount = React.useMemo(() => (
+        dashboard.priorityItems.filter((item) => item.tone === "negative" || item.tone === "warning").length
+    ), [dashboard.priorityItems])
+    const priorityStatusLabel = priorityReviewCount > 0
+        ? `${priorityReviewCount} ${dashboard.dashboardLabels.needsReview}`
+        : dashboard.dashboardLabels.healthy
 
     return (
-        <PageShell className="gap-3 p-3 md:p-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
+        <PageShell
+            className="min-h-fit gap-4 overflow-visible p-3 md:h-full md:min-h-0 md:overflow-hidden md:p-4"
+        >
             <PageHeader
                 breadcrumbs={[
-                    { label: isLoading ? "" : t.sidebar_dashboard, href: "/" },
+                    { label: dashboard.isLoading ? "" : dashboard.sidebarDashboardLabel, href: "/" },
                 ]}
-                isLoading={isLoading}
+                isLoading={dashboard.isLoading}
                 actions={
                     <>
                         <AccountFilter
-                            accounts={accounts}
-                            selectedIds={selectedAccountIds}
-                            onChange={setSelectedAccountIds}
-                            isLoading={isLoading}
+                            accounts={dashboard.accounts}
+                            selectedIds={dashboard.selectedAccountIds}
+                            onChange={dashboard.setSelectedAccountIds}
+                            isLoading={dashboard.isLoading}
+                            className={DASHBOARD_ACTION_BUTTON_CLASS}
                         />
                         <Button
-                            onClick={() => setShowExport(true)}
-                            title={dashboardExportLabel}
+                            type="button"
+                            onClick={() => setShowPriorityBrief(true)}
+                            aria-label={dashboard.dashboardLabels.priorityBrief}
+                            aria-controls="dashboard-priority-sidebar"
+                            aria-expanded={showPriorityBrief}
+                            title={dashboard.dashboardLabels.priorityBrief}
+                            className={cn(
+                                DASHBOARD_ACTION_BUTTON_CLASS,
+                                showPriorityBrief && "bg-accent text-foreground shadow-[inset_0_0_0_1px_var(--border)]",
+                            )}
                         >
-                            <Download />
+                            <ListChecks className={DASHBOARD_ACTION_ICON_CLASS} />
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => setShowExport(true)}
+                            aria-label={dashboard.dashboardExportLabel}
+                            title={dashboard.dashboardExportLabel}
+                            className={DASHBOARD_ACTION_BUTTON_CLASS}
+                        >
+                            <Download className={DASHBOARD_ACTION_ICON_CLASS} />
                         </Button>
                     </>
                 }
             />
 
-            <PageSection stagger={1} className="shrink-0">
-                <div className="grid gap-3 xl:grid-cols-[minmax(240px,0.34fr)_minmax(0,1fr)] xl:items-stretch">
-                    {isLoading || !userProfile ? (
-                        <div className="flex min-h-28 flex-col justify-center space-y-2">
-                            <Skeleton className="h-7 w-56" />
-                            <Skeleton className="h-4 w-80 max-w-full" />
-                        </div>
-                    ) : (
-                        <div className="flex min-h-28 flex-col justify-center gap-1.5">
-                            <div className="flex items-center gap-2.5 flex-wrap">
-                                <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
-                                    {greeting}{userProfile.name ? `, ${userProfile.name.split(" ")[0]}` : ""}
-                                </h1>
-                                <Badge variant="outline" className="shrink-0 text-[11px] font-medium">
-                                    <User className="size-3" /> {personalLabel}
-                                </Badge>
-                            </div>
-                            <p className="text-xs text-neutral-400 sm:text-sm">
-                                {formattedDate}
-                            </p>
-                        </div>
-                    )}
-
-                    <SectionCards data={filteredFinanceData} isLoading={isLoading} variant="dashboard" />
-                </div>
-            </PageSection>
-
-            <div className="grid flex-1 min-h-0 gap-3 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:overflow-hidden">
-                <PageSection stagger={2} className="flex min-h-0 flex-col overflow-hidden">
-                    <div className="flex h-full min-h-0 flex-col gap-2.5">
-                        <div className="shrink-0">
-                            <h2 className="text-base sm:text-lg font-semibold tracking-tight">
-                                <Link href="/Transactions" className="transition-colors hover:text-primary">
-                                    {t.finance?.transactions}
-                                </Link>
-                            </h2>
-                        </div>
-                        <div className="min-h-0 flex-1">
-                            <TransactionsTable
-                                data={filteredTransactions}
-                                accounts={filteredAccounts}
-                                isLoading={isLoading}
-                                variant="dashboard"
-                                pageSize={4}
-                                showSelectColumn={false}
-                                showActionsColumn={false}
-                            />
-                        </div>
-                    </div>
+            <div
+                className="flex min-w-0 flex-col gap-4 overflow-visible @[900px]/main:min-h-0 @[900px]/main:flex-1 @[900px]/main:overflow-hidden"
+                data-dashboard-priority-layout="drawer"
+            >
+                <PageSection stagger={1} className="shrink-0">
+                    <DashboardOverview
+                        activitySummary={dashboard.activitySummary}
+                        dashboardLabels={dashboard.dashboardLabels}
+                        filteredFinanceData={dashboard.filteredFinanceData}
+                        formattedDate={dashboard.formattedDate}
+                        greeting={dashboard.greeting}
+                        isLoading={dashboard.isLoading}
+                        isProfileLoading={dashboard.isProfileLoading}
+                        scopeSummary={dashboard.scopeSummary}
+                        userProfile={dashboard.userProfile}
+                    />
                 </PageSection>
 
-                <PageSection stagger={3} className="flex min-h-0 flex-col overflow-hidden">
-                    <div className="flex h-full min-h-0 flex-col gap-2.5">
-                        <div className="flex shrink-0 items-center justify-between gap-3">
-                            <div className="min-w-0">
-                                <h2 className="text-base sm:text-lg font-semibold tracking-tight">
-                                    <Link href="/Calendar" className="transition-colors hover:text-primary">
-                                        {t.finance?.analytics}
-                                    </Link>
-                                </h2>
-                            </div>
-                            <Button
-                                type="button"
-                                variant={showCashFlow ? "solid" : "glass"}
-                                size="sm"
-                                aria-pressed={showCashFlow}
-                                onClick={() => setShowCashFlow((value) => !value)}
-                            >
-                                <TrendingUp className="size-4" />
-                                {t.finance?.cash_flow || "Cash Flow"}
-                            </Button>
-                        </div>
-
-                        <div className={showCashFlow
-                            ? "grid min-h-0 flex-1 gap-3 overflow-hidden xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.44fr)]"
-                            : "min-h-0 flex-1 overflow-hidden"
-                        }>
-                            <div className="h-full min-h-0 overflow-hidden">
-                                <ChartAreaInteractive accountIds={selectedAccountIds} compact />
-                            </div>
-                            {showCashFlow && (
-                                <div className="h-full min-h-0 overflow-hidden">
-                                    <CashFlowCard accountIds={selectedAccountIds} compact />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </PageSection>
+                <DashboardModuleGrid modules={modules} />
             </div>
+
+            <Sheet open={showPriorityBrief} onOpenChange={setShowPriorityBrief}>
+                <SheetContent
+                    id="dashboard-priority-sidebar"
+                    side="right"
+                    className={cn(
+                        DASHBOARD_GLASS_SURFACE,
+                        "!fixed gap-0 overflow-hidden p-0 transform-gpu will-change-transform",
+                        "w-[min(24rem,calc(100vw-1rem))] sm:max-w-[24rem]",
+                        "data-[state=open]:!duration-300 data-[state=closed]:!duration-200",
+                    )}
+                    data-dashboard-priority-sidebar
+                >
+                    <SheetHeader className="shrink-0 px-4 pb-3 pt-4">
+                        <div className="flex min-w-0 items-start gap-2.5 pr-10">
+                            <ListChecks className="mt-0.5 size-4 shrink-0 text-foreground-secondary" />
+                            <div className="min-w-0">
+                                <SheetTitle className="truncate text-[13px] font-semibold tracking-normal text-foreground">
+                                    {dashboard.dashboardLabels.priorityBrief}
+                                </SheetTitle>
+                                <SheetDescription className="mt-1 truncate text-[11px] leading-4 text-muted-foreground">
+                                    {priorityStatusLabel}
+                                </SheetDescription>
+                            </div>
+                        </div>
+                        <div aria-hidden className="mt-3 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                    </SheetHeader>
+
+                    <div className="dashboard-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+                        <DashboardPriorityBrief
+                            dashboardLabels={dashboard.dashboardLabels}
+                            isLoading={dashboard.isLoading}
+                            priorityItems={dashboard.priorityItems}
+                            className="w-full"
+                        />
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             <ExportDialog open={showExport} onOpenChange={setShowExport} />
         </PageShell>

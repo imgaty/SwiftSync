@@ -1,13 +1,22 @@
+//
+//  page.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Renders the /Goals route in Argent, composing page-level layout, data dependencies, and
+//  feature components for that user-facing screen.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { queryKeys, apiFetch } from "@/lib/query-keys"
 import { PageShell, PageHeader, StatCards, PageSection } from "@/components/page-framework"
+import { EmptyState } from "@/components/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -17,13 +26,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Dialog } from "@/components/ui/dialog"
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-} from "@/components/ui/dialog"
+    FormDialogActions,
+    FormDialogContent,
+    FormDialogHeader,
+} from "@/components/form-dialog"
 import {
     Target,
     Plus,
@@ -38,6 +46,9 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
+import { getTranslations } from "@/lib/translation-utils"
+import { PRISM } from "@/lib/PRISM"
+import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 interface FinancialGoal {
@@ -74,7 +85,9 @@ const categoryColors: Record<string, string> = {
 export default function GoalsPage() {
     const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
-    const g = (t as any).goals_page || {} as Record<string, string>
+    const g = getTranslations(t, "goals_page")
+    const settings = getTranslations(t, "settings")
+    const common = getTranslations(t, "common")
     const queryClient = useQueryClient()
     const { data: goals = [], isLoading } = useQuery({
         queryKey: queryKeys.goals,
@@ -187,9 +200,10 @@ export default function GoalsPage() {
             overallProgress: target > 0 ? Math.round((saved / target) * 100) : 0,
         }
     }, [goals])
+    const hasGoals = goals.length > 0
 
     return (
-        <PageShell>
+        <PageShell className="gap-4 p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -205,104 +219,132 @@ export default function GoalsPage() {
 
 
 
-            <StatCards
-                stats={[
-                    { label: g.active_goals || "Active Goals", value: String(activeGoals.length), icon: <Target className="h-4 w-4" /> },
-                    { label: g.total_target || "Total Target", value: formatCurrency(totalTarget), icon: <TrendingUp className="h-4 w-4" /> },
-                    { label: g.total_saved || "Total Saved", value: formatCurrency(totalSaved), trend: "up" as const, icon: <PiggyBank className="h-4 w-4" /> },
-                    { label: g.overall_progress || "Overall Progress", value: `${overallProgress}%`, icon: <Check className="h-4 w-4" /> },
-                ]}
-                isLoading={isLoading}
-            />
+            {(isLoading || hasGoals) && (
+                <StatCards
+                    stats={[
+                        { label: g.active_goals || "Active Goals", value: String(activeGoals.length), icon: <Target className="h-4 w-4" /> },
+                        { label: g.total_target || "Total Target", value: formatCurrency(totalTarget), icon: <TrendingUp className="h-4 w-4" /> },
+                        { label: g.total_saved || "Total Saved", value: formatCurrency(totalSaved), trend: "up" as const, icon: <PiggyBank className="h-4 w-4" /> },
+                        { label: g.overall_progress || "Overall Progress", value: `${overallProgress}%`, icon: <Check className="h-4 w-4" /> },
+                    ]}
+                    isLoading={isLoading}
+                />
+            )}
 
-            {/* Goals Grid */}
-            <PageSection stagger={3}>
-            {isLoading ? (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3].map((i) => (
-                        <Card key={i}><CardContent className="p-6"><Skeleton className="h-40" /></CardContent></Card>
-                    ))}
-                </div>
-            ) : goals.length === 0 ? (
-                <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                        <Target className="h-12 w-12 text-neutral-400 mb-4" />
-                        <h3 className="text-lg font-medium">
-                            {g.no_goals || "No financial goals"}
-                        </h3>
-                        <p className="text-sm text-neutral-400 mb-4">
-                            {g.no_goals_desc || "Create your first goal to get started"}
-                        </p>
-                        <Button onClick={openNew}>
-                            <Plus className="h-4 w-4 mr-1" />
-                            {g.create_goal || "Create Goal"}
-                        </Button>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {goals.map((goal) => {
-                        const Icon = categoryIcons[goal.category] || Target
-                        const isCompleted = goal.status === "completed"
-                        return (
-                            <Card key={goal.id} className={isCompleted ? "opacity-75" : ""}>
-                                <CardHeader className="pb-3">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-2 rounded-lg" style={{ backgroundColor: `${goal.color}20` }}>
-                                                <Icon className="h-4 w-4" style={{ color: goal.color }} />
+            <PageSection stagger={3} fill>
+                {isLoading ? (
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className={cn(PRISM.cardSurface, "p-5")}>
+                                <Skeleton className="h-40 rounded-2xl" />
+                            </div>
+                        ))}
+                    </div>
+                ) : !hasGoals ? (
+                    <EmptyState
+                        variant="no-events"
+                        placement="page"
+                        title={g.no_goals || "No financial goals"}
+                        description={g.no_goals_desc || "Create your first goal to get started"}
+                        icon={<Target className="size-8" />}
+                        action={{
+                            label: g.create_goal || "Create Goal",
+                            onClick: openNew,
+                            icon: <Plus className="size-4" />,
+                        }}
+                    />
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {goals.map((goal) => {
+                            const Icon = categoryIcons[goal.category] || Target
+                            const isCompleted = goal.status === "completed"
+                            const progress = Math.min(100, Math.max(0, goal.percentage))
+                            const remaining = Math.max(0, goal.targetAmount - goal.currentAmount)
+
+                            return (
+                                <article
+                                    key={goal.id}
+                                    className={cn(
+                                        PRISM.cardSurface,
+                                        "flex min-h-[280px] flex-col justify-between p-4 transition-all duration-200",
+                                        isCompleted && "opacity-75",
+                                    )}
+                                >
+                                    <div>
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex min-w-0 items-center gap-3">
+                                                <div
+                                                    className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-border bg-[var(--surface-elevated)]"
+                                                    style={{ color: goal.color }}
+                                                >
+                                                    <Icon className="size-5" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h2 className="truncate text-base font-semibold leading-tight tracking-tight">{goal.name}</h2>
+                                                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                                                        {goal.deadline
+                                                            ? `${g.deadline || "Deadline"}: ${new Date(goal.deadline).toLocaleDateString(t.config?.locale || "en-US")}`
+                                                            : (g.no_deadline || "No deadline")}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <CardTitle className="text-base">{goal.name}</CardTitle>
-                                                <CardDescription className="text-xs">
-                                                    {goal.deadline
-                                                        ? `${g.deadline || "Deadline"}: ${new Date(goal.deadline).toLocaleDateString(t.config?.locale || "en-US")}`
-                                                        : (g.no_deadline || "No deadline")}
-                                                </CardDescription>
+
+                                            <div className="flex shrink-0 items-center gap-1">
+                                                {isCompleted && (
+                                                    <Badge variant="secondary" className="gap-1 text-green-600">
+                                                        <Check className="size-3" />
+                                                        {g.done || "Done"}
+                                                    </Badge>
+                                                )}
+                                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(goal)} aria-label={g.edit_goal || "Edit Goal"}>
+                                                    <Pencil className="size-3.5" />
+                                                </Button>
+                                                <Button variant="ghost-destructive" size="icon-sm" onClick={() => deleteGoal(goal.id)} aria-label={common.delete || "Delete"}>
+                                                    <Trash2 className="size-3.5" />
+                                                </Button>
                                             </div>
                                         </div>
-                                        <div className="flex gap-1">
-                                            {isCompleted && <Badge variant="secondary" className="text-green-600"><Check className="h-3 w-3 mr-1" />{g.done || "Done"}</Badge>}
-                                            <Button variant="ghost" size="icon" onClick={() => openEdit(goal)}>
-                                                <Pencil className="h-3 w-3" />
-                                            </Button>
-                                            <Button variant="ghost-destructive" size="icon" onClick={() => deleteGoal(goal.id)}>
-                                                <Trash2 className="h-3 w-3" />
-                                            </Button>
+
+                                        <div className="mt-6 rounded-2xl border border-border bg-[var(--surface-elevated)] p-3">
+                                            <div className="flex items-end justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="text-[11px] font-medium text-muted-foreground">{g.total_saved || "Total Saved"}</p>
+                                                    <p className="mt-1 truncate text-2xl font-semibold leading-none tracking-tight tabular-nums">
+                                                        {formatCurrency(goal.currentAmount)}
+                                                    </p>
+                                                </div>
+                                                <div className="shrink-0 text-right">
+                                                    <p className="text-[11px] font-medium text-muted-foreground">{g.total_target || "Total Target"}</p>
+                                                    <p className="mt-1 text-sm font-semibold tabular-nums">{formatCurrency(goal.targetAmount)}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+                                                <div
+                                                    className="h-full rounded-full transition-all duration-500"
+                                                    style={{ width: `${progress}%`, backgroundColor: goal.color }}
+                                                />
+                                            </div>
+
+                                            <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+                                                <span className="font-semibold tabular-nums" style={{ color: goal.color }}>
+                                                    {progress}%
+                                                </span>
+                                                <span className="truncate text-muted-foreground">
+                                                    {isCompleted ? (g.done || "Done") : `${formatCurrency(remaining)} ${g.remaining || "remaining"}`}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-neutral-400">
-                                            {formatCurrency(goal.currentAmount)}
-                                        </span>
-                                        <span className="font-medium">
-                                            {formatCurrency(goal.targetAmount)}
-                                        </span>
-                                    </div>
-                                    <div className="h-3 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-500"
-                                            style={{
-                                                width: `${Math.min(100, goal.percentage)}%`,
-                                                backgroundColor: goal.color,
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="text-center text-sm font-medium" style={{ color: goal.color }}>
-                                        {goal.percentage}%
-                                    </div>
 
-                                    {/* Quick add amount */}
                                     {!isCompleted && (
-                                        <div className="flex gap-1 mt-2">
+                                        <div className="mt-4 grid grid-cols-3 gap-1.5">
                                             {[10, 50, 100].map((amt) => (
                                                 <Button
                                                     key={amt}
                                                     variant="glass"
                                                     size="sm"
-                                                    className="flex-1 text-xs"
+                                                    className="min-w-0 px-2 text-xs"
                                                     onClick={() => updateAmount(goal, goal.currentAmount + amt)}
                                                 >
                                                     +{formatCurrency(amt)}
@@ -310,39 +352,33 @@ export default function GoalsPage() {
                                             ))}
                                         </div>
                                     )}
-                                </CardContent>
-                            </Card>
-                        )
-                    })}
-                </div>
-            )}
-
+                                </article>
+                            )
+                        })}
+                    </div>
+                )}
             </PageSection>
 
             {/* Create/Edit Dialog */}
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editingGoal
-                                ? (g.edit_goal || "Edit Goal")
-                                : (g.new_financial_goal || "New Financial Goal")}
-                        </DialogTitle>
-                        <DialogDescription>
-                            {g.set_savings_target || "Set your savings target"}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                <FormDialogContent maxWidth="430px">
+                    <FormDialogHeader
+                        title={editingGoal
+                            ? (g.edit_goal || "Edit Goal")
+                            : (g.new_financial_goal || "New Financial Goal")}
+                        description={g.set_savings_target || "Set your savings target"}
+                    />
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <div>
                             <Input
-                                label={(t as any).settings?.name || "Name"}
+                                label={settings.name || "Name"}
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 placeholder={g.goal_name_placeholder || "E.g. Holiday 2027"}
                                 required
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div>
                                 <Input
                                     label={g.target_amount || "Target (€)"}
@@ -389,20 +425,20 @@ export default function GoalsPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="flex justify-end gap-2 pt-2">
-                            <Button type="button" variant="glass" onClick={() => setShowDialog(false)}>
-                                {(t as any).common?.cancel || "Cancel"}
-                            </Button>
-                            <Button type="submit" disabled={isSaving}>
+                        <FormDialogActions>
+                            <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving}>
                                 {isSaving
-                                    ? ((t as any).common?.saving || "Saving...")
+                                    ? (common.saving || "Saving...")
                                     : editingGoal
-                                        ? ((t as any).common?.save || "Save")
-                                        : ((t as any).common?.create || "Create")}
+                                        ? (common.save || "Save")
+                                        : (common.create || "Create")}
                             </Button>
-                        </div>
+                            <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setShowDialog(false)}>
+                                {common.cancel || "Cancel"}
+                            </Button>
+                        </FormDialogActions>
                     </form>
-                </DialogContent>
+                </FormDialogContent>
             </Dialog>
         </PageShell>
     )

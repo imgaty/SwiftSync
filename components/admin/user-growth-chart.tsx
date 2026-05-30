@@ -1,8 +1,18 @@
+//
+//  user-growth-chart.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the User growth chart admin component for Argent, supporting administrative
+//  navigation, reporting, and management screens with shared UI structure.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useLanguage } from "@/components/language-provider"
+import { getTranslations } from "@/lib/translation-utils"
 
 interface GrowthData {
     date: string
@@ -29,8 +39,8 @@ function getChartConfig(ac: Record<string, string>): ChartConfig {
 
 export function UserGrowthChart({ data }: UserGrowthChartProps) {
     const { t } = useLanguage()
-    const a = (t as any).admin || {} as Record<string, any>
-    const ac = a.chart || {} as Record<string, string>
+    const a = getTranslations(t, "admin")
+    const ac = getTranslations(a, "chart")
     const chartConfig = getChartConfig(ac)
 
     if (data.length === 0) {

@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+//
+//  login-test.js
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Provides the login test maintenance script for Argent, automating operational or
+//  data-repair work that supports local development and administration.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 /**
  * Login test helper for Argent auth endpoints.
  *
@@ -7,6 +16,7 @@
  *   node scripts/login-test.js --email you@example.com --password yourpass
  *   node scripts/login-test.js --email you@example.com --password yourpass --base-url http://localhost:3000
  *   node scripts/login-test.js --email you@example.com --password yourpass --code 123456
+ *   node scripts/login-test.js --email you@example.com --password yourpass --code ab12-cd34
  *
  * Env fallback:
  *   LOGIN_EMAIL, LOGIN_PASSWORD, LOGIN_2FA_CODE, BASE_URL
@@ -23,20 +33,43 @@ function getArg(name) {
 const baseUrl = getArg('base-url') || process.env.BASE_URL || 'http://localhost:3000'
 const email = getArg('email') || process.env.LOGIN_EMAIL
 const password = getArg('password') || process.env.LOGIN_PASSWORD
-const twoFactorCode = getArg('code') || process.env.LOGIN_2FA_CODE
+const verificationCode = getArg('code') || process.env.LOGIN_2FA_CODE
 
 if (!email || !password) {
   console.error('Missing credentials.')
-  console.error('Use: node scripts/login-test.js --email you@example.com --password yourpass [--code 123456]')
+  console.error('Use: node scripts/login-test.js --email you@example.com --password yourpass [--code 123456|backup-code]')
   process.exit(1)
 }
 
-function extractCookie(setCookieHeader) {
-  if (!setCookieHeader) return ''
-  const raw = Array.isArray(setCookieHeader)
-    ? setCookieHeader[0]
-    : setCookieHeader.split(',').map((part) => part.trim())[0]
-  return raw.split(';')[0]
+function splitSetCookieHeader(header) {
+  if (!header) return []
+  return header.split(/,(?=\s*[^;,=\s]+=[^;,]+)/).map((part) => part.trim()).filter(Boolean)
+}
+
+function extractCookies(headers) {
+  const setCookies = typeof headers.getSetCookie === 'function'
+    ? headers.getSetCookie()
+    : splitSetCookieHeader(headers.get('set-cookie') || '')
+
+  return setCookies
+    .map((raw) => raw.split(';')[0])
+    .filter(Boolean)
+}
+
+function mergeCookieJar(current, nextCookies) {
+  const jar = new Map()
+
+  for (const cookie of current.split(';').map((part) => part.trim()).filter(Boolean)) {
+    const [name] = cookie.split('=')
+    if (name) jar.set(name, cookie)
+  }
+
+  for (const cookie of nextCookies) {
+    const [name] = cookie.split('=')
+    if (name) jar.set(name, cookie)
+  }
+
+  return Array.from(jar.values()).join('; ')
 }
 
 async function postJson(path, body, cookie = '') {
@@ -57,9 +90,7 @@ async function postJson(path, body, cookie = '') {
     data = { raw: text }
   }
 
-  const setCookie = response.headers.get('set-cookie') || ''
-
-  return { ok: response.ok, status: response.status, data, cookie: extractCookie(setCookie) }
+  return { ok: response.ok, status: response.status, data, cookies: extractCookies(response.headers) }
 }
 
 async function getJson(path, cookie = '') {
@@ -94,19 +125,19 @@ async function main() {
     process.exit(1)
   }
 
-  let sessionCookie = login.cookie
+  let sessionCookie = mergeCookieJar('', login.cookies)
 
   if (login.data?.needs_2fa) {
-    if (!twoFactorCode) {
-      console.error('\n2FA is required. Run again with --code 123456 or LOGIN_2FA_CODE env var.')
+    if (!verificationCode) {
+      console.error('\n2FA is required. Run again with --code 123456, --code backup-code, or LOGIN_2FA_CODE env var.')
       process.exit(1)
     }
 
     const twoFa = await postJson('/api/auth/2fa-login', {
       tempToken: login.data.tempToken,
-      code: twoFactorCode,
+      code: verificationCode,
       trustDevice: true,
-    })
+    }, sessionCookie)
 
     console.log('\n[2] /api/auth/2fa-login')
     console.log(`Status: ${twoFa.status}`)
@@ -116,7 +147,7 @@ async function main() {
       process.exit(1)
     }
 
-    sessionCookie = twoFa.cookie || sessionCookie
+    sessionCookie = mergeCookieJar(sessionCookie, twoFa.cookies)
   }
 
   if (!sessionCookie) {

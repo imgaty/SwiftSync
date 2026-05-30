@@ -1,3 +1,12 @@
+//
+//  account-filter.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Account filter React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -14,19 +23,31 @@ import { PRISM } from "@/lib/PRISM"
 import type { Account } from "@/lib/types"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
+import { getTranslations } from "@/lib/translation-utils"
 
 interface AccountFilterProps {
     accounts: Account[]
     selectedIds: string[]
     onChange: (ids: string[]) => void
     isLoading?: boolean
+    variant?: React.ComponentProps<typeof Button>["variant"]
+    size?: React.ComponentProps<typeof Button>["size"]
+    className?: string
 }
 
-export function AccountFilter({ accounts, selectedIds, onChange, isLoading }: AccountFilterProps) {
+export function AccountFilter({
+    accounts,
+    selectedIds,
+    onChange,
+    isLoading,
+    variant = "glass",
+    size = "icon",
+    className,
+}: AccountFilterProps) {
     const [open, setOpen] = React.useState(false)
     const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
-    const af = (t as any).account_filter || {} as Record<string, string>
+    const af = getTranslations(t, "account_filter")
 
     const allSelected = selectedIds.length === 0 // empty = all
     const selectedCount = selectedIds.length
@@ -55,11 +76,11 @@ export function AccountFilter({ accounts, selectedIds, onChange, isLoading }: Ac
             <TooltipTrigger asChild>
             <PopoverTrigger asChild>
                 <Button
-                    variant="ghost"
-                    size="icon"
+                    variant={variant}
+                    size={size}
                     role="combobox"
                     aria-expanded={open}
-                    className="relative"
+                    className={cn("relative", className)}
                 >
                     <SlidersHorizontal />
                     {!allSelected && (
@@ -75,10 +96,11 @@ export function AccountFilter({ accounts, selectedIds, onChange, isLoading }: Ac
             </TooltipContent>
             <PopoverContent align="end">
                 {/* All accounts option */}
-                <button
+                <Button variant="ghost"
                     type="button"
+                    data-glide-item="account-filter-all"
                     onClick={selectAll}
-                    className={cn(PRISM.item, PRISM.itemHover, "w-full")}
+                    className={cn(PRISM.item, PRISM.glideItem, PRISM.itemIcon, "w-full")}
                 >
                     <div className="flex size-4 items-center justify-center shrink-0">
                         <Wallet className="size-4" />
@@ -87,7 +109,7 @@ export function AccountFilter({ accounts, selectedIds, onChange, isLoading }: Ac
                     <span className="flex size-4 shrink-0 items-center justify-center">
                         {allSelected && <Check className="size-4 text-black dark:text-white" />}
                     </span>
-                </button>
+                </Button>
 
                 <div className={PRISM.separator} />
 
@@ -96,11 +118,12 @@ export function AccountFilter({ accounts, selectedIds, onChange, isLoading }: Ac
                     {accounts.map((acc) => {
                         const isSelected = selectedIds.includes(acc.id)
                         return (
-                            <button
+                            <Button variant="ghost"
                                 key={acc.id}
                                 type="button"
+                                data-glide-item={`account-filter-${acc.id}`}
                                 onClick={() => toggle(acc.id)}
-                                className={cn(PRISM.item, PRISM.itemHover, "w-full")}
+                                className={cn(PRISM.item, PRISM.glideItem, PRISM.itemIcon, "w-full")}
                             >
                                 <div
                                     className="size-4 rounded-full shrink-0 transition-opacity duration-150"
@@ -113,7 +136,7 @@ export function AccountFilter({ accounts, selectedIds, onChange, isLoading }: Ac
                                 <span className="flex size-4 shrink-0 items-center justify-center">
                                     {isSelected && <Check className="size-4 text-black dark:text-white" />}
                                 </span>
-                            </button>
+                            </Button>
                         )
                     })}
                 </div>
@@ -125,14 +148,15 @@ export function AccountFilter({ accounts, selectedIds, onChange, isLoading }: Ac
                 >
                     <div className="overflow-hidden min-h-0">
                         <div className={PRISM.separator} />
-                        <button
+                        <Button variant="ghost"
                             type="button"
+                            data-glide-item="account-filter-clear"
                             onClick={selectAll}
-                            className={cn(PRISM.item, PRISM.itemHover, "w-full")}
+                            className={cn(PRISM.item, PRISM.glideItem, PRISM.itemIcon, "w-full")}
                         >
                             <X className="size-4 shrink-0 text-neutral-400" />
                             <span className="text-neutral-400 text-[13px]">{af.clear_filter || "Clear filter"}</span>
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </PopoverContent>

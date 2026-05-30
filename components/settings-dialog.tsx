@@ -1,3 +1,12 @@
+//
+//  settings-dialog.tsx
+//  Argent
+//
+//  Created by Hilario Ferreira on 21 March 2026 at 17:05.
+//  Description: Implements the Settings dialog React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -41,12 +50,13 @@ import { cn } from "@/lib/utils"
 import { PRISM } from "@/lib/PRISM"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency, type SupportedCurrency } from "@/components/currency-provider"
-import { useSidebar } from "@/components/ui/sidebar"
+import { sidebarMenuButtonVariants, useSidebar } from "@/components/ui/sidebar"
 import { useColorBlind, type ColorBlindMode } from "@/components/colorblind-provider"
 import { useOS } from "@/hooks/use-os"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { toast } from "sonner"
 import { getSidebarPageDefinitions, type SidebarPageDefinition } from "@/lib/sidebar-pages"
+import { getTranslations, type LooseTranslations } from "@/lib/translation-utils"
 import { useSidebarPagePreferences } from "@/hooks/use-sidebar-page-preferences"
 import { RulesPanel } from "@/components/settings/rules-panel"
 
@@ -63,8 +73,7 @@ export type SettingsPage = "account" | "customization" | "notifications" | "shor
 
 export const SETTINGS_PAGES = ["account", "customization", "notifications", "shortcuts", "rules"] as const
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SettingsTranslations = Record<string, any>
+type SettingsTranslations = LooseTranslations
 
 const settingsPages: { id: SettingsPage; icon: React.ElementType; labelKey: string; defaultLabel: string }[] = [
     { id: "account", icon: User, labelKey: "account", defaultLabel: "Account" },
@@ -197,7 +206,7 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
     const isMobile = useIsMobile()
     const searchRef = React.useRef<HTMLInputElement>(null)
 
-    const s: SettingsTranslations = (t as SettingsTranslations).settings || {}
+    const s = React.useMemo<SettingsTranslations>(() => getTranslations(t, "settings"), [t])
     const sidebarPageNames = React.useMemo(() => getSidebarPageDefinitions(t, language).map((page) => page.name), [t, language])
 
     const pageSearchIndex = React.useMemo<Record<SettingsPage, Array<{ text: string; targetKey?: string }>>>(() => ({
@@ -318,7 +327,7 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                 if (prev) setActivePage(prev.id)
             }
         },
-        [activePage, filteredPages],
+        [activePage, filteredPages, setActivePage],
     )
 
     // Reset state on close
@@ -375,17 +384,16 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                     const isActive = activePage === page.id
                     const pageTitle = s[page.labelKey] || page.defaultLabel
                     return (
-                        <button
+                        <Button variant="ghost"
                             key={page.id}
+                            data-active={isActive}
                             onClick={() => (search.trim() ? handleSearchResultSelect(result) : handlePageSelect(page.id))}
                             className={cn(
-                                "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
-                                isActive
-                                    ? "bg-white/12 text-black dark:text-white shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]"
-                                    : "text-neutral-400 hover:bg-black/6 dark:hover:bg-white/6 hover:text-black dark:hover:text-white",
+                                sidebarMenuButtonVariants({ size: "default" }),
+                                "h-auto min-h-8 cursor-pointer gap-2.5 px-2.5 py-2 text-[13px]",
                             )}
                         >
-                            <Icon className="size-[15px]" />
+                            <Icon />
                             <span className="flex-1 text-left">
                                 <span className="block">{search.trim() ? highlightSearchText(pageTitle, search) : pageTitle}</span>
                                 {search.trim() && result.matches.length > 0 && (
@@ -400,7 +408,7 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                                 )}
                             </span>
                             <ChevronRight className="size-3 opacity-60" />
-                        </button>
+                        </Button>
                     )
                 })}
             </nav>
@@ -495,13 +503,13 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                                 /* Mobile content screen */
                                 <div className="flex flex-col h-full">
                                     <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-black/8 dark:border-white/8">
-                                        <button
+                                        <Button variant="ghost"
                                             type="button"
                                             onClick={() => setShowMobileContent(false)}
                                             className="p-1.5 rounded-md text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/6 dark:hover:bg-white/6 transition-all duration-150"
                                         >
                                             <ChevronLeft className="size-4" />
-                                        </button>
+                                        </Button>
                                         <span className="text-[13px] font-semibold">{activePageLabel}</span>
                                     </div>
                                     <div className="flex-1 relative overflow-hidden">
@@ -517,7 +525,7 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                     ) : (
                         /* ─── Desktop: side-by-side layout ─── */
                         <div className="flex w-full h-full">
-                            <aside className="flex w-56 shrink-0 flex-col border-r border-black/8 dark:border-white/8 bg-black/2 dark:bg-white/2">
+                            <aside className="flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
                                 <div className="px-5 pt-5 pb-3">
                                     <DialogTitle className={cn(PRISM.title, "text-[15px]")}>
                                         {s.title || "Settings"}
@@ -709,7 +717,7 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         dobMode
                         className="w-full"
                         trigger={
-                            <button
+                            <Button variant="ghost"
                                 type="button"
                                 className="relative flex h-11 w-full items-center rounded-xl border border-black/10 bg-black/5 px-4 pr-10 text-left text-[15px] text-neutral-900 transition-all duration-200 hover:bg-black/8 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/8"
                             >
@@ -719,7 +727,7 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2">
                                     <Calendar className="size-4 text-neutral-400" />
                                 </span>
-                            </button>
+                            </Button>
                         }
                     />
                     <Input
@@ -1219,7 +1227,7 @@ function SortableSidebarRow({
                 isDragging && "z-20 border-primary/30 bg-black/8 dark:bg-white/8 shadow-lg",
             )}
         >
-            <button
+            <Button variant="ghost"
                 type="button"
                 className="rounded p-1 text-neutral-400 hover:bg-black/8 dark:hover:bg-white/8"
                 aria-label={`Drag ${page.name}`}
@@ -1227,7 +1235,7 @@ function SortableSidebarRow({
                 {...listeners}
             >
                 <GripVertical className="size-4" />
-            </button>
+            </Button>
 
             <Icon className="size-4 text-neutral-400" />
             <span className="flex-1 text-[13px]">

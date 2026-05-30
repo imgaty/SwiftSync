@@ -1,3 +1,12 @@
+//
+//  notification-button.tsx
+//  Argent
+//
+//  Created by hilario on 22 May 2026 at 09:36.
+//  Description: Implements the Notification button React component for Argent, encapsulating reusable
+//  interface structure, state handling, and presentation logic for feature screens.
+//  Last changed by hilario on 30 May 2026 at 19:35.
+//
 "use client"
 
 import * as React from "react"
@@ -38,6 +47,7 @@ export function NotificationButton() {
     const { language } = useLanguage()
     const [notifications, setNotifications] = React.useState<Notification[]>([])
     const [isOpen, setIsOpen] = React.useState(false)
+    const [now, setNow] = React.useState(() => Date.now())
 
     const fetchNotifications = React.useCallback(async () => {
         try {
@@ -79,6 +89,11 @@ export function NotificationButton() {
         return () => window.removeEventListener("notifications:changed", handler)
     }, [fetchNotifications])
 
+    React.useEffect(() => {
+        const interval = setInterval(() => setNow(Date.now()), 60_000)
+        return () => clearInterval(interval)
+    }, [])
+
     const unreadCount = notifications.filter((n) => !n.read).length
 
     const markRead = async (id: string) => {
@@ -92,7 +107,7 @@ export function NotificationButton() {
     }
 
     const formatTimeAgo = (dateStr: string) => {
-        const diff = Date.now() - new Date(dateStr).getTime()
+        const diff = now - new Date(dateStr).getTime()
         const mins = Math.floor(diff / 60000)
         const hours = Math.floor(diff / 3600000)
         const days = Math.floor(diff / 86400000)
@@ -215,8 +230,9 @@ export function NotificationButton() {
                     and the Clear filter row on the accounts dropdown. */}
                 <Link
                     href="/Notifications"
+                    data-glide-item="notifications-view-all"
                     onClick={() => setIsOpen(false)}
-                    className={cn(PRISM.item, PRISM.itemHover, "w-full")}
+                    className={cn(PRISM.item, PRISM.glideItem, PRISM.itemIcon, "w-full")}
                 >
                     <ExternalLink className="size-4 shrink-0 text-neutral-400" />
                     <span className="text-neutral-400 text-[13px]">
