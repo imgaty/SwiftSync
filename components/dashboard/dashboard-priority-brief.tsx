@@ -9,10 +9,20 @@
 //
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight, ListChecks } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { DASHBOARD_ACTION_ACTIVE_CLASS } from "@/components/dashboard/dashboard-primitives"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import type {
     DashboardLabels,
@@ -20,41 +30,58 @@ import type {
     DashboardPriorityTone,
 } from "@/components/dashboard/types"
 
-function PriorityBriefSkeleton({ className }: { className?: string }) {
-    return (
-        <div className={cn("flex min-w-0 flex-col gap-3", className)}>
-            <div className="rounded-xl border border-border/60 bg-[color:color-mix(in_srgb,var(--surface-elevated)_54%,transparent)] p-3.5">
-                <div className="flex items-center justify-between gap-3">
-                    <Skeleton className="h-3 w-24 max-w-full" />
-                    <Skeleton className="size-3 rounded-md" />
-                </div>
-                <div className="mt-4 flex items-end justify-between gap-4">
-                    <div className="min-w-0 flex-1 space-y-2">
-                        <Skeleton className="h-3.5 w-28 max-w-full" />
-                        <Skeleton className="h-3 w-36 max-w-full" />
-                    </div>
-                    <Skeleton className="h-7 w-16 shrink-0" />
-                </div>
-            </div>
+type PriorityBriefVariant = "cards" | "dropdown"
 
-            <div className="overflow-hidden rounded-xl border border-border/60 bg-[color:color-mix(in_srgb,var(--surface-elevated)_42%,transparent)]">
-                {[0, 1, 2].map((key) => (
-                    <div
-                        key={key}
-                        className={cn(
-                            "flex min-h-[70px] items-center gap-3 px-3 py-2.5",
-                            key > 0 && "border-t border-border/55",
-                        )}
-                    >
-                        <Skeleton className="size-8 shrink-0 rounded-full" />
-                        <div className="min-w-0 flex-1 space-y-2">
-                            <Skeleton className="h-3.5 w-32 max-w-full" />
-                            <Skeleton className="h-3 w-40 max-w-full" />
+function PriorityBriefSkeleton({
+    className,
+    variant = "cards",
+}: {
+    className?: string
+    variant?: PriorityBriefVariant
+}) {
+    if (variant === "dropdown") {
+        return (
+            <div className={cn("flex min-w-0 flex-col", className)}>
+                {[0, 1, 2, 3].map((key) => (
+                    <React.Fragment key={key}>
+                        <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5">
+                            <Skeleton className="size-4 shrink-0 sq-md" />
+                            <div className="min-w-0 flex-1 space-y-1.5">
+                                <Skeleton className="h-3.5 w-28 max-w-full" />
+                                <Skeleton className="h-3 w-36 max-w-full" />
+                            </div>
+                            <Skeleton className="h-5 w-10 shrink-0" />
                         </div>
-                        <Skeleton className="h-4 w-12 shrink-0" />
-                    </div>
+                        {key < 3 && <div aria-hidden className={cn(UDS.separator, "my-1")} />}
+                    </React.Fragment>
                 ))}
             </div>
+        )
+    }
+
+    return (
+        <div className={cn("flex min-w-0 flex-col", className)}>
+            {[0, 1, 2, 3].map((key) => (
+                <div key={key}>
+                    <div className={cn(UDS.cardSurface, "relative flex min-h-[132px] flex-col justify-between p-4")}>
+                        <div className="flex min-w-0 items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                                <Skeleton className="size-4 shrink-0 sq-md" />
+                                <Skeleton className="h-3.5 w-28 max-w-full" />
+                            </div>
+                            <Skeleton className="size-4 shrink-0 sq-md" />
+                        </div>
+                        <div className="flex min-w-0 items-end justify-between gap-2">
+                            <div className="min-w-0 space-y-1.5">
+                                <Skeleton className="h-3.5 w-24 max-w-full" />
+                                <Skeleton className="h-3 w-20 max-w-full" />
+                            </div>
+                            <Skeleton className="h-8 w-16 shrink-0" />
+                        </div>
+                    </div>
+                    {key < 3 && <div aria-hidden className={cn(UDS.separator, "my-3")} />}
+                </div>
+            ))}
         </div>
     )
 }
@@ -68,40 +95,26 @@ const PRIORITY_TONE_WEIGHT: Record<DashboardPriorityTone, number> = {
 }
 
 const PRIORITY_TONE_STYLES: Record<DashboardPriorityTone, {
+    card: string
+    glow: string
     icon: string
-    rail: string
-    summary: string
+    meta: string
     value: string
 }> = {
     negative: {
-        icon: "text-red-500 dark:text-red-400",
-        rail: "bg-red-500",
-        summary: "border-red-500/20 bg-red-500/[0.04] dark:bg-red-500/[0.075]",
-        value: "text-red-500 dark:text-red-400",
+        ...UDS.statCardTone.negative,
     },
     warning: {
-        icon: "text-amber-500 dark:text-amber-400",
-        rail: "bg-amber-500",
-        summary: "border-amber-500/20 bg-amber-500/[0.045] dark:bg-amber-500/[0.08]",
-        value: "text-amber-500 dark:text-amber-400",
+        ...UDS.statCardTone.warning,
     },
     positive: {
-        icon: "text-emerald-500 dark:text-emerald-400",
-        rail: "bg-emerald-500",
-        summary: "border-emerald-500/20 bg-emerald-500/[0.035] dark:bg-emerald-500/[0.07]",
-        value: "text-emerald-500 dark:text-emerald-400",
+        ...UDS.statCardTone.positive,
     },
     accent: {
-        icon: "text-foreground-secondary",
-        rail: "bg-foreground-secondary",
-        summary: "border-border/70 bg-[color:color-mix(in_srgb,var(--surface-elevated)_58%,transparent)]",
-        value: "text-foreground",
+        ...UDS.statCardTone.accent,
     },
     neutral: {
-        icon: "text-muted-foreground",
-        rail: "bg-muted-foreground",
-        summary: "border-border/60 bg-[color:color-mix(in_srgb,var(--surface-elevated)_50%,transparent)]",
-        value: "text-foreground",
+        ...UDS.statCardTone.neutral,
     },
 }
 
@@ -137,92 +150,106 @@ function getPriorityStatus(priorityItems: DashboardPriorityItem[], dashboardLabe
     }
 }
 
-function PriorityBriefSummary({
+function PriorityBriefCard({
     item,
     status,
+    onSelect,
 }: {
     item: DashboardPriorityItem
     status: ReturnType<typeof getPriorityStatus>
+    onSelect?: () => void
 }) {
     const Icon = item.icon
     const itemStyles = PRIORITY_TONE_STYLES[item.tone]
-    const statusStyles = PRIORITY_TONE_STYLES[status.tone]
-
-    return (
-        <Link
-            href={item.href}
-            aria-label={`${status.label}: ${item.label}`}
-            className={cn(
-                "relative flex min-w-0 flex-col overflow-hidden rounded-xl border p-3.5",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                statusStyles.summary,
-            )}
-        >
-            <div className="flex min-w-0 items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                    <Icon className={cn("size-3.5 shrink-0", itemStyles.icon)} />
-                    <span className="truncate text-[12px] font-medium leading-4 text-foreground-secondary">
-                        {item.label}
-                    </span>
-                </div>
-                <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" />
-            </div>
-
-            <div className="mt-4 flex min-w-0 items-end justify-between gap-4">
-                <div className="min-w-0">
-                    <p className="truncate text-[11px] leading-4 text-muted-foreground">
-                        {item.detail}
-                    </p>
-                </div>
-                <div className={cn("shrink-0 text-right text-[1.55rem] font-semibold leading-none tabular-nums tracking-normal", itemStyles.value)}>
-                    {item.value}
-                </div>
-            </div>
-        </Link>
-    )
-}
-
-function PriorityBriefRow({
-    index,
-    item,
-}: {
-    index: number
-    item: DashboardPriorityItem
-}) {
-    const Icon = item.icon
-    const toneStyles = PRIORITY_TONE_STYLES[item.tone]
 
     return (
         <Link
             href={item.href}
             role="listitem"
-            aria-label={item.label}
+            aria-label={`${status.label}: ${item.label}`}
+            onClick={onSelect}
             className={cn(
-                "relative flex min-h-[70px] min-w-0 items-center gap-3 px-3 py-2.5",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/70",
-                index > 0 && "border-t border-border/55",
+                UDS.cardSurface,
+                "group relative flex min-h-[132px] min-w-0 flex-col justify-between overflow-hidden p-4",
+                "text-foreground outline-none",
+                "focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                itemStyles.card,
             )}
         >
-            <span className={cn("absolute bottom-3 left-0 top-3 w-0.5 rounded-full", toneStyles.rail)} />
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border/55 bg-[color:color-mix(in_srgb,var(--surface-elevated)_58%,transparent)]">
-                <Icon className={cn("size-3.5", toneStyles.icon)} />
-            </span>
-
-            <span className="grid min-w-0 flex-1 gap-1">
-                <span className="flex min-w-0 items-center justify-between gap-2">
-                    <span className="truncate text-[12px] font-medium leading-4 text-foreground-secondary">
+            <span aria-hidden className={cn("pointer-events-none absolute inset-0 opacity-80", itemStyles.glow)} />
+            <span className="relative flex min-w-0 items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2.5">
+                    <Icon className={cn("size-5 shrink-0 stroke-[1.9]", itemStyles.icon)} />
+                    <span className="truncate text-[15px] font-medium leading-5 text-foreground-secondary sm:text-[16px]">
                         {item.label}
                     </span>
-                    <span className={cn("shrink-0 text-[13px] font-semibold leading-none tabular-nums tracking-normal", toneStyles.value)}>
+                </span>
+                <ArrowUpRight className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
+            </span>
+
+            <span className="relative flex min-w-0 items-end justify-between gap-2">
+                <span className="min-w-0">
+                    <span className="block truncate text-[13px] font-medium leading-5 text-muted-foreground">
+                        {item.detail}
+                    </span>
+                    <span className={cn("mt-1 block truncate text-[11px] font-semibold leading-4 tabular-nums", itemStyles.meta)}>
+                        {status.label}
+                    </span>
+                </span>
+                <span className={cn("shrink-0 text-right text-[1.6rem] font-semibold leading-none tracking-normal tabular-nums sm:text-[1.7rem]", itemStyles.value)}>
+                    {item.value}
+                </span>
+            </span>
+        </Link>
+    )
+}
+
+function PriorityBriefDropdownRow({
+    item,
+    status,
+    onSelect,
+}: {
+    item: DashboardPriorityItem
+    status: ReturnType<typeof getPriorityStatus>
+    onSelect?: () => void
+}) {
+    const Icon = item.icon
+    const itemStyles = PRIORITY_TONE_STYLES[item.tone]
+
+    return (
+        <Link
+            href={item.href}
+            role="listitem"
+            aria-label={`${status.label}: ${item.label}`}
+            data-glide-item={`priority-brief-${item.id}`}
+            onClick={onSelect}
+            className={cn(
+                UDS.item,
+                UDS.glideItem,
+                UDS.itemIcon,
+                "w-full min-w-0 items-start gap-2.5 px-3 py-2.5 text-foreground",
+            )}
+        >
+            <Icon className={cn("mt-0.5 size-4 shrink-0 stroke-[1.9]", itemStyles.icon)} />
+            <span className="min-w-0 flex-1">
+                <span className="flex min-w-0 items-baseline justify-between gap-2">
+                    <span className="truncate text-[13px] font-medium leading-4 text-foreground-secondary">
+                        {item.label}
+                    </span>
+                    <span className={cn("shrink-0 text-[12px] font-semibold leading-4 tabular-nums", itemStyles.value)}>
                         {item.value}
                     </span>
                 </span>
-                <span className="truncate text-[11px] leading-4 text-muted-foreground">
-                    {item.detail}
+                <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2">
+                    <span className="truncate text-[11px] leading-4 text-muted-foreground">
+                        {item.detail}
+                    </span>
+                    <span className={cn("shrink-0 text-[10.5px] font-semibold leading-4 tabular-nums", itemStyles.meta)}>
+                        {status.label}
+                    </span>
                 </span>
             </span>
-
-            <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground/75" />
+            <ArrowUpRight className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
         </Link>
     )
 }
@@ -232,33 +259,133 @@ export function DashboardPriorityBrief({
     isLoading,
     priorityItems,
     className,
+    onSelect,
+    variant = "cards",
 }: {
     dashboardLabels: DashboardLabels
     isLoading: boolean
     priorityItems: DashboardPriorityItem[]
     className?: string
+    onSelect?: () => void
+    variant?: PriorityBriefVariant
 }) {
     if (isLoading) {
-        return <PriorityBriefSkeleton className={className} />
+        return <PriorityBriefSkeleton className={className} variant={variant} />
     }
 
-    const [leadItem, ...supportingItems] = getPrioritizedItems(priorityItems)
-    const status = getPriorityStatus(priorityItems, dashboardLabels)
+    const priorityStatus = getPriorityStatus(priorityItems, dashboardLabels)
+    const prioritizedItems = getPrioritizedItems(priorityItems)
+
+    if (variant === "dropdown") {
+        return (
+            <div role="list" className={cn("flex min-w-0 flex-col", className)}>
+                {prioritizedItems.map((item, index) => (
+                    <React.Fragment key={item.id}>
+                        <PriorityBriefDropdownRow item={item} status={priorityStatus} onSelect={onSelect} />
+                        {index < prioritizedItems.length - 1 && (
+                            <div aria-hidden className={cn(UDS.separator, "my-1")} />
+                        )}
+                    </React.Fragment>
+                ))}
+                <span className="sr-only">{dashboardLabels.needsReview}</span>
+            </div>
+        )
+    }
 
     return (
-        <div className={cn("flex min-w-0 flex-col gap-3", className)}>
-            {leadItem && (
-                <PriorityBriefSummary item={leadItem} status={status} />
-            )}
-            <div
-                role="list"
-                className="overflow-hidden rounded-xl border border-border/60 bg-[color:color-mix(in_srgb,var(--surface-elevated)_42%,transparent)]"
-            >
-                {supportingItems.map((item, index) => (
-                    <PriorityBriefRow key={item.id} item={item} index={index} />
-                ))}
-            </div>
+        <div role="list" className={cn("flex min-w-0 flex-col", className)}>
+            {prioritizedItems.map((item, index) => (
+                <div key={item.id}>
+                    <PriorityBriefCard item={item} status={priorityStatus} onSelect={onSelect} />
+                    {index < prioritizedItems.length - 1 && (
+                        <div aria-hidden className={cn(UDS.separator, "my-3")} />
+                    )}
+                </div>
+            ))}
             <span className="sr-only">{dashboardLabels.needsReview}</span>
         </div>
+    )
+}
+
+export function DashboardPriorityBriefDropdown({
+    dashboardLabels,
+    isLoading,
+    priorityItems,
+    className,
+    variant = "glass",
+    size = "icon",
+}: {
+    dashboardLabels: DashboardLabels
+    isLoading: boolean
+    priorityItems: DashboardPriorityItem[]
+    className?: string
+    variant?: React.ComponentProps<typeof Button>["variant"]
+    size?: React.ComponentProps<typeof Button>["size"]
+}) {
+    const [open, setOpen] = React.useState(false)
+    const priorityReviewCount = React.useMemo(() => (
+        priorityItems.filter((item) => item.tone === "negative" || item.tone === "warning").length
+    ), [priorityItems])
+    const priorityStatus = React.useMemo(
+        () => getPriorityStatus(priorityItems, dashboardLabels),
+        [dashboardLabels, priorityItems],
+    )
+
+    return (
+        <Tooltip>
+        <Popover open={open} onOpenChange={setOpen}>
+            <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+                <Button
+                    type="button"
+                    variant={variant}
+                    size={size}
+                    aria-label={dashboardLabels.priorityBrief}
+                    aria-controls="dashboard-priority-dropdown"
+                    aria-expanded={open}
+                    className={cn("relative", className, open && DASHBOARD_ACTION_ACTIVE_CLASS)}
+                >
+                    <ListChecks />
+                    {priorityReviewCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center sq-full bg-destructive text-destructive-foreground text-[10px] font-medium">
+                            {priorityReviewCount > 9 ? "9+" : priorityReviewCount}
+                        </span>
+                    )}
+                </Button>
+            </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                {dashboardLabels.priorityBrief}
+            </TooltipContent>
+            <PopoverContent
+                id="dashboard-priority-dropdown"
+                align="end"
+                className="w-[min(20rem,calc(100vw-1rem))] max-w-[20rem]"
+                data-dashboard-priority-dropdown
+            >
+                <div className="flex min-w-0 items-start gap-2.5 px-3 pb-2 pt-2.5">
+                    <ListChecks className="mt-0.5 size-4 shrink-0 text-foreground-secondary" />
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold leading-4 text-foreground">
+                            {dashboardLabels.priorityBrief}
+                        </p>
+                        <p className="mt-1 truncate text-[11px] leading-4 text-muted-foreground">
+                            {priorityStatus.label}
+                        </p>
+                    </div>
+                </div>
+                <div aria-hidden className={cn(UDS.separator, "my-1")} />
+                <div className="max-h-[300px] overflow-y-auto">
+                    <DashboardPriorityBrief
+                        dashboardLabels={dashboardLabels}
+                        isLoading={isLoading}
+                        priorityItems={priorityItems}
+                        onSelect={() => setOpen(false)}
+                        variant="dropdown"
+                    />
+                </div>
+            </PopoverContent>
+        </Popover>
+        </Tooltip>
     )
 }

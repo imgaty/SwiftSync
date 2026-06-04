@@ -18,7 +18,7 @@ import {
 
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { getTranslations } from "@/lib/translation-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -92,7 +92,7 @@ export default function AdminHealthPage() {
                 {loading && !data ? <HealthSkeleton /> : data && (
                     <>
                         {/* Status Banner */}
-                        <div className={`rounded-xl border p-4 flex items-center gap-3 ${data.status === "healthy" ? "border-emerald-500/30 bg-emerald-500/5" : "border-red-500/30 bg-red-500/5"}`}>
+                        <div className={`sq-xl border p-4 flex items-center gap-3 ${data.status === "healthy" ? "border-emerald-500/30 bg-emerald-500/5" : "border-red-500/30 bg-red-500/5"}`}>
                             {data.status === "healthy"
                                 ? <CheckCircle className="size-6 text-emerald-500" />
                                 : <Activity className="size-6 text-red-500" />}
@@ -108,11 +108,11 @@ export default function AdminHealthPage() {
                         {/* Row 1: Database + Runtime */}
                         <div className="grid gap-4 lg:grid-cols-2">
                             {/* Database */}
-                            <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+                            <div className={`${UDS.panelSurface} p-5`}>
                                 <div className="flex items-center gap-2 mb-4">
-                                    <Database className="size-5 text-blue-500" />
+                                    <Database className="size-4 text-blue-500" />
                                     <h3 className="font-semibold">{hp.database || "Database"}</h3>
-                                    <Badge variant="outline" className="ml-auto border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs">{hp.connected || "Connected"}</Badge>
+                                    <Badge variant="outline" className={`ml-auto ${UDS.semanticBadge.positive} text-xs`}>{hp.connected || "Connected"}</Badge>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <MetricRow icon={<Zap className="size-4" />} label={hp.query_latency || "Query Latency"} value={`${data.database.latencyMs}ms`}
@@ -122,9 +122,9 @@ export default function AdminHealthPage() {
                             </div>
 
                             {/* Runtime */}
-                            <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+                            <div className={`${UDS.panelSurface} p-5`}>
                                 <div className="flex items-center gap-2 mb-4">
-                                    <Server className="size-5 text-purple-500" />
+                                    <Server className="size-4 text-purple-500" />
                                     <h3 className="font-semibold">{hp.runtime || "Runtime"}</h3>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -138,62 +138,62 @@ export default function AdminHealthPage() {
                         </div>
 
                         {/* Row 2: Security */}
-                        <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+                        <div className={`${UDS.panelSurface} p-5`}>
                             <div className="flex items-center gap-2 mb-4">
-                                <Shield className="size-5 text-emerald-500" />
+                                <Shield className="size-4 text-emerald-500" />
                                 <h3 className="font-semibold">{hp.security || "Security"}</h3>
                             </div>
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.twofa_adoption || "2FA Adoption"}</p>
-                                    <p className="text-2xl font-bold">{data.security.twoFaPercentage}%</p>
-                                    <p className="text-xs text-neutral-400">{data.security.twoFaEnabled} {ad.users || "users"}</p>
+                                    <p className={UDS.summaryLabel}>{hp.twofa_adoption || "2FA Adoption"}</p>
+                                    <p className={UDS.summaryValue}>{data.security.twoFaPercentage}%</p>
+                                    <p className="text-[11px] text-muted-foreground">{data.security.twoFaEnabled} {ad.users || "users"}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.logins_today || "Logins Today"}</p>
-                                    <p className="text-2xl font-bold">{data.activity.loginsToday}</p>
+                                    <p className={UDS.summaryLabel}>{hp.logins_today || "Logins Today"}</p>
+                                    <p className={UDS.summaryValue}>{data.activity.loginsToday}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.logins_week || "Logins This Week"}</p>
-                                    <p className="text-2xl font-bold">{data.activity.loginsThisWeek}</p>
+                                    <p className={UDS.summaryLabel}>{hp.logins_week || "Logins This Week"}</p>
+                                    <p className={UDS.summaryValue}>{data.activity.loginsThisWeek}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.audit_events || "Audit Events"}</p>
-                                    <p className="text-2xl font-bold">{data.tables.auditLogs.toLocaleString()}</p>
+                                    <p className={UDS.summaryLabel}>{hp.audit_events || "Audit Events"}</p>
+                                    <p className={UDS.summaryValue}>{data.tables.auditLogs.toLocaleString()}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Row 3: Activity */}
-                        <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+                        <div className={`${UDS.panelSurface} p-5`}>
                             <div className="flex items-center gap-2 mb-4">
-                                <Activity className="size-5 text-orange-500" />
+                                <Activity className="size-4 text-orange-500" />
                                 <h3 className="font-semibold">{hp.recent_activity || "Recent Activity"}</h3>
                             </div>
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.new_users_today || "New Users Today"}</p>
-                                    <p className="text-2xl font-bold">{data.activity.newUsersToday}</p>
+                                    <p className={UDS.summaryLabel}>{hp.new_users_today || "New Users Today"}</p>
+                                    <p className={UDS.summaryValue}>{data.activity.newUsersToday}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.new_users_week || "New Users This Week"}</p>
-                                    <p className="text-2xl font-bold">{data.activity.newUsersThisWeek}</p>
+                                    <p className={UDS.summaryLabel}>{hp.new_users_week || "New Users This Week"}</p>
+                                    <p className={UDS.summaryValue}>{data.activity.newUsersThisWeek}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.transactions_today || "Transactions Today"}</p>
-                                    <p className="text-2xl font-bold">{data.activity.transactionsToday}</p>
+                                    <p className={UDS.summaryLabel}>{hp.transactions_today || "Transactions Today"}</p>
+                                    <p className={UDS.summaryValue}>{data.activity.transactionsToday}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-neutral-400">{hp.transactions_week || "Transactions This Week"}</p>
-                                    <p className="text-2xl font-bold">{data.activity.transactionsThisWeek}</p>
+                                    <p className={UDS.summaryLabel}>{hp.transactions_week || "Transactions This Week"}</p>
+                                    <p className={UDS.summaryValue}>{data.activity.transactionsThisWeek}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Row 4: Data Volumes */}
-                        <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+                        <div className={`${UDS.panelSurface} p-5`}>
                             <div className="flex items-center gap-2 mb-4">
-                                <Database className="size-5 text-sky-500" />
+                                <Database className="size-4 text-sky-500" />
                                 <h3 className="font-semibold">{hp.data_volumes || "Data Volumes"}</h3>
                             </div>
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
@@ -223,13 +223,13 @@ function MetricRow({ icon, label, value, status }: {
 }) {
     const statusColor = status === "good" ? "text-emerald-600 dark:text-emerald-400"
         : status === "warn" ? "text-amber-600 dark:text-amber-400"
-            : status === "bad" ? PRISM.destructiveText : ""
+            : status === "bad" ? UDS.destructiveText : ""
     return (
         <div className="flex items-start gap-2">
             <div className="text-neutral-400 mt-0.5">{icon}</div>
             <div>
-                <p className="text-xs text-neutral-400">{label}</p>
-                <p className={`font-semibold ${statusColor}`}>{value}</p>
+                <p className={UDS.summaryLabel}>{label}</p>
+                <p className={`${UDS.summaryValue} ${statusColor}`}>{value}</p>
             </div>
         </div>
     )
@@ -239,10 +239,10 @@ function TableCount({ icon, label, count, active }: {
     icon: React.ReactNode; label: string; count: number; active?: number
 }) {
     return (
-        <div className="rounded-lg bg-black/2 dark:bg-white/3 border border-black/5 dark:border-white/5 p-2.5">
-            <div className="flex items-center gap-1.5 text-neutral-400 text-xs mb-1">{icon} {label}</div>
-            <p className="text-lg font-bold">{count.toLocaleString()}</p>
-            {active !== undefined && <p className="text-xs text-emerald-600 dark:text-emerald-400">{active} active</p>}
+        <div className={`${UDS.inlineSurface} p-2.5`}>
+            <div className={UDS.summaryLabel}>{icon} {label}</div>
+            <p className={UDS.summaryValue}>{count.toLocaleString()}</p>
+            {active !== undefined && <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{active} active</p>}
         </div>
     )
 }
@@ -250,14 +250,14 @@ function TableCount({ icon, label, count, active }: {
 function HealthSkeleton() {
     return (
         <div className="space-y-4">
-            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-16 w-full sq-xl" />
             <div className="grid gap-4 lg:grid-cols-2">
-                <Skeleton className="h-40 rounded-xl" />
-                <Skeleton className="h-40 rounded-xl" />
+                <Skeleton className="h-40 sq-xl" />
+                <Skeleton className="h-40 sq-xl" />
             </div>
-            <Skeleton className="h-32 rounded-xl" />
-            <Skeleton className="h-32 rounded-xl" />
-            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-32 sq-xl" />
+            <Skeleton className="h-32 sq-xl" />
+            <Skeleton className="h-40 sq-xl" />
         </div>
     )
 }

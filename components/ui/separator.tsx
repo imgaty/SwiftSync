@@ -12,6 +12,7 @@
 import * as React from "react"
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Separator({
@@ -26,7 +27,8 @@ function Separator({
       decorative={decorative}
       orientation={orientation}
       className={cn(
-        "bg-border shrink-0",
+        "shrink-0",
+        UDS.hairline,
         orientation === "horizontal" ? "h-px w-full" : "h-6 w-px",
         className
       )}

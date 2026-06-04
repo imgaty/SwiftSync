@@ -38,7 +38,7 @@ const AUTH_TAG_LEN = 16
 const SCRYPT_N = 32768
 const SCRYPT_R = 8
 const SCRYPT_P = 1
-const SCRYPT_MAXMEM = 128 * SCRYPT_N * SCRYPT_R * SCRYPT_P + 1024 * 1024
+const SCRYPT_MAXMEMORY = 128 * SCRYPT_N * SCRYPT_R * SCRYPT_P + 1024 * 1024
 const VERSION = "v1"
 
 function getMasterKey(): string {
@@ -58,7 +58,7 @@ function deriveKey(salt: Buffer): Buffer {
     N: SCRYPT_N,
     r: SCRYPT_R,
     p: SCRYPT_P,
-    maxmem: SCRYPT_MAXMEM,
+    maxmem: SCRYPT_MAXMEMORY,
   })
 }
 

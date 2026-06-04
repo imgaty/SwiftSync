@@ -14,6 +14,7 @@ import { PageShell, PageHeader, PageSection } from "@/components/page-framework"
 import { EmptyState } from "@/components/empty-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { SmartTooltip } from "@/components/ui/tooltip"
 import {
     ArrowDownRight,
     ArrowUpRight,
@@ -31,7 +32,7 @@ import { useCurrency } from "@/components/currency-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
 import type { Transaction, Bill } from "@/lib/types"
 import { getTranslations } from "@/lib/translation-utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 type CalendarBill = Pick<Bill, "id" | "name" | "amount" | "dueDay" | "frequency" | "category">
@@ -145,7 +146,7 @@ function DetailMetric({
     icon: React.ReactNode
 }) {
     return (
-        <div className="min-w-0 rounded-lg border border-border/70 bg-[var(--surface-elevated)] px-2.5 py-2">
+        <div className={`${UDS.inlineSurface} min-w-0 px-2.5 py-2`}>
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                 {icon}
                 <span className="truncate">{label}</span>
@@ -174,13 +175,14 @@ function SummaryMetric({
     icon: React.ReactNode
 }) {
     return (
-        <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border/70 bg-[var(--surface-elevated)] px-2.5 py-2">
+        <div className={`${UDS.inlineSurface} flex min-w-0 items-center gap-2 px-2.5 py-2`}>
             <span className={cn(
-                "flex size-7 shrink-0 items-center justify-center rounded-md border bg-background/70",
+                "flex size-7 shrink-0 items-center justify-center",
+                UDS.iconSurface,
                 tone === "positive" && "border-positive-subtle text-positive",
                 tone === "negative" && "border-negative-subtle text-negative",
                 tone === "accent" && "border-amber-500/25 text-amber-700 dark:text-amber-300",
-                tone === "neutral" && "border-border text-muted-foreground",
+                tone === "neutral" && "text-muted-foreground",
             )}>
                 {icon}
             </span>
@@ -196,6 +198,28 @@ function SummaryMetric({
                 </p>
             </div>
         </div>
+    )
+}
+
+function CalendarDayIndicator({
+    children,
+    className,
+    label,
+}: {
+    children: React.ReactNode
+    className?: string
+    label: string
+}) {
+    return (
+        <SmartTooltip text={label} group="calendar-day-indicators" forceSide="top">
+            <span
+                role="img"
+                aria-label={label}
+                className={cn("inline-flex shrink-0 items-center justify-center", className)}
+            >
+                {children}
+            </span>
+        </SmartTooltip>
     )
 }
 
@@ -337,7 +361,7 @@ export default function CalendarPage() {
     const selectedNet = selectedDay ? selectedDay.income - selectedDay.expenses : 0
 
     return (
-        <PageShell className="h-full max-h-svh min-h-0 gap-3 overflow-hidden p-3 md:p-4">
+        <PageShell className="min-h-full gap-3 overflow-x-hidden overflow-y-visible p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: isLoading ? "" : (t.sidebar_dashboard || "Dashboard"), href: "/" },
@@ -346,25 +370,31 @@ export default function CalendarPage() {
                 isLoading={isLoading}
                 actions={
                     <>
-                        <Button onClick={goToToday} title={cal.today || "Today"}>
-                            <CalendarDays />
-                        </Button>
-                        <Button onClick={prevMonth} title={cal.prev_month || "Previous month"}>
-                            <ChevronLeft />
-                        </Button>
-                        <Button onClick={nextMonth} title={cal.next_month || "Next month"}>
-                            <ChevronRight />
-                        </Button>
+                        <SmartTooltip text={cal.today || "Today"} group="calendar-header-actions" forceSide="bottom">
+                            <Button type="button" onClick={goToToday} aria-label={cal.today || "Today"}>
+                                <CalendarDays />
+                            </Button>
+                        </SmartTooltip>
+                        <SmartTooltip text={cal.prev_month || "Previous month"} group="calendar-header-actions" forceSide="bottom">
+                            <Button type="button" onClick={prevMonth} aria-label={cal.prev_month || "Previous month"}>
+                                <ChevronLeft />
+                            </Button>
+                        </SmartTooltip>
+                        <SmartTooltip text={cal.next_month || "Next month"} group="calendar-header-actions" forceSide="bottom">
+                            <Button type="button" onClick={nextMonth} aria-label={cal.next_month || "Next month"}>
+                                <ChevronRight />
+                            </Button>
+                        </SmartTooltip>
                     </>
                 }
             />
 
-            <PageSection stagger={2} fill className="min-h-0 flex-1 overflow-hidden">
+            <PageSection stagger={2} fill className="min-h-0 flex-1">
                 <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(160px,32vh)] gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:grid-rows-1">
-                    <section className={cn(PRISM.cardSurface, "flex min-h-0 min-w-0 flex-col overflow-hidden p-0")}>
-                        <div className={cn("flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-3 py-2.5 sm:px-4", PRISM.cardDivider)}>
+                    <section className={cn(UDS.cardSurface, "flex min-h-0 min-w-0 flex-col overflow-hidden p-0")}>
+                        <div className={cn("flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-3 py-2.5 sm:px-4", UDS.cardDivider)}>
                             <div className="flex min-w-0 items-center gap-2.5">
-                                <div className={cn(PRISM.cardSurface, "flex size-9 shrink-0 items-center justify-center text-foreground-secondary")}>
+                                <div className={cn(UDS.cardSurface, "flex size-9 shrink-0 items-center justify-center text-foreground-secondary")}>
                                     <CalendarDays className="size-4.5" />
                                 </div>
                                 <div className="min-w-0">
@@ -378,26 +408,32 @@ export default function CalendarPage() {
                             </div>
 
                             <div className="flex min-w-0 items-center gap-1.5">
-                                <Badge variant="outline" className="hidden border-border bg-[var(--surface-elevated)] text-muted-foreground sm:inline-flex">
+                                <Badge variant="outline" className={cn("hidden text-muted-foreground sm:inline-flex", UDS.pillSurface)}>
                                     {monthRangeLabel}
                                 </Badge>
-                                <Badge variant="outline" className="hidden border-border bg-[var(--surface-elevated)] text-muted-foreground md:inline-flex">
+                                <Badge variant="outline" className={cn("hidden text-muted-foreground md:inline-flex", UDS.pillSurface)}>
                                     {countLabel(cal.active_days_change, monthlySummary.activeDays, "%count active days")}
                                 </Badge>
-                                <Button type="button" variant="glass" size="icon-sm" onClick={prevMonth} aria-label={cal.prev_month || "Previous month"}>
-                                    <ChevronLeft className="size-3.5" />
-                                </Button>
-                                <Button type="button" variant="glass" size="sm" onClick={goToToday} className="h-7 rounded-full px-2.5">
-                                    <CalendarDays className="size-3.5" />
-                                    <span className="hidden sm:inline">{cal.today || "Today"}</span>
-                                </Button>
-                                <Button type="button" variant="glass" size="icon-sm" onClick={nextMonth} aria-label={cal.next_month || "Next month"}>
-                                    <ChevronRight className="size-3.5" />
-                                </Button>
+                                <SmartTooltip text={cal.prev_month || "Previous month"} group="calendar-month-actions" forceSide="bottom">
+                                    <Button type="button" variant="glass" size="icon-sm" onClick={prevMonth} aria-label={cal.prev_month || "Previous month"}>
+                                        <ChevronLeft className="size-3.5" />
+                                    </Button>
+                                </SmartTooltip>
+                                <SmartTooltip text={cal.today || "Today"} group="calendar-month-actions" forceSide="bottom">
+                                    <Button type="button" variant="glass" size="sm" onClick={goToToday} aria-label={cal.today || "Today"} className="h-7 sq-full px-2.5">
+                                        <CalendarDays className="size-3.5" />
+                                        <span className="hidden sm:inline">{cal.today || "Today"}</span>
+                                    </Button>
+                                </SmartTooltip>
+                                <SmartTooltip text={cal.next_month || "Next month"} group="calendar-month-actions" forceSide="bottom">
+                                    <Button type="button" variant="glass" size="icon-sm" onClick={nextMonth} aria-label={cal.next_month || "Next month"}>
+                                        <ChevronRight className="size-3.5" />
+                                    </Button>
+                                </SmartTooltip>
                             </div>
                         </div>
 
-                        <div className={cn("grid shrink-0 grid-cols-2 gap-2 border-b px-3 py-2 sm:grid-cols-4 sm:px-4", PRISM.cardDivider)}>
+                        <div className={cn("grid shrink-0 grid-cols-2 gap-2 border-b px-3 py-2 sm:grid-cols-4 sm:px-4", UDS.cardDivider)}>
                             <SummaryMetric
                                 label={cal.monthly_income || "Monthly Income"}
                                 value={formatCompactCurrency(monthlySummary.monthlyIncome)}
@@ -446,6 +482,8 @@ export default function CalendarPage() {
                                         })
                                         const txCountLabel = countLabel(cal.transaction_count, day.transactions.length, "%count txns")
                                         const billCountLabel = countLabel(cal.bill_count, day.bills.length, "%count bills")
+                                        const incomeLabel = `${cal.income || "Income"}: +${formatCompactCurrency(day.income)}`
+                                        const expensesLabel = `${cal.expenses || "Expenses"}: -${formatCompactCurrency(day.expenses)}`
 
                                         return (
                                             <Button
@@ -456,18 +494,19 @@ export default function CalendarPage() {
                                                 aria-pressed={isSelected}
                                                 onClick={() => setSelectedDateKey(day.key)}
                                                 className={cn(
-                                                    "group relative flex h-full min-h-0 w-full flex-col items-stretch justify-start overflow-hidden whitespace-normal rounded-lg border p-1.5 text-left transition-all sm:p-2",
+                                                    UDS.inlineSurface,
+                                                    "group relative flex h-full min-h-0 w-full flex-col items-stretch justify-start whitespace-normal p-1.5 text-left transition-all sm:p-2",
                                                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70",
                                                     day.isCurrentMonth
-                                                        ? "border-border bg-[var(--surface-elevated)] text-foreground hover:border-[color:var(--border-strong)] hover:bg-accent"
-                                                        : "border-transparent bg-[var(--surface)] text-muted-foreground/55 hover:text-muted-foreground",
+                                                        ? cn("text-foreground", UDS.itemHover)
+                                                        : cn("text-muted-foreground/55 hover:text-muted-foreground", UDS.itemHover),
                                                     day.isToday && "border-primary/50 ring-1 ring-primary/30",
-                                                    isSelected && "border-[color:var(--border-strong)] bg-accent shadow-[var(--shadow-subtle)]",
+                                                    isSelected && UDS.selectedControl,
                                                 )}
                                             >
                                                 <div className="flex shrink-0 items-start justify-between gap-1">
                                                     <span className={cn(
-                                                        "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums",
+                                                        "flex size-6 shrink-0 items-center justify-center sq-full text-xs font-semibold tabular-nums",
                                                         day.isToday && "bg-primary text-primary-foreground",
                                                     )}>
                                                         {day.date.getDate()}
@@ -475,16 +514,14 @@ export default function CalendarPage() {
 
                                                     <div className="hidden min-w-0 shrink-0 items-center gap-1 sm:flex">
                                                         {day.transactions.length > 0 && (
-                                                            <span title={txCountLabel} className="inline-flex h-5 max-w-12 items-center gap-1 rounded-full border border-border/80 bg-background/70 px-1.5 text-[10px] font-semibold text-muted-foreground">
+                                                            <CalendarDayIndicator label={txCountLabel} className={cn(UDS.pillSurface, "size-5 text-muted-foreground")}>
                                                                 <Wallet className="size-3" />
-                                                                <span className="tabular-nums">{day.transactions.length}</span>
-                                                            </span>
+                                                            </CalendarDayIndicator>
                                                         )}
                                                         {day.bills.length > 0 && (
-                                                            <span title={billCountLabel} className="inline-flex h-5 max-w-12 items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                                                            <CalendarDayIndicator label={billCountLabel} className="size-5 sq-full border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300">
                                                                 <Receipt className="size-3" />
-                                                                <span className="tabular-nums">{day.bills.length}</span>
-                                                            </span>
+                                                            </CalendarDayIndicator>
                                                         )}
                                                     </div>
                                                 </div>
@@ -514,15 +551,31 @@ export default function CalendarPage() {
                                                 </div>
 
                                                 <div className="mt-auto flex items-center gap-1 pt-1 sm:hidden">
-                                                    {day.transactions.length > 0 && <span className="size-1.5 rounded-full bg-foreground-secondary" title={txCountLabel} />}
-                                                    {day.bills.length > 0 && <span className="size-1.5 rounded-full bg-amber-500" title={billCountLabel} />}
-                                                    {day.income > 0 && <span className="size-1.5 rounded-full bg-positive" title={formatCompactCurrency(day.income)} />}
-                                                    {day.expenses > 0 && <span className="size-1.5 rounded-full bg-negative" title={formatCompactCurrency(day.expenses)} />}
+                                                    {day.transactions.length > 0 && (
+                                                        <CalendarDayIndicator label={txCountLabel} className="size-4 sq-full bg-foreground-secondary/10 text-foreground-secondary">
+                                                            <Wallet className="size-2.5" />
+                                                        </CalendarDayIndicator>
+                                                    )}
+                                                    {day.bills.length > 0 && (
+                                                        <CalendarDayIndicator label={billCountLabel} className="size-4 sq-full bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                                                            <Receipt className="size-2.5" />
+                                                        </CalendarDayIndicator>
+                                                    )}
+                                                    {day.income > 0 && (
+                                                        <CalendarDayIndicator label={incomeLabel} className="size-4 sq-full bg-positive/10 text-positive">
+                                                            <ArrowUpRight className="size-2.5" />
+                                                        </CalendarDayIndicator>
+                                                    )}
+                                                    {day.expenses > 0 && (
+                                                        <CalendarDayIndicator label={expensesLabel} className="size-4 sq-full bg-negative/10 text-negative">
+                                                            <ArrowDownRight className="size-2.5" />
+                                                        </CalendarDayIndicator>
+                                                    )}
                                                 </div>
 
                                                 <div className="mt-auto hidden pt-1.5 sm:block">
                                                     {totalMovement > 0 ? (
-                                                        <div className="flex h-1.5 overflow-hidden rounded-full bg-muted">
+                                                        <div className={cn("flex h-1.5 overflow-hidden sq-full", UDS.subtleFill)}>
                                                             {day.income > 0 && (
                                                                 <span className="bg-positive" style={{ width: `${incomeShare}%` }} />
                                                             )}
@@ -531,7 +584,7 @@ export default function CalendarPage() {
                                                             )}
                                                         </div>
                                                     ) : (
-                                                        <div className="h-1.5 rounded-full bg-border/50" />
+                                                        <div className={cn("h-1.5 sq-full", UDS.subtleFill)} />
                                                     )}
                                                 </div>
                                             </Button>
@@ -542,10 +595,10 @@ export default function CalendarPage() {
                         </div>
                     </section>
 
-                    <aside className={cn(PRISM.cardSurface, "flex min-h-0 min-w-0 flex-col overflow-hidden p-0")}>
+                    <aside className={cn(UDS.cardSurface, "flex min-h-0 min-w-0 flex-col overflow-hidden p-0")}>
                         {selectedDay ? (
                             <>
-                                <div className={cn("shrink-0 border-b p-3 sm:p-4", PRISM.cardDivider)}>
+                                <div className={cn("shrink-0 border-b p-3 sm:p-4", UDS.cardDivider)}>
                                     <p className="text-[11px] font-semibold uppercase text-muted-foreground">
                                         {cal.selected_day || "Selected day"}
                                     </p>
@@ -584,7 +637,7 @@ export default function CalendarPage() {
                                         <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
                                             {cal.daily_summary || "Daily summary"}
                                         </h3>
-                                        <div className="flex items-center justify-between gap-3 border-y border-border/70 py-2.5">
+                                        <div className={cn("flex items-center justify-between gap-3 border-y py-2.5", UDS.cardDivider)}>
                                             <span className="text-sm text-muted-foreground">{cal.net || "Net"}</span>
                                             <span className={cn(
                                                 "text-sm font-semibold tabular-nums",
@@ -600,11 +653,11 @@ export default function CalendarPage() {
                                             <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
                                                 {cal.bills_due || "Bills Due"}
                                             </h3>
-                                            <div className="divide-y divide-border/70">
+                                            <div className={cn("divide-y", UDS.divideLine)}>
                                                 {selectedDay.bills.map((bill) => (
                                                     <div key={bill.id} className="flex items-center justify-between gap-3 py-2.5">
                                                         <div className="flex min-w-0 items-center gap-2">
-                                                            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                                                            <span className="flex size-7 shrink-0 items-center justify-center sq-lg bg-amber-500/10 text-amber-700 dark:text-amber-300">
                                                                 <Receipt className="size-3.5" />
                                                             </span>
                                                             <div className="min-w-0">
@@ -626,7 +679,7 @@ export default function CalendarPage() {
                                             <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
                                                 {cal.transactions || t.finance?.transactions || "Transactions"}
                                             </h3>
-                                            <div className="divide-y divide-border/70">
+                                            <div className={cn("divide-y", UDS.divideLine)}>
                                                 {selectedDay.transactions.map((txn) => (
                                                     <div key={txn.id} className="py-2.5">
                                                         <div className="flex items-start justify-between gap-3">
@@ -666,7 +719,7 @@ export default function CalendarPage() {
                             </>
                         ) : (
                             <>
-                                <div className={cn("shrink-0 border-b p-3 sm:p-4", PRISM.cardDivider)}>
+                                <div className={cn("shrink-0 border-b p-3 sm:p-4", UDS.cardDivider)}>
                                     <p className="text-[11px] font-semibold uppercase text-muted-foreground">
                                         {cal.month_at_a_glance || "Month at a glance"}
                                     </p>
@@ -696,7 +749,7 @@ export default function CalendarPage() {
                                             {cal.activity || "Activity"}
                                         </h3>
                                         {activityDays.length > 0 ? (
-                                            <div className="divide-y divide-border/70">
+                                            <div className={cn("divide-y", UDS.divideLine)}>
                                                 {activityDays.slice(0, 6).map((day) => {
                                                     const net = day.income - day.expenses
                                                     return (

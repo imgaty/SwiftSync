@@ -14,13 +14,13 @@ import { useCurrency } from "@/components/currency-provider"
 import { useLanguage } from "@/components/language-provider"
 import { buildDashboardPriorityItems } from "@/components/dashboard/dashboard-priority"
 import { useFinanceData } from "@/hooks/use-finance-data"
+import { useUserProfile } from "@/hooks/use-user-profile"
 import type { Account, Bill, Budget, FinanceData, Transaction } from "@/lib/types"
 import type {
     BudgetPressure,
     DashboardLabels,
     DashboardTranslations,
     DashboardUserProfile,
-    ProfileResponse,
     UpcomingBill,
 } from "@/components/dashboard/types"
 import {
@@ -47,38 +47,24 @@ export function useDashboardData() {
     const goodEveningLabel = text.dashboard?.good_evening || "Good evening"
     const locale = t.config?.locale || "en-US"
     const isPortuguese = locale.startsWith("pt")
+    const dashboardImportLabel = text.dashboard?.import || (isPortuguese ? "Importar" : "Import")
 
     const [selectedAccountIds, setSelectedAccountIds] = React.useState<string[]>([])
     const [now, setNow] = React.useState(() => new Date())
-    const [userProfile, setUserProfile] = React.useState<DashboardUserProfile | null>(null)
-    const [isProfileLoading, setIsProfileLoading] = React.useState(true)
+    const { data: profile, isLoading: isProfileLoading } = useUserProfile()
+    const userProfile = React.useMemo<DashboardUserProfile | null>(() => {
+        if (!profile) return null
+        return {
+            name: profile.name || "",
+            initials: profile.initials || "",
+        }
+    }, [profile])
 
     const isLoading = isLanguageLoading || isDataLoading
 
     React.useEffect(() => {
         const timer = window.setInterval(() => setNow(new Date()), 60_000)
         return () => window.clearInterval(timer)
-    }, [])
-
-    React.useEffect(() => {
-        async function loadProfile() {
-            try {
-                const profileResponse = await fetch("/api/auth/profile", { credentials: "include" })
-
-                if (profileResponse.ok) {
-                    const profile = await profileResponse.json() as ProfileResponse
-                    setUserProfile({
-                        name: profile.name || "",
-                        initials: profile.initials || "",
-                    })
-                }
-            } catch {
-                setUserProfile(null)
-            } finally {
-                setIsProfileLoading(false)
-            }
-        }
-        loadProfile()
     }, [])
 
     const greeting = React.useMemo(() => {
@@ -301,6 +287,7 @@ export function useDashboardData() {
         activitySummary,
         budgetPressure,
         dashboardExportLabel,
+        dashboardImportLabel,
         dashboardLabels,
         filteredFinanceData,
         formattedDate,
@@ -326,6 +313,7 @@ export function useDashboardData() {
         activitySummary,
         budgetPressure,
         dashboardExportLabel,
+        dashboardImportLabel,
         dashboardLabels,
         filteredFinanceData,
         formattedDate,

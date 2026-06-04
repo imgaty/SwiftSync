@@ -10,7 +10,7 @@
 'use client'
 
 import type { ComponentProps, ReactNode } from 'react'
-import { Check, Eye, Globe, Monitor, Moon, PanelLeft, PanelRight, Sun } from 'lucide-react'
+import { Eye, Globe, Monitor, Moon, PanelLeft, PanelRight, Sun } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -28,6 +28,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { UDS } from '@/lib/UDS'
 import { cn } from '@/lib/utils'
 
 export const Dropdown = DropdownMenu
@@ -127,6 +128,7 @@ export function DropdownSectionItem({
 }: DropdownSectionItemProps) {
   return (
     <DropdownItem
+      data-active={active ? 'true' : undefined}
       onSelect={onSelect}
     >
       {icon ? (
@@ -135,9 +137,6 @@ export function DropdownSectionItem({
         </span>
       ) : null}
       <span className="auto-scroll flex-1 min-w-0">{children}</span>
-      <span className="ml-auto flex size-4 shrink-0 items-center justify-center">
-        {active ? <Check className="size-4" /> : null}
-      </span>
     </DropdownItem>
   )
 }
@@ -290,9 +289,9 @@ export function DropdownSettingsSection({
 
 const COLOR_VISION_OPTIONS: DropdownOption[] = [
   { value: 'none', label: 'Default', icon: <Eye /> },
-  { value: 'deuteranopia', label: 'Deuteranopia', icon: <span className="h-3.5 w-3.5 rounded-full border border-current" style={{ background: 'linear-gradient(135deg, #d4a017 50%, #4a7fb5 50%)' }} /> },
-  { value: 'protanopia', label: 'Protanopia', icon: <span className="h-3.5 w-3.5 rounded-full border border-current" style={{ background: 'linear-gradient(135deg, #c4a835 50%, #5b8fbd 50%)' }} /> },
-  { value: 'tritanopia', label: 'Tritanopia', icon: <span className="h-3.5 w-3.5 rounded-full border border-current" style={{ background: 'linear-gradient(135deg, #e06070 50%, #40a0a0 50%)' }} /> },
+  { value: 'deuteranopia', label: 'Deuteranopia', icon: <span className={cn("size-3.5 ring-1 ring-current", UDS.radius.full)} style={{ background: 'linear-gradient(135deg, #d4a017 50%, #4a7fb5 50%)' }} /> },
+  { value: 'protanopia', label: 'Protanopia', icon: <span className={cn("size-3.5 ring-1 ring-current", UDS.radius.full)} style={{ background: 'linear-gradient(135deg, #c4a835 50%, #5b8fbd 50%)' }} /> },
+  { value: 'tritanopia', label: 'Tritanopia', icon: <span className={cn("size-3.5 ring-1 ring-current", UDS.radius.full)} style={{ background: 'linear-gradient(135deg, #e06070 50%, #40a0a0 50%)' }} /> },
 ]
 
 type DropdownColorVisionSectionProps = {
@@ -337,9 +336,9 @@ export function DropdownColorVisionSubmenu({
 
   return (
     <DropdownSub>
-      <DropdownSubTrigger className="group flex w-full cursor-pointer items-center gap-1.5 rounded-lg px-2 py-2 text-[13px]">
+      <DropdownSubTrigger className="group cursor-pointer">
         <span className="flex shrink-0 items-center justify-center text-neutral-400">
-          <Eye className="h-3.5 w-3.5" />
+          <Eye className="size-4" />
         </span>
         <span>{label}</span>
         <span className="ml-auto pr-0.5 text-[11px] text-neutral-400">{currentLabel}</span>

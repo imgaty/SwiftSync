@@ -13,6 +13,7 @@ import * as React from "react"
 import { OTPInput, OTPInputContext } from "input-otp"
 import { MinusIcon } from "lucide-react"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function InputOTP({
@@ -60,7 +61,11 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        "relative flex h-9 w-9 items-center justify-center border-y border-r border-input text-sm shadow-xs transition-all outline-none first:rounded-l-md first:border-l last:rounded-r-md aria-invalid:border-destructive data-[active=true]:z-10 data-[active=true]:border-ring data-[active=true]:ring-[3px] data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:bg-input/30 dark:data-[active=true]:aria-invalid:ring-destructive/40",
+        "relative flex h-9 w-9 items-center justify-center text-[13px] transition-[background-color,border-color,color,box-shadow,opacity] duration-150 outline-none first:sq-l-md last:sq-r-md aria-invalid:border-destructive data-[active=true]:z-10 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40",
+        UDS.inputSurface,
+        "sq-none border-l-0 first:border-l",
+        UDS.inputHover,
+        "data-[active=true]:border-blue-500/45 data-[active=true]:ring-2 data-[active=true]:ring-blue-500/45 dark:data-[active=true]:border-blue-400/35 dark:data-[active=true]:ring-blue-400/35",
         className
       )}
       {...props}

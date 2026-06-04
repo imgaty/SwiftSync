@@ -12,6 +12,7 @@
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 interface AnimatedToggleProps {
@@ -111,17 +112,18 @@ export function AnimatedToggle({
             disabled={disabled}
             onClick={handleClick}
             className={cn(
-                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200",
+                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center sq-full transition-colors duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                displayChecked ? "bg-primary" : "bg-muted",
+                displayChecked ? "bg-primary" : UDS.surface,
+                "sq-full",
                 className
             )}
         >
             {/* Thumb */}
             <motion.div
-                className="absolute flex items-center justify-center rounded-full bg-background shadow-sm"
-                style={{ height: 18, top: 3 }}
+                className="absolute flex items-center justify-center sq-full uds-bg-raised"
+                style={{ height: 18, top: 3, boxShadow: "var(--shadow-subtle)" }}
                 initial={false}
                 animate={{
                     x: thumbStyle.x,

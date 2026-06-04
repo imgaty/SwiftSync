@@ -17,7 +17,7 @@ import {
 
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -59,9 +59,9 @@ function formatCurrency(v: number) {
 
 function billStatusBadge(status: string, bp: Record<string, string>) {
     switch (status) {
-        case "paid": return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs"><CheckCircle className="size-3" />{bp.paid || "Paid"}</Badge>
-        case "pending": return <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs"><Clock className="size-3" />{bp.pending || "Pending"}</Badge>
-        case "overdue": return <Badge variant="outline" className={`${PRISM.destructiveBadge} text-xs`}><AlertTriangle className="size-3" />{bp.overdue || "Overdue"}</Badge>
+        case "paid": return <Badge variant="outline" className={`${UDS.semanticBadge.positive} text-xs`}><CheckCircle className="size-3" />{bp.paid || "Paid"}</Badge>
+        case "pending": return <Badge variant="outline" className={`${UDS.semanticBadge.warning} text-xs`}><Clock className="size-3" />{bp.pending || "Pending"}</Badge>
+        case "overdue": return <Badge variant="outline" className={`${UDS.destructiveBadge} text-xs`}><AlertTriangle className="size-3" />{bp.overdue || "Overdue"}</Badge>
         default: return <Badge variant="outline" className="text-xs capitalize">{status}</Badge>
     }
 }
@@ -124,7 +124,7 @@ export default function AdminBillsPage() {
                 />
                 <Select value={freqFilter} onValueChange={setFreqFilter}>
                     <SelectTrigger className="w-[145px]" size="sm">
-                        <Filter className="size-4" />
+                        <Filter className="size-3.5" />
                         <SelectValue placeholder={bp.frequency || "Frequency"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -145,13 +145,13 @@ export default function AdminBillsPage() {
             />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400 flex items-center gap-1"><Receipt className="size-3" /> {bp.total_bills || "Total Bills"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : pagination.total}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}><Receipt className="size-3.5" /> {bp.total_bills || "Total Bills"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-16" /> : pagination.total}</p>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400">{bp.total_amount || "Total Amount"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(totalAmount)}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}>{bp.total_amount || "Total Amount"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-28" /> : formatCurrency(totalAmount)}</p>
                     </div>
                 </div>
 
@@ -221,7 +221,7 @@ export default function AdminBillsPage() {
                                         <TableCell className="capitalize text-sm">{bill.frequency}</TableCell>
                                         <TableCell className="text-sm">{bill.dueDay}</TableCell>
                                         <TableCell>{billStatusBadge(bill.status, bp)}</TableCell>
-                                        <TableCell>{bill.autopay ? <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs">{bp.auto || "Auto"}</Badge> : <span className="text-xs text-neutral-400">{bp.manual || "Manual"}</span>}</TableCell>
+                                        <TableCell>{bill.autopay ? <Badge variant="outline" className={`${UDS.semanticBadge.info} text-xs`}>{bp.auto || "Auto"}</Badge> : <span className="text-xs text-neutral-400">{bp.manual || "Manual"}</span>}</TableCell>
                                         <TableCell className="text-right font-mono text-sm">{formatCurrency(Number(bill.amount))}</TableCell>
                                     </TableRow>
                                 ))}

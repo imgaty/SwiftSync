@@ -9,6 +9,7 @@
 //
 import * as React from "react"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
@@ -16,7 +17,11 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
     <textarea
       data-slot="textarea"
       className={cn(
-        "flex field-sizing-content min-h-16 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40",
+        "flex field-sizing-content min-h-24 w-full px-4 py-3 text-[15px] text-foreground caret-blue-600 transition-[background-color,border-color,color,box-shadow,opacity] duration-200 outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-70 aria-invalid:border-destructive/60 aria-invalid:ring-2 aria-invalid:ring-destructive/20 aria-invalid:focus-visible:border-destructive/70 aria-invalid:focus-visible:ring-destructive/25 dark:caret-blue-300 dark:aria-invalid:ring-destructive/30",
+        UDS.inputSurface,
+        UDS.inputHover,
+        UDS.inputFocus,
+        "disabled:bg-black/[0.02] dark:disabled:bg-white/[0.03] disabled:text-neutral-400",
         className
       )}
       {...props}

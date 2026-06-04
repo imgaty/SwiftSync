@@ -169,9 +169,6 @@ GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 GITHUB_CLIENT_ID=""
 GITHUB_CLIENT_SECRET=""
-MICROSOFT_CLIENT_ID=""
-MICROSOFT_CLIENT_SECRET=""
-APPLE_CLIENT_ID=""
 
 # ─── App URL ────────────────────────────────────────────────
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -267,9 +264,6 @@ The development server supports hot reloading — any code changes will automati
 | `GOOGLE_CLIENT_SECRET`    | No       | Google OAuth client secret            | —                                   |
 | `GITHUB_CLIENT_ID`        | No       | GitHub OAuth client ID                | —                                   |
 | `GITHUB_CLIENT_SECRET`    | No       | GitHub OAuth client secret            | —                                   |
-| `MICROSOFT_CLIENT_ID`     | No       | Microsoft OAuth client ID             | —                                   |
-| `MICROSOFT_CLIENT_SECRET` | No       | Microsoft OAuth client secret         | —                                   |
-| `APPLE_CLIENT_ID`         | No       | Apple Sign In client ID               | —                                   |
 
 > \* Required for the bank connection features to work. The app will function without them, but Open Banking integration will be unavailable.
 
@@ -326,7 +320,7 @@ Salt Edge provides Open Banking integration — it allows Argent to connect to r
 
 ### 3.4. OAuth Providers (Optional)
 
-OAuth allows users to log in with their existing Google, GitHub, Microsoft, or Apple accounts. Each provider requires registering an application in their developer console.
+OAuth allows users to log in with their existing Google or GitHub accounts. Each provider requires registering an application in their developer console.
 
 #### Google
 
@@ -343,21 +337,6 @@ OAuth allows users to log in with their existing Google, GitHub, Microsoft, or A
 2. Click **New OAuth App**
 3. Set the **Authorization callback URL** to: `http://localhost:3000/api/auth/oauth/github/callback`
 4. Copy the **Client ID** and **Client Secret** to your `.env`
-
-#### Microsoft
-
-1. Go to [https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps)
-2. Register a new application
-3. Add a **Redirect URI**: `http://localhost:3000/api/auth/oauth/microsoft/callback`
-4. Create a **Client Secret** under Certificates & Secrets
-5. Copy the **Application (client) ID** and **Client Secret** to your `.env`
-
-#### Apple
-
-1. Go to [https://developer.apple.com/account/](https://developer.apple.com/account/)
-2. Register a new **Service ID** under Certificates, Identifiers & Profiles
-3. Configure the redirect URL: `http://localhost:3000/api/auth/oauth/apple/callback`
-4. Copy the **Service ID** to your `.env` as `APPLE_CLIENT_ID`
 
 > **Note:** For production, replace `http://localhost:3000` with your actual domain in all redirect URIs.
 

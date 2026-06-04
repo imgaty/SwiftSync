@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { UDS } from "@/lib/UDS"
 
 export function FindReplaceDialog({
     open,
@@ -41,7 +42,7 @@ export function FindReplaceDialog({
     const [whole, setWhole] = React.useState(false)
 
     const inputCls =
-        "h-8 w-full rounded-lg border border-black/10 bg-white/80 px-2 text-xs outline-none transition-colors focus:border-primary/50 dark:border-white/10 dark:bg-neutral-950/80"
+        `${UDS.inlineSurface} h-8 w-full px-2 text-xs outline-none transition-colors focus:border-primary/50`
 
     const checkbox = (label: string, value: boolean, onChange: (v: boolean) => void) => (
         <label className="flex items-center gap-2 text-[11px] text-neutral-600 dark:text-neutral-400">
@@ -49,7 +50,7 @@ export function FindReplaceDialog({
                 type="checkbox"
                 checked={value}
                 onChange={(e) => onChange(e.target.checked)}
-                className="h-3 w-3 cursor-pointer"
+                className="size-3 cursor-pointer"
             />
             {label}
         </label>
@@ -69,7 +70,7 @@ export function FindReplaceDialog({
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-sm">
-                        <Search className="h-4 w-4" />
+                        <Search className="size-4" />
                         Find &amp; Replace
                     </DialogTitle>
                     <DialogDescription className="text-[11px]">
@@ -92,11 +93,11 @@ export function FindReplaceDialog({
                 </div>
                 <DialogFooter className="gap-2">
                     <Button variant="ghost" size="sm" onClick={handleFindNext}>
-                        <Search className="h-3.5 w-3.5 mr-1.5" />
+                        <Search className="size-3.5 mr-1.5" />
                         Find next
                     </Button>
                     <Button variant="solid" size="sm" onClick={handleReplaceAll}>
-                        <Replace className="h-3.5 w-3.5 mr-1.5" />
+                        <Replace className="size-3.5 mr-1.5" />
                         Replace all
                     </Button>
                 </DialogFooter>

@@ -37,6 +37,10 @@ function getResend() {
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Argent <onboarding@resend.dev>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
 const DEV_TO_EMAIL = process.env.RESEND_DEV_TO_EMAIL?.trim() || '';
+const EMAIL_SQUIRCLE_CARD =
+  '-webkit-clip-path: polygon(4% 0, 96% 0, 98% 0.5%, 99.3% 2%, 99.8% 4%, 100% 8%, 100% 92%, 99.8% 96%, 99.3% 98%, 98% 99.5%, 96% 100%, 4% 100%, 2% 99.5%, 0.7% 98%, 0.2% 96%, 0 92%, 0 8%, 0.2% 4%, 0.7% 2%, 2% 0.5%); clip-path: polygon(4% 0, 96% 0, 98% 0.5%, 99.3% 2%, 99.8% 4%, 100% 8%, 100% 92%, 99.8% 96%, 99.3% 98%, 98% 99.5%, 96% 100%, 4% 100%, 2% 99.5%, 0.7% 98%, 0.2% 96%, 0 92%, 0 8%, 0.2% 4%, 0.7% 2%, 2% 0.5%);';
+const EMAIL_SQUIRCLE_CONTROL =
+  '-webkit-clip-path: polygon(8% 0, 92% 0, 96% 0.8%, 98% 2%, 99.2% 4%, 100% 8%, 100% 92%, 99.2% 96%, 98% 98%, 96% 99.2%, 92% 100%, 8% 100%, 4% 99.2%, 2% 98%, 0.8% 96%, 0 92%, 0 8%, 0.8% 4%, 2% 2%, 4% 0.8%); clip-path: polygon(8% 0, 92% 0, 96% 0.8%, 98% 2%, 99.2% 4%, 100% 8%, 100% 92%, 99.2% 96%, 98% 98%, 96% 99.2%, 92% 100%, 8% 100%, 4% 99.2%, 2% 98%, 0.8% 96%, 0 92%, 0 8%, 0.8% 4%, 2% 2%, 4% 0.8%);';
 
 function resolveRecipient(to: string) {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -113,7 +117,7 @@ export async function sendPasswordResetEmail(
                   <!-- Card -->
                   <tr>
                     <td>
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px; overflow: hidden;">
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; ${EMAIL_SQUIRCLE_CARD} overflow: hidden;">
                         <!-- Content -->
                         <tr>
                           <td style="padding: 40px 36px 36px;">
@@ -128,7 +132,7 @@ export async function sendPasswordResetEmail(
                                 <td align="center">
                                   <table cellpadding="0" cellspacing="0">
                                     <tr>
-                                      <td style="border-radius: 10px; background-color: #18181b;" align="center">
+                                      <td style="${EMAIL_SQUIRCLE_CONTROL} background-color: #18181b;" align="center">
                                         <a href="${resetUrl}" style="display: inline-block; padding: 12px 36px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">
                                           Reset Password
                                         </a>
@@ -207,7 +211,7 @@ export async function send2FACode(to: string, code: string) {
                   <!-- Card -->
                   <tr>
                     <td>
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px; overflow: hidden;">
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; ${EMAIL_SQUIRCLE_CARD} overflow: hidden;">
                         <!-- Content -->
                         <tr>
                           <td style="padding: 40px 36px 36px;">
@@ -220,7 +224,7 @@ export async function send2FACode(to: string, code: string) {
                             <table cellpadding="0" cellspacing="0" style="margin: 0 auto 28px;" width="100%">
                               <tr>
                                 <td align="center">
-                                  <div style="display: inline-block; padding: 16px 40px; background-color: #f4f4f5; border-radius: 10px; font-size: 32px; font-weight: 700; letter-spacing: 0.3em; color: #18181b;">
+                                  <div style="display: inline-block; padding: 16px 40px; background-color: #f4f4f5; ${EMAIL_SQUIRCLE_CONTROL} font-size: 32px; font-weight: 700; letter-spacing: 0.3em; color: #18181b;">
                                     ${code}
                                   </div>
                                 </td>

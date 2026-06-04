@@ -13,6 +13,20 @@
 
 /* ── Default text-link underline animation ──
    Applied to regular links by default, while flex/button-like links are left alone. */
+a[href]:where(:not([data-slot="button"])),
+a[href]:where(:not([data-slot="button"])):visited,
+a[href]:where(:not([data-slot="button"])):hover,
+a[href]:where(:not([data-slot="button"])):focus-visible {
+    color: var(--link-foreground);
+}
+
+.dark a[href]:where(:not([data-slot="button"])),
+.dark a[href]:where(:not([data-slot="button"])):visited,
+.dark a[href]:where(:not([data-slot="button"])):hover,
+.dark a[href]:where(:not([data-slot="button"])):focus-visible {
+    color: var(--link-foreground);
+}
+
 a[href]:where(:not([class*="flex"]):not([class*="inline-flex"]):not([class*="contents"])) {
     position: relative;
     display: inline-block;
@@ -52,7 +66,7 @@ input[type="text"]::-webkit-credentials-auto-fill-button {
     pointer-events: none !important;
 }
 
-/* Fix autofill breaking rounded corners and background colors */
+/* Fix autofill preserving shaped corners and background colors */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -97,8 +111,8 @@ input:not(:-webkit-autofill) {
     --color-surface-elevated: var(--surface-elevated);
     --color-border-strong: var(--border-strong);
     --color-focus: var(--focus);
-    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-    --font-mono: "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --font-sans: "Akt", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: var(--font-geist-mono), "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -183,8 +197,16 @@ input:not(:-webkit-autofill) {
     }
 }
 
+.tabular-nums,
+.font-mono,
+.numeric-text,
+[data-numeric] {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
 :root {
-    background-color: var(--sidebar);
+    background-color: var(--background);
     color-scheme: light;
 
     --argent-bright-grey: #ebedf1;
@@ -195,14 +217,26 @@ input:not(:-webkit-autofill) {
     --argent-reversed-grey: #080808;
 
     --radius: 1.125rem;
-    --corner-shape: squircle;
+    --app-window-radius: 16px;
+    --sq-clip-2: polygon(1.6% 0, 98.4% 0, 98.72% 0.16%, 99.2% 0.4%, 99.6% 0.8%, 99.84% 1.28%, 100% 1.6%, 100% 98.4%, 99.84% 98.72%, 99.6% 99.2%, 99.2% 99.6%, 98.72% 99.84%, 98.4% 100%, 1.6% 100%, 1.28% 99.84%, 0.8% 99.6%, 0.4% 99.2%, 0.16% 98.72%, 0 98.4%, 0 1.6%, 0.16% 1.28%, 0.4% 0.8%, 0.8% 0.4%, 1.28% 0.16%);
+    --sq-clip-4: polygon(2.6% 0, 97.4% 0, 97.92% 0.26%, 98.7% 0.65%, 99.35% 1.3%, 99.74% 2.08%, 100% 2.6%, 100% 97.4%, 99.74% 97.92%, 99.35% 98.7%, 98.7% 99.35%, 97.92% 99.74%, 97.4% 100%, 2.6% 100%, 2.08% 99.74%, 1.3% 99.35%, 0.65% 98.7%, 0.26% 97.92%, 0 97.4%, 0 2.6%, 0.26% 2.08%, 0.65% 1.3%, 1.3% 0.65%, 2.08% 0.26%);
+    --sq-clip-5: polygon(3.2% 0, 96.8% 0, 97.44% 0.32%, 98.4% 0.8%, 99.2% 1.6%, 99.68% 2.56%, 100% 3.2%, 100% 96.8%, 99.68% 97.44%, 99.2% 98.4%, 98.4% 99.2%, 97.44% 99.68%, 96.8% 100%, 3.2% 100%, 2.56% 99.68%, 1.6% 99.2%, 0.8% 98.4%, 0.32% 97.44%, 0 96.8%, 0 3.2%, 0.32% 2.56%, 0.8% 1.6%, 1.6% 0.8%, 2.56% 0.32%);
+    --sq-clip-sm: polygon(4% 0, 96% 0, 96.8% 0.4%, 98% 1%, 99% 2%, 99.6% 3.2%, 100% 4%, 100% 96%, 99.6% 96.8%, 99% 98%, 98% 99%, 96.8% 99.6%, 96% 100%, 4% 100%, 3.2% 99.6%, 2% 99%, 1% 98%, 0.4% 96.8%, 0 96%, 0 4%, 0.4% 3.2%, 1% 2%, 2% 1%, 3.2% 0.4%);
+    --sq-clip-md: polygon(6% 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    --sq-clip-lg: polygon(8% 0, 92% 0, 93.6% 0.8%, 96% 2%, 98% 4%, 99.2% 6.4%, 100% 8%, 100% 92%, 99.2% 93.6%, 98% 96%, 96% 98%, 93.6% 99.2%, 92% 100%, 8% 100%, 6.4% 99.2%, 4% 98%, 2% 96%, 0.8% 93.6%, 0 92%, 0 8%, 0.8% 6.4%, 2% 4%, 4% 2%, 6.4% 0.8%);
+    --sq-clip: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    --sq-clip-2xl: polygon(12% 0, 88% 0, 90.4% 1.2%, 94% 3%, 97% 6%, 98.8% 9.6%, 100% 12%, 100% 88%, 98.8% 90.4%, 97% 94%, 94% 97%, 90.4% 98.8%, 88% 100%, 12% 100%, 9.6% 98.8%, 6% 97%, 3% 94%, 1.2% 90.4%, 0 88%, 0 12%, 1.2% 9.6%, 3% 6%, 6% 3%, 9.6% 1.2%);
+    --sq-clip-full: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    --sq-left-clip: polygon(6% 0, 100% 0, 100% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    --sq-right-clip: polygon(0 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 0 100%);
     --background: #ffffff;
     --foreground: var(--argent-reversed-grey);
     --foreground-secondary: var(--argent-smoked-pearl);
     --surface-subtle: #f8f8f8;
     --surface: #f3f3f3;
     --surface-elevated: #fafafa;
-    --card: var(--surface);
+    --card: rgb(235 235 235 / 0.58);
+    --card-hover: rgb(224 224 224 / 0.70);
     --card-foreground: var(--foreground);
     --popover: color-mix(in srgb, var(--surface-elevated) 86%, transparent);
     --popover-foreground: var(--foreground);
@@ -214,12 +248,14 @@ input:not(:-webkit-autofill) {
     --muted-foreground: var(--argent-smoked-pearl);
     --accent: var(--surface);
     --accent-foreground: var(--argent-reversed-grey);
+    --link-foreground: #000000;
     --destructive: rgba(220, 53, 53, 1);
     --success: rgba(34, 197, 94, 1);
     --success-foreground: rgba(255, 255, 255, 1);
+    --neutral-border: rgb(8 8 8 / 0.08);
     --border: color-mix(in srgb, var(--argent-smoked-pearl) 18%, transparent);
     --border-strong: color-mix(in srgb, var(--argent-smoked-pearl) 32%, transparent);
-    --input: color-mix(in srgb, var(--argent-smoked-pearl) 24%, transparent);
+    --input: var(--border);
     --ring: color-mix(in srgb, var(--argent-jet-black) 40%, transparent);
     --focus: color-mix(in srgb, var(--argent-reversed-grey) 68%, transparent);
     --shadow-subtle: 0 1px 2px rgba(8, 8, 8, 0.05), 0 16px 44px rgba(8, 8, 8, 0.06);
@@ -227,6 +263,30 @@ input:not(:-webkit-autofill) {
     --selection-background: color-mix(in srgb, var(--foreground) 32%, transparent);
     --selection-background-strong: color-mix(in srgb, var(--foreground) 46%, transparent);
     --selection-foreground: var(--background);
+    --selection-cell-background: rgba(8, 8, 8, 0.09);
+    --selection-cell-background-hover: rgba(8, 8, 8, 0.13);
+    --selection-cell-border: rgba(8, 8, 8, 0.025);
+    --selection-cell-highlight: none;
+    --sq-border-width: 1px;
+    --sq-border-rgb: 8 8 8;
+    --sq-border-highlight-rgb: 255 255 255;
+    --sq-border-shadow-rgb: 8 8 8;
+    --sq-border-color: rgb(var(--sq-border-rgb));
+    --sq-border-highlight-color: rgb(var(--sq-border-highlight-rgb));
+    --sq-border-shadow-color: rgb(var(--sq-border-shadow-rgb));
+    --sq-border-muted-opacity: 0.06;
+    --sq-border-soft-opacity: 0.08;
+    --sq-border-strong-opacity: 0.12;
+    --sq-border-muted-highlight-opacity: 0.18;
+    --sq-border-soft-highlight-opacity: 0.28;
+    --sq-border-strong-highlight-opacity: 0.42;
+    --sq-border-muted-shadow-opacity: 0.06;
+    --sq-border-soft-shadow-opacity: 0.10;
+    --sq-border-strong-shadow-opacity: 0.18;
+    --sq-border-opacity: var(--sq-border-soft-opacity);
+    --sq-border-highlight-opacity: var(--sq-border-soft-highlight-opacity);
+    --sq-border-shadow-opacity: var(--sq-border-soft-shadow-opacity);
+    --sq-border-glass-opacity: 0.82;
     --chart-1: rgba(232, 121, 59, 1);
     --chart-2: rgba(42, 157, 143, 1);
     --chart-3: rgba(38, 70, 83, 1);
@@ -270,7 +330,8 @@ input:not(:-webkit-autofill) {
     --surface-subtle: color-mix(in srgb, var(--argent-reversed-grey) 96%, var(--argent-jet-black));
     --surface: color-mix(in srgb, var(--argent-reversed-grey) 94%, var(--argent-jet-black));
     --surface-elevated: color-mix(in srgb, var(--argent-reversed-grey) 90%, var(--argent-jet-black));
-    --card: color-mix(in srgb, var(--background) 97%, var(--foreground));
+    --card: rgb(6 6 6 / 0.62);
+    --card-hover: rgb(14 14 14 / 0.72);
     --card-foreground: var(--foreground);
     --popover: var(--surface-elevated);
     --popover-foreground: var(--foreground);
@@ -282,10 +343,12 @@ input:not(:-webkit-autofill) {
     --muted-foreground: var(--argent-grey-timber-wolf);
     --accent: var(--surface-elevated);
     --accent-foreground: var(--argent-bright-grey);
+    --link-foreground: #ffffff;
     --destructive: rgba(239, 68, 68, 1);
+    --neutral-border: rgb(232 232 232 / 0.12);
     --border: color-mix(in srgb, var(--argent-bright-grey) 13%, transparent);
     --border-strong: color-mix(in srgb, var(--argent-bright-grey) 24%, transparent);
-    --input: color-mix(in srgb, var(--argent-bright-grey) 18%, transparent);
+    --input: var(--border);
     --ring: color-mix(in srgb, var(--argent-grey-timber-wolf) 42%, transparent);
     --focus: color-mix(in srgb, var(--argent-bright-grey) 72%, transparent);
     --shadow-subtle: 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 46px rgba(0, 0, 0, 0.35);
@@ -293,6 +356,26 @@ input:not(:-webkit-autofill) {
     --selection-background: color-mix(in srgb, var(--foreground) 34%, transparent);
     --selection-background-strong: color-mix(in srgb, var(--foreground) 50%, transparent);
     --selection-foreground: var(--background);
+    --selection-cell-background: rgba(232, 232, 232, 0.16);
+    --selection-cell-background-hover: rgba(232, 232, 232, 0.22);
+    --selection-cell-border: rgba(232, 232, 232, 0.035);
+    --selection-cell-highlight: none;
+    --sq-border-rgb: 232 232 232;
+    --sq-border-highlight-rgb: 255 255 255;
+    --sq-border-shadow-rgb: 0 0 0;
+    --sq-border-color: rgb(var(--sq-border-rgb));
+    --sq-border-highlight-color: rgb(var(--sq-border-highlight-rgb));
+    --sq-border-shadow-color: rgb(var(--sq-border-shadow-rgb));
+    --sq-border-muted-opacity: 0.08;
+    --sq-border-soft-opacity: 0.16;
+    --sq-border-strong-opacity: 0.22;
+    --sq-border-muted-highlight-opacity: 0.08;
+    --sq-border-soft-highlight-opacity: 0.13;
+    --sq-border-strong-highlight-opacity: 0.22;
+    --sq-border-muted-shadow-opacity: 0.11;
+    --sq-border-soft-shadow-opacity: 0.18;
+    --sq-border-strong-shadow-opacity: 0.30;
+    --sq-border-glass-opacity: 0.88;
     --chart-1: rgba(99, 102, 241, 1);
     --chart-2: rgba(52, 211, 153, 1);
     --chart-3: rgba(251, 191, 36, 1);
@@ -306,17 +389,22 @@ input:not(:-webkit-autofill) {
     --sidebar-accent-foreground: var(--foreground);
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
-    --spotlight-rgb: 147 197 253;
+    --spotlight-rgb: 232 232 232;
 
 }
 
 @layer base {
     * {
+        --sq-base-r: 0px;
+        --sq-r: var(--sq-measured-r, var(--sq-base-r));
+        --sq-q: 0.6;
+        --sq-scale: 0;
+        --sq-growth-damping: 420;
         @apply border-border outline-ring/50;
     }
 
-    :where(svg.lucide, svg[fill="none"][stroke="currentColor"], svg[data-rounded-icon]),
-    :where(svg.lucide, svg[fill="none"][stroke="currentColor"], svg[data-rounded-icon]) :where(path, line, polyline, polygon, circle, rect) {
+    :where(svg.lucide, svg[fill="none"][stroke="currentColor"], svg[data-line-icon]),
+    :where(svg.lucide, svg[fill="none"][stroke="currentColor"], svg[data-line-icon]) :where(path, line, polyline, polygon, circle, rect) {
         stroke-linecap: round;
         stroke-linejoin: round;
         shape-rendering: geometricPrecision;
@@ -324,17 +412,498 @@ input:not(:-webkit-autofill) {
 
     body {
         @apply bg-background text-foreground font-sans;
+        background-color: var(--background);
     }
 }
 
-@layer base {
-    @supports (corner-shape: squircle) {
-        *,
-        *::before,
-        *::after {
-            corner-shape: var(--corner-shape);
-        }
+@utility sq-2 {
+    --sq-base-r: 3px;
+    --sq-q: 0.6;
+    --sq-scale: 0.002;
+    --sq-p: 1.6%;
+    --sq-a: 0.16%;
+    --sq-b: 0.4%;
+    --sq-c: 0.8%;
+    --sq-d: 1.28%;
+    -webkit-clip-path: polygon(1.6% 0, 98.4% 0, 98.72% 0.16%, 99.2% 0.4%, 99.6% 0.8%, 99.84% 1.28%, 100% 1.6%, 100% 98.4%, 99.84% 98.72%, 99.6% 99.2%, 99.2% 99.6%, 98.72% 99.84%, 98.4% 100%, 1.6% 100%, 1.28% 99.84%, 0.8% 99.6%, 0.4% 99.2%, 0.16% 98.72%, 0 98.4%, 0 1.6%, 0.16% 1.28%, 0.4% 0.8%, 0.8% 0.4%, 1.28% 0.16%);
+    clip-path: polygon(1.6% 0, 98.4% 0, 98.72% 0.16%, 99.2% 0.4%, 99.6% 0.8%, 99.84% 1.28%, 100% 1.6%, 100% 98.4%, 99.84% 98.72%, 99.6% 99.2%, 99.2% 99.6%, 98.72% 99.84%, 98.4% 100%, 1.6% 100%, 1.28% 99.84%, 0.8% 99.6%, 0.4% 99.2%, 0.16% 98.72%, 0 98.4%, 0 1.6%, 0.16% 1.28%, 0.4% 0.8%, 0.8% 0.4%, 1.28% 0.16%);
+    clip-path: shape(from 3px 0, hline to calc(100% - 3px), curve to 100% 3px with calc(100% - 1px) 0 / 100% 1px, vline to calc(100% - 3px), curve to calc(100% - 3px) 100% with 100% calc(100% - 1px) / calc(100% - 1px) 100%, hline to 3px, curve to 0 calc(100% - 3px) with 1px 100% / 0 calc(100% - 1px), vline to 3px, curve to 3px 0 with 0 1px / 1px 0, close);
+}
+
+@utility sq-4 {
+    --sq-base-r: 4px;
+    --sq-q: 0.6;
+    --sq-scale: 0.003;
+    --sq-p: 2.6%;
+    --sq-a: 0.26%;
+    --sq-b: 0.65%;
+    --sq-c: 1.3%;
+    --sq-d: 2.08%;
+    -webkit-clip-path: polygon(2.6% 0, 97.4% 0, 97.92% 0.26%, 98.7% 0.65%, 99.35% 1.3%, 99.74% 2.08%, 100% 2.6%, 100% 97.4%, 99.74% 97.92%, 99.35% 98.7%, 98.7% 99.35%, 97.92% 99.74%, 97.4% 100%, 2.6% 100%, 2.08% 99.74%, 1.3% 99.35%, 0.65% 98.7%, 0.26% 97.92%, 0 97.4%, 0 2.6%, 0.26% 2.08%, 0.65% 1.3%, 1.3% 0.65%, 2.08% 0.26%);
+    clip-path: polygon(2.6% 0, 97.4% 0, 97.92% 0.26%, 98.7% 0.65%, 99.35% 1.3%, 99.74% 2.08%, 100% 2.6%, 100% 97.4%, 99.74% 97.92%, 99.35% 98.7%, 98.7% 99.35%, 97.92% 99.74%, 97.4% 100%, 2.6% 100%, 2.08% 99.74%, 1.3% 99.35%, 0.65% 98.7%, 0.26% 97.92%, 0 97.4%, 0 2.6%, 0.26% 2.08%, 0.65% 1.3%, 1.3% 0.65%, 2.08% 0.26%);
+    clip-path: shape(from 4px 0, hline to calc(100% - 4px), curve to 100% 4px with calc(100% - 2px) 0 / 100% 2px, vline to calc(100% - 4px), curve to calc(100% - 4px) 100% with 100% calc(100% - 2px) / calc(100% - 2px) 100%, hline to 4px, curve to 0 calc(100% - 4px) with 2px 100% / 0 calc(100% - 2px), vline to 4px, curve to 4px 0 with 0 2px / 2px 0, close);
+}
+
+@utility sq-5 {
+    --sq-base-r: 5px;
+    --sq-q: 0.6;
+    --sq-scale: 0.004;
+    --sq-p: 3.2%;
+    --sq-a: 0.32%;
+    --sq-b: 0.8%;
+    --sq-c: 1.6%;
+    --sq-d: 2.56%;
+    -webkit-clip-path: polygon(3.2% 0, 96.8% 0, 97.44% 0.32%, 98.4% 0.8%, 99.2% 1.6%, 99.68% 2.56%, 100% 3.2%, 100% 96.8%, 99.68% 97.44%, 99.2% 98.4%, 98.4% 99.2%, 97.44% 99.68%, 96.8% 100%, 3.2% 100%, 2.56% 99.68%, 1.6% 99.2%, 0.8% 98.4%, 0.32% 97.44%, 0 96.8%, 0 3.2%, 0.32% 2.56%, 0.8% 1.6%, 1.6% 0.8%, 2.56% 0.32%);
+    clip-path: polygon(3.2% 0, 96.8% 0, 97.44% 0.32%, 98.4% 0.8%, 99.2% 1.6%, 99.68% 2.56%, 100% 3.2%, 100% 96.8%, 99.68% 97.44%, 99.2% 98.4%, 98.4% 99.2%, 97.44% 99.68%, 96.8% 100%, 3.2% 100%, 2.56% 99.68%, 1.6% 99.2%, 0.8% 98.4%, 0.32% 97.44%, 0 96.8%, 0 3.2%, 0.32% 2.56%, 0.8% 1.6%, 1.6% 0.8%, 2.56% 0.32%);
+    clip-path: shape(from 5px 0, hline to calc(100% - 5px), curve to 100% 5px with calc(100% - 2px) 0 / 100% 2px, vline to calc(100% - 5px), curve to calc(100% - 5px) 100% with 100% calc(100% - 2px) / calc(100% - 2px) 100%, hline to 5px, curve to 0 calc(100% - 5px) with 2px 100% / 0 calc(100% - 2px), vline to 5px, curve to 5px 0 with 0 2px / 2px 0, close);
+}
+
+@utility sq {
+    --sq-base-r: 8px;
+    --sq-q: 0.6;
+    --sq-scale: 0.006;
+    --sq-p: 6%;
+    --sq-a: 0.6%;
+    --sq-b: 1.5%;
+    --sq-c: 3%;
+    --sq-d: 4.8%;
+    -webkit-clip-path: polygon(6% 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    clip-path: polygon(6% 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    clip-path: shape(from 8px 0, hline to calc(100% - 8px), curve to 100% 8px with calc(100% - 3px) 0 / 100% 3px, vline to calc(100% - 8px), curve to calc(100% - 8px) 100% with 100% calc(100% - 3px) / calc(100% - 3px) 100%, hline to 8px, curve to 0 calc(100% - 8px) with 3px 100% / 0 calc(100% - 3px), vline to 8px, curve to 8px 0 with 0 3px / 3px 0, close);
+}
+
+@utility sq-md {
+    --sq-base-r: 8px;
+    --sq-q: 0.6;
+    --sq-scale: 0.006;
+    --sq-p: 6%;
+    --sq-a: 0.6%;
+    --sq-b: 1.5%;
+    --sq-c: 3%;
+    --sq-d: 4.8%;
+    -webkit-clip-path: polygon(6% 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    clip-path: polygon(6% 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    clip-path: shape(from 8px 0, hline to calc(100% - 8px), curve to 100% 8px with calc(100% - 3px) 0 / 100% 3px, vline to calc(100% - 8px), curve to calc(100% - 8px) 100% with 100% calc(100% - 3px) / calc(100% - 3px) 100%, hline to 8px, curve to 0 calc(100% - 8px) with 3px 100% / 0 calc(100% - 3px), vline to 8px, curve to 8px 0 with 0 3px / 3px 0, close);
+}
+
+@utility sq-sm {
+    --sq-base-r: 6px;
+    --sq-q: 0.6;
+    --sq-scale: 0.005;
+    --sq-p: 4%;
+    --sq-a: 0.4%;
+    --sq-b: 1%;
+    --sq-c: 2%;
+    --sq-d: 3.2%;
+    -webkit-clip-path: polygon(4% 0, 96% 0, 96.8% 0.4%, 98% 1%, 99% 2%, 99.6% 3.2%, 100% 4%, 100% 96%, 99.6% 96.8%, 99% 98%, 98% 99%, 96.8% 99.6%, 96% 100%, 4% 100%, 3.2% 99.6%, 2% 99%, 1% 98%, 0.4% 96.8%, 0 96%, 0 4%, 0.4% 3.2%, 1% 2%, 2% 1%, 3.2% 0.4%);
+    clip-path: polygon(4% 0, 96% 0, 96.8% 0.4%, 98% 1%, 99% 2%, 99.6% 3.2%, 100% 4%, 100% 96%, 99.6% 96.8%, 99% 98%, 98% 99%, 96.8% 99.6%, 96% 100%, 4% 100%, 3.2% 99.6%, 2% 99%, 1% 98%, 0.4% 96.8%, 0 96%, 0 4%, 0.4% 3.2%, 1% 2%, 2% 1%, 3.2% 0.4%);
+    clip-path: shape(from 6px 0, hline to calc(100% - 6px), curve to 100% 6px with calc(100% - 2px) 0 / 100% 2px, vline to calc(100% - 6px), curve to calc(100% - 6px) 100% with 100% calc(100% - 2px) / calc(100% - 2px) 100%, hline to 6px, curve to 0 calc(100% - 6px) with 2px 100% / 0 calc(100% - 2px), vline to 6px, curve to 6px 0 with 0 2px / 2px 0, close);
+}
+
+@utility sq-lg {
+    --sq-base-r: 10px;
+    --sq-q: 0.6;
+    --sq-scale: 0.008;
+    --sq-p: 8%;
+    --sq-a: 0.8%;
+    --sq-b: 2%;
+    --sq-c: 4%;
+    --sq-d: 6.4%;
+    -webkit-clip-path: polygon(8% 0, 92% 0, 93.6% 0.8%, 96% 2%, 98% 4%, 99.2% 6.4%, 100% 8%, 100% 92%, 99.2% 93.6%, 98% 96%, 96% 98%, 93.6% 99.2%, 92% 100%, 8% 100%, 6.4% 99.2%, 4% 98%, 2% 96%, 0.8% 93.6%, 0 92%, 0 8%, 0.8% 6.4%, 2% 4%, 4% 2%, 6.4% 0.8%);
+    clip-path: polygon(8% 0, 92% 0, 93.6% 0.8%, 96% 2%, 98% 4%, 99.2% 6.4%, 100% 8%, 100% 92%, 99.2% 93.6%, 98% 96%, 96% 98%, 93.6% 99.2%, 92% 100%, 8% 100%, 6.4% 99.2%, 4% 98%, 2% 96%, 0.8% 93.6%, 0 92%, 0 8%, 0.8% 6.4%, 2% 4%, 4% 2%, 6.4% 0.8%);
+    clip-path: shape(from 10px 0, hline to calc(100% - 10px), curve to 100% 10px with calc(100% - 4px) 0 / 100% 4px, vline to calc(100% - 10px), curve to calc(100% - 10px) 100% with 100% calc(100% - 4px) / calc(100% - 4px) 100%, hline to 10px, curve to 0 calc(100% - 10px) with 4px 100% / 0 calc(100% - 4px), vline to 10px, curve to 10px 0 with 0 4px / 4px 0, close);
+}
+
+@utility sq-10 {
+    --sq-base-r: 12px;
+    --sq-q: 0.6;
+    --sq-scale: 0.011;
+    --sq-p: 10%;
+    --sq-a: 1%;
+    --sq-b: 2.5%;
+    --sq-c: 5%;
+    --sq-d: 8%;
+    -webkit-clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: shape(from 12px 0, hline to calc(100% - 12px), curve to 100% 12px with calc(100% - 5px) 0 / 100% 5px, vline to calc(100% - 12px), curve to calc(100% - 12px) 100% with 100% calc(100% - 5px) / calc(100% - 5px) 100%, hline to 12px, curve to 0 calc(100% - 12px) with 5px 100% / 0 calc(100% - 5px), vline to 12px, curve to 12px 0 with 0 5px / 5px 0, close);
+}
+
+@utility sq-xl {
+    --sq-base-r: 14px;
+    --sq-q: 0.6;
+    --sq-scale: 0.014;
+    --sq-p: 10%;
+    --sq-a: 1%;
+    --sq-b: 2.5%;
+    --sq-c: 5%;
+    --sq-d: 8%;
+    -webkit-clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: shape(from 14px 0, hline to calc(100% - 14px), curve to 100% 14px with calc(100% - 5px) 0 / 100% 5px, vline to calc(100% - 14px), curve to calc(100% - 14px) 100% with 100% calc(100% - 5px) / calc(100% - 5px) 100%, hline to 14px, curve to 0 calc(100% - 14px) with 5px 100% / 0 calc(100% - 5px), vline to 14px, curve to 14px 0 with 0 5px / 5px 0, close);
+}
+
+@utility sq-12 {
+    --sq-base-r: 16px;
+    --sq-q: 0.6;
+    --sq-scale: 0.016;
+    --sq-p: 12%;
+    --sq-a: 1.2%;
+    --sq-b: 3%;
+    --sq-c: 6%;
+    --sq-d: 9.6%;
+    -webkit-clip-path: polygon(12% 0, 88% 0, 90.4% 1.2%, 94% 3%, 97% 6%, 98.8% 9.6%, 100% 12%, 100% 88%, 98.8% 90.4%, 97% 94%, 94% 97%, 90.4% 98.8%, 88% 100%, 12% 100%, 9.6% 98.8%, 6% 97%, 3% 94%, 1.2% 90.4%, 0 88%, 0 12%, 1.2% 9.6%, 3% 6%, 6% 3%, 9.6% 1.2%);
+    clip-path: polygon(12% 0, 88% 0, 90.4% 1.2%, 94% 3%, 97% 6%, 98.8% 9.6%, 100% 12%, 100% 88%, 98.8% 90.4%, 97% 94%, 94% 97%, 90.4% 98.8%, 88% 100%, 12% 100%, 9.6% 98.8%, 6% 97%, 3% 94%, 1.2% 90.4%, 0 88%, 0 12%, 1.2% 9.6%, 3% 6%, 6% 3%, 9.6% 1.2%);
+    clip-path: shape(from 16px 0, hline to calc(100% - 16px), curve to 100% 16px with calc(100% - 6px) 0 / 100% 6px, vline to calc(100% - 16px), curve to calc(100% - 16px) 100% with 100% calc(100% - 6px) / calc(100% - 6px) 100%, hline to 16px, curve to 0 calc(100% - 16px) with 6px 100% / 0 calc(100% - 6px), vline to 16px, curve to 16px 0 with 0 6px / 6px 0, close);
+}
+
+@utility sq-2xl {
+    --sq-base-r: 16px;
+    --sq-q: 0.6;
+    --sq-scale: 0.016;
+    --sq-p: 12%;
+    --sq-a: 1.2%;
+    --sq-b: 3%;
+    --sq-c: 6%;
+    --sq-d: 9.6%;
+    -webkit-clip-path: polygon(12% 0, 88% 0, 90.4% 1.2%, 94% 3%, 97% 6%, 98.8% 9.6%, 100% 12%, 100% 88%, 98.8% 90.4%, 97% 94%, 94% 97%, 90.4% 98.8%, 88% 100%, 12% 100%, 9.6% 98.8%, 6% 97%, 3% 94%, 1.2% 90.4%, 0 88%, 0 12%, 1.2% 9.6%, 3% 6%, 6% 3%, 9.6% 1.2%);
+    clip-path: polygon(12% 0, 88% 0, 90.4% 1.2%, 94% 3%, 97% 6%, 98.8% 9.6%, 100% 12%, 100% 88%, 98.8% 90.4%, 97% 94%, 94% 97%, 90.4% 98.8%, 88% 100%, 12% 100%, 9.6% 98.8%, 6% 97%, 3% 94%, 1.2% 90.4%, 0 88%, 0 12%, 1.2% 9.6%, 3% 6%, 6% 3%, 9.6% 1.2%);
+    clip-path: shape(from 16px 0, hline to calc(100% - 16px), curve to 100% 16px with calc(100% - 6px) 0 / 100% 6px, vline to calc(100% - 16px), curve to calc(100% - 16px) 100% with 100% calc(100% - 6px) / calc(100% - 6px) 100%, hline to 16px, curve to 0 calc(100% - 16px) with 6px 100% / 0 calc(100% - 6px), vline to 16px, curve to 16px 0 with 0 6px / 6px 0, close);
+}
+
+@utility sq-radius-plus {
+    --sq-base-r: 16px;
+    --sq-q: 0.6;
+    --sq-scale: 0.016;
+    --sq-p: 12%;
+    --sq-a: 1.2%;
+    --sq-b: 3%;
+    --sq-c: 6%;
+    --sq-d: 9.6%;
+    -webkit-clip-path: polygon(12% 0, 88% 0, 90.4% 1.2%, 94% 3%, 97% 6%, 98.8% 9.6%, 100% 12%, 100% 88%, 98.8% 90.4%, 97% 94%, 94% 97%, 90.4% 98.8%, 88% 100%, 12% 100%, 9.6% 98.8%, 6% 97%, 3% 94%, 1.2% 90.4%, 0 88%, 0 12%, 1.2% 9.6%, 3% 6%, 6% 3%, 9.6% 1.2%);
+    clip-path: polygon(12% 0, 88% 0, 90.4% 1.2%, 94% 3%, 97% 6%, 98.8% 9.6%, 100% 12%, 100% 88%, 98.8% 90.4%, 97% 94%, 94% 97%, 90.4% 98.8%, 88% 100%, 12% 100%, 9.6% 98.8%, 6% 97%, 3% 94%, 1.2% 90.4%, 0 88%, 0 12%, 1.2% 9.6%, 3% 6%, 6% 3%, 9.6% 1.2%);
+    clip-path: shape(from 16px 0, hline to calc(100% - 16px), curve to 100% 16px with calc(100% - 6px) 0 / 100% 6px, vline to calc(100% - 16px), curve to calc(100% - 16px) 100% with 100% calc(100% - 6px) / calc(100% - 6px) 100%, hline to 16px, curve to 0 calc(100% - 16px) with 6px 100% / 0 calc(100% - 6px), vline to 16px, curve to 16px 0 with 0 6px / 6px 0, close);
+}
+
+@utility sq-full {
+    --sq-base-r: 9999px;
+    --sq-q: 1;
+    --sq-scale: 0;
+    --sq-p: 50%;
+    --sq-a: 5%;
+    --sq-b: 14%;
+    --sq-c: 30%;
+    --sq-d: 45%;
+    -webkit-clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: shape(from 50% 0, curve to 100% 50% with 78% 0 / 100% 22%, curve to 50% 100% with 100% 78% / 78% 100%, curve to 0 50% with 22% 100% / 0 78%, curve to 50% 0 with 0 22% / 22% 0, close);
+}
+
+@utility sq-l-md {
+    --sq-base-r: 0px;
+    --sq-q: 0.6;
+    --sq-p: 6%;
+    --sq-a: 0.6%;
+    --sq-b: 1.5%;
+    --sq-c: 3%;
+    --sq-d: 4.8%;
+    -webkit-clip-path: polygon(6% 0, 100% 0, 100% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    clip-path: polygon(6% 0, 100% 0, 100% 100%, 6% 100%, 4.8% 99.4%, 3% 98.5%, 1.5% 97%, 0.6% 95.2%, 0 94%, 0 6%, 0.6% 4.8%, 1.5% 3%, 3% 1.5%, 4.8% 0.6%);
+    clip-path: shape(from 8px 0, hline to 100%, vline to 100%, hline to 8px, curve to 0 calc(100% - 8px) with 3px 100% / 0 calc(100% - 3px), vline to 8px, curve to 8px 0 with 0 3px / 3px 0, close);
+}
+
+@utility sq-r-md {
+    --sq-base-r: 0px;
+    --sq-q: 0.6;
+    --sq-p: 6%;
+    --sq-a: 0.6%;
+    --sq-b: 1.5%;
+    --sq-c: 3%;
+    --sq-d: 4.8%;
+    -webkit-clip-path: polygon(0 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 0 100%);
+    clip-path: polygon(0 0, 94% 0, 95.2% 0.6%, 97% 1.5%, 98.5% 3%, 99.4% 4.8%, 100% 6%, 100% 94%, 99.4% 95.2%, 98.5% 97%, 97% 98.5%, 95.2% 99.4%, 94% 100%, 0 100%);
+    clip-path: shape(from 0 0, hline to calc(100% - 8px), curve to 100% 8px with calc(100% - 3px) 0 / 100% 3px, vline to calc(100% - 8px), curve to calc(100% - 8px) 100% with 100% calc(100% - 3px) / calc(100% - 3px) 100%, hline to 0, close);
+}
+
+@utility sq-none {
+    --sq-base-r: 0px;
+    --sq-scale: 0;
+    --sq-measured-r: 0px;
+    -webkit-clip-path: none;
+    clip-path: none;
+}
+
+@utility sq-overflow-visible {
+    overflow: visible !important;
+    -webkit-clip-path: none !important;
+    clip-path: none !important;
+}
+
+:where(
+    .sq-overflow-visible,
+    .overflow-visible:is(
+        .squircle-surface,
+        [data-squircle],
+        .sq,
+        .sq-2,
+        .sq-4,
+        .sq-5,
+        .sq-sm,
+        .sq-md,
+        .sq-lg,
+        .sq-10,
+        .sq-xl,
+        .sq-12,
+        .sq-2xl,
+        .sq-radius-plus,
+        .sq-full,
+        .sq-l-md,
+        .sq-r-md
+    ),
+    :is([data-slot="alert"], [data-slot="badge"], [data-slot="button"]):has(> .absolute)
+) {
+    overflow: visible !important;
+    -webkit-clip-path: none !important;
+    clip-path: none !important;
+}
+
+@utility sq-border-muted {
+    --sq-border-opacity: var(--sq-border-muted-opacity);
+    --sq-border-highlight-opacity: var(--sq-border-muted-highlight-opacity);
+    --sq-border-shadow-opacity: var(--sq-border-muted-shadow-opacity);
+    --sq-border-glass-opacity: 0.82;
+    border-style: solid;
+    border-width: var(--sq-border-width);
+    border-color: transparent !important;
+}
+
+@utility sq-border-soft {
+    --sq-border-opacity: var(--sq-border-soft-opacity);
+    --sq-border-highlight-opacity: var(--sq-border-soft-highlight-opacity);
+    --sq-border-shadow-opacity: var(--sq-border-soft-shadow-opacity);
+    --sq-border-glass-opacity: 0.88;
+    border-style: solid;
+    border-width: var(--sq-border-width);
+    border-color: transparent !important;
+}
+
+@utility sq-border-strong {
+    --sq-border-opacity: var(--sq-border-strong-opacity);
+    --sq-border-highlight-opacity: var(--sq-border-strong-highlight-opacity);
+    --sq-border-shadow-opacity: var(--sq-border-strong-shadow-opacity);
+    --sq-border-glass-opacity: 0.96;
+    border-style: solid;
+    border-width: var(--sq-border-width);
+    border-color: transparent !important;
+}
+
+@utility sq-border-none {
+    --sq-border-opacity: 0;
+    --sq-border-highlight-opacity: 0;
+    --sq-border-shadow-opacity: 0;
+    --sq-border-glass-opacity: 0;
+    border-color: transparent !important;
+}
+
+:where(.squircle-surface) {
+    --sq-base-r: 16px;
+    --sq-q: 0.6;
+    --sq-scale: 0.016;
+    --sq-p: 10%;
+    --sq-a: 1%;
+    --sq-b: 2.5%;
+    --sq-c: 5%;
+    --sq-d: 8%;
+    -webkit-clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: shape(from 16px 0, hline to calc(100% - 16px), curve to 100% 16px with calc(100% - 6px) 0 / 100% 6px, vline to calc(100% - 16px), curve to calc(100% - 16px) 100% with 100% calc(100% - 6px) / calc(100% - 6px) 100%, hline to 16px, curve to 0 calc(100% - 16px) with 6px 100% / 0 calc(100% - 6px), vline to 16px, curve to 16px 0 with 0 6px / 6px 0, close);
+}
+
+.squircle-surface.sq-full {
+    --sq-base-r: 9999px;
+    --sq-q: 1;
+    --sq-scale: 0;
+    -webkit-clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: shape(from 50% 0, curve to 100% 50% with 78% 0 / 100% 22%, curve to 50% 100% with 100% 78% / 78% 100%, curve to 0 50% with 22% 100% / 0 78%, curve to 50% 0 with 0 22% / 22% 0, close);
+}
+
+:where(.squircle-surface)::before,
+:where(.squircle-surface)::after {
+    -webkit-clip-path: inherit;
+    clip-path: inherit;
+}
+
+:where(
+    .squircle-surface,
+    [data-squircle],
+    .sq,
+    .sq-2,
+    .sq-4,
+    .sq-5,
+    .sq-sm,
+    .sq-md,
+    .sq-lg,
+    .sq-10,
+    .sq-xl,
+    .sq-12,
+    .sq-2xl,
+    .sq-radius-plus,
+    .sq-full,
+    .sq-l-md,
+    .sq-r-md,
+    .toaster [data-sonner-toast],
+    [class*="*:sq-"] > *
+) {
+    border-radius: var(--sq-r);
+    background-clip: padding-box;
+}
+
+:where(.sq-l-md) {
+    --sq-base-r: 8px;
+    --sq-scale: 0.01;
+    border-radius: var(--sq-r) 0 0 var(--sq-r);
+}
+
+:where(.sq-r-md) {
+    --sq-base-r: 8px;
+    --sq-scale: 0.01;
+    border-radius: 0 var(--sq-r) var(--sq-r) 0;
+}
+
+:where(.sq-none) {
+    --sq-base-r: 0px;
+    --sq-scale: 0;
+    --sq-measured-r: 0px;
+    border-radius: 0;
+    border-color: transparent !important;
+    border-width: 0;
+}
+
+@supports (corner-shape: squircle) {
+    :is(
+        .squircle-surface,
+        [data-squircle],
+        [data-slot="alert"],
+        [data-slot="badge"],
+        [data-slot="button"],
+        [data-slot="card"],
+        [data-slot="checkbox"],
+        [data-slot="command"],
+        [data-slot="context-menu-content"],
+        [data-slot="context-menu-sub-content"],
+        [data-slot="dialog-content"],
+        [data-slot="dropdown-menu-content"],
+        [data-slot="input"],
+        [data-slot="input-otp-slot"],
+        [data-slot="popover-content"],
+        [data-slot="select-content"],
+        [data-slot="select-trigger"],
+        [data-slot="sheet-content"],
+        [data-slot="skeleton"],
+        [data-slot="switch"],
+        [data-slot="tabs-list"],
+        [data-slot="tabs-trigger"],
+        [data-slot="table-shell"],
+        [data-slot="tooltip-content"],
+        [data-slot="textarea"],
+        .sq,
+        .sq-2,
+        .sq-4,
+        .sq-5,
+        .sq-sm,
+        .sq-md,
+        .sq-lg,
+        .sq-10,
+        .sq-xl,
+        .sq-12,
+        .sq-2xl,
+        .sq-radius-plus,
+        .sq-l-md,
+        .sq-r-md,
+        .toaster [data-sonner-toast],
+        [class*="*:sq-"] > *
+    ) {
+        -webkit-clip-path: none;
+        clip-path: none;
+        corner-shape: squircle;
     }
+
+    :is(
+        .sq-full,
+        .squircle-surface.sq-full,
+        [data-squircle].sq-full,
+        [class*="*:sq-full"] > *
+    ) {
+        -webkit-clip-path: none;
+        clip-path: none;
+        corner-shape: round;
+    }
+}
+
+:where(
+    [data-slot="alert"],
+    [data-slot="badge"],
+    [data-slot="button"],
+    [data-slot="card"],
+    [data-slot="checkbox"],
+    [data-slot="command"],
+    [data-slot="context-menu-content"],
+    [data-slot="context-menu-sub-content"],
+    [data-slot="dialog-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="input"],
+    [data-slot="input-otp-slot"],
+    [data-slot="popover-content"],
+    [data-slot="select-content"],
+    [data-slot="select-trigger"],
+    [data-slot="sheet-content"],
+    [data-slot="skeleton"],
+    [data-slot="switch"],
+    [data-slot="tabs-list"],
+    [data-slot="tabs-trigger"],
+    [data-slot="table-shell"],
+    [data-slot="tooltip-content"],
+    [data-slot="textarea"]
+) {
+    --sq-base-r: 14px;
+    --sq-q: 0.6;
+    --sq-scale: 0.014;
+    -webkit-clip-path: var(--sq-clip);
+    clip-path: var(--sq-clip);
+    border-radius: var(--sq-r);
+    background-clip: border-box;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    corner-shape: squircle;
+}
+
+.toaster [data-sonner-toast] {
+    --sq-base-r: 16px;
+    --sq-q: 0.6;
+    --sq-scale: 0.016;
+    --sq-p: 10%;
+    --sq-a: 1%;
+    --sq-b: 2.5%;
+    --sq-c: 5%;
+    --sq-d: 8%;
+    background: var(--surface-elevated) !important;
+    border-color: color-mix(in srgb, var(--foreground) 28%, transparent) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow:
+        0 10px 32px rgb(8 8 8 / 0.055),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.34) !important;
+    -webkit-clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: polygon(10% 0, 90% 0, 92% 1%, 95% 2.5%, 97.5% 5%, 99% 8%, 100% 10%, 100% 90%, 99% 92%, 97.5% 95%, 95% 97.5%, 92% 99%, 90% 100%, 10% 100%, 8% 99%, 5% 97.5%, 2.5% 95%, 1% 92%, 0 90%, 0 10%, 1% 8%, 2.5% 5%, 5% 2.5%, 8% 1%);
+    clip-path: shape(from 16px 0, hline to calc(100% - 16px), curve to 100% 16px with calc(100% - 6px) 0 / 100% 6px, vline to calc(100% - 16px), curve to calc(100% - 16px) 100% with 100% calc(100% - 6px) / calc(100% - 6px) 100%, hline to 16px, curve to 0 calc(100% - 16px) with 6px 100% / 0 calc(100% - 6px), vline to 16px, curve to 16px 0 with 0 6px / 6px 0, close);
+}
+
+.dark .toaster [data-sonner-toast] {
+    background: var(--surface-elevated) !important;
+    border-color: var(--neutral-border) !important;
+    box-shadow:
+        0 14px 38px rgb(0 0 0 / 0.24),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.12) !important;
 }
 
 /* ============================================
@@ -411,16 +980,6 @@ input:not(:-webkit-autofill) {
     }
 }
 
-@keyframes argent-icon-fill {
-    0% {
-        transform: scaleX(0);
-    }
-    72%,
-    100% {
-        transform: scaleX(1);
-    }
-}
-
 @keyframes argent-loading-out {
     from {
         opacity: 1;
@@ -452,13 +1011,13 @@ input:not(:-webkit-autofill) {
 }
 
 /* ============================================
-   PRISM SURFACE
-   Translucent, refractive overlay with specular 
-   highlight and light-distortion gradient.
+   UDS SURFACE
+   Solid shell and card materials with a subtle
+   highlight gradient.
    ============================================ */
 
-/* Entry: blur-in from slightly larger + transparent */
-@keyframes prism-surface-in {
+/* Entry: scale in from slightly larger + transparent */
+@keyframes uds-surface-in {
     0% {
         opacity: 0;
         transform: scale(0.92);
@@ -470,7 +1029,7 @@ input:not(:-webkit-autofill) {
 }
 
 /* Exit: shrink + fade-out */
-@keyframes prism-surface-out {
+@keyframes uds-surface-out {
     0% {
         opacity: 1;
         transform: scale(1);
@@ -506,27 +1065,21 @@ input:not(:-webkit-autofill) {
     animation: slide-in-left 0.4s ease-out forwards;
 }
 
-.argent-icon-fill-layer {
-    transform: scaleX(0);
-    transform-origin: left center;
-    will-change: transform;
-}
-
-.animate-argent-icon-fill {
-    animation: argent-icon-fill 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-}
-
 .animate-argent-loading-out {
     animation: argent-loading-out 450ms ease forwards;
 }
 
+.animate-argent-loading-failsafe {
+    animation: argent-loading-out 450ms ease forwards;
+    animation-delay: 2050ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .animate-argent-icon-fill {
-        animation: none;
-        transform: scaleX(1);
+    .animate-argent-loading-out {
+        animation-duration: 1ms;
     }
 
-    .animate-argent-loading-out {
+    .animate-argent-loading-failsafe {
         animation-duration: 1ms;
     }
 
@@ -606,7 +1159,8 @@ input:not(:-webkit-autofill) {
     position: absolute;
     inset: 0;
     z-index: 0;
-    border-radius: inherit;
+    -webkit-clip-path: inherit;
+    clip-path: inherit;
     pointer-events: none;
     opacity: var(--spotlight-opacity);
     background:
@@ -620,38 +1174,282 @@ input:not(:-webkit-autofill) {
     transition: opacity 180ms ease;
 }
 
-.prism-glass {
-    background-color: rgb(255 255 255 / 0.18);
+.uds-surface {
+    --uds-surface-shadow: 0 0 0 rgb(0 0 0 / 0);
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--background) 14%, transparent);
     background-image:
-        linear-gradient(
-            180deg,
-            rgb(255 255 255 / 0.10) 0%,
-            transparent 44%
-        );
-    border-color: rgb(0 0 0 / 0.08);
-    -webkit-backdrop-filter: blur(12px) saturate(1.75) contrast(1.03) brightness(1.02);
-    backdrop-filter: blur(12px) saturate(1.75) contrast(1.03) brightness(1.02);
+        linear-gradient(180deg, rgb(255 255 255 / 0.035) 0%, transparent 48%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--uds-surface-shadow);
+}
+
+.dark .uds-surface {
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.035) 0%, transparent 48%);
+}
+
+.uds-card-surface,
+.dark .uds-card-surface {
+    background-color: var(--card);
+    background-image: none;
+}
+
+.uds-card-surface.spotlight-surface::before {
+    background: none;
+}
+
+.app-framework-surface {
+    --sq-base-r: var(--app-window-radius);
+    --sq-scale: 0;
+    --app-framework-surface-shadow:
+        0 10px 28px rgb(0 0 0 / 0.06);
+    background-clip: border-box;
+    background-color: var(--background);
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-style: solid;
+    border-width: 1px;
+    border-color: color-mix(in srgb, var(--foreground) 28%, transparent) !important;
+}
+
+[data-sidebar="menu-button"] {
+    --sq-base-r: var(--app-window-radius);
+    --sq-scale: 0;
+}
+
+.dark .app-framework-surface {
+    --app-framework-surface-shadow:
+        0 10px 28px rgb(0 0 0 / 0.28);
+    background-color: var(--background);
+    background-image: none;
+    border-color: color-mix(in srgb, var(--foreground) 28%, transparent) !important;
+}
+
+:where(.sq-border-muted, .sq-border-soft, .sq-border-strong) {
+    --sq-border-layer-color: color-mix(in srgb, var(--neutral-border) calc(var(--sq-border-opacity) * 0.86 * 100%), transparent);
+    --sq-border-layer-sheen-color: color-mix(in srgb, var(--foreground) calc(var(--sq-border-highlight-opacity) * 0.18 * 100%), transparent);
+    --sq-border-layer-highlight-color: color-mix(in srgb, var(--foreground) calc(var(--sq-border-highlight-opacity) * 0.20 * 100%), transparent);
+    --sq-border-layer-glow-color: color-mix(in srgb, var(--foreground) calc(var(--sq-border-highlight-opacity) * 0.30 * 100%), transparent);
+    --sq-border-layer-shadow-color: color-mix(in srgb, var(--foreground) calc(var(--sq-border-shadow-opacity) * 0.16 * 100%), transparent);
+}
+
+:where(.sq-border-muted, .sq-border-soft, .sq-border-strong):not(.fixed):not(.absolute):not(.sticky) {
+    position: relative;
+}
+
+:where(.sq-border-muted, .sq-border-soft, .sq-border-strong)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    border-radius: inherit;
+    corner-shape: inherit;
+    -webkit-clip-path: inherit;
+    clip-path: inherit;
+    background: transparent;
+    box-shadow:
+        inset 0 0 0 var(--sq-border-width) var(--sq-border-layer-color),
+        inset 0 1px 0 var(--sq-border-layer-highlight-color),
+        inset 1px 0 0 var(--sq-border-layer-glow-color),
+        inset -1px 0 0 var(--sq-border-layer-glow-color),
+        inset 0 -1px 0 var(--sq-border-layer-shadow-color);
+}
+
+:where(.sq-border-muted, .sq-border-soft, .sq-border-strong)[data-squircle-border-runtime="path"]::after {
+    -webkit-clip-path: var(--sq-border-clip-path);
+    clip-path: var(--sq-border-clip-path);
+    background:
+        radial-gradient(circle at 18% 0%, var(--sq-border-layer-sheen-color), transparent 42%),
+        linear-gradient(180deg, var(--sq-border-layer-highlight-color), transparent 36%),
+        linear-gradient(90deg, var(--sq-border-layer-glow-color), transparent 22%, transparent 78%, var(--sq-border-layer-glow-color)),
+        linear-gradient(180deg, transparent 58%, var(--sq-border-layer-shadow-color)),
+        var(--sq-border-layer-color);
+    box-shadow: none;
+}
+
+@supports ((-webkit-mask: linear-gradient(#000 0 0)) or (mask: linear-gradient(#000 0 0))) {
+    :where(.sq-border-muted, .sq-border-soft, .sq-border-strong):not([data-squircle-border-runtime="path"])::after {
+        padding: var(--sq-border-width);
+        background: var(--sq-border-layer-color);
+        -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        box-shadow:
+            inset 0 0 0 var(--sq-border-width) var(--sq-border-layer-color),
+            inset 0 1px 0 var(--sq-border-layer-highlight-color),
+            inset 1px 0 0 var(--sq-border-layer-glow-color),
+            inset -1px 0 0 var(--sq-border-layer-glow-color),
+            inset 0 -1px 0 var(--sq-border-layer-shadow-color);
+    }
+}
+
+@media (width >= 48rem) {
+    .app-framework-surface {
+        background-color: var(--background);
+        box-shadow: var(--app-framework-surface-shadow);
+    }
+
+    .dark .app-framework-surface {
+        --app-framework-surface-shadow:
+            0 10px 28px rgb(0 0 0 / 0.28);
+        background-color: var(--background);
+    }
+}
+
+.uds-bg-glass {
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--background) 18%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.035) 0%, transparent 48%);
+}
+
+.uds-bg-subtle {
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--background) 10%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.025) 0%, transparent 48%);
+}
+
+.uds-bg-surface {
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--background) 14%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.03) 0%, transparent 48%);
+}
+
+.uds-bg-elevated {
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--background) 18%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.035) 0%, transparent 48%);
+}
+
+.uds-bg-raised {
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.03) 0%, transparent 48%);
+}
+
+.uds-bg-input {
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--background) 14%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.025) 0%, transparent 50%);
+}
+
+.uds-backdrop {
+    -webkit-backdrop-filter: blur(12px) saturate(1.12);
+    backdrop-filter: blur(12px) saturate(1.12);
+}
+
+.uds-backdrop-soft {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.dark .uds-backdrop {
+    -webkit-backdrop-filter: blur(12px) saturate(1.12);
+    backdrop-filter: blur(12px) saturate(1.12);
+}
+
+.dark .uds-backdrop-soft {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.uds-shadow-panel {
+    --uds-surface-shadow:
+        0 10px 28px rgb(0 0 0 / 0.14),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.34);
+}
+
+.uds-shadow-card {
+    --uds-surface-shadow: 0 0 0 rgb(0 0 0 / 0);
+}
+
+.uds-shadow-subtle {
+    --uds-surface-shadow: 0 0 0 rgb(0 0 0 / 0);
+}
+
+.uds-shadow-flat {
+    --uds-surface-shadow: 0 0 0 rgb(0 0 0 / 0);
+}
+
+.uds-glass {
+    background-clip: border-box;
+    background-color: color-mix(in srgb, var(--background) 18%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.035) 0%, transparent 48%);
     box-shadow:
         0 10px 28px rgb(0 0 0 / 0.14),
         inset 0 0.5px 0 rgb(255 255 255 / 0.34);
 }
 
-.prism-glass.spotlight-surface::before {
-    display: none;
+.dark .uds-bg-glass,
+.dark .uds-glass {
+    background-color: color-mix(in srgb, var(--background) 18%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.025) 0%, transparent 48%);
 }
 
-.dark .prism-glass {
-    background-color: rgb(10 10 10 / 0.12);
+.dark .uds-bg-subtle {
+    background-color: color-mix(in srgb, var(--background) 10%, transparent);
     background-image:
-        linear-gradient(
-            180deg,
-            rgb(255 255 255 / 0.045) 0%,
-            transparent 44%
-        );
-    border-color: rgb(255 255 255 / 0.16);
+        linear-gradient(180deg, rgb(255 255 255 / 0.02) 0%, transparent 48%);
+}
+
+.dark .uds-bg-surface {
+    background-color: color-mix(in srgb, var(--background) 14%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.02) 0%, transparent 48%);
+}
+
+.dark .uds-bg-elevated {
+    background-color: color-mix(in srgb, var(--background) 18%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.025) 0%, transparent 48%);
+}
+
+.dark .uds-bg-raised {
+    background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.02) 0%, transparent 48%);
+}
+
+.dark .uds-bg-input {
+    background-color: color-mix(in srgb, var(--background) 14%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.02) 0%, transparent 50%);
+}
+
+.dark .uds-shadow-panel {
+    --uds-surface-shadow:
+        0 10px 28px rgb(0 0 0 / 0.22),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.18);
+}
+
+.dark .uds-glass {
     box-shadow:
         0 10px 28px rgb(0 0 0 / 0.22),
         inset 0 0.5px 0 rgb(255 255 255 / 0.18);
+}
+
+.dark .uds-shadow-card {
+    --uds-surface-shadow: 0 0 0 rgb(0 0 0 / 0);
+}
+
+.dark .uds-shadow-subtle {
+    --uds-surface-shadow: 0 0 0 rgb(0 0 0 / 0);
 }
 
 .dashboard-sidebar-scroll-wrap {
@@ -680,9 +1478,16 @@ input:not(:-webkit-autofill) {
 }
 
 .dashboard-sidebar-scroll::-webkit-scrollbar-thumb {
+    --sq-p: 50%;
+    --sq-a: 5%;
+    --sq-b: 14%;
+    --sq-c: 30%;
+    --sq-d: 45%;
     min-height: 2.75rem;
     border: 0.11rem solid transparent;
-    border-radius: 999px;
+    -webkit-clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: shape(from 50% 0, curve to 100% 50% with 78% 0 / 100% 22%, curve to 50% 100% with 100% 78% / 78% 100%, curve to 0 50% with 22% 100% / 0 78%, curve to 50% 0 with 0 22% / 22% 0, close);
     background:
         linear-gradient(
             to bottom,
@@ -860,8 +1665,15 @@ svg *,
 }
 
 .scrollbar-subtle::-webkit-scrollbar-thumb {
+    --sq-p: 50%;
+    --sq-a: 5%;
+    --sq-b: 14%;
+    --sq-c: 30%;
+    --sq-d: 45%;
     background-color: rgba(128, 128, 128, 0.4);
-    border-radius: 4px;
+    -webkit-clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: polygon(50% 0, 50% 0, 55% 5%, 70% 14%, 86% 30%, 95% 45%, 100% 50%, 100% 50%, 95% 55%, 86% 70%, 70% 86%, 55% 95%, 50% 100%, 50% 100%, 45% 95%, 30% 86%, 14% 70%, 5% 55%, 0 50%, 0 50%, 5% 45%, 14% 30%, 30% 14%, 45% 5%);
+    clip-path: shape(from 50% 0, curve to 100% 50% with 78% 0 / 100% 22%, curve to 50% 100% with 100% 78% / 78% 100%, curve to 0 50% with 22% 100% / 0 78%, curve to 50% 0 with 0 22% / 22% 0, close);
 }
 
 .scrollbar-subtle:hover::-webkit-scrollbar-thumb {
@@ -875,6 +1687,558 @@ code {
 /* ============================================================================== */
 /* AUTH PAGE EFFECTS */
 /* ============================================================================== */
+
+.auth-shell {
+    min-height: 100svh;
+    min-height: 100dvh;
+}
+
+.auth-shell a[href]:not([data-slot="button"]) {
+    color: #000000;
+    font-weight: 700;
+}
+
+.dark .auth-shell a[href]:not([data-slot="button"]) {
+    color: #ffffff;
+}
+
+.auth-shell-main {
+    padding-block: clamp(1.5rem, 5svh, 5rem);
+}
+
+.auth-shell-footer {
+    padding-bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem));
+}
+
+@media (max-height: 719px) {
+    .auth-shell-main {
+        padding-block: 1.25rem;
+    }
+
+    .auth-shell-footer {
+        padding-bottom: max(1.25rem, calc(env(safe-area-inset-bottom) + 1.25rem));
+    }
+}
+
+@media (max-height: 619px) {
+    .auth-shell-main {
+        align-items: flex-start;
+        padding-top: 4.75rem;
+    }
+}
+
+.auth-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: none;
+}
+
+.dark .auth-shell::before {
+    background:
+        linear-gradient(120deg, color-mix(in srgb, var(--foreground) 7%, transparent), transparent 30%),
+        linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 62%, transparent), transparent 34%, color-mix(in srgb, var(--foreground) 5%, transparent));
+}
+
+.auth-shell[data-corner-highlight="off"]::before {
+    background: none;
+}
+
+.dark .auth-shell[data-corner-highlight="off"]::before {
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 62%, transparent), transparent 34%, color-mix(in srgb, var(--foreground) 5%, transparent));
+}
+
+.auth-stage {
+    min-height: min(720px, calc(100svh - 10rem));
+}
+
+.auth-panel {
+    --spotlight-opacity: 0.68;
+    --spotlight-size: clamp(13rem, 42vw, 22rem);
+    --sq-border-strong-opacity: 0.16;
+    --sq-border-strong-highlight-opacity: 0.36;
+    --sq-border-strong-shadow-opacity: 0.14;
+}
+
+.auth-shell .auth-panel.uds-surface {
+    background-color: color-mix(in srgb, var(--background) 76%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.18), transparent 42%),
+        linear-gradient(135deg, color-mix(in srgb, var(--foreground) 8%, transparent), transparent 46%);
+    box-shadow:
+        0 28px 80px rgb(8 8 8 / 0.12),
+        0 8px 24px rgb(8 8 8 / 0.08),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.44);
+}
+
+.dark .auth-shell .auth-panel.uds-surface {
+    background-color: color-mix(in srgb, var(--background) 64%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.07), transparent 44%),
+        linear-gradient(135deg, color-mix(in srgb, var(--foreground) 10%, transparent), transparent 48%);
+    box-shadow:
+        0 30px 88px rgb(0 0 0 / 0.42),
+        0 8px 28px rgb(0 0 0 / 0.30),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.16);
+}
+
+.auth-mobile-logo {
+    min-height: 2.5rem;
+}
+
+.auth-brand-scene {
+    isolation: isolate;
+}
+
+.auth-brand-scene::before {
+    content: "";
+    position: absolute;
+    inset: 4rem 1.5rem 2rem 0;
+    z-index: 1;
+    opacity: 0.58;
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--foreground) 10%, transparent) 1px, transparent 1px),
+        linear-gradient(0deg, color-mix(in srgb, var(--foreground) 8%, transparent) 1px, transparent 1px);
+    background-size: 4.5rem 4.5rem;
+    mask-image:
+        linear-gradient(90deg, transparent 0%, black 16%, black 74%, transparent 100%),
+        linear-gradient(180deg, transparent 0%, black 14%, black 86%, transparent 100%);
+    mask-composite: intersect;
+    -webkit-mask-image:
+        linear-gradient(90deg, transparent 0%, black 16%, black 74%, transparent 100%),
+        linear-gradient(180deg, transparent 0%, black 14%, black 86%, transparent 100%);
+    -webkit-mask-composite: source-in;
+}
+
+.auth-brand-scene::after {
+    content: "";
+    position: absolute;
+    inset: 9rem 5rem 5rem 0;
+    z-index: 1;
+    opacity: 0.42;
+    background:
+        repeating-linear-gradient(
+            135deg,
+            transparent 0,
+            transparent 1.2rem,
+            color-mix(in srgb, var(--foreground) 9%, transparent) 1.2rem,
+            color-mix(in srgb, var(--foreground) 9%, transparent) calc(1.2rem + 1px)
+        );
+    mask-image: linear-gradient(90deg, black 0%, transparent 78%);
+    -webkit-mask-image: linear-gradient(90deg, black 0%, transparent 78%);
+}
+
+.auth-brand-lockup {
+    position: absolute;
+    top: clamp(3.25rem, 10vh, 5.25rem);
+    left: clamp(0.75rem, 2.5vw, 2.25rem);
+    z-index: 4;
+}
+
+.auth-uds-scene {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    perspective: 900px;
+    transform-style: preserve-3d;
+}
+
+.auth-shell .auth-uds-pane.uds-bg-glass {
+    position: absolute;
+    display: block;
+    background-color: color-mix(in srgb, var(--foreground) 7%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.16), transparent 48%),
+        linear-gradient(135deg, color-mix(in srgb, var(--foreground) 8%, transparent), transparent 52%);
+    box-shadow:
+        0 24px 70px rgb(8 8 8 / 0.14),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.36);
+    transform-origin: center;
+}
+
+.dark .auth-shell .auth-uds-pane.uds-bg-glass {
+    background-color: color-mix(in srgb, var(--foreground) 8%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.08), transparent 50%),
+        linear-gradient(135deg, color-mix(in srgb, var(--foreground) 10%, transparent), transparent 52%);
+    box-shadow:
+        0 28px 78px rgb(0 0 0 / 0.46),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.16);
+}
+
+.auth-uds-pane::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    -webkit-clip-path: inherit;
+    clip-path: inherit;
+    background:
+        linear-gradient(118deg, transparent 0%, transparent 30%, rgb(255 255 255 / 0.32) 30.4%, transparent 32%),
+        linear-gradient(118deg, transparent 0%, transparent 55%, color-mix(in srgb, var(--foreground) 14%, transparent) 55.4%, transparent 57%),
+        linear-gradient(90deg, color-mix(in srgb, var(--foreground) 7%, transparent), transparent 28%, transparent 70%, color-mix(in srgb, var(--foreground) 5%, transparent));
+}
+
+.auth-uds-pane-back {
+    top: 26%;
+    left: 1%;
+    width: clamp(18rem, 34vw, 31rem);
+    aspect-ratio: 1 / 1.18;
+    opacity: 0.34;
+    transform: rotate(-16deg) rotateY(12deg) translateZ(-80px);
+}
+
+.auth-uds-pane-mid {
+    top: 14%;
+    left: 22%;
+    width: clamp(20rem, 38vw, 34rem);
+    aspect-ratio: 1 / 1.08;
+    opacity: 0.52;
+    transform: rotate(8deg) rotateY(-10deg) translateZ(-24px);
+}
+
+.auth-uds-pane-front {
+    top: 34%;
+    left: 15%;
+    width: clamp(16rem, 28vw, 25rem);
+    aspect-ratio: 1 / 1.24;
+    opacity: 0.78;
+    transform: rotate(-7deg) rotateY(8deg) translateZ(48px);
+}
+
+.auth-uds-label {
+    position: absolute;
+    top: clamp(25rem, 58vh, 33rem);
+    left: clamp(9rem, 22vw, 20rem);
+    z-index: 5;
+    color: color-mix(in srgb, var(--foreground) 54%, transparent);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    opacity: 0.74;
+    padding: 0.5rem 0.65rem;
+    border-left: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+}
+
+@media (width < 64rem) {
+    .auth-stage {
+        min-height: auto;
+    }
+
+    .auth-panel {
+        --spotlight-opacity: 0.54;
+    }
+}
+
+.auth-noise-background {
+    --auth-spotlight-x: 50vw;
+    --auth-spotlight-y: 44vh;
+    --auth-ascii-tile: url("/auth-ascii-tile.svg");
+    --auth-ascii-base: rgb(8 8 8 / 0.065);
+    --auth-ascii-sweep: rgb(8 8 8 / 0.24);
+    --auth-ascii-spotlight: rgb(8 8 8 / 0.34);
+    --auth-logo-texture: rgb(8 8 8 / 0.22);
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    contain: layout paint style;
+    color: var(--auth-logo-texture);
+}
+
+.dark .auth-noise-background {
+    --auth-ascii-base: rgb(235 237 241 / 0.095);
+    --auth-ascii-sweep: rgb(235 237 241 / 0.28);
+    --auth-ascii-spotlight: rgb(235 237 241 / 0.42);
+    --auth-logo-texture: rgb(235 237 241 / 0.36);
+}
+
+.auth-noise-background::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background:
+        radial-gradient(circle at var(--auth-spotlight-x) var(--auth-spotlight-y), transparent 0%, transparent 12rem, color-mix(in srgb, var(--background) 60%, transparent) 26rem),
+        radial-gradient(ellipse at 50% 48%, transparent 0%, transparent 48%, var(--background) 96%),
+        linear-gradient(180deg, var(--background) 0%, transparent 12%, transparent 88%, var(--background) 100%);
+}
+
+.auth-ascii-layer {
+    position: absolute;
+    display: block;
+    -webkit-mask-image: var(--auth-ascii-tile);
+    mask-image: var(--auth-ascii-tile);
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+    -webkit-mask-size: 32rem auto;
+    mask-size: 32rem auto;
+}
+
+.auth-ascii-layer-base {
+    inset: -7rem;
+    z-index: 1;
+    background-color: var(--auth-ascii-base);
+    will-change: transform;
+    animation: auth-ascii-field-drift 42s linear infinite;
+}
+
+.auth-ascii-layer-highlight {
+    inset: 0;
+    z-index: 3;
+    background-image:
+        radial-gradient(
+            18rem circle at var(--auth-spotlight-x) var(--auth-spotlight-y),
+            var(--auth-ascii-spotlight) 0%,
+            color-mix(in srgb, var(--auth-ascii-spotlight) 42%, transparent) 28%,
+            transparent 70%
+        );
+}
+
+.auth-ascii-layer-sweep {
+    inset: -28% -72%;
+    z-index: 2;
+    background-image:
+        linear-gradient(
+            112deg,
+            transparent 0%,
+            transparent 42%,
+            var(--auth-ascii-sweep) 50%,
+            transparent 58%,
+            transparent 100%
+        );
+    will-change: transform;
+    animation: auth-ascii-highlight-sweep 8.5s linear infinite;
+}
+
+.auth-logo-morph {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    width: clamp(18rem, 54vw, 54rem);
+    aspect-ratio: 4 / 1;
+    will-change: transform;
+    transform-origin: center;
+    animation: auth-logo-flight 26s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    animation-delay: -7s;
+}
+
+.auth-logo-morph-secondary {
+    width: clamp(16rem, 44vw, 42rem);
+    opacity: 0.42;
+    animation-name: auth-logo-flight-secondary;
+    animation-duration: 34s;
+    animation-delay: -19s;
+}
+
+.auth-logo-mask {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    will-change: opacity, transform;
+}
+
+.auth-logo-mask-mark {
+    -webkit-mask-image: url("/icon-white.svg");
+    mask-image: url("/icon-white.svg");
+    animation: auth-logo-mark-morph 13s ease-in-out infinite;
+}
+
+.auth-logo-mask-word {
+    -webkit-mask-image: url("/full-icon-white.svg");
+    mask-image: url("/full-icon-white.svg");
+    animation: auth-logo-word-morph 13s ease-in-out infinite;
+}
+
+.auth-logo-character-fill {
+    position: absolute;
+    inset: -20%;
+    display: block;
+    background-color: currentColor;
+    -webkit-mask-image: var(--auth-ascii-tile);
+    mask-image: var(--auth-ascii-tile);
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+    -webkit-mask-size: 18rem auto;
+    mask-size: 18rem auto;
+    will-change: transform;
+    animation: auth-logo-character-drift 18s linear infinite;
+}
+
+@keyframes auth-ascii-field-drift {
+    0% {
+        transform: translate3d(-2.5rem, -2rem, 0);
+    }
+
+    100% {
+        transform: translate3d(2.5rem, 2rem, 0);
+    }
+}
+
+@keyframes auth-ascii-highlight-sweep {
+    0% {
+        transform: translate3d(-18%, 0, 0);
+    }
+
+    100% {
+        transform: translate3d(18%, 0, 0);
+    }
+}
+
+@keyframes auth-logo-character-drift {
+    0% {
+        transform: translate3d(-1.5rem, -0.75rem, 0);
+    }
+
+    100% {
+        transform: translate3d(1.5rem, 0.75rem, 0);
+    }
+}
+
+@keyframes auth-logo-flight {
+    0% {
+        transform: translate3d(-42vw, 12vh, 0) rotate(-9deg) scale(1.05, 1);
+    }
+
+    24% {
+        transform: translate3d(12vw, 5vh, 0) rotate(5deg) scale(0.82, 1.22);
+    }
+
+    48% {
+        transform: translate3d(64vw, 30vh, 0) rotate(-3deg) scale(1.2, 0.92);
+    }
+
+    72% {
+        transform: translate3d(18vw, 70vh, 0) rotate(8deg) scale(0.95, 1.18);
+    }
+
+    100% {
+        transform: translate3d(-42vw, 12vh, 0) rotate(-9deg) scale(1.05, 1);
+    }
+}
+
+@keyframes auth-logo-flight-secondary {
+    0% {
+        transform: translate3d(72vw, 72vh, 0) rotate(7deg) scale(0.85, 1.12);
+    }
+
+    30% {
+        transform: translate3d(24vw, 12vh, 0) rotate(-5deg) scale(1.16, 0.9);
+    }
+
+    62% {
+        transform: translate3d(-34vw, 44vh, 0) rotate(10deg) scale(0.78, 1.28);
+    }
+
+    100% {
+        transform: translate3d(72vw, 72vh, 0) rotate(7deg) scale(0.85, 1.12);
+    }
+}
+
+@keyframes auth-logo-mark-morph {
+    0%,
+    18%,
+    100% {
+        opacity: 0.86;
+        transform: scale(1);
+    }
+
+    42%,
+    68% {
+        opacity: 0.12;
+        transform: scale(0.74, 1.28);
+    }
+}
+
+@keyframes auth-logo-word-morph {
+    0%,
+    18%,
+    100% {
+        opacity: 0.12;
+        transform: scale(1.1, 0.72);
+    }
+
+    42%,
+    68% {
+        opacity: 0.78;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-ascii-layer,
+    .auth-logo-morph,
+    .auth-logo-mask,
+    .auth-logo-character-fill {
+        animation: none;
+    }
+
+    .auth-logo-morph-secondary {
+        display: none;
+    }
+}
+
+.auth-shell .uds-bg-glass {
+    background-color: color-mix(in srgb, var(--background) 18%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.035), transparent 48%);
+}
+
+.auth-shell .uds-bg-input,
+.auth-shell [data-slot="button"].uds-bg-elevated {
+    background-color: color-mix(in srgb, var(--background) 14%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 50%);
+    box-shadow:
+        0 6px 18px rgb(8 8 8 / 0.045),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.30);
+}
+
+.dark .auth-shell .uds-bg-glass {
+    background-color: color-mix(in srgb, var(--background) 18%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 48%);
+}
+
+.dark .auth-shell .uds-bg-input,
+.dark .auth-shell [data-slot="button"].uds-bg-elevated {
+    background-color: color-mix(in srgb, var(--background) 14%, transparent);
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.02), transparent 50%);
+    box-shadow:
+        0 8px 24px rgb(0 0 0 / 0.18),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.10);
+}
+
+.auth-shell [data-slot="button"].auth-primary-button {
+    background-color: var(--primary) !important;
+    background-image:
+        linear-gradient(180deg, rgb(255 255 255 / 0.18), transparent 48%) !important;
+    color: var(--primary-foreground) !important;
+    box-shadow:
+        0 18px 44px color-mix(in srgb, var(--primary) 18%, transparent),
+        inset 0 0.5px 0 rgb(255 255 255 / 0.22) !important;
+}
+
+.auth-shell [data-slot="button"].auth-primary-button:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--primary) 86%, var(--background)) !important;
+    color: var(--primary-foreground) !important;
+}
 
 /* Hide scrollbar for nav tabs */
 .scrollbar-none {

@@ -12,6 +12,7 @@
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Avatar({
@@ -22,7 +23,7 @@ function Avatar({
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={cn(
-        "relative flex size-8 shrink-0 overflow-hidden rounded-full",
+        "relative flex size-8 shrink-0 overflow-hidden sq-full",
         className
       )}
       {...props}
@@ -51,7 +52,8 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "bg-muted flex size-full items-center justify-center rounded-full",
+        "flex size-full items-center justify-center sq-full",
+        UDS.subtleFill,
         className
       )}
       {...props}

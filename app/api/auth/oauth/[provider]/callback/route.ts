@@ -17,11 +17,10 @@ import { clientIp } from "@/lib/rate-limit"
 import { timingSafeEqual } from "crypto"
 
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60
-const VALID_PROVIDERS = ["google", "github", "microsoft"] as const
+const VALID_PROVIDERS = ["google", "github"] as const
 
 interface OAuthTokenData {
   access_token: string
-  id_token?: string
 }
 
 interface OAuthUserInfo {
@@ -183,11 +182,6 @@ async function exchangeCodeForToken(provider: string, code: string, _requestUrl:
       clientId: process.env.GITHUB_CLIENT_ID || "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
     },
-    microsoft: {
-      tokenUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-      clientId: process.env.MICROSOFT_CLIENT_ID || "",
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET || "",
-    },
   }
 
   const config = configs[provider]
@@ -211,41 +205,13 @@ async function exchangeCodeForToken(provider: string, code: string, _requestUrl:
   if (!response.ok) return null
   const data = (await response.json()) as Partial<OAuthTokenData>
   if (!data.access_token) return null
-  return { access_token: data.access_token, id_token: data.id_token }
-}
-
-function decodeJwtPayload(token: string | undefined): Record<string, unknown> | null {
-  if (!token) return null
-  const [, payload] = token.split(".")
-  if (!payload) return null
-  try {
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/")
-    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4)
-    return JSON.parse(Buffer.from(padded, "base64").toString("utf8")) as Record<string, unknown>
-  } catch {
-    return null
-  }
-}
-
-function validMicrosoftClaims(claims: Record<string, unknown> | null): boolean {
-  if (!claims) return false
-  const expectedClientId = process.env.MICROSOFT_CLIENT_ID
-  const exp = typeof claims.exp === "number" ? claims.exp : 0
-  const aud = typeof claims.aud === "string" ? claims.aud : ""
-  const iss = typeof claims.iss === "string" ? claims.iss : ""
-  return (
-    !!expectedClientId &&
-    aud === expectedClientId &&
-    exp > Math.floor(Date.now() / 1000) &&
-    iss.startsWith("https://login.microsoftonline.com/")
-  )
+  return { access_token: data.access_token }
 }
 
 async function getUserInfo(provider: string, tokenData: OAuthTokenData): Promise<OAuthUserInfo | null> {
   const endpoints: Record<string, string> = {
     google: "https://www.googleapis.com/oauth2/v2/userinfo",
     github: "https://api.github.com/user",
-    microsoft: "https://graph.microsoft.com/v1.0/me",
   }
 
   const endpoint = endpoints[provider]
@@ -291,21 +257,6 @@ async function getUserInfo(provider: string, tokenData: OAuthTokenData): Promise
         email: primaryVerified.email,
         name: data.name || data.login || "",
         emailVerified: true,
-      }
-    }
-    case "microsoft": {
-      const claims = decodeJwtPayload(tokenData.id_token)
-      const email =
-        data.mail ||
-        data.userPrincipalName ||
-        claims?.email ||
-        claims?.preferred_username ||
-        ""
-      return {
-        id: String(data.id || claims?.sub || ""),
-        email: String(email),
-        name: String(data.displayName || claims?.name || ""),
-        emailVerified: validMicrosoftClaims(claims) && Boolean(email),
       }
     }
     default:

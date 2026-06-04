@@ -8,7 +8,6 @@
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
 import { Toaster } from "@/components/ui/sonner"
-import { CanvasBackground } from "@/components/canvas-background"
 
 export default function AuthLayout({
   children,
@@ -18,8 +17,7 @@ export default function AuthLayout({
   // AuthShell handles the vertical layout so the footer can sit in normal flow
   // beneath the auth content instead of overlapping it on mobile.
   return (
-    <div className="relative min-h-screen w-full bg-white dark:bg-black transition-colors duration-300">
-      <CanvasBackground />
+    <div className="relative min-h-dvh w-full bg-background transition-colors duration-300">
       <Toaster richColors closeButton position="bottom-right" />
       {children}
     </div>

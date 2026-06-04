@@ -16,6 +16,8 @@ import { UserGrowthChart } from "@/components/admin/user-growth-chart"
 import { useLanguage } from "@/components/language-provider"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getTranslations, type LooseTranslations } from "@/lib/translation-utils"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 import {
     Users,
     ArrowLeftRight,
@@ -114,29 +116,35 @@ function StatCard({
     icon: Icon,
     description,
     trend,
+    tone = "info",
 }: {
     title: string
     value: number | string
     icon: React.ElementType
     description?: string
     trend?: { value: number; label: string }
+    tone?: keyof typeof UDS.statCardTone
 }) {
+    const toneStyles = UDS.statCardTone[tone]
+
     return (
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-neutral-400">{title}</p>
-                <Icon className="h-4 w-4 text-neutral-400" />
+        <div className={cn(UDS.summaryTileSurface, toneStyles.card, "relative overflow-hidden")}>
+            <div aria-hidden className={cn("pointer-events-none absolute inset-0 opacity-80", toneStyles.glow)} />
+            <div aria-hidden className={cn("pointer-events-none absolute inset-x-0 top-0 h-0.5", toneStyles.line)} />
+            <div className="relative flex items-center justify-between">
+                <p className={UDS.summaryLabel}>{title}</p>
+                <Icon className={cn("size-3.5", toneStyles.icon)} />
             </div>
-            <div className="mt-2">
-                <p className="text-2xl font-bold">{value}</p>
+            <div className="relative mt-2">
+                <p className={cn(UDS.summaryValue, toneStyles.value)}>{value}</p>
                 {trend && trend.value > 0 && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3" />
+                    <p className={cn("mt-1 flex items-center gap-1 text-[11px] font-medium", toneStyles.meta)}>
+                        <TrendingUp className="size-3" />
                         +{trend.value} {trend.label}
                     </p>
                 )}
                 {description && !trend && (
-                    <p className="text-xs text-neutral-400 mt-1">{description}</p>
+                    <p className={cn("mt-1 text-[11px]", toneStyles.meta)}>{description}</p>
                 )}
             </div>
         </div>
@@ -146,13 +154,13 @@ function StatCard({
 // --- Skeleton loaders ---
 function StatCardSkeleton() {
     return (
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div className={UDS.summaryTileSurface}>
             <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="size-3.5" />
             </div>
             <div className="mt-2">
-                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-6 w-16" />
                 <Skeleton className="h-3 w-24 mt-2" />
             </div>
         </div>
@@ -197,6 +205,7 @@ export default function AdminDashboardPage() {
                                     title={ad.users || "Total Users"}
                                     value={c?.totalUsers ?? 0}
                                     icon={Users}
+                                    tone="info"
                                     trend={a?.newUsersThisWeek ? { value: a.newUsersThisWeek, label: "this week" } : undefined}
                                     description={!a?.newUsersThisWeek ? `${c?.activeUsers ?? 0} ${ad.active || "active"}` : undefined}
                                 />
@@ -204,18 +213,21 @@ export default function AdminDashboardPage() {
                                     title={ad.transactions || "Transactions"}
                                     value={(c?.totalTransactions ?? 0).toLocaleString()}
                                     icon={ArrowLeftRight}
+                                    tone="positive"
                                     trend={a?.transactionsThisWeek ? { value: a.transactionsThisWeek, label: "this week" } : undefined}
                                 />
                                 <StatCard
                                     title={healthPage.logins_today || "Active Today"}
                                     value={a?.loginsToday ?? 0}
                                     icon={LogIn}
+                                    tone="warning"
                                     description={`${a?.loginsThisWeek ?? 0} ${healthPage.logins_week ? healthPage.logins_week.toLowerCase() : "this week"}`}
                                 />
                                 <StatCard
                                     title={healthPage.new_users_today || "New Today"}
                                     value={a?.newUsersToday ?? 0}
                                     icon={UserPlus}
+                                    tone="accent"
                                     description={`${a?.newUsersThisWeek ?? 0} ${healthPage.new_users_week ? healthPage.new_users_week.toLowerCase() : "this week"}`}
                                 />
                             </>
@@ -228,10 +240,10 @@ export default function AdminDashboardPage() {
                             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
                         ) : (
                             <>
-                                <StatCard title={accountsPage.total_accounts || "Bank Accounts"} value={c?.totalAccounts ?? 0} icon={Wallet} />
-                                <StatCard title={ad.bills || "Bills"} value={c?.totalBills ?? 0} icon={Receipt} />
-                                <StatCard title={ad.budgets || "Budgets"} value={c?.totalBudgets ?? 0} icon={PiggyBank} />
-                                <StatCard title={ad.goals || "Goals"} value={c?.totalGoals ?? 0} icon={Target} />
+                                <StatCard title={accountsPage.total_accounts || "Bank Accounts"} value={c?.totalAccounts ?? 0} icon={Wallet} tone="info" />
+                                <StatCard title={ad.bills || "Bills"} value={c?.totalBills ?? 0} icon={Receipt} tone="warning" />
+                                <StatCard title={ad.budgets || "Budgets"} value={c?.totalBudgets ?? 0} icon={PiggyBank} tone="positive" />
+                                <StatCard title={ad.goals || "Goals"} value={c?.totalGoals ?? 0} icon={Target} tone="accent" />
                             </>
                         )}
                     </div>
@@ -239,7 +251,7 @@ export default function AdminDashboardPage() {
                     {/* Account Status + User Growth Chart */}
                     <div className="grid gap-4 lg:grid-cols-5">
                         {/* Account Status Breakdown */}
-                        <div className="lg:col-span-2 rounded-xl border bg-card shadow-sm">
+                        <div className={`lg:col-span-2 ${UDS.panelSurface}`}>
                             <div className="p-4 border-b">
                                 <h3 className="font-semibold">{usersPage.status || "Account Status"}</h3>
                                 <p className="text-sm text-neutral-400">{"User distribution by status"}</p>
@@ -257,7 +269,7 @@ export default function AdminDashboardPage() {
                                     ].map((item) => (
                                         <div key={item.label} className="flex items-center justify-between py-2">
                                             <div className="flex items-center gap-3">
-                                                <item.icon className={`h-4 w-4 ${item.color}`} />
+                                                <item.icon className={`size-4 ${item.color}`} />
                                                 <span className="text-sm">{item.label}</span>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -275,7 +287,7 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {/* User Growth Chart */}
-                        <div className="lg:col-span-3 rounded-xl border bg-card shadow-sm">
+                        <div className={`lg:col-span-3 ${UDS.panelSurface}`}>
                             <div className="p-4 border-b">
                                 <h3 className="font-semibold">User Growth</h3>
                                 <p className="text-sm text-neutral-400">{"Signups & total users — last 30 days"}</p>
@@ -293,7 +305,7 @@ export default function AdminDashboardPage() {
                     {/* Recent Users + Audit Log */}
                     <div className="grid gap-4 lg:grid-cols-2">
                         {/* Recent Users */}
-                        <div className="rounded-xl border bg-card shadow-sm">
+                        <div className={`${UDS.panelSurface}`}>
                             <div className="p-4 border-b flex items-center justify-between">
                                 <div>
                                     <h3 className="font-semibold">{ad.users_page ? (ad.users || "Recent Users") : "Recent Users"}</h3>
@@ -303,19 +315,19 @@ export default function AdminDashboardPage() {
                                     href="/admin/users"
                                     className="text-xs text-neutral-400 hover:text-foreground flex items-center gap-1 transition-colors"
                                 >
-                                    View all <ExternalLink className="h-3 w-3" />
+                                    View all <ExternalLink className="size-3" />
                                 </Link>
                             </div>
                             <div className="divide-y">
                                 {loading ? (
                                     Array.from({ length: 5 }).map((_, i) => (
                                         <div key={i} className="flex items-center gap-3 p-4">
-                                            <Skeleton className="h-8 w-8 rounded-full" />
+                                            <Skeleton className="size-8 sq-full" />
                                             <div className="flex-1 space-y-1.5">
                                                 <Skeleton className="h-3.5 w-28" />
                                                 <Skeleton className="h-3 w-40" />
                                             </div>
-                                            <Skeleton className="h-5 w-14 rounded-full" />
+                                            <Skeleton className="h-5 w-14 sq-full" />
                                         </div>
                                     ))
                                 ) : data?.recentUsers.length === 0 ? (
@@ -326,7 +338,7 @@ export default function AdminDashboardPage() {
                                     data?.recentUsers.map((user) => (
                                         <div key={user.id} className="flex items-center justify-between p-3 px-4">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-medium">
+                                                <div className="flex size-8 shrink-0 items-center justify-center sq-full bg-primary/10 text-primary text-xs font-medium">
                                                     {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U"}
                                                 </div>
                                                 <div className="min-w-0">
@@ -338,7 +350,7 @@ export default function AdminDashboardPage() {
                                                 {user.twoFactorEnabled && (
                                                     <span className="text-[10px] text-blue-600 dark:text-blue-400" title="2FA enabled">🔐</span>
                                                 )}
-                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[user.status] || statusColors.active}`}>
+                                                <span className={`inline-flex items-center sq-full px-2 py-0.5 text-[10px] font-medium ${statusColors[user.status] || statusColors.active}`}>
                                                     {user.status}
                                                 </span>
                                                 <span className="text-[11px] text-neutral-400 whitespace-nowrap">
@@ -352,7 +364,7 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {/* Audit Log */}
-                        <div className="rounded-xl border bg-card shadow-sm">
+                        <div className={`${UDS.panelSurface}`}>
                             <div className="p-4 border-b flex items-center justify-between">
                                 <div>
                                     <h3 className="font-semibold">{auditPage.title || "Recent Admin Activity"}</h3>
@@ -362,14 +374,14 @@ export default function AdminDashboardPage() {
                                     href="/admin/audit-log"
                                     className="text-xs text-neutral-400 hover:text-foreground flex items-center gap-1 transition-colors"
                                 >
-                                    View all <ExternalLink className="h-3 w-3" />
+                                    View all <ExternalLink className="size-3" />
                                 </Link>
                             </div>
                             <div className="divide-y">
                                 {loading ? (
                                     Array.from({ length: 5 }).map((_, i) => (
                                         <div key={i} className="flex items-center gap-3 p-4">
-                                            <Skeleton className="h-8 w-8 rounded-md" />
+                                            <Skeleton className="size-8 sq-md" />
                                             <div className="flex-1 space-y-1.5">
                                                 <Skeleton className="h-3.5 w-32" />
                                                 <Skeleton className="h-3 w-48" />
@@ -379,7 +391,7 @@ export default function AdminDashboardPage() {
                                     ))
                                 ) : data?.recentAuditLogs.length === 0 ? (
                                     <div className="p-8 text-center text-sm text-neutral-400">
-                                        <ScrollText className="h-8 w-8 mx-auto mb-2 text-neutral-400/50" />
+                                        <ScrollText className="size-8 mx-auto mb-2 text-neutral-400/50" />
                                         <p>No admin activity yet</p>
                                         <p className="text-xs mt-1">Actions will appear here as admins manage the platform</p>
                                     </div>
@@ -387,8 +399,8 @@ export default function AdminDashboardPage() {
                                     data?.recentAuditLogs.map((log) => (
                                         <div key={log.id} className="flex items-start justify-between p-3 px-4 gap-3">
                                             <div className="flex items-start gap-3 min-w-0">
-                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-neutral-400 mt-0.5">
-                                                    <ScrollText className="h-3.5 w-3.5" />
+                                                <div className={cn("flex size-7 shrink-0 items-center justify-center text-neutral-400 mt-0.5", UDS.iconSurface)}>
+                                                    <ScrollText className="size-3.5" />
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium">{formatAction(log.action)}</p>

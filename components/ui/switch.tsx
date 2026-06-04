@@ -12,6 +12,7 @@
 import * as React from "react"
 import * as SwitchPrimitive from "@radix-ui/react-switch"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Switch({
@@ -22,7 +23,10 @@ function Switch({
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        "peer inline-flex h-5 w-9 shrink-0 items-center border-2 border-transparent transition-[background-color,border-color,box-shadow,opacity] duration-150 outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
+        UDS.surface,
+        "sq-full data-[state=checked]:bg-primary/[0.20] data-[state=checked]:text-primary",
+        "focus-visible:border-transparent focus-visible:ring-focus/70 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         className
       )}
       {...props}
@@ -30,7 +34,8 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          "bg-background pointer-events-none block size-4 rounded-full ring-0 shadow-lg transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+          UDS.raisedSurface,
+          "pointer-events-none block size-4 sq-full ring-0 transition-transform duration-150 data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
         )}
       />
     </SwitchPrimitive.Root>

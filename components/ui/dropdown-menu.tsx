@@ -11,10 +11,10 @@
 
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
-import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
+import { ChevronRightIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { GlideHighlight, useGlideHighlight } from "@/components/ui/glide-highlight"
 
 function DropdownMenu({
@@ -63,11 +63,11 @@ function DropdownMenuContent({
         collisionPadding={16}
         avoidCollisions={true}
         className={cn(
-          PRISM.container,
-          PRISM.glideSurface,
-          PRISM.animateIn,
-          PRISM.animateOut,
-          "z-999 w-[220px] max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          UDS.transientSurface,
+          UDS.glideSurface,
+          UDS.animateIn,
+          UDS.animateOut,
+          "z-[999] w-[220px] max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
           className
         )}
         {...props}
@@ -112,12 +112,12 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        PRISM.item,
-        PRISM.glideItem,
-        PRISM.itemIcon,
-        PRISM.itemIconFocus,
-        PRISM.itemDestructive,
-        PRISM.itemDisabled,
+        UDS.item,
+        UDS.glideItem,
+        UDS.itemIcon,
+        UDS.itemIconFocus,
+        UDS.itemDestructive,
+        UDS.itemDisabled,
         "data-inset:pl-8",
         className
       )}
@@ -143,20 +143,15 @@ function DropdownMenuCheckboxItem({
       data-slot="dropdown-menu-checkbox-item"
       data-glide-item={dataGlideItem}
       className={cn(
-        PRISM.checkboxItem,
-        PRISM.glideItem,
-        PRISM.itemDisabled,
-        PRISM.itemIcon,
+        UDS.checkboxItem,
+        UDS.glideItem,
+        UDS.itemDisabled,
+        UDS.itemIcon,
         className
       )}
       checked={checked}
       {...props}
     >
-      <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
-        <DropdownMenuPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
-        </DropdownMenuPrimitive.ItemIndicator>
-      </span>
       {children}
     </DropdownMenuPrimitive.CheckboxItem>
   )
@@ -189,19 +184,14 @@ function DropdownMenuRadioItem({
       data-slot="dropdown-menu-radio-item"
       data-glide-item={dataGlideItem}
       className={cn(
-        PRISM.checkboxItem,
-        PRISM.glideItem,
-        PRISM.itemDisabled,
-        PRISM.itemIcon,
+        UDS.checkboxItem,
+        UDS.glideItem,
+        UDS.itemDisabled,
+        UDS.itemIcon,
         className
       )}
       {...props}
     >
-      <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
-        <DropdownMenuPrimitive.ItemIndicator>
-          <CircleIcon className="size-2 fill-current" />
-        </DropdownMenuPrimitive.ItemIndicator>
-      </span>
       {children}
     </DropdownMenuPrimitive.RadioItem>
   )
@@ -219,7 +209,7 @@ function DropdownMenuLabel({
       data-slot="dropdown-menu-label"
       data-inset={inset}
       className={cn(
-        PRISM.label, "data-inset:pl-8",
+        UDS.label, "data-inset:pl-8",
         className
       )}
       {...props}
@@ -234,7 +224,7 @@ function DropdownMenuSeparator({
   return (
     <DropdownMenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
-      className={cn(PRISM.separator, className)}
+      className={cn(UDS.separator, className)}
       {...props}
     />
   )
@@ -248,7 +238,7 @@ function DropdownMenuShortcut({
     <span
       data-slot="dropdown-menu-shortcut"
       className={cn(
-        PRISM.shortcut,
+        UDS.shortcut,
         className
       )}
       {...props}
@@ -282,11 +272,10 @@ function DropdownMenuSubTrigger({
       data-glide-item={dataGlideItem}
       data-inset={inset}
       className={cn(
-        PRISM.item,
-        PRISM.glideItem,
-        PRISM.itemIcon,
-        PRISM.itemIconFocus,
-        "data-[state=open]:bg-transparent data-[state=open]:shadow-none",
+        UDS.item,
+        UDS.glideItem,
+        UDS.itemIcon,
+        UDS.itemIconFocus,
         "data-inset:pl-8",
         className
       )}
@@ -314,11 +303,11 @@ function DropdownMenuSubContent({
       ref={contentRef}
       data-slot="dropdown-menu-sub-content"
       className={cn(
-        PRISM.container,
-        PRISM.glideSurface,
-        PRISM.animateIn,
-        PRISM.animateOut,
-        "z-999 w-[220px] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden",
+        UDS.transientSurface,
+        UDS.glideSurface,
+        UDS.animateIn,
+        UDS.animateOut,
+        "z-[999] w-[220px] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden",
         className
       )}
       {...props}

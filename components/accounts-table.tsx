@@ -89,7 +89,8 @@ import { MobileCard, MobileCardList, useIsMobileView } from "@/components/mobile
 import { Skeleton } from "@/components/ui/skeleton"
 import { SmartTooltip } from "@/components/ui/tooltip"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 import { useCurrency } from "@/components/currency-provider"
 
 export const accountSchema = z.object({
@@ -316,7 +317,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                 return (
                     <div className="flex items-center gap-3">
                         <div
-                            className="size-10 rounded-lg flex items-center justify-center text-white"
+                            className="size-10 sq-lg flex items-center justify-center text-white"
                             style={{ backgroundColor: row.original.color || undefined }}
                         >
                             <Icon className="size-5" />
@@ -412,7 +413,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         <Button
                             variant="ghost"
                             size="icon"
-                            className={PRISM.destructiveHover}
+                            className={UDS.destructiveHover}
                             onClick={() => openDeleteDialog(row.original)}
                         >
                             <Trash2 className="size-4" />
@@ -479,7 +480,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[0, 1, 2, 3].map(i => (
-                        <div key={i} className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                        <div key={i} className={`${UDS.tileSurface} p-3.5`}>
                             <Skeleton className="h-4 w-24 mb-2" />
                             <Skeleton className="h-8 w-32" />
                         </div>
@@ -489,7 +490,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
+                                <TableHead className="w-8"><Skeleton className="size-4" /></TableHead>
                                 {[180, 100, 100, 80, 80, 100, 40].map((w, i) => (
                                     <TableHead key={i}><Skeleton className="h-4" style={{ width: w }} /></TableHead>
                                 ))}
@@ -498,21 +499,21 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         <TableBody>
                             {[...Array(5)].map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                    <TableCell><Skeleton className="size-4" /></TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
-                                            <Skeleton className="h-10 w-10 rounded-lg" />
+                                            <Skeleton className="size-10 sq-lg" />
                                             <div>
                                                 <Skeleton className="h-4 w-24 mb-1" />
                                                 <Skeleton className="h-3 w-32" />
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20 sq-full" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                    <TableCell><Skeleton className="h-6 w-6 rounded" /></TableCell>
+                                    <TableCell><Skeleton className="size-6 sq" /></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -559,23 +560,23 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_assets || "Total Assets"}</p>
-                    <p className="text-lg font-bold mt-1 text-green-600">{formatCurrency(totals.assets)}</p>
+                    <p className="text-lg font-bold mt-1 text-green-600 tabular-nums">{formatCurrency(totals.assets)}</p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_liabilities || "Total Liabilities"}</p>
-                    <p className="text-lg font-bold mt-1 text-red-600">-{formatCurrency(totals.liabilities)}</p>
+                    <p className="text-lg font-bold mt-1 text-red-600 tabular-nums">-{formatCurrency(totals.liabilities)}</p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.net_worth || "Net Worth"}</p>
-                    <p className={`text-lg font-bold mt-1 ${totals.netWorth >= 0 ? "text-green-600" : PRISM.destructiveText}`}>
+                    <p className={`text-lg font-bold mt-1 tabular-nums ${totals.netWorth >= 0 ? "text-green-600" : UDS.destructiveText}`}>
                         {formatCurrency(totals.netWorth)}
                     </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_accounts || "Total Accounts"}</p>
-                    <p className="text-lg font-bold mt-1">{totals.totalAccounts}</p>
+                    <p className="text-lg font-bold mt-1 tabular-nums">{totals.totalAccounts}</p>
                 </div>
             </div>
 
@@ -603,16 +604,16 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                             variant: "secondary"
                                         }}
                                         fields={[
-                                            { label: at.balance || "Balance", value: formatCurrency(account.balance) },
+                                            { label: at.balance || "Balance", value: <span className="tabular-nums">{formatCurrency(account.balance)}</span> },
                                             {
                                                 label: at.monthly_change || "Monthly",
                                                 value: (
-                                                    <span className={(account.monthlyChange ?? 0) >= 0 ? "text-green-600" : "text-red-600"}>
+                                                    <span className={`tabular-nums ${(account.monthlyChange ?? 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
                                                         {(account.monthlyChange ?? 0) >= 0 ? "+" : ""}{formatCurrency(account.monthlyChange ?? 0)}
                                                     </span>
                                                 )
                                             },
-                                            { label: at.transactions || "Transactions", value: account.transactionCount },
+                                            { label: at.transactions || "Transactions", value: <span className="tabular-nums">{account.transactionCount}</span> },
                                             {
                                                 label: at.status || "Status",
                                                 value: (account.isActive ?? true) ? (at.active || "Active") : (at.hidden || "Hidden")
@@ -658,7 +659,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                                     if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
                                                     row.toggleSelected()
                                                 }}
-                                                className="group/row cursor-pointer border-b transition-colors hover:bg-black/3 dark:hover:bg-white/3 data-[state=selected]:bg-black/5 dark:bg-white/5"
+                                                className={cn("group/row cursor-pointer border-b transition-colors", UDS.itemHover, UDS.rowSelected)}
                                             >
                                                 {row.getVisibleCells().map((cell) => (
                                                     <TableCell key={cell.id}>
@@ -692,7 +693,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                         <>
                             <FormDialogHeader
                                 icon={
-                                    <div className="mb-1 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                    <div className="mb-1 flex size-14 items-center justify-center sq-full bg-primary/10 text-primary">
                                         <Link className="size-6" />
                                     </div>
                                 }
@@ -700,9 +701,9 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                 description="Securely connect your bank via Open Banking. You'll be redirected to authorize access."
                             />
                             <FormDialogBody>
-                                <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/3 dark:bg-white/4 p-4">
+                                <div className={`${UDS.tileSurface} p-4`}>
                                     <div className="flex items-start gap-3">
-                                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center sq-full bg-primary/10 text-primary">
                                             <CheckCircle2 className="size-4" />
                                         </div>
                                         <div className="text-sm">
@@ -721,14 +722,14 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                     <motion.div
                                         initial={{ opacity: 0, y: -4 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+                                        className="flex items-center gap-2 sq-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
                                     >
                                         <AlertCircle className="size-4 shrink-0" />
                                         <span>{syncError}</span>
                                     </motion.div>
                                 )}
 
-                                <div className="rounded-xl border border-dashed border-black/10 dark:border-white/10 p-3 text-center text-xs text-neutral-400">
+                                <div className={cn(UDS.largeTileSurface, "border-dashed p-3 text-center text-xs text-neutral-400")}>
                                     <p>Your banking credentials are handled directly by your bank.</p>
                                     <p className="mt-1">Argent never sees or stores your login details.</p>
                                 </div>
@@ -818,7 +819,7 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
                                             <Button variant="ghost"
                                                 key={c.value}
                                                 type="button"
-                                                className={`size-8 rounded-full border-2 transition-all ${
+                                                className={`size-8 sq-full border-2 transition-all ${
                                                     formData.color === c.value ? "border-foreground scale-110" : "border-transparent"
                                                 }`}
                                                 style={{ backgroundColor: c.value }}

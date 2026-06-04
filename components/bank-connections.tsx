@@ -35,7 +35,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { notify } from "@/lib/notify"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { getTranslations } from "@/lib/translation-utils"
 
 interface BankConnection {
@@ -55,8 +55,11 @@ export function BankConnections() {
     const common = getTranslations(t, "common")
     const { data: connections = [], isLoading, error: fetchError } = useQuery({
         queryKey: queryKeys.bankConnections,
-        queryFn: async () => {
-            const res = await fetch("/api/bank/connections")
+        queryFn: async ({ signal }) => {
+            const res = await fetch("/api/bank/connections", {
+                credentials: "include",
+                signal,
+            })
             if (!res.ok) {
                 if (res.status === 401) return []
                 throw new Error("Failed to fetch connections")
@@ -64,6 +67,9 @@ export function BankConnections() {
             const data = await res.json()
             return (data.connections || []) as BankConnection[]
         },
+        staleTime: 2 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
     })
     const [isConnecting, setIsConnecting] = React.useState(false)
     const [disconnectingId, setDisconnectingId] = React.useState<string | null>(null)
@@ -151,14 +157,14 @@ export function BankConnections() {
     // Don't render anything while loading or if there's an error with no connections
     if (isLoading) {
         return (
-            <div className="rounded-xl border bg-white dark:bg-neutral-950 p-4">
+            <div className={`${UDS.panelSurface} p-4`}>
                 <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                    <div className="flex size-9 items-center justify-center sq-lg bg-primary/10">
                         <Building2 className="size-4 text-primary" />
                     </div>
                     <div className="space-y-1.5">
-                        <div className="h-4 w-32 animate-pulse rounded bg-black/5 dark:bg-white/5" />
-                        <div className="h-3 w-48 animate-pulse rounded bg-black/5 dark:bg-white/5" />
+                        <div className="h-4 w-32 animate-pulse sq uds-bg-subtle" />
+                        <div className="h-3 w-48 animate-pulse sq uds-bg-subtle" />
                     </div>
                 </div>
             </div>
@@ -178,17 +184,17 @@ export function BankConnections() {
 
     return (
         <>
-            <div className="rounded-xl border bg-white dark:bg-neutral-950">
+            <div className={UDS.panelSurface}>
                 {/* Header */}
                 <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setExpanded(!expanded)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded) } }}
-                    className="flex w-full items-center justify-between p-4 text-left hover:bg-black/5 dark:hover:bg-white/5/30 transition-colors rounded-xl cursor-pointer"
+                    className={`${UDS.itemHover} flex w-full cursor-pointer items-center justify-between p-4 text-left transition-colors`}
                 >
                     <div className="flex items-center gap-3">
-                        <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+                        <div className="flex size-9 items-center justify-center sq-lg bg-primary/10">
                             <Building2 className="size-4 text-primary" />
                         </div>
                         <div>
@@ -237,7 +243,7 @@ export function BankConnections() {
                         >
                             <div className="border-t px-4 pb-4">
                                 {error && (
-                                    <div className={`mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm ${PRISM.destructiveText}`}>
+                                    <div className={`mt-3 flex items-center gap-2 sq-lg bg-red-500/10 px-3 py-2 text-sm ${UDS.destructiveText}`}>
                                         <AlertCircle className="size-4 shrink-0" />
                                         <span>{error}</span>
                                     </div>
@@ -258,10 +264,10 @@ export function BankConnections() {
                                         {connections.map((conn) => (
                                             <div
                                                 key={conn.id}
-                                                className="flex items-center justify-between rounded-lg border bg-background p-3"
+                                                className={`${UDS.inlineSurface} flex items-center justify-between p-3`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex size-9 items-center justify-center rounded-lg bg-black/5 dark:bg-white/5">
+                                                    <div className={`${UDS.inlineSurface} flex size-9 items-center justify-center`}>
                                                         <Building2 className="size-4 text-neutral-400" />
                                                     </div>
                                                     <div>
@@ -286,7 +292,7 @@ export function BankConnections() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-8 w-8 p-0"
+                                                        className="size-8 p-0"
                                                         title={bk.refresh_connection || "Refresh connection"}
                                                         onClick={() => handleRefresh(conn.id)}
                                                     >
@@ -295,7 +301,7 @@ export function BankConnections() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className={`h-8 w-8 p-0 ${PRISM.destructiveHover}`}
+                                                        className={`size-8 p-0 ${UDS.destructiveHover}`}
                                                         title={bk.disconnect_bank || "Disconnect bank"}
                                                         onClick={() => setConfirmDisconnect(conn)}
                                                     >

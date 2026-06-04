@@ -18,19 +18,21 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { DatePicker } from "@/components/date-picker"
 import {
     Select,
     SelectContent,
     SelectItem,
-    SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
 import { Dialog } from "@/components/ui/dialog"
 import {
     FormDialogActions,
+    FormDialogBody,
     FormDialogContent,
     FormDialogHeader,
+    FormSelectTrigger,
+    FormDialogStepIndicator,
 } from "@/components/form-dialog"
 import {
     Target,
@@ -43,13 +45,26 @@ import {
     Shield,
     ShoppingBag,
     Check,
+    Wallet,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
 import { getTranslations } from "@/lib/translation-utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+
+interface GoalLinkedAccount {
+    id: string
+    name: string
+    type: string
+    institution: string
+    balance: number
+    currency: string
+    color: string
+    status: string
+    reference: string
+}
 
 interface FinancialGoal {
     id: string
@@ -61,7 +76,16 @@ interface FinancialGoal {
     color: string
     status: string
     percentage: number
+    accounts: GoalLinkedAccount[]
     createdAt: string
+}
+
+interface GoalFormData {
+    name: string
+    targetAmount: string
+    currentAmount: string
+    deadline: string
+    category: string
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -83,26 +107,61 @@ const categoryColors: Record<string, string> = {
 }
 
 export default function GoalsPage() {
-    const { t } = useLanguage()
+    const { language, t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const g = getTranslations(t, "goals_page")
     const settings = getTranslations(t, "settings")
     const common = getTranslations(t, "common")
     const queryClient = useQueryClient()
+    const [showDialog, setShowDialog] = React.useState(false)
     const { data: goals = [], isLoading } = useQuery({
         queryKey: queryKeys.goals,
         queryFn: () => apiFetch<FinancialGoal[]>("/api/goals"),
     })
-    const [showDialog, setShowDialog] = React.useState(false)
     const [editingGoal, setEditingGoal] = React.useState<FinancialGoal | null>(null)
+    const [goalStep, setGoalStep] = React.useState(0)
     const [isSaving, setIsSaving] = React.useState(false)
-    const [formData, setFormData] = React.useState({
+    const [formData, setFormData] = React.useState<GoalFormData>({
         name: "",
         targetAmount: "",
         currentAmount: "0",
         deadline: "",
         category: "savings",
     })
+
+    React.useEffect(() => {
+        if (showDialog) setGoalStep(0)
+    }, [showDialog])
+
+    const displayedCurrentAmount = React.useMemo(() => {
+        const amount = Number(formData.currentAmount)
+        return Number.isFinite(amount) ? amount : 0
+    }, [formData.currentAmount])
+
+    const handleGoalNext = React.useCallback(() => {
+        if (goalStep === 0) {
+            if (!formData.name.trim()) {
+                toast.error(settings.name || "Name is required")
+                return
+            }
+            setGoalStep(1)
+            return
+        }
+
+        if (goalStep === 1) {
+            const targetAmount = Number(formData.targetAmount)
+            const currentAmount = Number(formData.currentAmount)
+            if (!Number.isFinite(targetAmount) || targetAmount <= 0) {
+                toast.error(g.target_amount || "Enter a target amount")
+                return
+            }
+            if (!Number.isFinite(currentAmount) || currentAmount < 0) {
+                toast.error(g.current_amount || "Enter a current amount")
+                return
+            }
+            setGoalStep(2)
+        }
+    }, [formData.currentAmount, formData.name, formData.targetAmount, g, goalStep, settings.name])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -179,12 +238,14 @@ export default function GoalsPage() {
             deadline: goal.deadline || "",
             category: goal.category,
         })
+        setGoalStep(0)
         setShowDialog(true)
     }
 
     const openNew = () => {
         setEditingGoal(null)
         setFormData({ name: "", targetAmount: "", currentAmount: "0", deadline: "", category: "savings" })
+        setGoalStep(0)
         setShowDialog(true)
     }
 
@@ -203,7 +264,7 @@ export default function GoalsPage() {
     const hasGoals = goals.length > 0
 
     return (
-        <PageShell className="gap-4 p-3 md:p-4">
+        <PageShell className="min-h-fit gap-4 p-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:p-4 md:pb-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -222,21 +283,21 @@ export default function GoalsPage() {
             {(isLoading || hasGoals) && (
                 <StatCards
                     stats={[
-                        { label: g.active_goals || "Active Goals", value: String(activeGoals.length), icon: <Target className="h-4 w-4" /> },
-                        { label: g.total_target || "Total Target", value: formatCurrency(totalTarget), icon: <TrendingUp className="h-4 w-4" /> },
-                        { label: g.total_saved || "Total Saved", value: formatCurrency(totalSaved), trend: "up" as const, icon: <PiggyBank className="h-4 w-4" /> },
-                        { label: g.overall_progress || "Overall Progress", value: `${overallProgress}%`, icon: <Check className="h-4 w-4" /> },
+                        { label: g.active_goals || "Active Goals", value: String(activeGoals.length), icon: <Target className="size-4" /> },
+                        { label: g.total_target || "Total Target", value: formatCurrency(totalTarget), icon: <TrendingUp className="size-4" /> },
+                        { label: g.total_saved || "Total Saved", value: formatCurrency(totalSaved), trend: "up" as const, icon: <PiggyBank className="size-4" /> },
+                        { label: g.overall_progress || "Overall Progress", value: `${overallProgress}%`, icon: <Check className="size-4" /> },
                     ]}
                     isLoading={isLoading}
                 />
             )}
 
-            <PageSection stagger={3} fill>
+            <PageSection stagger={3}>
                 {isLoading ? (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className={cn(PRISM.cardSurface, "p-5")}>
-                                <Skeleton className="h-40 rounded-2xl" />
+                            <div key={i} className={cn(UDS.cardSurface, "p-5")}>
+                                <Skeleton className="h-40 sq-2xl" />
                             </div>
                         ))}
                     </div>
@@ -260,12 +321,13 @@ export default function GoalsPage() {
                             const isCompleted = goal.status === "completed"
                             const progress = Math.min(100, Math.max(0, goal.percentage))
                             const remaining = Math.max(0, goal.targetAmount - goal.currentAmount)
+                            const goalAccount = goal.accounts?.[0]
 
                             return (
                                 <article
                                     key={goal.id}
                                     className={cn(
-                                        PRISM.cardSurface,
+                                        UDS.cardSurface,
                                         "flex min-h-[280px] flex-col justify-between p-4 transition-all duration-200",
                                         isCompleted && "opacity-75",
                                     )}
@@ -274,7 +336,7 @@ export default function GoalsPage() {
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="flex min-w-0 items-center gap-3">
                                                 <div
-                                                    className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-border bg-[var(--surface-elevated)]"
+                                                    className={`${UDS.iconSurface} flex size-10 shrink-0 items-center justify-center`}
                                                     style={{ color: goal.color }}
                                                 >
                                                     <Icon className="size-5" />
@@ -286,6 +348,11 @@ export default function GoalsPage() {
                                                             ? `${g.deadline || "Deadline"}: ${new Date(goal.deadline).toLocaleDateString(t.config?.locale || "en-US")}`
                                                             : (g.no_deadline || "No deadline")}
                                                     </p>
+                                                    {goalAccount && (
+                                                        <p className="mt-1 truncate text-xs text-muted-foreground">
+                                                            {goalAccount.name}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -305,7 +372,7 @@ export default function GoalsPage() {
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 rounded-2xl border border-border bg-[var(--surface-elevated)] p-3">
+                                        <div className={`${UDS.largeTileSurface} mt-6 p-3`}>
                                             <div className="flex items-end justify-between gap-3">
                                                 <div className="min-w-0">
                                                     <p className="text-[11px] font-medium text-muted-foreground">{g.total_saved || "Total Saved"}</p>
@@ -319,9 +386,9 @@ export default function GoalsPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+                                            <div className={cn("mt-4 h-2 overflow-hidden sq-full", UDS.subtleFill)}>
                                                 <div
-                                                    className="h-full rounded-full transition-all duration-500"
+                                                    className="h-full sq-full transition-all duration-500"
                                                     style={{ width: `${progress}%`, backgroundColor: goal.color }}
                                                 />
                                             </div>
@@ -331,11 +398,26 @@ export default function GoalsPage() {
                                                     {progress}%
                                                 </span>
                                                 <span className="truncate text-muted-foreground">
-                                                    {isCompleted ? (g.done || "Done") : `${formatCurrency(remaining)} ${g.remaining || "remaining"}`}
+                                                    {isCompleted ? (
+                                                        g.done || "Done"
+                                                    ) : (
+                                                        <>
+                                                            <span className="tabular-nums">{formatCurrency(remaining)}</span> {g.remaining || "remaining"}
+                                                        </>
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {goalAccount && (
+                                        <div className="mt-4 flex min-h-8 items-center gap-2 overflow-hidden text-xs text-muted-foreground">
+                                            <Wallet className="size-3.5 shrink-0" />
+                                            <span className="truncate">
+                                                {(g.goal_account || "Goal account")}: {goalAccount.reference}
+                                            </span>
+                                        </div>
+                                    )}
 
                                     {!isCompleted && (
                                         <div className="mt-4 grid grid-cols-3 gap-1.5">
@@ -344,7 +426,7 @@ export default function GoalsPage() {
                                                     key={amt}
                                                     variant="glass"
                                                     size="sm"
-                                                    className="min-w-0 px-2 text-xs"
+                                                    className="min-w-0 px-2 text-xs tabular-nums"
                                                     onClick={() => updateAmount(goal, goal.currentAmount + amt)}
                                                 >
                                                     +{formatCurrency(amt)}
@@ -361,25 +443,46 @@ export default function GoalsPage() {
 
             {/* Create/Edit Dialog */}
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <FormDialogContent maxWidth="430px">
+                <FormDialogContent>
                     <FormDialogHeader
                         title={editingGoal
                             ? (g.edit_goal || "Edit Goal")
                             : (g.new_financial_goal || "New Financial Goal")}
-                        description={g.set_savings_target || "Set your savings target"}
+                        description={
+                            goalStep === 0
+                                ? (g.goal_name_placeholder || "Give this goal a clear name.")
+                                : goalStep === 1
+                                    ? (g.set_savings_target || "Set your savings target")
+                                    : (g.category || "Choose timing and category")
+                        }
                     />
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                        <div>
-                            <Input
-                                label={settings.name || "Name"}
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder={g.goal_name_placeholder || "E.g. Holiday 2027"}
-                                required
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div>
+
+                    <form
+                        onSubmit={(e) => {
+                            if (goalStep < 2) {
+                                e.preventDefault()
+                                handleGoalNext()
+                                return
+                            }
+                            handleSubmit(e)
+                        }}
+                        className="flex flex-col gap-4"
+                    >
+                        {goalStep === 0 && (
+                            <FormDialogBody key="goal-name">
+                                <Input
+                                    label={settings.name || "Name"}
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder={g.goal_name_placeholder || "E.g. Holiday 2027"}
+                                    autoFocus
+                                    required
+                                />
+                            </FormDialogBody>
+                        )}
+
+                        {goalStep === 1 && (
+                            <FormDialogBody key="goal-amounts">
                                 <Input
                                     label={g.target_amount || "Target (€)"}
                                     type="number"
@@ -387,56 +490,79 @@ export default function GoalsPage() {
                                     step="0.01"
                                     value={formData.targetAmount}
                                     onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
+                                    autoFocus
                                     required
                                 />
-                            </div>
-                            <div>
-                                <Input
-                                    label={g.current_amount || "Current (€)"}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={formData.currentAmount}
-                                    onChange={(e) => setFormData({ ...formData, currentAmount: e.target.value })}
+                                <div className="flex flex-col gap-2">
+                                    <Input
+                                        label={g.initial_transfer || "Initial transfer (€)"}
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.currentAmount}
+                                        onChange={(e) => setFormData({ ...formData, currentAmount: e.target.value })}
+                                    />
+
+                                    <div className={`${UDS.tileSurface} flex items-center justify-between px-3 py-2 text-sm`}>
+                                        <span className="text-muted-foreground">{g.reserved_account || "Reserved account"}</span>
+                                        <span className="font-semibold tabular-nums">{formatCurrency(displayedCurrentAmount)}</span>
+                                    </div>
+                                </div>
+                            </FormDialogBody>
+                        )}
+
+                        {goalStep === 2 && (
+                            <FormDialogBody key="goal-details">
+                                <DatePicker
+                                    value={formData.deadline}
+                                    onChange={(deadline) => setFormData({ ...formData, deadline })}
+                                    locale={language}
+                                    placeholder={g.deadline || "Deadline"}
                                 />
-                            </div>
-                        </div>
-                        <div>
-                            <Input
-                                label={g.deadline || "Deadline"}
-                                type="date"
-                                value={formData.deadline}
-                                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <Label>{g.category || "Category"}</Label>
-                            <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="savings">{g.cat_savings || "Savings"}</SelectItem>
-                                    <SelectItem value="emergency">{g.cat_emergency || "Emergency"}</SelectItem>
-                                    <SelectItem value="investment">{g.cat_investment || "Investment"}</SelectItem>
-                                    <SelectItem value="purchase">{g.cat_purchase || "Purchase"}</SelectItem>
-                                    <SelectItem value="travel">{g.cat_travel || "Travel"}</SelectItem>
-                                    <SelectItem value="other">{g.cat_other || "Other"}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                                    <FormSelectTrigger label={g.category || "Category"}>
+                                        <SelectValue />
+                                    </FormSelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="savings">{g.cat_savings || "Savings"}</SelectItem>
+                                        <SelectItem value="emergency">{g.cat_emergency || "Emergency"}</SelectItem>
+                                        <SelectItem value="investment">{g.cat_investment || "Investment"}</SelectItem>
+                                        <SelectItem value="purchase">{g.cat_purchase || "Purchase"}</SelectItem>
+                                        <SelectItem value="travel">{g.cat_travel || "Travel"}</SelectItem>
+                                        <SelectItem value="other">{g.cat_other || "Other"}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </FormDialogBody>
+                        )}
+
                         <FormDialogActions>
                             <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving}>
-                                {isSaving
+                                {goalStep < 2
+                                    ? (common.continue || "Continue")
+                                    : isSaving
                                     ? (common.saving || "Saving...")
                                     : editingGoal
                                         ? (common.save || "Save")
                                         : (common.create || "Create")}
                             </Button>
-                            <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setShowDialog(false)}>
-                                {common.cancel || "Cancel"}
+                            <Button
+                                type="button"
+                                variant="glass"
+                                size="lg"
+                                className="w-full"
+                                onClick={() => {
+                                    if (goalStep === 0) {
+                                        setShowDialog(false)
+                                        return
+                                    }
+                                    setGoalStep((step) => Math.max(step - 1, 0))
+                                }}
+                                disabled={isSaving}
+                            >
+                                {goalStep === 0 ? (common.cancel || "Cancel") : (common.back || "Back")}
                             </Button>
                         </FormDialogActions>
+                        <FormDialogStepIndicator current={goalStep} total={3} />
                     </form>
                 </FormDialogContent>
             </Dialog>

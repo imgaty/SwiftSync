@@ -10,7 +10,9 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { UDS } from "@/lib/UDS"
 import {
     ArrowUpRight,
     ArrowDownRight,
@@ -112,6 +114,7 @@ export function TransactionsTable({
     onDeleteTransaction,
     onAddTransaction,
 }: TransactionsTableProps) {
+    const router = useRouter()
     const { t, isLoading: isLangLoading } = useLanguage()
     const { formatCurrency } = useCurrency()
     const f = React.useMemo(() => (t.finance || {}) as Record<string, unknown>, [t.finance])
@@ -189,7 +192,7 @@ export function TransactionsTable({
                 return (
                     <span
                         className={cn(
-                            "inline-flex items-center gap-1.5 h-5 px-2 rounded-full text-[11px] font-medium",
+                            "inline-flex items-center gap-1.5 h-5 px-2 sq-full text-[11px] font-medium",
                             isIncome
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                 : "bg-red-500/10 text-red-600 dark:text-red-400",
@@ -235,7 +238,7 @@ export function TransactionsTable({
                 return (
                     <div className="flex items-center gap-2 min-w-0">
                         <span
-                            className="size-2 rounded-full shrink-0"
+                            className="size-2 sq-full shrink-0"
                             style={{ backgroundColor: account?.color || "var(--muted-foreground)" }}
                         />
                         <span className="truncate text-[13px]">
@@ -338,6 +341,12 @@ export function TransactionsTable({
     }, [isDashboard])
     const [globalFilter, setGlobalFilter] = React.useState("")
     const isMobile = useIsMobileView()
+    const openTransaction = React.useCallback((transaction: Transaction) => {
+        router.push(`/Transactions/${encodeURIComponent(transaction.id)}`)
+    }, [router])
+    const isRowNavigationBlocked = React.useCallback((target: EventTarget | null) => {
+        return target instanceof Element && target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")
+    }, [])
 
     // Sync data when initialData changes (e.g., after async fetch)
     React.useEffect(() => {
@@ -402,8 +411,8 @@ export function TransactionsTable({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
-                                <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
+                                <TableHead className="w-8"><Skeleton className="size-4" /></TableHead>
+                                <TableHead className="w-8"><Skeleton className="size-4" /></TableHead>
                                 {[80, 150, 80, 60, 80, 80, 60, 40].map((w, i) => (
                                     <TableHead key={i}><Skeleton className="h-4" style={{ width: w }} /></TableHead>
                                 ))}
@@ -412,16 +421,16 @@ export function TransactionsTable({
                         <TableBody>
                             {[...Array(10)].map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                    <TableCell><Skeleton className="size-4" /></TableCell>
+                                    <TableCell><Skeleton className="size-4" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20 sq-full" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                                    <TableCell><Skeleton className="h-6 w-6 rounded" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-16 sq-full" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-16 sq-full" /></TableCell>
+                                    <TableCell><Skeleton className="size-6 sq" /></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -432,7 +441,7 @@ export function TransactionsTable({
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-40 hidden lg:block" />
                     <div className="flex items-center gap-2">
-                        {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-8 w-8" />)}
+                        {[0, 1, 2, 3].map(i => <Skeleton key={i} className="size-8" />)}
                     </div>
                 </div>
             </div>
@@ -442,7 +451,7 @@ export function TransactionsTable({
     return (
         <Tabs defaultValue="all" className={cn("flex flex-col justify-start w-full min-h-0 flex-1", isDashboard ? "h-full gap-4" : "gap-4")}>
             {showToolbar && (
-            <TableToolbar className={cn(isDashboard && "border-b border-black/6 dark:border-white/8 pb-2") }>
+            <TableToolbar className={cn(isDashboard && cn("border-b pb-2", UDS.cardDivider))}>
                 <TableToolbarGroup className="flex-wrap">
                     <TableSearchControl
                         table={table}
@@ -509,40 +518,57 @@ export function TransactionsTable({
                             ).map((row, index) => {
                                 const tx = row.original
                                 return (
-                                    <MobileCard
+                                    <div
                                         key={row.id}
-                                        item={tx}
-                                        id={tx.id}
-                                        index={index}
-                                        fieldLayout={isDashboard ? "grid" : "carousel"}
-                                        isSelected={row.getIsSelected()}
-                                        onSelect={(checked) => row.toggleSelected(checked)}
-                                        icon={
-                                            tx.type === "in"
-                                                ? <ArrowDownRight className="size-5 text-positive" />
-                                                : <ArrowUpRight className="size-5 text-negative" />
-                                        }
-                                        title={tx.description}
-                                        subtitle={new Date(tx.date).toLocaleDateString(t.config?.locale || "en-US")}
-                                        badge={{
-                                            label: tx.type === "in" ? (tt.income || "Income") : (tt.expense || "Expense"),
-                                            variant: tx.type === "in" ? "default" : "destructive",
+                                        role="link"
+                                        tabIndex={0}
+                                        aria-label={`Open transaction ${tx.description}`}
+                                        onClick={(event) => {
+                                            if (isRowNavigationBlocked(event.target)) return
+                                            openTransaction(tx)
                                         }}
-                                        fields={[
-                                            {
-                                                label: tt.amount || "Amount",
-                                                value: (
-                                                    <span className={tx.type === "in" ? "text-positive" : "text-negative"}>
-                                                        {tx.type === "in" ? "+" : "-"}{formatCurrency(tx.amount)}
-                                                    </span>
-                                                ),
-                                            },
-                                            {
-                                                label: tt.tags || "Tags",
-                                                value: tx.tags.length > 0 ? tx.tags.join(", ") : "—",
-                                            },
-                                        ]}
-                                    />
+                                        onKeyDown={(event) => {
+                                            if (event.key !== "Enter" && event.key !== " ") return
+                                            if (isRowNavigationBlocked(event.target)) return
+                                            event.preventDefault()
+                                            openTransaction(tx)
+                                        }}
+                                        className="cursor-pointer sq-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    >
+                                        <MobileCard
+                                            item={tx}
+                                            id={tx.id}
+                                            index={index}
+                                            fieldLayout={isDashboard ? "grid" : "carousel"}
+                                            isSelected={row.getIsSelected()}
+                                            onSelect={(checked) => row.toggleSelected(checked)}
+                                            icon={
+                                                tx.type === "in"
+                                                    ? <ArrowDownRight className="size-5 text-positive" />
+                                                    : <ArrowUpRight className="size-5 text-negative" />
+                                            }
+                                            title={tx.description}
+                                            subtitle={new Date(tx.date).toLocaleDateString(t.config?.locale || "en-US")}
+                                            badge={{
+                                                label: tx.type === "in" ? (tt.income || "Income") : (tt.expense || "Expense"),
+                                                variant: tx.type === "in" ? "default" : "destructive",
+                                            }}
+                                            fields={[
+                                                {
+                                                    label: tt.amount || "Amount",
+                                                    value: (
+                                                        <span className={`tabular-nums ${tx.type === "in" ? "text-positive" : "text-negative"}`}>
+                                                            {tx.type === "in" ? "+" : "-"}{formatCurrency(tx.amount)}
+                                                        </span>
+                                                    ),
+                                                },
+                                                {
+                                                    label: tt.tags || "Tags",
+                                                    value: tx.tags.length > 0 ? tx.tags.join(", ") : "—",
+                                                },
+                                            ]}
+                                        />
+                                    </div>
                                 )
                             })
                         ) : (
@@ -551,7 +577,7 @@ export function TransactionsTable({
                     </MobileCardList>
                     </>
                 ) : (
-                <TableShell className={cn(isDashboard ? "h-full rounded-none border-0 bg-transparent shadow-none backdrop-blur-0 dark:bg-transparent dark:shadow-none" : "flex-1")}>
+                <TableShell className={cn(isDashboard ? cn("h-full sq-none border-0 bg-transparent backdrop-blur-0 dark:bg-transparent", UDS.cardFlatShadow) : "flex-1")}>
                     <TableScrollArea>
                     <Table className="w-full">
                         <TableHeader>
@@ -579,12 +605,20 @@ export function TransactionsTable({
                                     <TableRow
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
+                                        role="link"
+                                        tabIndex={0}
+                                        aria-label={`Open transaction ${row.original.description}`}
                                         onClick={(e) => {
-                                            const target = e.target as HTMLElement
-                                            if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
-                                            row.toggleSelected()
+                                            if (isRowNavigationBlocked(e.target)) return
+                                            openTransaction(row.original)
                                         }}
-                                        className="group/row animate-fade-in"
+                                        onKeyDown={(e) => {
+                                            if (e.key !== "Enter" && e.key !== " ") return
+                                            if (isRowNavigationBlocked(e.target)) return
+                                            e.preventDefault()
+                                            openTransaction(row.original)
+                                        }}
+                                        className="group/row animate-fade-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/70"
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id} className={cn(isDashboard && "py-2")}>

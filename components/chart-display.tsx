@@ -17,18 +17,21 @@ import { Button } from "@/components/ui/button"
 import { OverflowScroll } from "@/components/ui/overflow-scroll"
 import { useChartContext } from "@/components/chart-context"
 import { useCurrency } from "@/components/currency-provider"
-import { DISPLAY_MODE_ICONS, HOVER_DELAY, DATE_FORMAT_OPTIONS } from "@/lib/chart-constants"
-import { 
-    getOffsetDate, 
-    getFilteredPeriodData, 
-    getFilteredCustomRangeData, 
+import {
+    DATE_FORMAT_OPTIONS,
+    DISPLAY_MODE_ICONS,
     getCategoryOptions,
-    getConfigColor 
-} from "@/lib/chart-utils"
-import type { ChartInstance, DailyData } from "@/lib/chart-types"
+    getConfigColor,
+    getFilteredCustomRangeData,
+    getFilteredPeriodData,
+    getOffsetDate,
+    HOVER_DELAY,
+} from "@/lib/chart"
+import type { ChartInstance, DailyData } from "@/lib/chart"
 import { AreaChartComponent, BarChartComponent, PieChartComponent } from "@/components/ui/chart"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { EmptyState } from "@/components/empty-state"
+import { cn } from "@/lib/utils"
 
 // ==============================================================================
 // CHART DISPLAY COMPONENT
@@ -180,6 +183,7 @@ export const ChartDisplay = React.memo(function ChartDisplay({
     const handleSettings = React.useCallback((e: React.MouseEvent) => { e.stopPropagation(); onOpenSettings() }, [onOpenSettings])
     const handleDelete = React.useCallback((e: React.MouseEvent) => { e.stopPropagation(); onDelete() }, [onDelete])
     const handleExpand = React.useCallback((e: React.MouseEvent) => { e.stopPropagation(); onExpand() }, [onExpand])
+    const expandLabel = labels.expand ?? "Expand"
 
     const periodLabel = React.useMemo(() => {
         // Show custom date range label if set
@@ -210,20 +214,18 @@ export const ChartDisplay = React.memo(function ChartDisplay({
     // Show bubbles when hovering OR selected
     const showBubbles = isHovered || isSelected
     
-    // Border: selected = soft accent, hovered = subtle highlight, neither = default
-    const borderClass = isSelected 
-        ? 'border-2 border-primary/40 shadow-sm' 
-        : isHovered 
-            ? 'border-primary/25 shadow-sm' 
-            : 'border-border hover:border-border/80 shadow-sm'
-
     return (
         <div 
             data-chart-display
-            className={compact
-                ? "relative flex h-full min-h-0 flex-1 min-w-0 select-none flex-col"
-                : `relative flex-1 min-w-0 rounded-xl p-4 select-none transition-all duration-200 border bg-card ${borderClass}`
-            }
+            className={cn(
+                compact
+                    ? "group relative flex h-full min-h-0 flex-1 min-w-0 select-none flex-col"
+                    : [
+                        UDS.cardSurface,
+                        "relative flex-1 min-w-0 p-4 select-none",
+                        (isSelected || isHovered) ? "sq-border-strong" : UDS.cardHover,
+                    ],
+            )}
             style={{ WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -231,72 +233,100 @@ export const ChartDisplay = React.memo(function ChartDisplay({
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
+            {/* Compact dashboard charts keep the old expanded view without exposing full edit controls. */}
+            {compact && (
+                <div
+                    className={cn(
+                        "pointer-events-none absolute right-2 top-2 z-10 opacity-0",
+                        "group-hover:pointer-events-auto group-hover:opacity-100",
+                        "group-focus-within:pointer-events-auto group-focus-within:opacity-100",
+                        showBubbles && "pointer-events-auto opacity-100",
+                    )}
+                >
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="glass"
+                                size="icon-sm"
+                                onClick={handleExpand}
+                                className="size-7 text-foreground-secondary hover:text-foreground"
+                                aria-label={expandLabel}
+                            >
+                                <Maximize2 className="size-3.5" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left"><p>{expandLabel}</p></TooltipContent>
+                    </Tooltip>
+                </div>
+            )}
+
             {/* Controls bubble - horizontal: top center, stacked: right border vertical */}
             {!compact && (isHorizontal ? (
-                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 z-10 transition-all duration-200 ease-out ${showBubbles ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
-                    <div className="flex items-center gap-0.5 rounded-full px-1.5 py-1 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]">
+                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 z-10 ${showBubbles ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className={`${UDS.floatingPillSurface} flex items-center gap-0.5 px-1.5 py-1`}>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleMoveLeft} disabled={index === 0} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleMoveLeft} disabled={index === 0} className={cn("p-1.5 sq-full transition-colors disabled:cursor-not-allowed disabled:opacity-30", UDS.itemHover)}><ChevronLeft className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" disabled={index === 0}><p>{labels.move_left ?? "Move left"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleExpand} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Maximize2 className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleExpand} className={cn("p-1.5 sq-full transition-colors", UDS.itemHover)}><Maximize2 className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom"><p>{labels.expand ?? "Expand"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleSettings} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Settings className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleSettings} className={cn("p-1.5 sq-full transition-colors", UDS.itemHover)}><Settings className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom"><p>{labels.customize ?? "Customize"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleDelete} disabled={totalCharts <= 1} className={`p-1.5 rounded-full ${PRISM.destructiveHover} transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}><X className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleDelete} disabled={totalCharts <= 1} className={`p-1.5 sq-full ${UDS.destructiveHover} transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}><X className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" disabled={totalCharts <= 1}><p>{labels.remove ?? "Remove"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleMoveRight} disabled={index === totalCharts - 1} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleMoveRight} disabled={index === totalCharts - 1} className={cn("p-1.5 sq-full transition-colors disabled:cursor-not-allowed disabled:opacity-30", UDS.itemHover)}><ChevronRight className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" disabled={index === totalCharts - 1}><p>{labels.move_right ?? "Move right"}</p></TooltipContent>
                         </Tooltip>
                     </div>
                 </div>
             ) : (
-                <div className={`absolute -right-3 top-1/2 -translate-y-1/2 z-10 transition-all duration-200 ease-out ${showBubbles ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'}`}>
-                    <div className="flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_0.5px_0_rgba(255,255,255,0.08)]">
+                <div className={`absolute -right-3 top-1/2 -translate-y-1/2 z-10 ${showBubbles ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className={`${UDS.floatingPillSurface} flex flex-col items-center gap-0.5 px-1 py-1.5`}>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleMoveLeft} disabled={index === 0} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronUp className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleMoveLeft} disabled={index === 0} className={cn("p-1.5 sq-full transition-colors disabled:cursor-not-allowed disabled:opacity-30", UDS.itemHover)}><ChevronUp className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="left" disabled={index === 0}><p>{labels.move_up ?? "Move up"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleExpand} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Maximize2 className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleExpand} className={cn("p-1.5 sq-full transition-colors", UDS.itemHover)}><Maximize2 className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="left"><p>{labels.expand ?? "Expand"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleSettings} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"><Settings className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleSettings} className={cn("p-1.5 sq-full transition-colors", UDS.itemHover)}><Settings className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="left"><p>{labels.customize ?? "Customize"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleDelete} disabled={totalCharts <= 1} className={`p-1.5 rounded-full ${PRISM.destructiveHover} transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}><X className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleDelete} disabled={totalCharts <= 1} className={`p-1.5 sq-full ${UDS.destructiveHover} transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}><X className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="left" disabled={totalCharts <= 1}><p>{labels.remove ?? "Remove"}</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleMoveRight} disabled={index === totalCharts - 1} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><ChevronDown className="w-3.5 h-3.5" /></Button>
+                                <Button variant="ghost" onClick={handleMoveRight} disabled={index === totalCharts - 1} className={cn("p-1.5 sq-full transition-colors disabled:cursor-not-allowed disabled:opacity-30", UDS.itemHover)}><ChevronDown className="w-3.5 h-3.5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent side="left" disabled={index === totalCharts - 1}><p>{labels.move_down ?? "Move down"}</p></TooltipContent>
                         </Tooltip>
@@ -307,11 +337,11 @@ export const ChartDisplay = React.memo(function ChartDisplay({
 
             {/* Info strip - subtle text display, appears on hover/select */}
             {!compact && (
-            <div className={`absolute bottom-0 left-0 right-0 z-10 pointer-events-none transition-all duration-200 ease-out ${showBubbles ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`absolute bottom-0 left-0 right-0 z-10 pointer-events-none ${showBubbles ? 'opacity-100' : 'opacity-0'}`}>
                 <OverflowScroll className={`py-1.5 ${isHorizontal ? 'px-4' : 'px-3'}`} speed={25} pauseDuration={2500} center>
                     <span className="flex items-center gap-3 text-[10px] text-neutral-400/70">
                         <span className="flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: metricColor }} />
+                            <span className="w-1.5 h-1.5 sq-full shrink-0" style={{ backgroundColor: metricColor }} />
                             <span>{chartConfig[metricType]?.label}</span>
                         </span>
                         <span className="text-neutral-400/30">·</span>
@@ -334,7 +364,7 @@ export const ChartDisplay = React.memo(function ChartDisplay({
             {!compact && (
             <div className={`flex items-center justify-between ${isHorizontal ? 'mb-3' : 'mb-2'}`}>
                 <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-400/80">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: metricColor }} />
+                    <span className="w-2 h-2 sq-full" style={{ backgroundColor: metricColor }} />
                     <span>{chartConfig[metricType]?.label}</span>
                     <span className="text-neutral-400/40">•</span>
                     {selectedCategories.length > 1 ? (
@@ -343,14 +373,14 @@ export const ChartDisplay = React.memo(function ChartDisplay({
                                 <span className="flex items-center gap-1.5 cursor-help">
                                     <span className="flex items-center -space-x-0.5">
                                         {selectedCategories.slice(0, 5).map(cat => (
-                                            <span 
-                                                key={cat} 
-                                                className="w-2 h-2 rounded-full ring-1 ring-background" 
-                                                style={{ backgroundColor: getConfigColor(chartConfig, cat) }} 
+                                            <span
+                                                key={cat}
+                                                className="w-2 h-2 sq-full ring-1 ring-background"
+                                                style={{ backgroundColor: getConfigColor(chartConfig, cat) }}
                                             />
                                         ))}
                                         {selectedCategories.length > 5 && (
-                                            <span className="w-2 h-2 rounded-full bg-black/5 dark:bg-white/5-foreground/30 ring-1 ring-background text-[6px]">+</span>
+                                            <span className="w-2 h-2 sq-full uds-bg-subtle ring-1 ring-background text-[6px]">+</span>
                                         )}
                                     </span>
                                     <span className="underline decoration-dotted underline-offset-2">{filterLabel}</span>
@@ -360,7 +390,7 @@ export const ChartDisplay = React.memo(function ChartDisplay({
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
                                     {selectedCategories.map(cat => (
                                         <span key={cat} className="flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: getConfigColor(chartConfig, cat) }} />
+                                            <span className="w-1.5 h-1.5 sq-full shrink-0" style={{ backgroundColor: getConfigColor(chartConfig, cat) }} />
                                             <span className="auto-scroll">{chartConfig[cat as keyof typeof chartConfig]?.label ?? cat}</span>
                                         </span>
                                     ))}

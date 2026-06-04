@@ -12,7 +12,7 @@
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_ITEM_SELECTOR =
@@ -59,13 +59,13 @@ type UseGlideHighlightOptions = {
     onEscapeKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void
 }
 
-export type PrismGlideMenuProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onActivate"> &
+export type UDSGlideMenuProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onActivate"> &
     Omit<UseGlideHighlightOptions, "surfaceRef"> & {
         highlightClassName?: string
         contentClassName?: string
     }
 
-export type PrismGlideMenuItemProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+export type UDSGlideMenuItemProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     glideId?: string
 }
 
@@ -82,7 +82,7 @@ function ensureGlideId(element: HTMLElement) {
     }
 
     generatedId += 1
-    const id = `prism-glide-${generatedId}`
+    const id = `uds-glide-${generatedId}`
     element.dataset.glideItem = id
     element.id = id
     return id
@@ -579,8 +579,8 @@ export function GlideHighlight({
     return null
 }
 
-export const PrismGlideMenu = React.forwardRef<HTMLDivElement, PrismGlideMenuProps>(
-    function PrismGlideMenu({
+export const UDSGlideMenu = React.forwardRef<HTMLDivElement, UDSGlideMenuProps>(
+    function UDSGlideMenu({
         children,
         className,
         contentClassName,
@@ -627,10 +627,10 @@ export const PrismGlideMenu = React.forwardRef<HTMLDivElement, PrismGlideMenuPro
         return (
             <div
                 ref={composedRef}
-                data-prism-glide-menu=""
+                data-uds-glide-menu=""
                 aria-activedescendant={activeId || undefined}
                 tabIndex={tabIndex ?? (keyboardNavigation ? 0 : undefined)}
-                className={cn(PRISM.glideSurface, shouldPreventTouchScroll && "touch-none", className)}
+                className={cn(UDS.glideSurface, shouldPreventTouchScroll && "touch-none", className)}
                 {...props}
                 {...menuHandlers}
             >
@@ -643,8 +643,8 @@ export const PrismGlideMenu = React.forwardRef<HTMLDivElement, PrismGlideMenuPro
     },
 )
 
-export const PrismGlideMenuItem = React.forwardRef<HTMLButtonElement, PrismGlideMenuItemProps>(
-    function PrismGlideMenuItem({
+export const UDSGlideMenuItem = React.forwardRef<HTMLButtonElement, UDSGlideMenuItemProps>(
+    function UDSGlideMenuItem({
         children,
         className,
         glideId,
@@ -662,9 +662,9 @@ export const PrismGlideMenuItem = React.forwardRef<HTMLButtonElement, PrismGlide
                 type={type}
                 data-glide-item={itemId}
                 className={cn(
-                    PRISM.item,
-                    PRISM.glideItem,
-                    PRISM.itemIcon,
+                    UDS.item,
+                    UDS.glideItem,
+                    UDS.itemIcon,
                     className,
                 )}
                 {...props}

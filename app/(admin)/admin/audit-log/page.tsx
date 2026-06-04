@@ -17,7 +17,7 @@ import {
 
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -54,12 +54,12 @@ type AdminCopy = Record<string, string | undefined> & {
 
 function actionBadge(action: string) {
     const color = action.includes("ban") || action.includes("delete")
-        ? PRISM.destructiveBadge
+        ? UDS.destructiveBadge
         : action.includes("suspend")
-            ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+            ? UDS.semanticBadge.warning
             : action.includes("create")
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                : "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                ? UDS.semanticBadge.positive
+                : UDS.semanticBadge.info
     return <Badge variant="outline" className={`font-mono text-xs ${color}`}>{action}</Badge>
 }
 
@@ -131,7 +131,7 @@ export default function AdminAuditLogPage() {
                 />
                 <Select value={entityFilter} onValueChange={setEntityFilter}>
                     <SelectTrigger className="w-[145px]" size="sm">
-                        <Filter className="size-4" />
+                        <Filter className="size-3.5" />
                         <SelectValue placeholder={al.entity || "Entity"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -152,11 +152,11 @@ export default function AdminAuditLogPage() {
             />
 
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
-                <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3 flex items-center gap-3">
-                    <ScrollText className="size-5 text-neutral-400" />
+                <div className={`${UDS.summaryTileSurface} flex items-center gap-3`}>
+                    <ScrollText className="size-4 text-neutral-400" />
                     <div>
-                        <p className="text-sm font-medium">{al.total_entries || "Total Entries"}</p>
-                        <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : pagination.total.toLocaleString()}</p>
+                        <p className={UDS.summaryLabel}>{al.total_entries || "Total Entries"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-16" /> : pagination.total.toLocaleString()}</p>
                     </div>
                 </div>
 

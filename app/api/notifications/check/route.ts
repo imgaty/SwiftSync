@@ -20,6 +20,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthContext } from "@/lib/auth-helpers"
 import { scopeFilter, scopeCreateData } from "@/lib/data-access"
+import { toAmount } from "@/lib/goal-account"
 export async function POST() {
   const ctx = await getAuthContext()
   if (!ctx) {
@@ -158,14 +159,21 @@ export async function POST() {
   // --- Check financial goals reached ---
   const goals = await prisma.financialGoal.findMany({
     where: { ...baseFilter, status: "active" },
+    include: {
+      accountLinks: { select: { balance: true } },
+    },
   })
   for (const goal of goals) {
-    if (Number(goal.currentAmount) >= Number(goal.targetAmount)) {
+    const linkedCurrentAmount = goal.accountLinks.length > 0
+      ? goal.accountLinks.reduce((sum, account) => sum + toAmount(account.balance), 0)
+      : toAmount(goal.currentAmount)
+
+    if (linkedCurrentAmount >= Number(goal.targetAmount)) {
       // Re-apply the scope filter on the write so a future refactor of the read
       // query above can't accidentally turn this into a cross-scope write.
       await prisma.financialGoal.updateMany({
         where: { id: goal.id, ...baseFilter },
-        data: { status: "completed" },
+        data: { currentAmount: linkedCurrentAmount, status: "completed" },
       })
       await prisma.notification.create({
         data: {

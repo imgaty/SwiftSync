@@ -218,7 +218,7 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
             underline: !!cell.u,
             strikethrough: !!cell.s,
             wrap: !!cell.wrap,
-            fontSize: cell.fs ?? 13,
+            fontSize: cell.fs ?? 14,
             align: (cell.al ?? "l") as "l" | "c" | "r" | "j",
             valign: (cell.va ?? "t") as "t" | "m" | "b",
             indent: cell.ind ?? 0,
@@ -524,9 +524,9 @@ export function useSpreadsheet({ initialDoc, initialTemplateSheets, initialTempl
     )
 
     const bumpFontSize = React.useCallback((delta: number) => {
-        const cur = getCell(sel.col, sel.row).fs ?? 13
+        const cur = getCell(sel.col, sel.row).fs ?? 14
         const next = Math.max(6, Math.min(96, cur + delta))
-        applyFormat({ fs: next === 13 ? undefined : next })
+        applyFormat({ fs: next === 14 ? undefined : next })
     }, [sel, getCell, applyFormat])
 
     const applyNumberFormat = React.useCallback((nf: string | undefined) => {

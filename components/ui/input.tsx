@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, TOOLTIP_DELAY } from '@/components/ui/tooltip';
+import { UDS } from '@/lib/UDS';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -66,6 +67,7 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
         <div className = {cn("relative", className)}>
             <input
                 {...props}
+                data-slot="input"
                 ref = {(el) => {
                     inputRef.current = el;
                     if (typeof ref === 'function') ref(el);
@@ -73,7 +75,7 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                 }}
                 type = {currentType}
                 value = {value}
-                placeholder = {hasFloatingLabel ? (isFocused ? props.placeholder : undefined) : props.placeholder}
+                placeholder = {hasFloatingLabel ? (isFloating ? props.placeholder : undefined) : props.placeholder}
                 onChange = {handleChange}
                 disabled = {disabled}
                 onFocus = {(e) => {
@@ -86,17 +88,16 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                 }}
                 className = {cn(
                     "w-full",
-                    hasFloatingLabel ? "h-14 px-4 pt-4" : "h-11 px-4",
-                    "bg-[var(--surface)] border border-[color:var(--input)] rounded-xl",
-                    "backdrop-blur-xl backdrop-saturate-[1.25]",
-                    "shadow-[var(--shadow-subtle)]",
-                    "text-foreground text-[15px] text-left",
-                    "placeholder:text-muted-foreground/70",
-                    "hover:border-[color:var(--border-strong)]",
-                    "focus:outline-none focus:ring-2 focus:ring-focus/70 focus:ring-offset-2 focus:ring-offset-background focus:border-transparent",
-                    "transition-all duration-200",
+                    hasFloatingLabel ? "h-14 px-4 pb-2 pt-6" : "h-11 px-4",
+                    UDS.inputSurface,
+                    "text-left text-[15px] text-foreground caret-blue-600 dark:caret-blue-300",
+                    "placeholder:text-muted-foreground/60",
+                    UDS.inputHover,
+                    UDS.inputFocus,
+                    "transition-[background-color,border-color,color,box-shadow,opacity] duration-200",
+                    "aria-invalid:border-destructive/60 aria-invalid:ring-2 aria-invalid:ring-destructive/20 aria-invalid:focus-visible:border-destructive/70 aria-invalid:focus-visible:ring-destructive/25 dark:aria-invalid:ring-destructive/30",
                     isPasswordType && "pr-12",
-                    disabled && "opacity-50 cursor-not-allowed",
+                    disabled && cn(UDS.disabledSurface, "cursor-not-allowed border-border/60 opacity-70"),
                     resolvedInputClassName,
                 )}
             />
@@ -105,12 +106,12 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                 <label
                     htmlFor = {props.id}
                     className = {cn(
-                        "absolute left-4 top-4",
-                        "text-neutral-400",
-                        "text-[15px] pointer-events-none",
-                        "transition-all duration-200",
-                        "transform origin-left",
-                        isFloating && "scale-[0.75] -translate-y-3"
+                        "absolute left-4 top-1/2",
+                        "pointer-events-none text-[15px] leading-none",
+                        "transition-[color,translate,scale] duration-200 ease-out will-change-transform",
+                        "transform origin-top-left",
+                        isFocused ? "text-blue-600/80 dark:text-blue-300/80" : "text-muted-foreground/80",
+                        isFloating ? "-translate-y-[20px] scale-[0.75]" : "-translate-y-1/2 scale-100"
                     )}
                 >
                     {label}
@@ -129,9 +130,9 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                                 className = {cn(
                                     "absolute right-2 top-1/2 -translate-y-1/2",
                                     "inline-flex size-9 items-center justify-center",
-                                    "hover:bg-accent",
+                                    UDS.itemHover,
                                     "text-muted-foreground hover:text-foreground",
-                                    "rounded-lg",
+                                    "sq-lg",
                                     "transition-colors",
                                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                                 )}
@@ -241,15 +242,15 @@ function OTPInput({ length = 6, value, onChange, disabled, autoFocus, ariaLabel 
 
                     className = {cn(
                         "w-12 h-16",
-                        "bg-[var(--surface)]",
-                        "border border-[color:var(--input)]",
-                        "text-center text-[24px] font-bold rounded-[10px]",
-                        "text-foreground",
-                        "focus:outline-none focus:ring-2 focus:ring-focus/70 focus:ring-offset-2 focus:ring-offset-background focus:border-transparent",
-                        "transition-all duration-200",
-                        "placeholder:text-muted-foreground",
+                        UDS.inputSurface,
+                        "text-center text-[24px] font-bold sq-10",
+                        "text-foreground caret-blue-600 dark:caret-blue-300",
+                        UDS.inputHover,
+                        UDS.inputFocus,
+                        "transition-[background-color,border-color,color,box-shadow,opacity] duration-200",
+                        "placeholder:text-muted-foreground/50",
 
-                        disabled && "opacity-50 cursor-not-allowed"
+                        disabled && cn(UDS.disabledSurface, "cursor-not-allowed border-border/60 opacity-70")
                     )}
 
                     placeholder="·"

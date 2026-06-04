@@ -13,7 +13,7 @@ import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { GlideHighlight, useGlideHighlight } from "@/components/ui/glide-highlight"
 
 function Popover({
@@ -55,11 +55,11 @@ function PopoverContent({
         avoidCollisions={avoidCollisions}
         sticky={sticky}
         className={cn(
-          PRISM.container,
-          PRISM.glideSurface,
-          PRISM.animateIn,
-          PRISM.animateOut,
-          "z-50 w-[220px] origin-(--radix-popover-content-transform-origin) outline-hidden max-h-[calc(100vh-4rem)] overflow-y-auto",
+          UDS.transientSurface,
+          UDS.glideSurface,
+          UDS.animateIn,
+          UDS.animateOut,
+          "z-[999] w-[220px] origin-(--radix-popover-content-transform-origin) outline-hidden max-h-[calc(100vh-4rem)] overflow-y-auto",
           className
         )}
         {...props}

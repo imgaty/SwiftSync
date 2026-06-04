@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import type { Column, Table as TanstackTable } from "@tanstack/react-table"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/empty-state"
@@ -57,11 +58,8 @@ function TableShell({ className, ...props }: React.ComponentProps<"div">) {
         <div
             data-slot="table-shell"
             className={cn(
-                "relative w-full flex min-h-0 flex-col overflow-hidden rounded-lg",
-                "border border-border",
-                "bg-card",
-                "shadow-[var(--shadow-subtle)]",
-                "backdrop-blur-md",
+                UDS.cardSurface,
+                "relative w-full flex min-h-0 flex-col sq-lg",
                 className,
             )}
             {...props}
@@ -117,9 +115,9 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
             data-slot="table-header"
             className={cn(
                 "sticky top-0 z-10",
-                "bg-[var(--surface-elevated)] backdrop-blur-md",
+                UDS.elevatedSurface,
                 "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px",
-                "after:bg-gradient-to-r after:from-transparent after:via-border-strong after:to-transparent",
+                "after:bg-gradient-to-r after:from-transparent after:via-black/10 after:to-transparent dark:after:via-white/10",
                 "[&_tr]:hover:bg-transparent",
                 className,
             )}
@@ -146,7 +144,9 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
         <tfoot
             data-slot="table-footer"
             className={cn(
-                "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
+                "border-t font-medium [&>tr]:last:border-b-0",
+                UDS.elevatedSurface,
+                UDS.cardDivider,
                 className,
             )}
             {...props}
@@ -162,8 +162,8 @@ function TableRow({ className, onClick, ...props }: React.ComponentProps<"tr">) 
             className={cn(
                 "group/row",
                 "transition-colors duration-150",
-                "hover:bg-accent",
-                "data-[state=selected]:bg-muted",
+                UDS.itemHover,
+                UDS.rowSelected,
                 onClick && "cursor-pointer",
                 className,
             )}
@@ -196,7 +196,8 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
             className={cn(
                 "h-11 px-4 py-2 align-middle whitespace-nowrap text-[13px] leading-tight",
                 "text-foreground",
-                "border-b border-border",
+                "border-b",
+                UDS.cardDivider,
                 "[&:has([role=checkbox])]:px-4 *:[[role=checkbox]]:translate-y-0.5",
                 className,
             )}
@@ -235,7 +236,7 @@ function TableToolbar({
                 "flex flex-wrap items-center justify-between gap-2 max-sm:flex-col max-sm:items-stretch",
                 "relative px-3 py-2.5",
                 "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px",
-                "after:bg-gradient-to-r after:from-transparent after:via-border-strong after:to-transparent",
+                "after:bg-gradient-to-r after:from-transparent after:via-black/10 after:to-transparent dark:after:via-white/10",
                 className,
             )}
             {...props}
@@ -301,7 +302,7 @@ function TableSortHeader({
             type="button"
             onClick={onClick}
             className={cn(
-                "inline-flex w-full items-center gap-1.5 rounded-md text-inherit",
+                "inline-flex w-full items-center gap-1.5 sq-md text-inherit",
                 "transition-colors hover:text-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70",
                 align === "right" && "justify-end text-right",
@@ -371,7 +372,7 @@ function TableSkeletonRows({
                         return (
                             <TableCell key={columnIndex}>
                                 <div
-                                    className="h-3.5 rounded-md bg-muted animate-pulse"
+                                    className={cn("h-3.5 sq-md animate-pulse", UDS.subtleFill)}
                                     style={{ width }}
                                 />
                             </TableCell>
@@ -418,7 +419,8 @@ function TablePaginationBar({
             data-slot="table-pagination"
             className={cn(
                 "flex flex-wrap items-center justify-between gap-3",
-                "border-t border-border px-3 py-2.5",
+                "border-t px-3 py-2.5",
+                UDS.cardDivider,
                 className,
             )}
         >
@@ -449,7 +451,7 @@ function TablePaginationBar({
 // =============================================================================
 // SHARED TOOLBAR CONTROLS
 // All controls are 32px tall (size="sm" / h-8) and use Button variant="glass"
-// or the existing PRISM-styled Select / Dropdown so every table looks the same.
+// or the existing UDS-styled Select / Dropdown so every table looks the same.
 // =============================================================================
 
 type SortDirection = "asc" | "desc"
@@ -500,13 +502,12 @@ function TableSearchControl<T>({
                 placeholder={placeholder}
                 onChange={(e) => update(e.target.value)}
                 className={cn(
-                    "h-8 w-full rounded-lg pl-8 text-[13px]",
-                    "bg-[var(--surface)]",
-                    "border border-[color:var(--input)]",
+                    "h-8 w-full sq-lg pl-8 text-[13px]",
+                    UDS.inputSurface,
                     "text-foreground placeholder:text-muted-foreground/70",
-                    "hover:border-[color:var(--border-strong)]",
-                    "focus:outline-none focus:bg-[var(--surface-elevated)]",
-                    "focus:border-transparent focus:ring-2 focus:ring-focus/70 focus:ring-offset-1 focus:ring-offset-background",
+                    UDS.inputHover,
+                    UDS.inputFocus,
+                    "focus:bg-[var(--surface-elevated)]",
                     "transition-all duration-150",
                     current ? "pr-8" : "pr-3",
                 )}
@@ -516,7 +517,7 @@ function TableSearchControl<T>({
                     type="button"
                     aria-label="Clear search"
                     onClick={() => update("")}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className={cn("absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex size-6 items-center justify-center sq-md text-muted-foreground hover:text-foreground transition-colors", UDS.itemHover)}
                 >
                     <X className="size-3.5" />
                 </Button>
@@ -567,7 +568,7 @@ function TableFilterSelect<T>({
 
 /**
  * TableSortControl — dropdown that sets the table's sorting on a single
- * column. Uses Dropdown (PRISM-styled) so it matches the rest of the app.
+ * column. Uses Dropdown (UDS-styled) so it matches the rest of the app.
  */
 function TableSortControl<T>({
     table,
@@ -622,7 +623,7 @@ function TableSortControl<T>({
                                 <span className="text-[11px] text-neutral-400">
                                     {dir === "asc" ? "A→Z" : "Z→A"}
                                 </span>
-                                {isActive && <span className="ml-1 size-1.5 rounded-full bg-primary" />}
+                                {isActive && <span className="ml-1 size-1.5 sq-full bg-primary" />}
                             </DropdownItem>
                         )
                     })
@@ -723,11 +724,10 @@ function TableInlineInput({ className, ...props }: React.ComponentProps<"input">
         <input
             {...props}
             className={cn(
-                "h-8 w-44 rounded-lg px-3 text-[13px]",
-                "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10",
-                "backdrop-blur-xl backdrop-saturate-150",
+                "h-8 w-44 sq-lg px-3 text-[13px]",
+                UDS.inputSurface,
                 "text-foreground placeholder:text-neutral-400/70",
-                "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30",
+                UDS.inputFocus,
                 "transition-all duration-150",
                 className,
             )}

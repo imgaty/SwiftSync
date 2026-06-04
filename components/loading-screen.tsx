@@ -29,30 +29,57 @@ const iconFrameStyle: React.CSSProperties = {
     width: "clamp(5.75rem,20vw,8.625rem)",
 }
 
-const iconMaskStyle: React.CSSProperties = {
-    position: "absolute",
-    inset: 0,
-    WebkitMaskImage: "url('/icon-black.svg')",
-    WebkitMaskPosition: "center",
-    WebkitMaskRepeat: "no-repeat",
-    WebkitMaskSize: "contain",
-    maskImage: "url('/icon-black.svg')",
-    maskPosition: "center",
-    maskRepeat: "no-repeat",
-    maskSize: "contain",
+function ArgentLoadingMark({ className }: { className?: string }) {
+    return (
+        <svg
+            aria-hidden="true"
+            className={className}
+            fill="none"
+            viewBox="0 0 151 131"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <defs>
+                <mask id="argent-loading-icon-mask" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="-5" y="-4" width="161" height="142">
+                    <path d="M151 0.273399H0V130.273H151V0.273399Z" fill="white" />
+                    <path d="M0 130.273L151 2.2734" stroke="black" strokeWidth="15" />
+                    <path d="M0 130.273L151 78.2734" stroke="black" strokeWidth="15" />
+                </mask>
+                <clipPath id="argent-loading-fill-clip" clipPathUnits="userSpaceOnUse">
+                    <rect x="0" y="0" width="0" height="131">
+                        <animate
+                            attributeName="width"
+                            calcMode="spline"
+                            dur="1.6s"
+                            fill="freeze"
+                            keySplines="0.65 0 0.35 1; 0.65 0 0.35 1"
+                            keyTimes="0; 0.72; 1"
+                            values="0; 151; 151"
+                        />
+                    </rect>
+                </clipPath>
+            </defs>
+            <g mask="url(#argent-loading-icon-mask)" opacity="0.2">
+                <path d="M0 130.273L75.214 0L150.428 130.273H0Z" fill="currentColor" />
+            </g>
+            <g mask="url(#argent-loading-icon-mask)" clipPath="url(#argent-loading-fill-clip)">
+                <path d="M0 130.273L75.214 0L150.428 130.273H0Z" fill="currentColor" />
+            </g>
+        </svg>
+    )
 }
 
 export function LoadingScreen({
     exiting = false,
-    filling = false,
 }: {
     exiting?: boolean
-    filling?: boolean
 }) {
     return (
         <div
-            className={`fixed inset-0 z-[9999] flex min-h-screen items-center justify-center ${exiting ? "animate-argent-loading-out" : ""}`}
-            style={screenStyle}
+            className={`fixed inset-0 z-[9999] flex min-h-screen items-center justify-center ${exiting ? "animate-argent-loading-out" : "animate-argent-loading-failsafe"}`}
+            style={{
+                ...screenStyle,
+                pointerEvents: exiting ? "none" : "auto",
+            }}
             role="status"
             aria-label="Loading"
         >
@@ -61,22 +88,7 @@ export function LoadingScreen({
                 style={iconFrameStyle}
                 aria-hidden="true"
             >
-                <div
-                    className="absolute inset-0"
-                    style={{ ...iconMaskStyle, backgroundColor: "color-mix(in srgb, var(--foreground) 20%, transparent)" }}
-                />
-                <div
-                    className={`argent-icon-fill-layer absolute inset-0 ${filling ? "animate-argent-icon-fill" : ""}`}
-                    style={{
-                        ...iconMaskStyle,
-                        backgroundColor: "var(--foreground)",
-                        ...(filling
-                            ? null
-                            : {
-                                transform: "scaleX(0)",
-                            }),
-                    }}
-                />
+                <ArgentLoadingMark className="absolute inset-0 h-full w-full text-foreground" />
             </div>
             <span className="sr-only">Loading</span>
         </div>

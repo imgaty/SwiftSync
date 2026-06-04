@@ -2,14 +2,16 @@
 
 ## Overview
 
-Argent uses a **clean financial dashboard** aesthetic with **refracting glass overlays** for elevated UI. The goal is to keep the product feeling modern and tactile without sacrificing readability.
+Argent uses a **compact financial cockpit** aesthetic with the high-opacity UDS glass material, Vercel-like neutral structure, and continuous squircle geometry. The goal is to keep the product feeling tactile and premium while preserving fast scanning of money, risk, and account data.
+
+The root [DESIGN.md](../DESIGN.md) is the visual source of truth. This document explains the implementation conventions that keep the design system consistent in code.
 
 ## Core visual principles
 
 - **Clarity first** — financial data must remain readable at a glance.
-- **Refracting overlays** — menus, popovers, tooltips, dialogs, and sheets should feel translucent and elevated.
-- **Consistent chrome** — border, blur, radius, spacing, and muted text treatment should stay uniform across floating UI.
-- **Squircle corners** — rounded surfaces use the global squircle enhancement documented in [Squircles](Squircles.md).
+- **UDS glass, readable data** — navigation, cards, overlays, dock, and auth/admin chrome use neutral UDS glass; dense tables and charts use the highest-opacity fills.
+- **Consistent chrome** — border, blur, squircle shape, spacing, and muted text treatment should stay uniform across floating UI.
+- **Soft surface corners** — large surfaces use the shared deterministic corner treatment documented in [Squircles](Squircles.md).
 - **Minimal duplication** — shared styling should come from tokens, not repeated ad-hoc class lists.
 
 ## Styling layers
@@ -28,7 +30,7 @@ The Button component uses three visual families, each with a destructive counter
 | :------------------- | :-------------------------------------------------------------- |
 | `solid`              | Filled black/white background with shadow                       |
 | `solid-destructive`  | Filled red background                                           |
-| `glass`              | Translucent backdrop-blur with subtle borders                   |
+| `glass`              | Translucent backdrop-blur with squircle edge highlights          |
 | `glass-destructive`  | Translucent red glass                                           |
 | `ghost`              | Transparent with hover wash                                     |
 | `ghost-destructive`  | Transparent red with hover wash                                 |
@@ -37,14 +39,16 @@ Sizes: `default`, `sm`, `lg`, `icon`, `icon-sm`, `icon-lg`.
 
 #### Corner geometry
 
-Rounded UI uses normal Tailwind/shadcn radius utilities (`rounded-lg`, `rounded-xl`, `rounded-full`) plus the global `corner-shape: squircle` enhancement in `app/globals.css`.
+Corner geometry uses Argent's Tailwind custom squircle utilities (`sq-lg`, `sq-xl`, `sq-full`). Large dashboard and UDS surfaces use `squircle-surface`. Browsers with native `corner-shape: squircle` support use it so backdrop effects follow the same continuous curve; other browsers fall back to deterministic clip-path geometry and the measured superellipse runtime. Radius uses a bounded area response (`--sq-growth-damping`) so larger containers become visibly rounder without changing the squircle curve angle, while short controls clamp into capsules or circles.
 
-Use existing radius utilities in component markup. Do not create SVG masks, `clip-path` paths, or one-off wrapper outlines to fake squircle corners.
+Use existing `sq-*` utilities in component markup. Do not create SVG masks, local `corner-shape` declarations, or one-off wrapper outlines to fake squircle corners.
+
+UDS outlines are redrawn by the shared squircle edge layer from the `sq-border-*` variables. The native border is transparent on squircle border utilities, while the measured edge layer owns a glass gradient ring, top highlight, side glow, and lower inset shade. Its inner edge is a normal offset of the outer superellipse, so corner pixels keep a stable gap without bottom-corner drop shadows. Avoid extra `ring-*` outlines, component-local edge rings, nested wrapper borders, or colored card washes on UDS surfaces; they read as double borders and do not follow the same measured squircle geometry.
 
 For implementation details and opt-out guidance, see [Squircles](Squircles.md).
 
 ### 2. Polished overlay surfaces
-Use `lib/PRISM.ts` and the exported `PRISM` token map for:
+Use `lib/UDS.ts` and the exported `UDS` token map for:
 - dropdown menus
 - context menus
 - popovers
@@ -52,20 +56,22 @@ Use `lib/PRISM.ts` and the exported `PRISM` token map for:
 - dialogs
 - sheets
 - floating selectors and overlay panels
+- mobile dock and command/search chrome
+- auth and admin panel chrome
 
 ### 3. Class composition
 Use `cn()` from `lib/utils.ts` to compose tokens with local layout utilities.
 
 ```tsx
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 
-<div className={cn(PRISM.container, "min-w-[220px]")}>...</div>
+<div className={cn(UDS.containerClass({ spotlight: false }), "min-w-[220px]")}>...</div>
 ```
 
-## `PRISM` token purpose
+## `UDS` token purpose
 
-`PRISM` stands for **Polished Refractive Interface Surface Map**.
+`UDS` stands for **Unified Design System**.
 
 It is the shared source of truth for overlay styling, including:
 - container chrome
@@ -75,17 +81,18 @@ It is the shared source of truth for overlay styling, including:
 - titles and descriptions
 - overlay backdrops
 - close button styling
+- shared glass panel, dock, command, and data-panel surfaces
 
-## `PRISM` spec reference
+## `UDS` spec reference
 
 ### Cell anatomy
-Every `PRISM` row should read as a compact three-part cell:
+Every `UDS` row should read as a compact three-part cell:
 
 `[icon / indicator] [primary label + optional secondary text] [checkmark / shortcut / chevron]`
 
 - **Height feel:** visually around `32–36px`
 - **Horizontal rhythm:** `gap-2` between icon and text, `px-2 py-2` inside the row
-- **Corners:** `rounded-lg`
+- **Corners:** `sq-lg`
 - **Alignment:** primary content left, affordances right
 - **Density rule:** keep it compact, but never cramped
 
@@ -93,17 +100,17 @@ Every `PRISM` row should read as a compact three-part cell:
 
 | Element | Spacing / size | Light mode | Dark mode | Notes |
 | --- | --- | --- | --- | --- |
-| Container | `rounded-xl p-[7px]`, base `text-[13px]` | `text-black`, `bg-white/[0.03]`, thin `border-white/[0.15]` | `text-white`, same glass shell with stronger perceived contrast | Use only for floating UI |
+| Container | `sq-xl p-[7px]`, base `text-[13px]` | `text-black`, high-opacity neutral glass, thin squircle edge, subtle drop/inset shadow | `text-white`, dark neutral glass with the same restrained depth | Use only for floating UI |
 | Labels | `px-8 py-1.5`, `text-[13px] font-semibold tracking-wide` | `text-neutral-500` | `text-neutral-400` | Group headings and section labels |
-| Item / button cells | `gap-2 rounded-lg px-8 py-2` | subtle `bg-black/[0.06]` on hover/focus | subtle `bg-white/[0.12]` on hover/focus | Base interactive row primitive |
+| Item / button cells | `gap-2 sq-lg px-8 py-2` | subtle `bg-black/[0.06]` on hover/focus | subtle `bg-white/[0.12]` on hover/focus | Base interactive row primitive |
 | Icons | `size-4`, no shrinking | `text-neutral-500` → `text-black` on focus | `text-neutral-400` → `text-white` on focus | Decorative/supporting, not the primary target |
 | Checkmarks / shortcuts | right aligned, shortcuts use `ml-auto text-[12px] tracking-wide` | `text-neutral-500` | `text-neutral-400` | Keep the right slot visually lighter than the main label |
 | Titles | `text-[15px] font-semibold` | `text-black` | `text-white` | Dialog and sheet headings |
 | Descriptions | `text-[13px]` | `text-neutral-500` | `text-neutral-400` | Helper copy, never brighter than the title |
-| Close button | `rounded-lg p-1.5` | muted icon + translucent hover wash | muted icon + brighter white hover wash | Use the same chrome language as other PRISM controls |
+| Close button | `sq-lg p-1.5` | muted icon + translucent hover wash | muted icon + brighter white hover wash | Use the same chrome language as other UDS controls |
 
 ### Interaction rules
-- **Hover / focus:** glass wash + faint inset highlight; no heavy solid fills
+- **Hover / focus:** UDS wash + faint inset highlight; no heavy solid fills or bright edge ramps
 - **Disabled:** `pointer-events-none opacity-40`
 - **Destructive:** red text with restrained red background feedback
 - **Motion:** `animateIn` is softer and slightly longer than `animateOut`
@@ -115,15 +122,15 @@ Every `PRISM` row should read as a compact three-part cell:
 
 ## Usage rules
 
-- Prefer `PRISM` tokens over rewriting the same glass classes manually.
+- Prefer `UDS` tokens over rewriting the same glass classes manually.
 - Compose with `cn()` for layout or size tweaks.
 - Keep overrides small and intentional.
 - Do not create one-off shadow/border/blur styles when an existing token already matches.
-- If a new overlay pattern becomes reusable, add it to `lib/PRISM.ts`.
+- If a new overlay pattern becomes reusable, add it to `lib/UDS.ts`.
 
 ## Naming guidance
 
-- `PRISM` is reserved for the polished/floating overlay identity.
+- `UDS` is reserved for shared design-system tokens and polished glass overlay identity.
 - Standard UI primitives (Button, Card, Input) live in `components/ui/` and follow the shadcn/ui pattern.
 
 ## Design intent summary

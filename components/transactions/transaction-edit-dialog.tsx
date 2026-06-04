@@ -25,19 +25,24 @@ import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
 import {
     FormDialogActions,
+    FormDialogBody,
     FormDialogContent,
     FormDialogHeader,
+    FormSelectTrigger,
+    FormDialogStepIndicator,
 } from "@/components/form-dialog"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/date-picker"
 import {
     Select,
     SelectContent,
     SelectItem,
-    SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
 import { TagPicker } from "@/components/tag-picker"
+import { useLanguage } from "@/components/language-provider"
 import type { Account, Transaction } from "@/lib/types"
+import { UDS } from "@/lib/UDS"
 
 interface TransactionEditDialogProps {
     open: boolean
@@ -60,6 +65,7 @@ export function TransactionEditDialog({
     onSaved,
 }: TransactionEditDialogProps) {
     const qc = useQueryClient()
+    const { language } = useLanguage()
     const isEditing = !!initial
 
     const [date, setDate] = React.useState(todayISO())
@@ -68,6 +74,7 @@ export function TransactionEditDialog({
     const [description, setDescription] = React.useState("")
     const [accountId, setAccountId] = React.useState<string>("")
     const [tags, setTags] = React.useState<string[]>([])
+    const [stepIndex, setStepIndex] = React.useState(0)
     const [submitting, setSubmitting] = React.useState(false)
 
     // Reset form whenever the dialog opens or the source transaction changes.
@@ -88,7 +95,37 @@ export function TransactionEditDialog({
             setAccountId(accounts[0]?.id ?? "")
             setTags([])
         }
+        setStepIndex(0)
     }, [open, initial, accounts])
+
+    const handleNext = React.useCallback(() => {
+        if (stepIndex === 0) {
+            const amt = Number(amount)
+            if (!Number.isFinite(amt) || amt <= 0) {
+                notify.error({ title: "Invalid amount", message: "Enter a positive number.", transient: true })
+                return
+            }
+            setStepIndex(1)
+            return
+        }
+
+        if (stepIndex === 1) {
+            if (!description.trim()) {
+                notify.error({ title: "Description required", transient: true })
+                return
+            }
+            setStepIndex(2)
+            return
+        }
+
+        if (stepIndex === 2) {
+            if (!accountId) {
+                notify.error({ title: "Pick an account", transient: true })
+                return
+            }
+            setStepIndex(3)
+        }
+    }, [accountId, amount, description, stepIndex])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -155,64 +192,85 @@ export function TransactionEditDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <FormDialogContent maxWidth="430px">
+            <FormDialogContent maxWidth="430px" stableSize>
                 <FormDialogHeader
                     title={isEditing ? "Edit transaction" : "New transaction"}
-                    description={isEditing
-                        ? "Update the details below."
-                        : "Tags will be auto-assigned by PACE if you leave them empty."}
+                    description={
+                        stepIndex === 0
+                            ? "Set the transaction type and amount."
+                            : stepIndex === 1
+                                ? "Add the merchant or transaction description."
+                                : stepIndex === 2
+                                    ? "Choose when it happened and which account it belongs to."
+                                    : isEditing
+                                        ? "Review tags before saving."
+                                        : "Tags will be auto-assigned by PACE if you leave them empty."}
                 />
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <form
+                    onSubmit={(e) => {
+                        if (stepIndex < 3) {
+                            e.preventDefault()
+                            handleNext()
+                            return
+                        }
+                        handleSubmit(e)
+                    }}
+                    className="flex flex-col gap-4"
+                >
                         {/* Type + Amount */}
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[120px_1fr]">
-                            <div className="space-y-1.5">
-                                <label className="text-[11px] text-neutral-400">Type</label>
+                        {stepIndex === 0 && (
+                            <FormDialogBody key="transaction-amount">
                                 <Select value={type} onValueChange={(v) => setType(v as "in" | "out")}>
-                                    <SelectTrigger>
+                                    <FormSelectTrigger label="Type">
                                         <SelectValue />
-                                    </SelectTrigger>
+                                    </FormSelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="out">Expense</SelectItem>
                                         <SelectItem value="in">Income</SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
-                            <Input
-                                label="Amount"
-                                type="number"
-                                step="0.01"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                placeholder="0.00"
-                                inputClassName="tabular-nums"
-                            />
-                        </div>
+                                <Input
+                                    label="Amount"
+                                    type="number"
+                                    step="0.01"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="0.00"
+                                    inputClassName="tabular-nums"
+                                    autoFocus
+                                />
+                            </FormDialogBody>
+                        )}
 
                         {/* Description */}
-                        <Input
-                            label="Description"
-                            type="text"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="e.g. Continente Lisboa"
-                            maxLength={200}
-                        />
+                        {stepIndex === 1 && (
+                            <FormDialogBody key="transaction-description">
+                                <Input
+                                    label="Description"
+                                    type="text"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    placeholder="e.g. Continente Lisboa"
+                                    maxLength={200}
+                                    autoFocus
+                                />
+                            </FormDialogBody>
+                        )}
 
                         {/* Date + Account */}
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <Input
-                                label="Date"
-                                type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                            />
-                            <div className="space-y-1.5">
-                                <label className="text-[11px] text-neutral-400">Account</label>
+                        {stepIndex === 2 && (
+                            <FormDialogBody key="transaction-account">
+                                <DatePicker
+                                    value={date}
+                                    onChange={setDate}
+                                    locale={language}
+                                    placeholder="Date"
+                                />
                                 <Select value={accountId} onValueChange={setAccountId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select…" />
-                                    </SelectTrigger>
+                                    <FormSelectTrigger label="Account">
+                                        <SelectValue placeholder="Select..." />
+                                    </FormSelectTrigger>
                                     <SelectContent>
                                         {accounts.length === 0 ? (
                                             <div className="px-2 py-1.5 text-xs text-neutral-400">
@@ -223,7 +281,7 @@ export function TransactionEditDialog({
                                                 <SelectItem key={a.id} value={a.id}>
                                                     <span className="flex items-center gap-2">
                                                         <span
-                                                            className="size-2 rounded-full shrink-0"
+                                                            className="size-2 shrink-0 sq-full"
                                                             style={{ backgroundColor: a.color }}
                                                         />
                                                         {a.name}
@@ -233,37 +291,48 @@ export function TransactionEditDialog({
                                         )}
                                     </SelectContent>
                                 </Select>
-                            </div>
-                        </div>
+                            </FormDialogBody>
+                        )}
 
                         {/* Tags */}
-                        <div className="space-y-1.5">
-                            <label className="text-[11px] text-neutral-400">Tags</label>
-                            <div className="rounded-xl border border-[color:var(--input)] bg-[var(--surface)] px-2 py-1.5 shadow-[var(--shadow-subtle)]">
-                                <TagPicker value={tags} onChange={setTags} />
-                            </div>
-                            {!isEditing && tags.length === 0 && (
-                                <p className="text-xs text-neutral-400">
-                                    Leave empty to auto-categorize.
-                                </p>
-                            )}
-                        </div>
+                        {stepIndex === 3 && (
+                            <FormDialogBody key="transaction-tags">
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] text-neutral-400">Tags</label>
+                                    <div className={`${UDS.controlSurface} px-2 py-1.5`}>
+                                        <TagPicker value={tags} onChange={setTags} />
+                                    </div>
+                                    {!isEditing && tags.length === 0 && (
+                                        <p className="text-xs text-neutral-400">
+                                            Leave empty to auto-categorize.
+                                        </p>
+                                    )}
+                                </div>
+                            </FormDialogBody>
+                        )}
 
                         <FormDialogActions>
                             <Button type="submit" variant="solid" size="lg" className="w-full" disabled={submitting}>
-                                {submitting ? "Saving..." : isEditing ? "Save" : "Create"}
+                                {stepIndex < 3 ? "Continue" : submitting ? "Saving..." : isEditing ? "Save" : "Create"}
                             </Button>
                             <Button
                                 type="button"
                                 variant="glass"
                                 size="lg"
                                 className="w-full"
-                                onClick={() => onOpenChange(false)}
+                                onClick={() => {
+                                    if (stepIndex === 0) {
+                                        onOpenChange(false)
+                                        return
+                                    }
+                                    setStepIndex((step) => Math.max(step - 1, 0))
+                                }}
                                 disabled={submitting}
                             >
-                                Cancel
+                                {stepIndex === 0 ? "Cancel" : "Back"}
                             </Button>
                         </FormDialogActions>
+                        <FormDialogStepIndicator current={stepIndex} total={4} />
                     </form>
             </FormDialogContent>
         </Dialog>

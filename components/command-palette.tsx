@@ -37,6 +37,13 @@ import {
 } from "@/components/ui/command"
 import { useLanguage } from "@/components/language-provider"
 
+const COMMAND_PALETTE_OPEN_EVENT = "argent-command-palette:open"
+
+export function openCommandPalette() {
+    if (typeof window === "undefined") return
+    window.dispatchEvent(new Event(COMMAND_PALETTE_OPEN_EVENT))
+}
+
 export function CommandPalette() {
     const [open, setOpen] = React.useState(false)
     const router = useRouter()
@@ -53,6 +60,12 @@ export function CommandPalette() {
 
         document.addEventListener("keydown", down)
         return () => document.removeEventListener("keydown", down)
+    }, [])
+
+    React.useEffect(() => {
+        const handleOpen = () => setOpen(true)
+        window.addEventListener(COMMAND_PALETTE_OPEN_EVENT, handleOpen)
+        return () => window.removeEventListener(COMMAND_PALETTE_OPEN_EVENT, handleOpen)
     }, [])
 
     const runCommand = React.useCallback((command: () => void) => {

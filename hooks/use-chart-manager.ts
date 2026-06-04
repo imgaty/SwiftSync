@@ -11,9 +11,8 @@
 
 import * as React from "react"
 import { saveChartSettings, getChartSettings } from "@/app/actions/chart-settings"
-import { MAX_CHARTS } from "@/lib/chart-constants"
-import type { ChartInstance, CustomDateRange } from "@/lib/chart-types"
-import { generateChartId, getCategoryOptions } from "@/lib/chart-utils"
+import { generateChartId, getCategoryOptions, MAX_CHARTS } from "@/lib/chart"
+import type { ChartInstance, CustomDateRange } from "@/lib/chart"
 
 // ==============================================================================
 // CHART MANAGER HOOK

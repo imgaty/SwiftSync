@@ -50,12 +50,8 @@ interface Translations {
         divider_label: string
         login_google: string
         register_google: string
-        login_apple: string
-        register_apple: string
         login_github: string
         register_github: string
-        login_microsoft: string
-        register_microsoft: string
     }
     login_page: {
         title: string

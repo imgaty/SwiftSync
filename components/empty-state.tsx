@@ -157,7 +157,7 @@ const placementStyles: Record<EmptyStatePlacement, {
         title: "text-lg",
         description: "text-[13px]",
         actions: "mt-5",
-        actionButton: "h-9 rounded-xl px-5 text-[13px]",
+        actionButton: "h-9 sq-xl px-5 text-[13px]",
     },
     section: {
         root: "min-h-[280px] px-4 py-12",
@@ -167,7 +167,7 @@ const placementStyles: Record<EmptyStatePlacement, {
         title: "text-base",
         description: "text-[13px]",
         actions: "mt-5",
-        actionButton: "h-9 rounded-xl px-4 text-[13px]",
+        actionButton: "h-9 sq-xl px-4 text-[13px]",
     },
     card: {
         root: "min-h-[160px] px-4 py-8",
@@ -177,7 +177,7 @@ const placementStyles: Record<EmptyStatePlacement, {
         title: "text-sm",
         description: "text-xs",
         actions: "mt-4",
-        actionButton: "h-8 rounded-lg px-3 text-xs",
+        actionButton: "h-8 sq-lg px-3 text-xs",
     },
     dialog: {
         root: "px-4 py-8",
@@ -187,7 +187,7 @@ const placementStyles: Record<EmptyStatePlacement, {
         title: "text-sm",
         description: "text-xs",
         actions: "mt-4",
-        actionButton: "h-8 rounded-lg px-3 text-xs",
+        actionButton: "h-8 sq-lg px-3 text-xs",
     },
     popover: {
         root: "px-3 py-5",
@@ -197,7 +197,7 @@ const placementStyles: Record<EmptyStatePlacement, {
         title: "text-[13px]",
         description: "text-xs",
         actions: "mt-3",
-        actionButton: "h-8 rounded-lg px-3 text-xs",
+        actionButton: "h-8 sq-lg px-3 text-xs",
     },
     inline: {
         root: "px-3 py-3",
@@ -207,7 +207,7 @@ const placementStyles: Record<EmptyStatePlacement, {
         title: "text-sm",
         description: "text-xs",
         actions: "mt-3",
-        actionButton: "h-8 rounded-lg px-3 text-xs",
+        actionButton: "h-8 sq-lg px-3 text-xs",
     },
 }
 

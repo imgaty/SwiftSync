@@ -23,7 +23,7 @@ import {
   PasswordStrength,
   usePasswordStrength,
 } from '@/components/auth'
-import { PRISM } from '@/lib/PRISM'
+import { UDS } from '@/lib/UDS'
 import { postAuth } from '@/lib/auth-fetch'
 import { Loader2, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useTranslationNamespace } from '@/components/language-provider'
@@ -83,11 +83,11 @@ function ResetPasswordForm() {
           title={rp.password_reset_success || 'Password reset!'}
           description={rp.password_reset_desc || 'Your password has been updated. You can now sign in.'}
         >
-          <Link href="/login" className="block">
-            <Button variant="solid" size="lg" className="w-full">
+          <Button asChild variant="solid" size="lg" className="auth-primary-button w-full">
+            <Link href="/login">
               {rp.sign_in || 'Sign in'}<ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </StatusCard>
       ) : (
         <>
@@ -110,7 +110,7 @@ function ResetPasswordForm() {
                 onChange={e => setConfirmPassword(e.target.value)}
                 disabled={loading}
                 required
-                className={confirmPassword && !passwordsMatch ? PRISM.destructiveValidation : ''}
+                className={confirmPassword && !passwordsMatch ? UDS.destructiveValidation : ''}
               />
               {confirmPassword && !passwordsMatch && (
                 <p className="text-[11px] text-red-500 dark:text-red-400 ml-1 mt-1.5">{rp.error_passwords_dont_match || 'Passwords do not match'}</p>
@@ -118,7 +118,7 @@ function ResetPasswordForm() {
             </div>
 
             <div className="space-y-4">
-              <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading || !passwordsMatch || !allPassed}>
+              <Button type="submit" variant="solid" size="lg" className="auth-primary-button w-full" disabled={loading || !passwordsMatch || !allPassed}>
                 {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />{rp.resetting || 'Resetting...'}</> : <>{rp.reset_password || 'Reset password'}<ArrowRight className="w-4 h-4" /></>}
               </Button>
               <BackButton href="/login" label={rp.back_to_login || 'Back to login'} />

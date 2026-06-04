@@ -23,6 +23,8 @@ import { useLanguage, useTranslationNamespace } from '@/components/language-prov
 import { postAuth } from '@/lib/auth-fetch'
 import { useResendCooldown } from '@/hooks/use-resend-cooldown'
 import { Loader2, ArrowRight, CheckCircle2, RotateCw } from 'lucide-react'
+import { UDS } from '@/lib/UDS'
+import { cn } from '@/lib/utils'
 
 const RESEND_COOLDOWN = 30
 
@@ -112,7 +114,7 @@ export default function ForgotPasswordPage() {
                 >
                     <ErrorAlert message={resendError} />
                     {devNotice || devResetUrl ? (
-                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-left text-xs text-amber-700 dark:text-amber-200">
+                        <div className={cn(UDS.surfaceClass({ background: "subtle", blur: false, border: "soft", radius: "xl", shadow: "flat" }), "px-4 py-3 text-left text-xs text-amber-700 dark:text-amber-200")}>
                             <p className="font-medium">Local development</p>
                             {devNotice ? <p className="mt-1">{devNotice}</p> : null}
                             {devResetUrl ? (
@@ -151,7 +153,7 @@ export default function ForgotPasswordPage() {
                         <Input id="email" type="email" label={page?.email_label} value={email} onChange={e => setEmail(e.target.value)} disabled={loading} required />
 
                         <div className="flex flex-col gap-4">
-                            <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
+                            <Button type="submit" variant="solid" size="lg" className="auth-primary-button w-full" disabled={loading}>
                                 {loading
                                     ? <><Loader2 className="w-4 h-4 animate-spin" />{page?.sending}</>
                                     : <>{page?.send_reset_link}<ArrowRight className="w-4 h-4" /></>

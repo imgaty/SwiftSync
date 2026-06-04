@@ -11,6 +11,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { CommandPalette } from "@/components/command-palette";
 import { AppSidebar } from "@/components/app-sidebar"
+import { MobileDock } from "@/components/mobile-dock"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { CanvasBackground } from "@/components/canvas-background"
@@ -44,10 +45,11 @@ export default async function MainLayout({
                 <AppSidebar />
                 <SidebarInset>
                     <CanvasBackground inset />
-                    <div className="relative z-1 flex min-w-0 flex-col flex-1 min-h-0">
+                    <div className="relative z-1 flex min-w-0 flex-col flex-1 min-h-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
                         {children}
                     </div>
                 </SidebarInset>
+                <MobileDock />
                 <SettingsRouter />
                 <AutoRecategorize />
             </SidebarProvider>

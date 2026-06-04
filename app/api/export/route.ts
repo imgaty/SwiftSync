@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server"
 import { getAuthContext } from "@/lib/auth-helpers"
 import { scopeFilter, requirePermission } from "@/lib/data-access"
+import { ARGENT_BACKUP_SCHEMA } from "@/lib/data-import"
 import { prisma } from "@/lib/prisma"
 
 function csvCell(value: unknown): string {
@@ -20,7 +21,7 @@ function csvCell(value: unknown): string {
     : safe
 }
 
-// GET /api/export?format=csv|json&entity=transactions|bills|budgets|accounts|all
+// GET /api/export?format=csv|json&entity=transactions|bills|budgets|accounts|backup|all
 export async function GET(request: Request) {
   const ctx = await getAuthContext()
   if (!ctx) {
@@ -38,10 +39,119 @@ export async function GET(request: Request) {
   try {
     const where = scopeFilter(ctx)
 
-    let exportData: Record<string, unknown>[]
+    let exportData: Record<string, unknown>[] | Record<string, unknown>
     let filename: string
 
     switch (entity) {
+      case "backup": {
+        if (format !== "json") {
+          return NextResponse.json({ error: "Backup exports are available as JSON only" }, { status: 400 })
+        }
+
+        const [accounts, tags, txns, bills, budgets, goals, rules, paceRules, spreadsheets] = await Promise.all([
+          prisma.bankAccount.findMany({ where, include: { bank: true }, orderBy: { createdAt: "asc" } }),
+          prisma.tag.findMany({ where, orderBy: { createdAt: "asc" } }),
+          prisma.transaction.findMany({ where, orderBy: { date: "desc" } }),
+          prisma.bill.findMany({ where, orderBy: { createdAt: "asc" } }),
+          prisma.budget.findMany({ where, orderBy: { createdAt: "asc" } }),
+          prisma.financialGoal.findMany({ where, include: { accountLinks: { orderBy: { createdAt: "asc" } } }, orderBy: { createdAt: "asc" } }),
+          prisma.rule.findMany({ where, orderBy: [{ priority: "desc" }, { createdAt: "asc" }] }),
+          prisma.pACERule.findMany({ where, orderBy: [{ priority: "desc" }, { createdAt: "asc" }] }),
+          prisma.spreadsheetDocument.findMany({ where, orderBy: { createdAt: "asc" } }),
+        ])
+
+        exportData = {
+          schema: ARGENT_BACKUP_SCHEMA,
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          data: {
+            accounts: accounts.map((account) => ({
+              id: account.id,
+              name: account.cardName,
+              type: account.accountType,
+              institution: account.bank.name,
+              balance: Number(account.balance),
+              iban: account.iban,
+              currency: account.currency,
+              color: account.color,
+              isActive: account.isActive,
+            })),
+            tags: tags.map((tag) => ({
+              id: tag.id,
+              slug: tag.slug,
+              name: tag.name,
+              color: tag.color,
+              icon: tag.icon,
+              isSystem: tag.isSystem,
+              isArchived: tag.isArchived,
+            })),
+            transactions: txns.map((transaction) => ({
+              id: transaction.id,
+              date: transaction.date.toISOString().slice(0, 10),
+              type: transaction.type,
+              amount: Number(transaction.amount),
+              description: transaction.description,
+              tags: transaction.tags,
+              accountId: transaction.accountId,
+            })),
+            bills: bills.map((bill) => ({
+              id: bill.id,
+              name: bill.name,
+              amount: Number(bill.amount),
+              tags: bill.tags,
+              dueDay: bill.dueDay,
+              frequency: bill.frequency,
+              accountId: bill.accountId,
+              category: bill.category,
+              autopay: bill.autopay,
+              status: bill.status,
+            })),
+            budgets: budgets.map((budget) => ({
+              id: budget.id,
+              tag: budget.tag,
+              category: budget.category,
+              limit: Number(budget.limit),
+              color: budget.color,
+            })),
+            goals: goals.map((goal) => ({
+              id: goal.id,
+              name: goal.name,
+              targetAmount: Number(goal.targetAmount),
+              currentAmount: Number(goal.currentAmount),
+              deadline: goal.deadline?.toISOString().slice(0, 10) || null,
+              category: goal.category,
+              color: goal.color,
+              status: goal.status,
+              currency: goal.accountLinks[0]?.currency || "EUR",
+            })),
+            rules: rules.map((rule) => ({
+              id: rule.id,
+              name: rule.name,
+              enabled: rule.enabled,
+              filters: rule.filters,
+              addTagSlugs: rule.addTagSlugs,
+              priority: rule.priority,
+            })),
+            paceRules: paceRules.map((rule) => ({
+              id: rule.id,
+              pattern: rule.pattern,
+              matchField: rule.matchField,
+              tag: rule.tag,
+              priority: rule.priority,
+            })),
+            spreadsheets: spreadsheets.map((sheet) => ({
+              id: sheet.id,
+              name: sheet.name,
+              description: sheet.description,
+              sheetType: sheet.sheetType,
+              linkedEntity: sheet.linkedEntity,
+              content: sheet.content,
+            })),
+          },
+        }
+        filename = `argent_backup_${new Date().toISOString().slice(0, 10)}`
+        break
+      }
       case "transactions": {
         const dateFilter: { gte?: Date; lte?: Date } = {}
         if (startDate) dateFilter.gte = new Date(startDate)
@@ -161,6 +271,10 @@ export async function GET(request: Request) {
     }
 
     // CSV format
+    if (!Array.isArray(exportData)) {
+      return NextResponse.json({ error: "This export is available as JSON only" }, { status: 400 })
+    }
+
     if (exportData.length === 0) {
       return new NextResponse("No data to export", { status: 404 })
     }

@@ -17,17 +17,19 @@ import type { SpreadsheetDocument, SpreadsheetLog } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
 import { getTranslations } from "@/lib/translation-utils"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 
 /* ─── Action icon mapping ──────────────────────────────────────────── */
 function actionIcon(action: string) {
     switch (action) {
-        case "created": return <Plus className="h-3.5 w-3.5" />
-        case "renamed": return <Pencil className="h-3.5 w-3.5" />
-        case "cell_edit": return <Type className="h-3.5 w-3.5" />
-        case "content_update": return <Table className="h-3.5 w-3.5" />
-        case "sheet_added": return <Plus className="h-3.5 w-3.5" />
-        case "sheet_deleted": return <Trash2 className="h-3.5 w-3.5" />
-        default: return <History className="h-3.5 w-3.5" />
+        case "created": return <Plus className="size-3.5" />
+        case "renamed": return <Pencil className="size-3.5" />
+        case "cell_edit": return <Type className="size-3.5" />
+        case "content_update": return <Table className="size-3.5" />
+        case "sheet_added": return <Plus className="size-3.5" />
+        case "sheet_deleted": return <Trash2 className="size-3.5" />
+        default: return <History className="size-3.5" />
     }
 }
 
@@ -87,13 +89,13 @@ export function SpreadsheetLogs({
             {/* Header */}
             <div className="w-full max-w-lg mb-6">
                 <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 mb-4 -ml-2 text-neutral-400">
-                    <ArrowLeft className="h-3.5 w-3.5" />
+                    <ArrowLeft className="size-3.5" />
                     {sp.back || "Back"}
                 </Button>
 
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                        <FileSpreadsheet className="h-5 w-5 text-primary" />
+                    <div className="flex size-10 items-center justify-center sq-xl bg-primary/10">
+                        <FileSpreadsheet className="size-5 text-primary" />
                     </div>
                     <div className="min-w-0">
                         <h1 className="text-lg font-bold tracking-tight truncate">{doc.name}</h1>
@@ -106,23 +108,23 @@ export function SpreadsheetLogs({
             <div className="w-full max-w-lg">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-20">
-                        <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+                        <Loader2 className="size-6 animate-spin text-neutral-400" />
                     </div>
                 ) : !logs || logs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
-                        <History className="h-10 w-10 mb-3 opacity-40" />
+                        <History className="size-10 mb-3 opacity-40" />
                         <p className="text-sm">{sp.no_logs || "No changes recorded yet"}</p>
                     </div>
                 ) : (
                     <div className="relative">
                         {/* Timeline line */}
-                        <div className="absolute left-[19px] top-2 bottom-2 w-px bg-black/10 dark:bg-white/10" />
+                        <div className={cn("absolute bottom-2 left-[19px] top-2", UDS.separatorVertical)} />
 
                         <div className="flex flex-col gap-0">
                             {logs.map((log, i) => (
                                 <div key={log.id} className="relative flex items-start gap-3 py-3">
                                     {/* Timeline dot */}
-                                    <div className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 dark:border-white/10 ${i === 0 ? "bg-primary/10 text-primary" : "bg-white dark:bg-neutral-950 text-neutral-400"}`}>
+                                    <div className={`relative z-10 flex size-10 shrink-0 items-center justify-center ${i === 0 ? "sq-full border border-primary/20 bg-primary/10 text-primary" : `${UDS.pillSurface} text-neutral-400`}`}>
                                         {actionIcon(log.action)}
                                     </div>
 

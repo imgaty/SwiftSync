@@ -23,7 +23,7 @@ import {
 import { TrendingUp, AlertTriangle, ClipboardCopy, RefreshCw } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -56,8 +56,8 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
     const [data, setData] = React.useState<CashFlowData | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
     const shellClassName = compact
-        ? "flex h-full min-h-0 flex-col overflow-hidden bg-transparent"
-        : cn("overflow-hidden rounded-2xl", PRISM.cardSurface)
+        ? "flex h-full min-h-[280px] flex-col overflow-hidden bg-transparent"
+        : cn("overflow-hidden sq-2xl", UDS.cardSurface)
 
     const buildUrl = React.useCallback(() => {
         const params = new URLSearchParams({ months: compact ? "4" : "6" })
@@ -92,7 +92,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                 <div className={cn(compact ? "p-4 pb-3" : "p-5 pb-4")}>
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-2.5">
-                            <Skeleton className="size-8 rounded-lg" />
+                            <Skeleton className="size-8 sq-lg" />
                             <div className="space-y-1.5">
                                 <Skeleton className="h-4 w-40" />
                                 <Skeleton className="h-3 w-52" />
@@ -117,7 +117,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                         {[0, 1, 2, 3, 4].map(i => (
                             <div key={i} className="flex items-center gap-3">
                                 <Skeleton className="h-3 w-16" />
-                                <Skeleton className="flex-1 h-7 rounded-lg" />
+                                <Skeleton className="flex-1 h-7 sq-lg" />
                                 <Skeleton className="h-3 w-20" />
                             </div>
                         ))}
@@ -176,7 +176,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
             <div className={cn(compact ? "p-4 pb-3" : "p-5 pb-4")}>
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center size-8 rounded-lg bg-primary/8 text-primary">
+                        <div className="flex items-center justify-center size-8 sq-lg bg-primary/8 text-primary">
                             <TrendingUp className="size-4" />
                         </div>
                         <div>
@@ -235,7 +235,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
 
                 {/* Warning if negative */}
                 {!isPositiveNet && !compact && (
-                    <Alert variant="destructive" className="rounded-xl border-destructive/20 bg-destructive/5">
+                    <Alert variant="destructive" className="sq-xl border-destructive/20 bg-destructive/5">
                         <AlertTriangle className="size-4" />
                         <AlertDescription>
                             {isPt
@@ -267,9 +267,9 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                                     <span className="text-[11px] font-semibold text-foreground w-16 shrink-0">
                                         {isPt ? "Atual" : "Now"}
                                     </span>
-                                    <div className={cn("flex-1 rounded-lg bg-muted/40 overflow-hidden", compact ? "h-6" : "h-7")}>
+                                    <div className={cn("flex-1 sq-lg overflow-hidden", UDS.subtleFill, compact ? "h-6" : "h-7")}>
                                         <div
-                                            className={`h-full rounded-lg transition-all duration-500 ${currentNegative ? "bg-destructive/60" : "bg-primary/60"}`}
+                                            className={`h-full sq-lg transition-all duration-500 ${currentNegative ? "bg-destructive/60" : "bg-primary/60"}`}
                                             style={{ width: `${Math.min(100, currentBarWidth)}%` }}
                                         />
                                     </div>
@@ -288,9 +288,9 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                                     return (
                                         <div key={p.date} className="flex items-center gap-3 group/bar">
                                             <span className="text-[11px] font-medium text-neutral-400 w-16 shrink-0">{monthName}</span>
-                                            <div className={cn("flex-1 rounded-lg bg-muted/40 overflow-hidden", compact ? "h-6" : "h-7")}>
+                                            <div className={cn("flex-1 sq-lg overflow-hidden", UDS.subtleFill, compact ? "h-6" : "h-7")}>
                                                 <div
-                                                    className={`h-full rounded-lg transition-all duration-500 ${isNegative ? "bg-destructive/40 group-hover/bar:bg-destructive/60" : "bg-primary/40 group-hover/bar:bg-primary/60"}`}
+                                                    className={`h-full sq-lg transition-all duration-500 ${isNegative ? "bg-destructive/40 group-hover/bar:bg-destructive/60" : "bg-primary/40 group-hover/bar:bg-primary/60"}`}
                                                     style={{ width: `${Math.min(100, barWidth)}%` }}
                                                 />
                                             </div>

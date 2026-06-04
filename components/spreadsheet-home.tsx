@@ -36,6 +36,7 @@ import {
 import { ContextMenuPortal, useContextMenu } from "@/components/ui/context-menu-portal"
 import { notify } from "@/lib/notify"
 import { useLanguage } from "@/components/language-provider"
+import { UDS } from "@/lib/UDS"
 
 /* ─── Helpers ──────────────────────────────────────────────────────────── */
 function colLabel(i: number): string {
@@ -76,14 +77,14 @@ const PREVIEW_CELL_H = 12
 const SpreadsheetPreview = React.memo(function SpreadsheetPreview({ sheet }: { sheet?: SpreadsheetSheetTab }) {
     if (!sheet) {
         return (
-            <div className="w-full h-full bg-muted/50 rounded flex items-center justify-center">
+            <div className={`${UDS.subtleFill} flex h-full w-full items-center justify-center sq`}>
                 <FileSpreadsheet className="size-8 text-neutral-400/30" />
             </div>
         )
     }
 
     return (
-        <div className="w-full h-full overflow-hidden rounded bg-background border border-border/20">
+        <div className={`${UDS.inlineSurface} w-full h-full overflow-hidden`}>
             <svg
                 viewBox={`0 0 ${PREVIEW_COLS * PREVIEW_CELL_W} ${PREVIEW_ROWS * PREVIEW_CELL_H}`}
                 className="w-full h-full"
@@ -169,7 +170,7 @@ const TEMPLATES: Template[] = [
     {
         name: "Monthly Overview",
         description: "Live income & expenses by tag — pulls from your app data",
-        icon: <LayoutTemplate className="h-5 w-5" />,
+        icon: <LayoutTemplate className="size-5" />,
         build: () => {
             const cells: Record<string, SpreadsheetCellData> = {}
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -253,7 +254,7 @@ const TEMPLATES: Template[] = [
     {
         name: "Account Balances",
         description: "Live balances across all your accounts",
-        icon: <LayoutTemplate className="h-5 w-5" />,
+        icon: <LayoutTemplate className="size-5" />,
         build: () => {
             const cells: Record<string, SpreadsheetCellData> = {}
             cells[ck(0, 0)] = { v: "Account Balances", b: true, fs: 16 }
@@ -273,7 +274,7 @@ const TEMPLATES: Template[] = [
     {
         name: "Monthly Budget",
         description: "Track income and expenses by category",
-        icon: <LayoutTemplate className="h-5 w-5" />,
+        icon: <LayoutTemplate className="size-5" />,
         build: () => {
             const cells: Record<string, SpreadsheetCellData> = {}
             const headers = ["Category", "Budget", "Actual", "Difference"]
@@ -297,7 +298,7 @@ const TEMPLATES: Template[] = [
     {
         name: "Expense Tracker",
         description: "Log daily expenses with dates and amounts",
-        icon: <LayoutTemplate className="h-5 w-5" />,
+        icon: <LayoutTemplate className="size-5" />,
         build: () => {
             const cells: Record<string, SpreadsheetCellData> = {}
             const headers = ["Date", "Description", "Category", "Amount", "Payment Method"]
@@ -310,7 +311,7 @@ const TEMPLATES: Template[] = [
     {
         name: "Savings Goal",
         description: "Plan and track progress toward savings goals",
-        icon: <LayoutTemplate className="h-5 w-5" />,
+        icon: <LayoutTemplate className="size-5" />,
         build: () => {
             const cells: Record<string, SpreadsheetCellData> = {}
             const headers = ["Month", "Target", "Deposited", "Running Total", "% Complete"]
@@ -327,7 +328,7 @@ const TEMPLATES: Template[] = [
     {
         name: "Invoice",
         description: "Create a simple invoice layout",
-        icon: <LayoutTemplate className="h-5 w-5" />,
+        icon: <LayoutTemplate className="size-5" />,
         build: () => {
             const cells: Record<string, SpreadsheetCellData> = {}
             cells[ck(0, 0)] = { v: "INVOICE", b: true, al: "l" }
@@ -421,7 +422,7 @@ export function SpreadsheetHome({
         <div className="flex flex-col items-center w-full min-h-[calc(100vh-220px)] py-10 px-4">
             {/* ═══ Hero / Title ═══════════════════════════════════════════ */}
             <div className="text-center mb-8 max-w-md">
-                <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 mb-5">
+                <div className="inline-flex items-center justify-center size-12 sq-xl bg-primary/10 mb-5">
                     <FileSpreadsheet className="size-6 text-primary" />
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground">{sp.title || "Spreadsheets"}</h1>
@@ -457,9 +458,9 @@ export function SpreadsheetHome({
                                     setTemplateOpen(false)
                                     onNewTemplate(tpl.build(), tpl.name)
                                 }}
-                                className="group flex flex-col rounded-xl border border-border/50 hover:border-primary/40 p-3 transition-all duration-200 cursor-pointer hover:shadow-md text-left bg-card/30 hover:bg-card/60"
+                                className={`${UDS.tileSurface} ${UDS.cardHover} group flex cursor-pointer flex-col p-3 text-left`}
                             >
-                                <div className="w-full aspect-4/3 rounded-lg overflow-hidden mb-2.5">
+                                <div className="w-full aspect-4/3 sq-lg overflow-hidden mb-2.5">
                                     <SpreadsheetPreview sheet={TEMPLATE_PREVIEWS[i]} />
                                 </div>
                                 <span className="text-sm font-medium text-foreground">{tpl.name}</span>
@@ -484,7 +485,7 @@ export function SpreadsheetHome({
                                 value={search}
                                 onChange={(e) => { setSearch(e.target.value); setVisibleCount(ITEMS_PER_PAGE) }}
                                 placeholder={common.search || "Search..."}
-                                className="h-8 pl-8 pr-3 rounded-lg border border-border/60 bg-background text-xs text-foreground outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 w-48 transition-all placeholder:text-neutral-400/50"
+                                className={`${UDS.inlineSurface} h-8 w-48 pl-8 pr-3 text-xs text-foreground outline-none transition-all placeholder:text-neutral-400/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/10`}
                             />
                         </div>
                     )}
@@ -514,10 +515,10 @@ export function SpreadsheetHome({
                                         setCtxDoc(doc)
                                         ctxMenu.open(e)
                                     }}
-                                    className="group relative flex items-center gap-3.5 rounded-xl border border-border/50 hover:border-primary/30 overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-md bg-card/50 hover:bg-card/80 px-3.5 py-3"
+                                    className={`${UDS.tileSurface} ${UDS.cardHover} group relative flex cursor-pointer items-center gap-3.5 overflow-hidden px-3.5 py-3`}
                                 >
                                     {/* Preview (small, side) */}
-                                    <div className="size-11 shrink-0 rounded-lg overflow-hidden bg-muted/40 border border-border/30">
+                                    <div className={`${UDS.inlineSurface} size-11 shrink-0 overflow-hidden`}>
                                         <SpreadsheetPreview sheet={getFirstSheet(doc)} />
                                     </div>
                                     {/* Info */}
@@ -537,7 +538,7 @@ export function SpreadsheetHome({
                                         tabIndex={0}
                                         onKeyDown={(e) => { if (e.key === "Enter") deleteDocument(doc, e as unknown as React.MouseEvent) }}
                                     >
-                                        <div className="flex size-7 items-center justify-center rounded-full bg-muted/60 hover:bg-destructive/10 border border-border/40 hover:border-destructive/30 transition-all duration-200 hover:scale-105 active:scale-95">
+                                        <div className={`${UDS.pillSurface} flex size-7 items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 transition-all duration-200 hover:scale-105 active:scale-95`}>
                                             <Trash2 className="size-3 text-neutral-400 group-hover:text-destructive/70" />
                                         </div>
                                     </div>
@@ -552,9 +553,9 @@ export function SpreadsheetHome({
                                 y={ctxMenu.state.y}
                                 onClose={ctxMenu.close}
                                 items={[
-                                    { label: sp.open || "Open", icon: <ExternalLink className="h-3.5 w-3.5" />, onClick: () => onOpen(ctxDoc) },
-                                    { label: sp.view_logs || "View logs", icon: <History className="h-3.5 w-3.5" />, onClick: () => onShowLogs(ctxDoc) },
-                                    { label: common.delete || "Delete", icon: <Trash2 className="h-3.5 w-3.5" />, separator: true, variant: "destructive" as const, onClick: () => { if (confirm(`Delete "${ctxDoc.name}"?`)) { fetch(`/api/spreadsheets/${ctxDoc.id}`, { method: "DELETE" }).then(() => { refetch(); notify.success({ title: common.deleted || "Deleted", message: ctxDoc.name }) }).catch(() => notify.error({ title: sp.delete_failed || "Delete failed", message: ctxDoc.name })) } } },
+                                    { label: sp.open || "Open", icon: <ExternalLink className="size-3.5" />, onClick: () => onOpen(ctxDoc) },
+                                    { label: sp.view_logs || "View logs", icon: <History className="size-3.5" />, onClick: () => onShowLogs(ctxDoc) },
+                                    { label: common.delete || "Delete", icon: <Trash2 className="size-3.5" />, separator: true, variant: "destructive" as const, onClick: () => { if (confirm(`Delete "${ctxDoc.name}"?`)) { fetch(`/api/spreadsheets/${ctxDoc.id}`, { method: "DELETE" }).then(() => { refetch(); notify.success({ title: common.deleted || "Deleted", message: ctxDoc.name }) }).catch(() => notify.error({ title: sp.delete_failed || "Delete failed", message: ctxDoc.name })) } } },
                                 ]}
                             />
                         )}

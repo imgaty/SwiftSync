@@ -7,6 +7,8 @@
 //  recovery, or security flows with reusable presentation logic.
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
+"use client"
+
 import Image from 'next/image'
 import { type ReactNode, useSyncExternalStore } from 'react'
 import { Globe2, Moon, Sun } from 'lucide-react'
@@ -19,6 +21,7 @@ import {
     DropdownTrigger,
 } from '@/components/ui/dropdown'
 import { Button } from '@/components/ui/button'
+import { CanvasBackground } from '@/components/canvas-background'
 
 const YEAR = new Date().getFullYear()
 const subscribeToMount = () => () => {}
@@ -27,7 +30,15 @@ const getServerSnapshot = () => false
 
 type LanguageCode = 'en' | 'pt'
 
-export function AuthShell({ children, maxWidth = '390px' }: { children: ReactNode; maxWidth?: string }) {
+export function AuthShell({
+    children,
+    maxWidth = '350px',
+    cornerHighlight = true,
+}: {
+    children: ReactNode
+    maxWidth?: string
+    cornerHighlight?: boolean
+}) {
     const { t, language, setLanguage } = useLanguage()
     const { resolvedTheme, setTheme } = useTheme()
     const mounted = useSyncExternalStore(subscribeToMount, getClientSnapshot, getServerSnapshot)
@@ -35,12 +46,17 @@ export function AuthShell({ children, maxWidth = '390px' }: { children: ReactNod
     const nextTheme = isDark ? 'light' : 'dark'
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
+        <div
+            className="auth-shell relative isolate flex min-h-dvh w-full flex-col overflow-x-hidden overflow-y-auto bg-background text-foreground"
+            data-corner-highlight={cornerHighlight ? 'on' : 'off'}
+        >
+            <CanvasBackground tone="auth" />
             <div className="absolute top-5 right-5 z-20 flex items-center gap-2">
                 <Button
                     type="button"
-                    variant="glass"
+                    variant="ghost"
                     size="icon"
+                    className="text-muted-foreground hover:text-foreground"
                     aria-label="Toggle theme"
                     onClick={() => setTheme(nextTheme)}
                 >
@@ -51,8 +67,9 @@ export function AuthShell({ children, maxWidth = '390px' }: { children: ReactNod
                     <DropdownTrigger asChild>
                         <Button
                             type="button"
-                            variant="glass"
+                            variant="ghost"
                             size="icon"
+                            className="text-muted-foreground hover:text-foreground"
                             aria-label="Change language"
                         >
                             <Globe2 />
@@ -69,36 +86,37 @@ export function AuthShell({ children, maxWidth = '390px' }: { children: ReactNod
                 </Dropdown>
             </div>
 
-            <main className="flex flex-1 items-center justify-center p-4 pt-24 sm:p-8">
+            <main className="auth-shell-main relative z-10 flex min-h-0 flex-1 items-center justify-center px-4 py-8 sm:px-8 sm:py-12 lg:py-20">
                 <div
                     className="relative z-10 flex w-full flex-col gap-4 animate-slide-in-right"
-                    style={{ maxWidth: `min(${maxWidth}, calc(100vw - 2rem))` }}
+                    style={{ maxWidth }}
                 >
-                    <div className="flex items-center justify-center mb-5">
+                    <div className="mb-6 flex items-center justify-center sm:mb-8">
                         <Image
-                            src="/full-icon-black.svg"
+                            src="/icon-black.svg"
                             alt="Argent"
-                            width={632}
-                            height={167}
+                            width={122}
+                            height={113}
                             priority
-                            className="h-11 w-auto max-w-full object-contain dark:hidden"
+                            className="h-16 w-auto max-w-full object-contain dark:hidden"
                         />
                         <Image
-                            src="/full-icon-white.svg"
+                            src="/icon-white.svg"
                             alt=""
-                            width={632}
-                            height={167}
+                            width={122}
+                            height={113}
                             priority
                             aria-hidden
-                            className="hidden h-11 w-auto max-w-full object-contain dark:block"
+                            className="hidden h-16 w-auto max-w-full object-contain dark:block"
                         />
                     </div>
+
                     {children}
                 </div>
             </main>
 
-            <footer className="relative z-10 px-4 pb-4 pt-2 text-center animate-slide-in-right">
-                <p className="text-xs text-muted-foreground">
+            <footer className="auth-shell-footer relative z-10 shrink-0 px-4 pt-1 text-center animate-slide-in-right">
+                <p className="text-xs leading-5 text-muted-foreground">
                     {t.auth_page?.footer?.replace('%{CURRENT_YEAR}', String(YEAR))}
                 </p>
             </footer>
@@ -113,7 +131,7 @@ export function AuthHeader({ page: pageKey, registerSubtitleKey }: { page: strin
 
     return (
         <div className = "flex flex-col gap-2 | pb-4 | text-center">
-            <h1 className = "text-foreground | text-[1.75rem] font-semibold leading-tight tracking-tight">{page?.title}</h1>
+            <h1 className = "text-foreground | text-[1.75rem] font-bold leading-tight tracking-tight">{page?.title}</h1>
             <p className = "text-muted-foreground | text-sm leading-5">{page?.[registerSubtitleKey ?? 'subtitle']}</p>
         </div>
     )

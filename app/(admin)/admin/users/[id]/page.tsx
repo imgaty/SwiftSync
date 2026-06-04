@@ -10,7 +10,8 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { useParams } from "next/navigation"
 import {
     ArrowLeft, Shield, ShieldAlert, ShieldCheck, Ban, Lock, Unlock,
     KeyRound, RefreshCw, Mail, Calendar, Clock, Globe, CreditCard,
@@ -20,7 +21,7 @@ import {
 
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -101,13 +102,13 @@ type AdminCopy = Record<string, string | undefined> & {
 function statusBadge(status: string, ad: Record<string, string | undefined> = {}) {
     switch (status) {
         case "active":
-            return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{ad.active || "Active"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.positive}>{ad.active || "Active"}</Badge>
         case "suspended":
-            return <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">{ad.suspended || "Suspended"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.warning}>{ad.suspended || "Suspended"}</Badge>
         case "banned":
-            return <Badge variant="outline" className={PRISM.destructiveBadge}>{ad.banned || "Banned"}</Badge>
+            return <Badge variant="outline" className={UDS.destructiveBadge}>{ad.banned || "Banned"}</Badge>
         case "deleted":
-            return <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-400">{ad.deleted || "Deleted"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.neutral}>{ad.deleted || "Deleted"}</Badge>
         default:
             return <Badge variant="outline">{status}</Badge>
     }
@@ -116,11 +117,11 @@ function statusBadge(status: string, ad: Record<string, string | undefined> = {}
 function roleBadge(role: string, ud: Record<string, string | undefined> = {}) {
     switch (role) {
         case "superadmin":
-            return <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400"><ShieldAlert className="size-3" />{ud.super_admin || "Super Admin"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.accent}><ShieldAlert className="size-3" />{ud.super_admin || "Super Admin"}</Badge>
         case "admin":
-            return <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"><ShieldCheck className="size-3" />{ud.admin_role || "Admin"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.info}><ShieldCheck className="size-3" />{ud.admin_role || "Admin"}</Badge>
         default:
-            return <Badge variant="outline" className="text-neutral-400"><User className="size-3" />{ud.user_role || "User"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.neutral}><User className="size-3" />{ud.user_role || "User"}</Badge>
     }
 }
 
@@ -153,7 +154,6 @@ function timeAgo(dateStr: string, ad: Record<string, string | undefined> = {}) {
 // ---------------------------------------------------------------------------
 export default function AdminUserDetailPage() {
     const { id } = useParams<{ id: string }>()
-    const router = useRouter()
     const [user, setUser] = React.useState<UserDetail | null>(null)
     const [financial, setFinancial] = React.useState<FinancialSummary | null>(null)
     const [loading, setLoading] = React.useState(true)
@@ -229,8 +229,10 @@ export default function AdminUserDetailPage() {
                 <div className="flex flex-col items-center justify-center p-12">
                     <AlertTriangle className="size-12 text-neutral-400 mb-3" />
                     <p className="text-lg font-medium">{error || (ud.user_not_found || "User not found")}</p>
-                    <Button variant="glass" className="mt-4" onClick={() => router.push("/admin/users")}>
-                        <ArrowLeft className="size-4 mr-2" /> {ud.back_to_users || "Back to Users"}
+                    <Button asChild variant="glass" className="mt-4">
+                        <Link href="/admin/users">
+                            <ArrowLeft className="size-4 mr-2" /> {ud.back_to_users || "Back to Users"}
+                        </Link>
                     </Button>
                 </div>
             </>
@@ -243,8 +245,10 @@ export default function AdminUserDetailPage() {
                 title={user.name}
                 breadcrumbs={[{ label: ad.users || "Users", href: "/admin/users" }, { label: user.name }]}
                 actions={
-                    <Button variant="glass" size="sm" onClick={() => router.push("/admin/users")}>
-                        <ArrowLeft className="size-4" /> {ud.back || "Back"}
+                    <Button asChild variant="glass" size="sm">
+                        <Link href="/admin/users">
+                            <ArrowLeft className="size-4" /> {ud.back || "Back"}
+                        </Link>
                     </Button>
                 }
             />
@@ -253,10 +257,10 @@ export default function AdminUserDetailPage() {
                 {/* --- Top: Profile + Quick Actions --- */}
                 <div className="grid gap-4 lg:grid-cols-3">
                     {/* Profile Card */}
-                    <div className="lg:col-span-2 rounded-xl border border-black/10 dark:border-white/10 p-5">
+                    <div className={`lg:col-span-2 ${UDS.panelSurface} p-5`}>
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="flex size-14 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xl font-bold">
+                                <div className="flex size-14 items-center justify-center sq-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xl font-bold">
                                     {user.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
@@ -266,7 +270,7 @@ export default function AdminUserDetailPage() {
                                         {roleBadge(user.role, ud)}
                                         {statusBadge(user.status, ad)}
                                         {user.twoFactorEnabled && (
-                                            <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                            <Badge variant="outline" className={UDS.semanticBadge.positive}>
                                                 <Shield className="size-3" />2FA
                                             </Badge>
                                         )}
@@ -276,7 +280,7 @@ export default function AdminUserDetailPage() {
                         </div>
 
                         {user.status === "suspended" && user.suspendedReason && (
-                            <div className="mt-4 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 flex items-start gap-2">
+                            <div className="mt-4 sq-lg bg-amber-500/10 border border-amber-500/20 p-3 flex items-start gap-2">
                                 <AlertTriangle className="size-4 text-amber-500 mt-0.5 shrink-0" />
                                 <div>
                                     <p className="text-sm font-medium text-amber-600 dark:text-amber-400">{ud.account_suspended || "Account Suspended"}</p>
@@ -289,10 +293,10 @@ export default function AdminUserDetailPage() {
                         )}
 
                         {user.status === "banned" && (
-                            <div className={`mt-4 rounded-lg ${PRISM.destructiveAlert} p-3 flex items-start gap-2`}>
+                            <div className={`mt-4 sq-lg ${UDS.destructiveAlert} p-3 flex items-start gap-2`}>
                                 <Ban className="size-4 text-red-500 mt-0.5 shrink-0" />
                                 <div>
-                                    <p className={`text-sm font-medium ${PRISM.destructiveText}`}>{ud.account_banned || "Account Banned"}</p>
+                                    <p className={`text-sm font-medium ${UDS.destructiveText}`}>{ud.account_banned || "Account Banned"}</p>
                                     <p className="text-xs text-red-600/80 dark:text-red-400/80">{user.suspendedReason || (ud.no_reason || "No reason provided")}</p>
                                 </div>
                             </div>
@@ -327,7 +331,7 @@ export default function AdminUserDetailPage() {
                     </div>
 
                     {/* Quick Actions Card */}
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+                    <div className={`${UDS.panelSurface} p-5`}>
                         <h3 className="text-sm font-semibold mb-3">{ud.quick_actions || "Quick Actions"}</h3>
                         <div className="flex flex-col gap-2">
                             {user.status === "active" && (
@@ -381,29 +385,29 @@ export default function AdminUserDetailPage() {
                 <div>
                     <h3 className="text-sm font-semibold mb-3">{ud.financial_summary || "Financial Overview"}</h3>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
-                        <StatCard icon={<CreditCard className="size-4" />} label={ud.stat_accounts || "Accounts"} value={user._count.bankAccounts} />
-                        <StatCard icon={<FileText className="size-4" />} label={ud.total_transactions || "Transactions"} value={user._count.transactions} />
-                        <StatCard icon={<Receipt className="size-4" />} label={ud.stat_bills || "Bills"} value={user._count.bills} />
-                        <StatCard icon={<PiggyBank className="size-4" />} label={ud.stat_budgets || "Budgets"} value={user._count.budgets} />
-                        <StatCard icon={<Target className="size-4" />} label={ud.stat_goals || "Goals"} value={user._count.financialGoals} />
+                        <StatCard icon={<CreditCard className="size-3.5" />} label={ud.stat_accounts || "Accounts"} value={user._count.bankAccounts} />
+                        <StatCard icon={<FileText className="size-3.5" />} label={ud.total_transactions || "Transactions"} value={user._count.transactions} />
+                        <StatCard icon={<Receipt className="size-3.5" />} label={ud.stat_bills || "Bills"} value={user._count.bills} />
+                        <StatCard icon={<PiggyBank className="size-3.5" />} label={ud.stat_budgets || "Budgets"} value={user._count.budgets} />
+                        <StatCard icon={<Target className="size-3.5" />} label={ud.stat_goals || "Goals"} value={user._count.financialGoals} />
                     </div>
                     {financial && (
                         <div className="grid grid-cols-3 gap-4 mt-3">
-                            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                                <p className="text-xs text-neutral-400 flex items-center gap-1">
-                                    <ArrowUpRight className="size-3 text-emerald-500" /> {ud.total_income || "Total Income"}
+                            <div className={UDS.summaryTileSurface}>
+                                <p className={UDS.summaryLabel}>
+                                    <ArrowUpRight className="size-3.5 text-emerald-500" /> {ud.total_income || "Total Income"}
                                 </p>
-                                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(financial.totalIncome)}</p>
+                                <p className={`${UDS.summaryValue} text-emerald-600 dark:text-emerald-400`}>{formatCurrency(financial.totalIncome)}</p>
                             </div>
-                            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                                <p className="text-xs text-neutral-400 flex items-center gap-1">
-                                    <ArrowDownRight className="size-3 text-red-500" /> {ud.total_expenses || "Total Expenses"}
+                            <div className={UDS.summaryTileSurface}>
+                                <p className={UDS.summaryLabel}>
+                                    <ArrowDownRight className="size-3.5 text-red-500" /> {ud.total_expenses || "Total Expenses"}
                                 </p>
-                                <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatCurrency(financial.totalExpenses)}</p>
+                                <p className={`${UDS.summaryValue} text-red-600 dark:text-red-400`}>{formatCurrency(financial.totalExpenses)}</p>
                             </div>
-                            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                                <p className="text-xs text-neutral-400">{ud.net_balance || "Net Balance"}</p>
-                                <p className={`text-lg font-bold ${financial.totalIncome - financial.totalExpenses >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                            <div className={UDS.summaryTileSurface}>
+                                <p className={UDS.summaryLabel}>{ud.net_balance || "Net Balance"}</p>
+                                <p className={`${UDS.summaryValue} ${financial.totalIncome - financial.totalExpenses >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                                     {formatCurrency(financial.totalIncome - financial.totalExpenses)}
                                 </p>
                             </div>
@@ -617,9 +621,9 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
     return (
-        <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-            <div className="flex items-center gap-2 text-neutral-400 text-xs">{icon} {label}</div>
-            <p className="text-xl font-bold mt-1">{value}</p>
+        <div className={UDS.summaryTileSurface}>
+            <div className={UDS.summaryLabel}>{icon} {label}</div>
+            <p className={UDS.summaryValue}>{value}</p>
         </div>
     )
 }
@@ -630,15 +634,15 @@ function DetailSkeleton({ ad = {} }: { ad?: Record<string, string | undefined> }
             <AdminHeader title={ad.loading || "Loading..."} breadcrumbs={[{ label: ad.users || "Users", href: "/admin/users" }, { label: "..." }]} />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="grid gap-4 lg:grid-cols-3">
-                    <div className="lg:col-span-2 rounded-xl border border-black/10 dark:border-white/10 p-5">
+                    <div className={`lg:col-span-2 ${UDS.panelSurface} p-5`}>
                         <div className="flex items-center gap-4">
-                            <Skeleton className="size-14 rounded-full" />
+                            <Skeleton className="size-14 sq-full" />
                             <div className="space-y-2">
                                 <Skeleton className="h-6 w-40" />
                                 <Skeleton className="h-4 w-52" />
                                 <div className="flex gap-2">
-                                    <Skeleton className="h-5 w-16 rounded-full" />
-                                    <Skeleton className="h-5 w-16 rounded-full" />
+                                    <Skeleton className="h-5 w-16 sq-full" />
+                                    <Skeleton className="h-5 w-16 sq-full" />
                                 </div>
                             </div>
                         </div>
@@ -655,14 +659,14 @@ function DetailSkeleton({ ad = {} }: { ad?: Record<string, string | undefined> }
                             ))}
                         </div>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+                    <div className={`${UDS.panelSurface} p-5`}>
                         <Skeleton className="h-5 w-24 mb-3" />
                         {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-8 w-full mb-2" />)}
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
                     {[...Array(5)].map((_, i) => (
-                        <div key={i} className="rounded-xl border border-black/10 dark:border-white/10 p-3">
+                        <div key={i} className={UDS.summaryTileSurface}>
                             <Skeleton className="h-3 w-16 mb-2" />
                             <Skeleton className="h-6 w-10" />
                         </div>

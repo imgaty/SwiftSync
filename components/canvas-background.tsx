@@ -11,7 +11,15 @@
 
 import { useEffect, useRef } from "react"
 
-export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
+type CanvasBackgroundTone = "default" | "auth"
+
+export function CanvasBackground({
+  inset,
+  tone = "default",
+}: {
+  inset?: boolean
+  tone?: CanvasBackgroundTone
+} = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef({ mx: -1, my: -1, active: false, fade: 0, pmx: 0.5, pmy: 0.5 })
   const ripplesRef = useRef<{ x: number; y: number; born: number }[]>([])
@@ -27,16 +35,17 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
     if (mq.matches) return
 
-    const DPR_CAP = 1
-    const BASE_GAP = 34
-    const DOT_R_BASE = 1.0
-    const DOT_R_PEAK = 1.3
-    const ALPHA_BASE = 0.05
-    const ALPHA_PEAK = 0.08
+    const authTone = tone === "auth"
+    const DPR_CAP = 2
+    const BASE_GAP = 24
+    const DOT_R_BASE = 0.85
+    const DOT_R_PEAK = authTone ? 1.05 : 1.15
+    const ALPHA_BASE = authTone ? 0.024 : 0.05
+    const ALPHA_PEAK = authTone ? 0.04 : 0.08
     const WAVE_AMP = 4
-    const WAVE_WIDTH = 280
+    const WAVE_WIDTH = 170
     const CYCLE_MS = 7000
-    const ZOOM_R = 100
+    const ZOOM_R = 56
     const ZOOM_SCALE = 1.8
     const PARALLAX_PX = 14
 
@@ -45,12 +54,8 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
     let loadingObserver: MutationObserver | null = null
     let deferredByLoader = Boolean(document.querySelector('[aria-label="Loading"]'))
 
-    const getDpr = () => Math.min(window.devicePixelRatio || 1, DPR_CAP)
-    const getGap = (w: number, h: number) => {
-      if (w * h > 1_600_000) return BASE_GAP + 6
-      if (w < 760) return BASE_GAP + 2
-      return BASE_GAP
-    }
+    const getDpr = () => Math.min(DPR_CAP, window.devicePixelRatio || 1)
+    const getGap = () => BASE_GAP
 
     const getSize = () => {
       if (inset && container) {
@@ -92,22 +97,24 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
+      if (authTone && !dark) {
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0, 0, w, h)
+      }
+
       const st = stateRef.current
 
       if (st.active) st.fade = Math.min(1, st.fade + 0.06)
       else st.fade = Math.max(0, st.fade - 0.04)
 
-      const gap = getGap(w, h)
+      const gap = getGap()
       const cols = Math.ceil(w / gap) + 6
       const rows = Math.ceil(h / gap) + 6
-      const darkMul = dark ? 0.48 : 1
+      const darkMul = dark ? 0.8 : 1
       const { mx, my, fade } = st
 
       const targetPx = mx >= 0 ? mx / w : 0.5
       const targetPy = my >= 0 ? my / h : 0.5
-      const parallaxSettling =
-        Math.abs(targetPx - st.pmx) > 0.001 ||
-        Math.abs(targetPy - st.pmy) > 0.001
       st.pmx += (targetPx - st.pmx) * 0.04
       st.pmy += (targetPy - st.pmy) * 0.04
       const parX = (st.pmx - 0.5) * -PARALLAX_PX
@@ -120,7 +127,7 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
       const sigma = WAVE_WIDTH * 0.55
 
       const RIPPLE_DURATION = 1800
-      const RIPPLE_MAX_R = 350
+      const RIPPLE_MAX_R = 220
       const RIPPLE_RING_W = 90
       const ripples = ripplesRef.current
 
@@ -225,17 +232,14 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
         if (fadeOut > 0.001) {
           ctx.beginPath()
           ctx.arc(rp.x, rp.y, rpRadius, 0, Math.PI * 2)
-          ctx.globalAlpha = (dark ? 0.02 : 0.025) * fadeOut
+          ctx.globalAlpha = (dark ? 0.035 : authTone ? 0.014 : 0.025) * fadeOut
           ctx.lineWidth = 1
           ctx.stroke()
         }
       }
       ctx.globalAlpha = 1
 
-      const fadeChanging = st.active ? st.fade < 0.995 : st.fade > 0.01
-      if (fadeChanging || parallaxSettling || ripples.length > 0) {
-        scheduleDraw()
-      }
+      scheduleDraw()
     }
 
     const syncCanvasBounds = () => {
@@ -292,7 +296,7 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
     const onClick = (e: MouseEvent) => {
       const { ox, oy } = getOffset()
       const rp = ripplesRef.current
-      if (rp.length >= 4) rp.shift()
+      if (rp.length >= 8) rp.shift()
       rp.push({ x: e.clientX - ox, y: e.clientY - oy, born: performance.now() })
       scheduleDraw()
     }
@@ -339,14 +343,16 @@ export function CanvasBackground({ inset }: { inset?: boolean } = {}) {
       document.removeEventListener("visibilitychange", onVisibilityChange)
       window.removeEventListener("click", onClick)
     }
-  }, [inset])
+  }, [inset, tone])
 
   return (
     <canvas
       ref={canvasRef}
       className={inset
         ? "fixed z-0 pointer-events-none"
-        : "fixed inset-0 z-0 pointer-events-none"
+        : tone === "auth"
+          ? "fixed inset-0 z-0 pointer-events-none bg-white dark:bg-transparent"
+          : "fixed inset-0 z-0 pointer-events-none"
       }
     />
   )

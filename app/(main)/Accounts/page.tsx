@@ -13,6 +13,7 @@ import * as React from "react"
 import { PageShell, PageHeader, StatCards, PageSection } from "@/components/page-framework"
 import { AccountsTable, Account } from "@/components/accounts-table"
 import { BankConnections } from "@/components/bank-connections"
+import { DashboardSupportSidebar } from "@/components/dashboard/dashboard-support-sidebar"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
@@ -34,15 +35,15 @@ export default function AccountsPage() {
         for (const a of allAccounts) { totalBalance += a.balance; totalIn += a.totalIn; totalOut += a.totalOut }
         const fmt = (n: number) => formatCurrency(n)
         return [
-            { label: "Total Balance", value: fmt(totalBalance), icon: <Wallet className="h-4 w-4" /> },
-            { label: "Total Income", value: fmt(totalIn), change: "All accounts", trend: "up" as const, icon: <TrendingUp className="h-4 w-4" /> },
-            { label: "Total Expenses", value: fmt(totalOut), change: "All accounts", trend: "down" as const, icon: <TrendingDown className="h-4 w-4" /> },
-            { label: "Accounts", value: String(allAccounts.length), icon: <CreditCard className="h-4 w-4" /> },
+            { label: "Total Balance", value: fmt(totalBalance), icon: <Wallet className="size-4" /> },
+            { label: "Total Income", value: fmt(totalIn), change: "All accounts", trend: "up" as const, icon: <TrendingUp className="size-4" /> },
+            { label: "Total Expenses", value: fmt(totalOut), change: "All accounts", trend: "down" as const, icon: <TrendingDown className="size-4" /> },
+            { label: "Accounts", value: String(allAccounts.length), icon: <CreditCard className="size-4" /> },
         ]
     }, [allAccounts, isLoading, formatCurrency])
 
     return (
-        <PageShell className="gap-4 p-3 md:p-4">
+        <PageShell className="gap-4 overflow-x-hidden overflow-y-visible p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -59,19 +60,41 @@ export default function AccountsPage() {
                 }
             />
 
-
-            <StatCards stats={stats} isLoading={isLoading} />
-
-            <div className="grid min-h-0 gap-4 xl:grid-cols-[minmax(280px,0.36fr)_minmax(0,1fr)] xl:items-start">
-                <PageSection stagger={2} className="xl:sticky xl:top-4">
-                    <div id="bank-connections">
-                        <BankConnections />
-                    </div>
+            <div className="flex min-w-0 flex-col gap-4 overflow-visible @[900px]/main:min-h-0 @[900px]/main:flex-1">
+                <PageSection stagger={1} className="shrink-0">
+                    <StatCards stats={stats} isLoading={isLoading} />
                 </PageSection>
 
-                <PageSection stagger={3} fill>
-                    <AccountsTable data={allAccounts} isLoading={isLoading} />
-                </PageSection>
+                <div
+                    className="grid min-w-0 gap-4 overflow-visible @[900px]/main:min-h-0 @[900px]/main:flex-1 @[900px]/main:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] @[1320px]/main:grid-cols-5"
+                    data-dashboard-grid
+                    data-dashboard-layout="command-center"
+                >
+                    <section
+                        aria-label={f.accounts || "Accounts"}
+                        className="flex min-h-[420px] min-w-0 overflow-visible @[900px]/main:min-h-0 @[1320px]/main:col-span-4"
+                        data-dashboard-module="accounts"
+                        data-dashboard-zone="primary"
+                    >
+                        <PageSection stagger={2} fill className="flex min-h-0 flex-1 flex-col">
+                            <AccountsTable data={allAccounts} isLoading={isLoading} />
+                        </PageSection>
+                    </section>
+
+                    <DashboardSupportSidebar className="@[1320px]/main:col-span-1">
+                        <section
+                            id="bank-connections"
+                            aria-label={isPt ? "Ligações bancárias" : "Bank connections"}
+                            className="min-h-[220px] min-w-0 overflow-visible @[900px]/main:flex-1"
+                            data-dashboard-module="bank-connections"
+                            data-dashboard-zone="supporting"
+                        >
+                            <PageSection stagger={3} className="flex min-h-0 flex-1 flex-col">
+                                <BankConnections />
+                            </PageSection>
+                        </section>
+                    </DashboardSupportSidebar>
+                </div>
             </div>
         </PageShell>
     )

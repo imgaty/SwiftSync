@@ -8,6 +8,7 @@
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
 import { Card } from "@/components/ui/card"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import { AlertCircle, FileQuestion, Ban } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
@@ -55,7 +56,7 @@ export function ErrorState({ type, className, details: _details, fileName }: Err
                         <span key={i}>
                             {part}
                             {i < messageParts.length - 1 && fileName && (
-                                <code className = "px-1.5 py-0.5 | bg-muted rounded | font-mono text-xs font-medium">
+                                <code className = {cn("px-1.5 py-0.5 | font-mono text-xs font-medium", UDS.inlineSurface)}>
                                     {fileName}
                                 </code>
                             )}

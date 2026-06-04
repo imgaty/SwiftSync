@@ -20,8 +20,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog } from "@/components/ui/dialog"
 import {
     FormDialogActions,
+    FormDialogBody,
     FormDialogContent,
     FormDialogHeader,
+    FormSelectTrigger,
+    FormDialogStepIndicator,
 } from "@/components/form-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,13 +32,13 @@ import {
     Select,
     SelectContent,
     SelectItem,
-    SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
 import { queryKeys } from "@/lib/query-keys"
+import { UDS } from "@/lib/UDS"
 import { Receipt, CalendarClock, AlertTriangle, CheckCircle2, Plus } from "lucide-react"
 
 export default function BillsPage() {
@@ -51,6 +54,7 @@ export default function BillsPage() {
 
     const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
     const [editingBillId, setEditingBillId] = React.useState<string | null>(null)
+    const [billStep, setBillStep] = React.useState(0)
     const [isSaving, setIsSaving] = React.useState(false)
     const [formData, setFormData] = React.useState({
         name: "",
@@ -78,7 +82,36 @@ export default function BillsPage() {
             category: "utilities",
             autopay: false,
         })
+        setBillStep(0)
     }, [accounts])
+
+    const handleBillNext = React.useCallback(() => {
+        if (billStep === 0) {
+            if (!formData.name.trim()) {
+                toast.error(isPt ? "Introduza um nome." : "Enter a name.")
+                return
+            }
+            setBillStep(1)
+            return
+        }
+
+        if (billStep === 1) {
+            const amount = Number(formData.amount)
+            const dueDay = Number(formData.dueDay)
+            if (!Number.isFinite(amount) || amount <= 0) {
+                toast.error(isPt ? "Introduza um valor maior do que zero." : "Enter an amount greater than zero.")
+                return
+            }
+            if (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) {
+                toast.error(isPt ? "Introduza um dia entre 1 e 31." : "Enter a day between 1 and 31.")
+                return
+            }
+            setBillStep(2)
+            return
+        }
+
+        if (billStep === 2) setBillStep(3)
+    }, [billStep, formData.amount, formData.dueDay, formData.name, isPt])
 
     async function handleCreateBill() {
         if (!formData.name || !formData.amount || !formData.dueDay || !formData.accountId || !formData.category) {
@@ -125,6 +158,7 @@ export default function BillsPage() {
 
     function openEditDialog(bill: Bill) {
         setEditingBillId(bill.id)
+        setBillStep(0)
         setFormData({
             name: bill.name,
             amount: String(bill.amount),
@@ -178,10 +212,10 @@ export default function BillsPage() {
         }
         const fmt = (n: number) => formatCurrency(n)
         return [
-            { label: "Monthly Total", value: fmt(totalMonthly), change: `${countMonthly} bills`, trend: "neutral" as const, icon: <Receipt className="h-4 w-4" /> },
-            { label: "Yearly Total", value: fmt(totalYearly), change: `${countYearly} bills`, trend: "neutral" as const, icon: <CalendarClock className="h-4 w-4" /> },
-            { label: "Overdue", value: String(overdue), change: overdue > 0 ? "Needs attention" : "All good", trend: overdue > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="h-4 w-4" /> },
-            { label: "Paid", value: String(paid), change: `of ${billsData.length} total`, trend: "up" as const, icon: <CheckCircle2 className="h-4 w-4" /> },
+            { label: "Monthly Total", value: fmt(totalMonthly), change: `${countMonthly} bills`, trend: "neutral" as const, icon: <Receipt className="size-4" /> },
+            { label: "Yearly Total", value: fmt(totalYearly), change: `${countYearly} bills`, trend: "neutral" as const, icon: <CalendarClock className="size-4" /> },
+            { label: "Overdue", value: String(overdue), change: overdue > 0 ? "Needs attention" : "All good", trend: overdue > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="size-4" /> },
+            { label: "Paid", value: String(paid), change: `of ${billsData.length} total`, trend: "up" as const, icon: <CheckCircle2 className="size-4" /> },
         ]
     }, [billsData, isLoading, formatCurrency])
 
@@ -250,57 +284,70 @@ export default function BillsPage() {
                 setIsAddDialogOpen(open)
                 if (!open) { setEditingBillId(null); resetForm() }
             }}>
-                <FormDialogContent maxWidth="430px">
+                <FormDialogContent stableSize>
                     <FormDialogHeader
                         title={editingBillId ? (isPt ? "Editar conta a pagar" : "Edit bill") : (isPt ? "Adicionar conta a pagar" : "Add bill")}
-                        description={accounts.length > 0
-                            ? (isPt ? "Crie uma nova despesa recorrente e associe-a a uma conta." : "Create a new recurring expense and link it to an account.")
-                            : (isPt ? "Ligue primeiro uma conta na página Accounts para poder associar a despesa." : "Connect an account first on the Accounts page so the bill can be assigned.")}
+                        description={
+                            billStep === 0
+                                ? (isPt ? "Comece pelo nome da despesa recorrente." : "Start with the recurring expense name.")
+                                : billStep === 1
+                                    ? (isPt ? "Defina o valor e o dia de vencimento." : "Set the amount and due day.")
+                                    : billStep === 2
+                                        ? (isPt ? "Classifique a frequência e categoria." : "Classify the frequency and category.")
+                                        : accounts.length > 0
+                                            ? (isPt ? "Associe a despesa a uma conta." : "Link the bill to an account.")
+                                            : (isPt ? "Ligue primeiro uma conta na página Accounts." : "Connect an account first on the Accounts page.")}
                     />
 
                     <form
                         onSubmit={(e) => {
                             e.preventDefault()
+                            if (billStep < 3) {
+                                handleBillNext()
+                                return
+                            }
                             handleCreateBill()
                         }}
                         className="flex flex-col gap-4"
                     >
-                        <div className="grid gap-2">
-                            <Label htmlFor="bill-name">{isPt ? "Nome" : "Name"}</Label>
-                            <Input id="bill-name" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} placeholder={isPt ? "Ex.: Internet" : "e.g. Internet"} />
-                        </div>
+                        {billStep === 0 && (
+                            <FormDialogBody key="bill-name">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="bill-name">{isPt ? "Nome" : "Name"}</Label>
+                                    <Input id="bill-name" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} placeholder={isPt ? "Ex.: Internet" : "e.g. Internet"} autoFocus />
+                                </div>
+                            </FormDialogBody>
+                        )}
 
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="bill-amount">{isPt ? "Valor" : "Amount"}</Label>
-                                <Input id="bill-amount" type="number" min="0" step="0.01" value={formData.amount} onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="bill-dueDay">{isPt ? "Dia de vencimento" : "Due day"}</Label>
-                                <Input id="bill-dueDay" type="number" min="1" max="31" value={formData.dueDay} onChange={(e) => setFormData((prev) => ({ ...prev, dueDay: e.target.value }))} />
-                            </div>
-                        </div>
+                        {billStep === 1 && (
+                            <FormDialogBody key="bill-amount">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="bill-amount">{isPt ? "Valor" : "Amount"}</Label>
+                                    <Input id="bill-amount" type="number" min="0" step="0.01" value={formData.amount} onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))} autoFocus />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="bill-dueDay">{isPt ? "Dia de vencimento" : "Due day"}</Label>
+                                    <Input id="bill-dueDay" type="number" min="1" max="31" value={formData.dueDay} onChange={(e) => setFormData((prev) => ({ ...prev, dueDay: e.target.value }))} />
+                                </div>
+                            </FormDialogBody>
+                        )}
 
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label>{isPt ? "Frequência" : "Frequency"}</Label>
+                        {billStep === 2 && (
+                            <FormDialogBody key="bill-classify">
                                 <Select value={formData.frequency} onValueChange={(value) => setFormData((prev) => ({ ...prev, frequency: value }))}>
-                                    <SelectTrigger>
+                                    <FormSelectTrigger label={isPt ? "Frequência" : "Frequency"}>
                                         <SelectValue />
-                                    </SelectTrigger>
+                                    </FormSelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="weekly">{isPt ? "Semanal" : "Weekly"}</SelectItem>
                                         <SelectItem value="monthly">{isPt ? "Mensal" : "Monthly"}</SelectItem>
                                         <SelectItem value="yearly">{isPt ? "Anual" : "Yearly"}</SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>{isPt ? "Categoria" : "Category"}</Label>
                                 <Select value={formData.category} onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}>
-                                    <SelectTrigger>
+                                    <FormSelectTrigger label={isPt ? "Categoria" : "Category"}>
                                         <SelectValue />
-                                    </SelectTrigger>
+                                    </FormSelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="utilities">{isPt ? "Serviços" : "Utilities"}</SelectItem>
                                         <SelectItem value="housing">{isPt ? "Habitação" : "Housing"}</SelectItem>
@@ -311,42 +358,59 @@ export default function BillsPage() {
                                         <SelectItem value="other">{isPt ? "Outros" : "Other"}</SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
-                        </div>
+                            </FormDialogBody>
+                        )}
 
-                        <div className="grid gap-2">
-                            <Label>{isPt ? "Conta associada" : "Linked account"}</Label>
-                            <Select value={formData.accountId} onValueChange={(value) => setFormData((prev) => ({ ...prev, accountId: value }))} disabled={accounts.length === 0}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={isPt ? "Escolha uma conta" : "Choose an account"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {accounts.map((account) => (
-                                        <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {billStep === 3 && (
+                            <FormDialogBody key="bill-account">
+                                <Select value={formData.accountId} onValueChange={(value) => setFormData((prev) => ({ ...prev, accountId: value }))} disabled={accounts.length === 0}>
+                                    <FormSelectTrigger label={isPt ? "Conta associada" : "Linked account"}>
+                                        <SelectValue placeholder={isPt ? "Escolha uma conta" : "Choose an account"} />
+                                    </FormSelectTrigger>
+                                    <SelectContent>
+                                        {accounts.map((account) => (
+                                            <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
 
-                        <label className="group flex cursor-pointer select-none items-center justify-center gap-2 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-3 py-2.5 transition-colors hover:border-[color:var(--border-strong)]">
-                            <Checkbox checked={formData.autopay} onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, autopay: checked === true }))} />
-                            <span className="text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
-                                {isPt ? "Pagamento automático" : "Autopay enabled"}
-                            </span>
-                        </label>
+                                <label className={`${UDS.surface} ${UDS.itemHover} group flex cursor-pointer select-none items-center justify-center gap-2 px-3 py-2.5 transition-colors`}>
+                                    <Checkbox checked={formData.autopay} onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, autopay: checked === true }))} />
+                                    <span className="text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+                                        {isPt ? "Pagamento automático" : "Autopay enabled"}
+                                    </span>
+                                </label>
+                            </FormDialogBody>
+                        )}
 
                         <FormDialogActions>
-                            <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving || accounts.length === 0}>
-                            {isSaving
-                                ? (isPt ? "A guardar..." : "Saving...")
-                                : editingBillId
-                                    ? (isPt ? "Guardar" : "Save")
-                                    : (isPt ? "Adicionar" : "Add bill")}
+                            <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving || (billStep === 3 && accounts.length === 0)}>
+                                {billStep < 3
+                                    ? (isPt ? "Continuar" : "Continue")
+                                    : isSaving
+                                        ? (isPt ? "A guardar..." : "Saving...")
+                                        : editingBillId
+                                            ? (isPt ? "Guardar" : "Save")
+                                            : (isPt ? "Adicionar" : "Add bill")}
                             </Button>
-                            <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setIsAddDialogOpen(false)}>
-                                {isPt ? "Cancelar" : "Cancel"}
+                            <Button
+                                type="button"
+                                variant="glass"
+                                size="lg"
+                                className="w-full"
+                                onClick={() => {
+                                    if (billStep === 0) {
+                                        setIsAddDialogOpen(false)
+                                        return
+                                    }
+                                    setBillStep((step) => Math.max(step - 1, 0))
+                                }}
+                                disabled={isSaving}
+                            >
+                                {billStep === 0 ? (isPt ? "Cancelar" : "Cancel") : (isPt ? "Voltar" : "Back")}
                             </Button>
                         </FormDialogActions>
+                        <FormDialogStepIndicator current={billStep} total={4} />
                     </form>
                 </FormDialogContent>
             </Dialog>

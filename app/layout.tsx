@@ -9,6 +9,7 @@
 //
 import type { Metadata } from "next"
 import { cookies } from "next/headers"
+import { GeistMono } from "geist/font/mono"
 import { LanguageProvider } from "@/components/language-provider"
 import { CurrencyProvider } from "@/components/currency-provider"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -16,6 +17,7 @@ import { ColorBlindProvider } from "@/components/colorblind-provider"
 import { AuthProvider } from "@/components/auth-provider"
 import { QueryProvider } from "@/components/query-provider"
 import { AppLoadingProvider } from "@/components/loading-provider"
+import { SquircleProvider } from "@/components/squircle-provider"
 import { SurfaceSpotlightProvider } from "@/components/surface-spotlight-provider"
 import "./globals.css"
 
@@ -59,9 +61,13 @@ export default async function RootLayout({
     const languageCookie = (await cookies()).get("language")?.value === "pt" ? "pt" as const : "en" as const
     const colorblindCookie = (await cookies()).get("colorblind_mode")?.value as "deuteranopia" | "protanopia" | "tritanopia" | undefined
     const currencyCookie = (await cookies()).get("preferred_currency")?.value as "USD" | "GBP" | "BRL" | undefined
+    const htmlClassName = [
+        GeistMono.variable,
+        colorblindCookie ? `colorblind-${colorblindCookie}` : undefined,
+    ].filter(Boolean).join(" ")
 
     return (
-        <html lang = {languageCookie} className = {colorblindCookie ? `colorblind-${colorblindCookie}` : undefined} suppressHydrationWarning>
+        <html lang = {languageCookie} className = {htmlClassName} suppressHydrationWarning>
             <head>
                 <script
                     id="theme-init"
@@ -82,6 +88,7 @@ export default async function RootLayout({
                         </LanguageProvider>
                     </ColorBlindProvider>
                 </ThemeProvider>
+                <SquircleProvider />
                 <SurfaceSpotlightProvider />
             </body>
         </html>

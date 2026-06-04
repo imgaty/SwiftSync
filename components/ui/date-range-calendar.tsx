@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { TabSwitcher, TabSwitcherItem } from "@/components/ui/tab-switcher"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 // ==============================================================================
@@ -508,7 +509,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                 isHorizontalPanel
                     ? cn("w-[200px] shrink-0", panelPosition === 'left' ? "border-r" : "border-l")
                     : cn(panelPosition === 'top' ? "border-b" : "border-t"),
-                "border-black/8 dark:border-white/8"
+                UDS.cardDivider
             )}>
                 <div className={cn("p-3", isHorizontalPanel && "flex-1")}>
                     <div className={cn(!isHorizontalPanel && "flex gap-2")}>
@@ -517,11 +518,11 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                             <div
                                 onClick={() => setSelectingEnd(false)}
                                 className={cn(
-                                    "group px-3 py-2 rounded-xl transition-all duration-200",
+                                    "group px-3 py-2 sq-xl transition-all duration-200",
                                     isHorizontalPanel && "mb-2",
                                     !selectingEnd
-                                        ? "bg-black/5 dark:bg-white/5 ring-2 ring-blue-500/50 dark:ring-blue-500/30 shadow-sm"
-                                        : "bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 ring-1 ring-black/10 dark:ring-white/10"
+                                        ? cn(UDS.surface, UDS.activeRing)
+                                        : cn(UDS.surface, UDS.itemHover)
                                 )}
                             >
                                 <div className={cn(
@@ -552,11 +553,11 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                             <div
                                 onClick={() => startDate && setSelectingEnd(true)}
                                 className={cn(
-                                    "group px-3 py-2 rounded-xl transition-all duration-200",
+                                    "group px-3 py-2 sq-xl transition-all duration-200",
                                     !startDate && "opacity-40 cursor-not-allowed",
                                     selectingEnd
-                                        ? "bg-black/5 dark:bg-white/5 ring-2 ring-blue-500/50 dark:ring-blue-500/30 shadow-sm"
-                                        : "bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 ring-1 ring-black/10 dark:ring-white/10"
+                                        ? cn(UDS.surface, UDS.activeRing)
+                                        : cn(UDS.surface, UDS.itemHover)
                                 )}
                             >
                                 <div className={cn(
@@ -587,7 +588,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                     {/* Duration indicator — horizontal panel only */}
                     {isHorizontalPanel && daysDiff && (
                         <div className="mt-3 flex items-center justify-center">
-                            <span className="text-xs text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
+                            <span className={cn("px-2.5 py-1 text-xs text-neutral-400", UDS.surface, "sq-full")}>
                                 {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
                             </span>
                         </div>
@@ -596,18 +597,18 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
 
                 {/* Actions */}
                 {isHorizontalPanel ? (
-                    <div className="flex flex-col gap-2 p-3 border-t border-black/8 dark:border-white/8 mt-auto">
+                    <div className={cn("flex flex-col gap-2 p-3 border-t mt-auto", UDS.cardDivider)}>
                         <Button variant="ghost"
                             onClick={handleApply}
                             disabled={!startDate || !endDate}
-                            className="h-8 w-full text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-xl shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={cn("h-8 w-full text-xs font-semibold sq-xl active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed", UDS.primaryControl)}
                         >
                             {labels.apply ?? "Apply Range"}
                         </Button>
                         <Button variant="ghost"
                             onClick={handleClear}
                             disabled={!value && !startDate}
-                            className="h-8 w-full text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={cn("h-8 w-full text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white sq-xl transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed", UDS.itemHover)}
                         >
                             <X className="w-3.5 h-3.5" />
                             {labels.clear_range ?? "Clear"}
@@ -616,7 +617,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                 ) : (
                     <div className="flex items-center gap-2 px-3 pb-3">
                         {daysDiff && (
-                            <span className="text-xs text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full shrink-0">
+                            <span className={cn("px-2.5 py-1 text-xs text-neutral-400 shrink-0", UDS.surface, "sq-full")}>
                                 {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
                             </span>
                         )}
@@ -624,7 +625,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                         <Button variant="ghost"
                             onClick={handleClear}
                             disabled={!value && !startDate}
-                            className="h-8 px-3 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                            className={cn("h-8 px-3 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white sq-lg transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0", UDS.itemHover)}
                         >
                             <X className="w-3.5 h-3.5" />
                             {labels.clear_range ?? "Clear"}
@@ -632,7 +633,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                         <Button variant="ghost"
                             onClick={handleApply}
                             disabled={!startDate || !endDate}
-                            className="h-8 px-4 text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-lg shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                            className={cn("h-8 px-4 text-xs font-semibold sq-lg active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0", UDS.primaryControl)}
                         >
                             {labels.apply ?? "Apply"}
                         </Button>
@@ -646,7 +647,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
             <div
                 ref={ref}
                 className={cn(
-                    "rounded-xl overflow-hidden w-full",
+                    "sq-xl overflow-hidden w-full",
                     className
                 )}
             >
@@ -663,7 +664,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                     else if (viewMode === 'months') setViewDate(new Date(viewDate.getFullYear() - 1, viewDate.getMonth(), 1))
                                     else setViewDate(new Date(viewDate.getFullYear() - 12, viewDate.getMonth(), 1))
                                 }}
-                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                                className={cn("inline-flex items-center justify-center w-7 h-7 sq-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors", UDS.itemHover)}
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
@@ -673,7 +674,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                     if (viewMode === 'days') setViewMode('months')
                                     else if (viewMode === 'months') setViewMode('years')
                                 }}
-                                className="flex-1 text-center text-sm font-semibold text-neutral-900 dark:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg py-1 px-2 transition-colors"
+                                className={cn("flex-1 text-center text-sm font-semibold text-neutral-900 dark:text-white sq-lg py-1 px-2 transition-colors", UDS.itemHover)}
                             >
                                 {viewMode === 'days' && `${viewDate.toLocaleDateString(locale, { month: 'long' })} ${viewDate.getFullYear()}`}
                                 {viewMode === 'months' && viewDate.getFullYear()}
@@ -699,7 +700,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                     (viewMode === 'months' && viewDate.getFullYear() >= CURRENT_YEAR) ||
                                     (viewMode === 'years' && years[years.length - 1] >= CURRENT_YEAR)
                                 }
-                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                className={cn("inline-flex items-center justify-center w-7 h-7 sq-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed", UDS.itemHover)}
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
@@ -753,7 +754,7 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                     <div className={cn(
                                                         "absolute inset-y-0.5",
                                                         start ? "left-1/2 right-0" : end ? "left-0 right-1/2" : "inset-x-0",
-                                                        "bg-black/5 dark:bg-white/5"
+                                                        UDS.subtleFill
                                                     )} />
                                                 )}
 
@@ -765,14 +766,14 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                     }}
                                                     disabled={disabled && !dragging}
                                                     className={cn(
-                                                        "relative z-10 inline-flex items-center justify-center size-8 rounded-lg text-sm font-medium transition-all duration-200",
+                                                        "relative z-10 inline-flex items-center justify-center size-8 sq-lg text-sm font-medium transition-all duration-200",
                                                         disabled && !dragging && "text-neutral-400 cursor-not-allowed",
                                                         outside && !disabled && "text-neutral-400",
-                                                        (start || end) && !isDragOver && "bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200",
+                                                        (start || end) && !isDragOver && UDS.selectedControl,
                                                         (start || end) && dragging && "cursor-grab active:cursor-grabbing",
-                                                        !start && !end && !disabled && !outside && !isDragOver && "hover:bg-black/5 dark:hover:bg-white/10 text-neutral-900 dark:text-white",
+                                                        !start && !end && !disabled && !outside && !isDragOver && cn(UDS.itemHover, "text-neutral-900 dark:text-white"),
                                                         today && !start && !end && !isDragOver && "ring-1 ring-neutral-900/30 dark:ring-white/30 font-bold",
-                                                        isDragOver && !disabled && "bg-neutral-700 dark:bg-neutral-200 text-white dark:text-black scale-110"
+                                                        isDragOver && !disabled && cn(UDS.selectedControl, "scale-110")
                                                     )}
                                                 >
                                                     {day.getDate()}
@@ -800,7 +801,8 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                         <div key={month.index} className="relative flex items-center justify-center">
                                             {!isSameMonth && (inRange || isStart || isEnd) && startDate && endDate && (
                                                 <div className={cn(
-                                                    "absolute inset-y-0.5 rounded-sm bg-black/5 dark:bg-white/5",
+                                                    "absolute inset-y-0.5 sq-sm",
+                                                    UDS.subtleFill,
                                                     isStart ? "left-1/2 right-0" : isEnd ? "left-0 right-1/2" : "inset-x-0"
                                                 )} />
                                             )}
@@ -809,10 +811,10 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                 onDoubleClick={() => handleMonthClick(month.index, true)}
                                                 disabled={disabled}
                                                 className={cn(
-                                                    "relative z-10 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200",
+                                                    "relative z-10 py-2 px-3 sq-lg text-xs font-medium transition-all duration-200",
                                                     disabled && "text-neutral-400 cursor-not-allowed",
-                                                    (isStart || isEnd) && "bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200",
-                                                    !isStart && !isEnd && !disabled && "hover:bg-black/5 dark:hover:bg-white/10 text-neutral-900 dark:text-white"
+                                                    (isStart || isEnd) && UDS.selectedControl,
+                                                    !isStart && !isEnd && !disabled && cn(UDS.itemHover, "text-neutral-900 dark:text-white")
                                                 )}
                                             >
                                                 {month.name}
@@ -838,7 +840,8 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                         <div key={year} className="relative flex items-center justify-center">
                                             {!isSameYear && (inRange || isStart || isEnd) && startDate && endDate && (
                                                 <div className={cn(
-                                                    "absolute inset-y-0.5 rounded-sm bg-black/5 dark:bg-white/5",
+                                                    "absolute inset-y-0.5 sq-sm",
+                                                    UDS.subtleFill,
                                                     isStart ? "left-1/2 right-0" : isEnd ? "left-0 right-1/2" : "inset-x-0"
                                                 )} />
                                             )}
@@ -847,10 +850,10 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                                 onDoubleClick={() => handleYearClick(year, true)}
                                                 disabled={disabled}
                                                 className={cn(
-                                                    "relative z-10 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200",
+                                                    "relative z-10 py-2 px-3 sq-lg text-xs font-medium transition-all duration-200",
                                                     disabled && "text-neutral-400 cursor-not-allowed",
-                                                    (isStart || isEnd) && "bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200",
-                                                    !isStart && !isEnd && !disabled && "hover:bg-black/5 dark:hover:bg-white/10 text-neutral-900 dark:text-white"
+                                                    (isStart || isEnd) && UDS.selectedControl,
+                                                    !isStart && !isEnd && !disabled && cn(UDS.itemHover, "text-neutral-900 dark:text-white")
                                                 )}
                                             >
                                                 {year}
@@ -871,12 +874,12 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
                                     onChange={(e) => setYearJumpInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
                                     onKeyDown={(e) => { if (e.key === 'Enter') handleYearJump(yearJumpInput) }}
                                     placeholder="2013"
-                                    className="w-16 px-2 py-1 text-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg outline-none focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-blue-500/30 text-center text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-400"
+                                    className={cn("w-16 px-2 py-1 text-xs sq-lg outline-none text-center text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-400", UDS.surface, UDS.focusRing)}
                                 />
                                 <Button variant="ghost"
                                     onClick={() => handleYearJump(yearJumpInput)}
                                     disabled={!yearJumpInput || yearJumpInput.length < 4}
-                                    className="px-2 py-1 text-xs bg-black/5 dark:bg-white/5 text-neutral-900 dark:text-white rounded-lg hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className={cn("px-2 py-1 text-xs text-neutral-900 dark:text-white sq-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors", UDS.surface, UDS.itemHover)}
                                 >
                                     Go
                                 </Button>
@@ -885,24 +888,24 @@ const DateRangeCalendar = React.memo(React.forwardRef<HTMLDivElement, DateRangeC
 
                         {/* Inline footer when inputs are hidden */}
                         {!showInputs && (
-                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/8 dark:border-white/8">
+                            <div className={cn("flex items-center justify-between mt-3 pt-3 border-t", UDS.cardDivider)}>
                                 <Button variant="ghost"
                                     onClick={handleClear}
                                     disabled={!value && !startDate}
-                                    className="h-8 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg px-2.5 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className={cn("h-8 text-xs font-medium text-neutral-400 hover:text-neutral-900 dark:hover:text-white sq-lg px-2.5 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed", UDS.itemHover)}
                                 >
                                     <X className="w-3.5 h-3.5" />
                                     {labels.clear_range ?? "Clear"}
                                 </Button>
                                 {daysDiff && (
-                                    <span className="text-xs text-neutral-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
+                                    <span className={cn("px-2.5 py-1 text-xs text-neutral-400", UDS.surface, "sq-full")}>
                                         {daysDiff} {daysDiff === 1 ? (labels.day ?? 'day') : (labels.days ?? 'days')}
                                     </span>
                                 )}
                                 <Button variant="ghost"
                                     onClick={handleApply}
                                     disabled={!startDate || !endDate}
-                                    className="h-8 text-xs font-semibold bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-xl px-4 shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className={cn("h-8 text-xs font-semibold sq-xl px-4 active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed", UDS.primaryControl)}
                                 >
                                     {labels.apply ?? "Apply"}
                                 </Button>

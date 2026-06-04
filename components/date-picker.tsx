@@ -25,7 +25,7 @@ import type { Locale } from "date-fns"
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Button } from "@/components/ui/button"
 import { TabSwitcher, TabSwitcherItem } from "@/components/ui/tab-switcher"
 import {
@@ -311,9 +311,9 @@ export function DatePicker({
           onClick={() => !disabled && setOpen(true)}
           className={cn(
             "relative flex items-center w-full h-14 px-4 pr-12 pt-4 text-left font-normal group text-[15px] transition-all duration-200",
-            PRISM.surface,
-            PRISM.focusRing,
-            open && PRISM.activeRing,
+            UDS.surface,
+            UDS.focusRing,
+            open && UDS.activeRing,
             disabled && "opacity-50 cursor-not-allowed",
             className
           )}
@@ -380,7 +380,10 @@ export function DatePicker({
                 else if (view === 'month') setDisplayMonth(setYear(displayMonth, displayMonth.getFullYear() - 1))
                 else setDisplayMonth(setYear(displayMonth, displayMonth.getFullYear() - 12))
               }}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
+              className={cn(
+                "inline-flex items-center justify-center w-7 h-7 sq-lg text-neutral-400 hover:text-black dark:hover:text-white transition-colors",
+                UDS.itemHover
+              )}
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -391,7 +394,10 @@ export function DatePicker({
                 if (view === 'date') setView('month')
                 else if (view === 'month') setView('year')
               }}
-              className="flex-1 text-center text-sm font-semibold text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-lg py-1 px-2 transition-colors"
+              className={cn(
+                "flex-1 text-center text-sm font-semibold text-black dark:text-white sq-lg py-1 px-2 transition-colors",
+                UDS.itemHover
+              )}
             >
               {view === 'date' && `${format(displayMonth, "MMMM", { locale: loc })} ${formatYear(displayMonth.getFullYear())}`}
               {view === 'month' && formatYear(displayMonth.getFullYear())}
@@ -408,10 +414,10 @@ export function DatePicker({
                 else setDisplayMonth(setYear(displayMonth, displayMonth.getFullYear() + 12))
               }}
               className={cn(
-                "inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors",
+                "inline-flex items-center justify-center w-7 h-7 sq-lg transition-colors",
                 forwardDisabled
                   ? "text-neutral-400 cursor-not-allowed"
-                  : "hover:bg-black/5 dark:hover:bg-white/10 text-neutral-400 hover:text-black dark:hover:text-white"
+                  : cn(UDS.itemHover, "text-neutral-400 hover:text-black dark:hover:text-white")
               )}
             >
               <ChevronRight className="w-4 h-4" />
@@ -457,11 +463,11 @@ export function DatePicker({
                         onClick={() => { if (!disabled) handleSelect(day) }}
                         disabled={disabled}
                         className={cn(
-                          "inline-flex items-center justify-center size-8 rounded-lg text-sm font-medium transition-all duration-200",
+                          "inline-flex items-center justify-center size-8 sq-lg text-sm font-medium transition-all duration-200",
                           disabled && "text-neutral-400 cursor-not-allowed",
                           outside && !disabled && "text-neutral-400",
-                          isSelected && "bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-900 dark:hover:bg-neutral-100",
-                          !isSelected && !disabled && !outside && "hover:bg-black/5 dark:hover:bg-white/10 text-black dark:text-white",
+                          isSelected && UDS.selectedControl,
+                          !isSelected && !disabled && !outside && cn(UDS.itemHover, "text-black dark:text-white"),
                           today && !isSelected && "ring-1 ring-black/30 dark:ring-white/30 font-bold"
                         )}
                       >
@@ -488,12 +494,12 @@ export function DatePicker({
                     type="button"
                     disabled={!!isFutureMonth}
                     className={cn(
-                      "py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200",
+                      "py-2 px-3 sq-lg text-xs font-medium transition-all duration-200",
                       isFutureMonth
                         ? "text-neutral-400 cursor-not-allowed"
                         : displayMonth.getMonth() === i
-                          ? "bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-900 dark:hover:bg-neutral-100"
-                          : "hover:bg-black/5 dark:hover:bg-white/10 text-black dark:text-white"
+                          ? UDS.selectedControl
+                          : cn(UDS.itemHover, "text-black dark:text-white")
                     )}
                     onClick={() => {
                       if (!isFutureMonth) {
@@ -520,12 +526,12 @@ export function DatePicker({
                       type="button"
                       disabled={isFutureYear}
                       className={cn(
-                        "relative z-10 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200",
+                        "relative z-10 py-2 px-3 sq-lg text-xs font-medium transition-all duration-200",
                         isFutureYear
                           ? "text-neutral-400 cursor-not-allowed"
                           : displayMonth.getFullYear() === y
-                            ? "bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-900 dark:hover:bg-neutral-100"
-                            : "hover:bg-black/5 dark:hover:bg-white/10 text-black dark:text-white"
+                            ? UDS.selectedControl
+                            : cn(UDS.itemHover, "text-black dark:text-white")
                       )}
                       onClick={() => {
                         if (!isFutureYear) {
@@ -543,12 +549,12 @@ export function DatePicker({
           )}
 
           {/* Footer */}
-          <div className="mt-3 pt-3 border-t border-black/8 dark:border-white/8 flex items-center justify-between gap-2">
+          <div className={cn("mt-3 flex items-center justify-between gap-2 border-t pt-3", UDS.cardDivider)}>
             <div className="flex items-center gap-1.5">
               {!dobMode && view === 'date' && (
                 <Button variant="ghost"
                   type="button"
-                  className="px-3 h-8 text-xs font-medium rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                  className="px-3 h-8 text-xs font-medium sq-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
                   onClick={() => handleSelect(new Date())}
                 >
                   Today
@@ -557,7 +563,10 @@ export function DatePicker({
               {selected && (
                 <Button variant="ghost"
                   type="button"
-                  className="px-3 h-8 text-xs font-medium rounded-lg text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-black dark:hover:text-white transition-colors"
+                  className={cn(
+                    "px-3 h-8 text-xs font-medium sq-lg text-neutral-400 hover:text-black dark:hover:text-white transition-colors",
+                    UDS.itemHover
+                  )}
                   onClick={() => { onChange?.(''); setOpen(false) }}
                 >
                   Clear
@@ -571,13 +580,13 @@ export function DatePicker({
                     onChange={(e) => setYearJumpInput(e.target.value.replace(/[^0-9\-bcBC ]/g, '').slice(0, 8))}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleYearJump(yearJumpInput) }}
                     placeholder="Jump to year"
-                    className="w-28 px-2.5 h-8 text-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg outline-none focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-blue-500/30 text-black dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-400"
+                    className={`${UDS.inlineSurface} h-8 w-28 px-2.5 text-xs text-black outline-none placeholder:text-neutral-400 focus:ring-1 focus:ring-blue-500/50 dark:text-white dark:placeholder:text-neutral-400 dark:focus:ring-blue-500/30`}
                   />
                   <Button variant="ghost"
                     type="button"
                     onClick={() => handleYearJump(yearJumpInput)}
                     disabled={!yearJumpInput}
-                    className="px-2.5 h-8 text-xs font-medium bg-black/5 dark:bg-white/5 text-black dark:text-white rounded-lg hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                    className={`${UDS.inlineSurface} ${UDS.itemHover} h-8 shrink-0 px-2.5 text-xs font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-40 dark:text-white`}
                   >
                     Go
                   </Button>
@@ -586,7 +595,7 @@ export function DatePicker({
             </div>
             <Button variant="ghost"
               type="button"
-              className="px-4 h-8 text-xs font-medium rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors shrink-0"
+              className={cn("px-4 h-8 text-xs font-medium sq-lg transition-colors shrink-0", UDS.primaryControl)}
               onClick={() => setOpen(false)}
             >
               Done

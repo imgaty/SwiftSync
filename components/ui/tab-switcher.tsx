@@ -12,7 +12,7 @@
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 export type TabSwitcherProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -44,31 +44,30 @@ function setForwardedRef<T>(ref: React.ForwardedRef<T>, value: T | null) {
     if (ref) (ref as React.MutableRefObject<T | null>).current = value
 }
 
-const roundedControl = "rounded-full"
+const squircleControl = "sq-full"
 
 const tabSwitcherSurface = cn(
-    PRISM.cardSurface,
+    UDS.cardSurface,
     "relative isolate inline-flex min-h-9 min-w-0 items-center gap-1 overflow-hidden p-1",
-    roundedControl,
+    squircleControl,
 )
 
 const tabSwitcherButtonBase = cn(
     "relative z-[2] inline-flex h-7 min-w-0 items-center justify-center gap-1.5 border border-transparent bg-transparent",
-    roundedControl,
+    squircleControl,
     "text-[12px] font-semibold leading-none outline-none",
     "transition-colors duration-150 ease-out",
-    "hover:bg-transparent hover:shadow-none active:scale-100",
+    "hover:bg-transparent active:scale-100",
     "focus-visible:ring-2 focus-visible:ring-focus/70",
     "disabled:pointer-events-none disabled:opacity-45",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
 )
 
 const tabSwitcherActiveIndicator = cn(
-    PRISM.cardSurface,
+    UDS.cardSurface,
+    UDS.raisedSurface,
     "pointer-events-none absolute left-0 top-0 z-[1] border",
-    roundedControl,
-    "bg-[color:color-mix(in_srgb,var(--surface-elevated)_92%,transparent)] dark:bg-white/[0.105]",
-    "shadow-[inset_0_1px_0_rgba(255,255,255,0.58)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]",
+    squircleControl,
     "will-change-transform",
     "transition-[opacity,transform,width,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
 )

@@ -17,7 +17,7 @@ import {
 
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -114,7 +114,7 @@ export default function AdminTransactionsPage() {
                 />
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-[130px]" size="sm">
-                        <Filter className="size-4" />
+                        <Filter className="size-3.5" />
                         <SelectValue placeholder={tp.type || "Type"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -135,17 +135,17 @@ export default function AdminTransactionsPage() {
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {/* Summary */}
                 <div className="grid grid-cols-3 gap-4">
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400 flex items-center gap-1"><ArrowUpRight className="size-3 text-emerald-500" /> {tp.total_income || "Total Income"}</p>
-                        <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{loading ? <Skeleton className="h-7 w-24" /> : formatCurrency(Number(summary.totalIncome))}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}><ArrowUpRight className="size-3.5 text-emerald-500" /> {tp.total_income || "Total Income"}</p>
+                        <p className={`${UDS.summaryValue} text-emerald-600 dark:text-emerald-400`}>{loading ? <Skeleton className="h-6 w-24" /> : formatCurrency(Number(summary.totalIncome))}</p>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400 flex items-center gap-1"><ArrowDownRight className="size-3 text-red-500" /> {tp.total_expenses || "Total Expenses"}</p>
-                        <p className={`text-xl font-bold ${PRISM.destructiveText}`}>{loading ? <Skeleton className="h-7 w-24" /> : formatCurrency(Number(summary.totalExpenses))}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}><ArrowDownRight className="size-3.5 text-red-500" /> {tp.total_expenses || "Total Expenses"}</p>
+                        <p className={`${UDS.summaryValue} ${UDS.destructiveText}`}>{loading ? <Skeleton className="h-6 w-24" /> : formatCurrency(Number(summary.totalExpenses))}</p>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400">{tp.total_count || "Total Count"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : summary.count.toLocaleString()}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}>{tp.total_count || "Total Count"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-16" /> : summary.count.toLocaleString()}</p>
                     </div>
                 </div>
 
@@ -206,10 +206,10 @@ export default function AdminTransactionsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1">
-                                                {tx.type === "in" ? <><ArrowUpRight className="size-4 text-emerald-500" /><span className="text-emerald-600 dark:text-emerald-400 text-sm">{tp.income || "Income"}</span></> : <><ArrowDownRight className="size-4 text-red-500" /><span className={`${PRISM.destructiveText} text-sm`}>{tp.expense || "Expense"}</span></>}
+                                                {tx.type === "in" ? <><ArrowUpRight className="size-4 text-emerald-500" /><span className="text-emerald-600 dark:text-emerald-400 text-sm">{tp.income || "Income"}</span></> : <><ArrowDownRight className="size-4 text-red-500" /><span className={`${UDS.destructiveText} text-sm`}>{tp.expense || "Expense"}</span></>}
                                             </div>
                                         </TableCell>
-                                        <TableCell className={`text-right font-mono text-sm ${tx.type === "in" ? "text-emerald-600 dark:text-emerald-400" : PRISM.destructiveText}`}>
+                                        <TableCell className={`text-right font-mono text-sm ${tx.type === "in" ? "text-emerald-600 dark:text-emerald-400" : UDS.destructiveText}`}>
                                             {tx.type === "in" ? "+" : "-"}{formatCurrency(Number(tx.amount))}
                                         </TableCell>
                                     </TableRow>

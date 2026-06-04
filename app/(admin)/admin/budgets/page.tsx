@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { UDS } from "@/lib/UDS"
 
 interface BudgetItem {
     id: string; tag: string; category: string; limit: number; color: string
@@ -117,13 +118,13 @@ export default function AdminBudgetsPage() {
             />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400 flex items-center gap-1"><PiggyBank className="size-3" /> {bp.total_budgets || "Total Budgets"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : pagination.total}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}><PiggyBank className="size-3.5" /> {bp.total_budgets || "Total Budgets"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-16" /> : pagination.total}</p>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400">{bp.combined_limit || "Combined Budget Limit"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(totalLimit)}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}>{bp.combined_limit || "Combined Budget Limit"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-28" /> : formatCurrency(totalLimit)}</p>
                     </div>
                 </div>
 
@@ -189,7 +190,7 @@ export default function AdminBudgetsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <div className="size-4 rounded-full border" style={{ backgroundColor: b.color }} />
+                                                <div className="size-4 sq-full border" style={{ backgroundColor: b.color }} />
                                                 <span className="text-xs text-neutral-400 font-mono">{b.color}</span>
                                             </div>
                                         </TableCell>

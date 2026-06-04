@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { UDS } from "@/lib/UDS"
 
 interface AdminProfile {
     id: string; name: string; email: string; role: string
@@ -77,7 +78,7 @@ export default function AdminSettingsPage() {
                 {loading ? <SettingsSkeleton /> : (
                     <>
                         {/* Admin Profile */}
-                        <Section title={sp.profile || "Your Admin Profile"} icon={<User className="size-5 text-blue-500" />}>
+                        <Section title={sp.profile || "Your Admin Profile"} icon={<User className="size-4 text-blue-500" />}>
                             {profile && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                     <InfoRow label={sp.name || "Name"} value={profile.name} />
@@ -99,11 +100,11 @@ export default function AdminSettingsPage() {
                         </Section>
 
                         {/* Admin Users */}
-                        <Section title={sp.admin_team || "Admin Team"} icon={<ShieldCheck className="size-5 text-purple-500" />}>
+                        <Section title={sp.admin_team || "Admin Team"} icon={<ShieldCheck className="size-4 text-purple-500" />}>
                             <div className="space-y-2">
                                 {admins.map(a => (
-                                    <div key={a.id} className="flex items-center gap-3 rounded-lg bg-black/2 dark:bg-white/3 border border-black/5 dark:border-white/5 p-3">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                                    <div key={a.id} className={`${UDS.inlineSurface} flex items-center gap-3 p-3`}>
+                                        <div className="flex size-8 items-center justify-center sq-full bg-primary/10 text-primary text-xs font-bold">
                                             {a.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -119,7 +120,7 @@ export default function AdminSettingsPage() {
                         </Section>
 
                         {/* Data Export */}
-                        <Section title={sp.data_export || "Data Export"} icon={<Download className="size-5 text-emerald-500" />}>
+                        <Section title={sp.data_export || "Data Export"} icon={<Download className="size-4 text-emerald-500" />}>
                             <p className="text-sm text-neutral-400 mb-4">{sp.export_description || "Export platform data as JSON for backup or analysis."}</p>
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 <ExportButton label={ad.users || "Users"} onClick={() => handleExport("users")} icon={<UsersIcon className="size-4" />} />
@@ -132,7 +133,7 @@ export default function AdminSettingsPage() {
                         </Section>
 
                         {/* Quick Links */}
-                        <Section title={sp.quick_actions || "Quick Actions"} icon={<Settings className="size-5 text-orange-500" />}>
+                        <Section title={sp.quick_actions || "Quick Actions"} icon={<Settings className="size-4 text-orange-500" />}>
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 <QuickLink href="/admin/users" label={sp.manage_users || "Manage Users"} icon={<UsersIcon className="size-4" />} />
                                 <QuickLink href="/admin/announcements" label={ad.announcements || "Announcements"} icon={<Shield className="size-4" />} />
@@ -152,7 +153,7 @@ export default function AdminSettingsPage() {
 
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
     return (
-        <div className="rounded-xl border border-black/10 dark:border-white/10 p-5">
+        <div className={`${UDS.panelSurface} p-5`}>
             <div className="flex items-center gap-2 mb-4">
                 {icon}
                 <h3 className="font-semibold">{title}</h3>
@@ -181,7 +182,7 @@ function ExportButton({ label, onClick, icon }: { label: string; onClick: () => 
 
 function QuickLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
     return (
-        <a href={href} className="flex items-center gap-2 rounded-lg border border-black/5 dark:border-white/5 bg-black/2 dark:bg-white/3 px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+        <a href={href} className={`${UDS.inlineSurface} ${UDS.itemHover} flex items-center gap-2 px-3 py-2.5 text-[13px] font-medium transition-colors`}>
             {icon} {label}
         </a>
     )
@@ -190,7 +191,7 @@ function QuickLink({ href, label, icon }: { href: string; label: string; icon: R
 function SettingsSkeleton() {
     return (
         <div className="space-y-4">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 w-full sq-xl" />)}
         </div>
     )
 }

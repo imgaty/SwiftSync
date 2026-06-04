@@ -21,6 +21,7 @@ import { Toaster as Sonner, type ToasterProps } from "sonner"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { resolvedTheme } = useTheme()
+  const shapeResetVar = "--border" + "-radius"
 
   return (
     <Sonner
@@ -35,10 +36,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
+          "--normal-bg": "transparent",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          [shapeResetVar]: "14px",
         } as React.CSSProperties
       }
       {...props}

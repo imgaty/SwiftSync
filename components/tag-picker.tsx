@@ -26,7 +26,6 @@ import {
     Briefcase,
     Building2,
     Car,
-    Check,
     ChevronDown,
     CircleHelp,
     Dumbbell,
@@ -56,7 +55,7 @@ import {
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Button } from "@/components/ui/button"
 import {
     Popover,
@@ -199,8 +198,8 @@ export function TagPill({
     return (
         <span
             className={cn(
-                "inline-flex items-center h-5 rounded-full px-2 text-[11px] font-medium",
-                "border border-black/10 dark:border-white/10",
+                UDS.pillSurface,
+                "inline-flex h-5 items-center px-2 text-[11px] font-medium",
                 className,
             )}
             style={
@@ -316,7 +315,7 @@ export function TagPicker({
             </PopoverTrigger>
             <PopoverContent align={align} className="w-[300px] p-0">
                 {!creating && (
-                    <div className="flex items-center gap-2 px-3 py-2 border-b border-black/8 dark:border-white/8">
+                    <div className={cn("flex items-center gap-2 border-b px-3 py-2", UDS.cardDivider)}>
                         <Search className="size-3.5 text-neutral-400" />
                         <input
                             autoFocus
@@ -351,35 +350,35 @@ export function TagPicker({
                                             key={t.id}
                                             type="button"
                                             data-glide-item={`tag-picker-${t.id}`}
+                                            data-active={checked ? "true" : undefined}
                                             onClick={() => toggle(t.slug)}
                                             className={cn(
-                                                PRISM.item,
-                                                PRISM.glideItem,
-                                                PRISM.itemIcon,
+                                                UDS.item,
+                                                UDS.glideItem,
+                                                UDS.itemIcon,
                                                 "w-full justify-start cursor-pointer",
                                             )}
                                         >
                                             <Icon className="size-3.5 shrink-0" />
                                             <span
-                                                className="size-2 rounded-full shrink-0"
+                                                className="size-2 sq-full shrink-0"
                                                 style={{ backgroundColor: t.color }}
                                             />
                                             <span className="flex-1 text-left truncate">{t.name}</span>
-                                            {checked && <Check className="size-3.5 text-neutral-400" />}
                                         </Button>
                                     )
                                 })
                             )}
                         </div>
-                        <div className="border-t border-black/8 dark:border-white/8 p-1">
+                        <div className={cn("border-t p-1", UDS.cardDivider)}>
                             <Button variant="ghost"
                                 type="button"
                                 data-glide-item="tag-picker-new"
                                 onClick={() => setCreating(true)}
                                 className={cn(
-                                    PRISM.item,
-                                    PRISM.glideItem,
-                                    PRISM.itemIcon,
+                                    UDS.item,
+                                    UDS.glideItem,
+                                    UDS.itemIcon,
                                     "w-full justify-start cursor-pointer text-neutral-400",
                                 )}
                             >
@@ -407,14 +406,12 @@ function DefaultTrigger({
             type="button"
             className={cn(
                 "group inline-flex items-center gap-1.5 max-w-full",
-                "rounded-md px-1.5 py-0.5 -mx-1.5 -my-0.5",
+                "sq-md px-1.5 py-0.5 -mx-1.5 -my-0.5",
                 "border border-transparent",
                 "cursor-pointer transition-all duration-150",
-                "hover:bg-black/4 dark:hover:bg-white/6",
-                "hover:border-black/10 dark:hover:border-white/10",
+                UDS.itemHover,
                 "outline-none focus-visible:ring-1 focus-visible:ring-black/20 dark:focus-visible:ring-white/20",
-                "data-[state=open]:bg-black/4 dark:data-[state=open]:bg-white/6",
-                "data-[state=open]:border-black/10 dark:data-[state=open]:border-white/10",
+                UDS.itemOpen,
             )}
         >
             {selected.length === 0 ? (
@@ -492,7 +489,7 @@ function NewTagForm({
                 <Button variant="ghost"
                     type="button"
                     onClick={onCancel}
-                    className="p-1 -m-1 rounded text-neutral-400 hover:text-black dark:hover:text-white"
+                    className="p-1 -m-1 sq text-neutral-400 hover:text-black dark:hover:text-white"
                     aria-label="Cancel"
                 >
                     <X className="size-3.5" />
@@ -508,10 +505,9 @@ function NewTagForm({
                     placeholder="Groceries"
                     maxLength={50}
                     className={cn(
-                        "w-full text-[13px] px-2 py-1.5 rounded-md outline-none",
-                        "bg-black/5 dark:bg-white/5",
-                        "border border-black/10 dark:border-white/10",
-                        "focus:border-black/20 dark:focus:border-white/20",
+                        UDS.inlineSurface,
+                        "w-full px-2 py-1.5 text-[13px] outline-none",
+                        UDS.inputFocus,
                     )}
                 />
             </div>
@@ -526,7 +522,7 @@ function NewTagForm({
                             onClick={() => setColor(c)}
                             aria-label={`Color ${c}`}
                             className={cn(
-                                "size-5 rounded-full transition-all",
+                                "size-5 sq-full transition-all",
                                 "ring-offset-1 ring-offset-transparent",
                                 color === c ? "ring-2 ring-black/30 dark:ring-white/40 scale-110" : "hover:scale-110",
                             )}
@@ -546,10 +542,10 @@ function NewTagForm({
                             onClick={() => setIcon(iconName)}
                             aria-label={iconName}
                             className={cn(
-                                "p-1.5 rounded transition-all",
+                                "p-1.5 sq transition-all",
                                 icon === iconName
-                                    ? "bg-black/10 dark:bg-white/10 text-black dark:text-white"
-                                    : "text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5",
+                                    ? cn(UDS.cardSelected, "text-black dark:text-white")
+                                    : cn(UDS.itemHover, "text-neutral-400 hover:text-black dark:hover:text-white"),
                             )}
                         >
                             <Icon className="size-3.5" />
@@ -560,7 +556,7 @@ function NewTagForm({
 
             <div className="flex items-center gap-2 pt-1">
                 <span
-                    className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium border"
+                    className="inline-flex items-center gap-1.5 px-2 py-1 sq-md text-[11px] font-medium border"
                     style={{
                         backgroundColor: `${color}1a`,
                         borderColor: `${color}33`,
@@ -575,7 +571,7 @@ function NewTagForm({
                     type="button"
                     onClick={onCancel}
                     disabled={submitting}
-                    className="px-2.5 py-1 text-[12px] rounded-md text-neutral-400 hover:text-black dark:hover:text-white"
+                    className="px-2.5 py-1 text-[12px] sq-md text-neutral-400 hover:text-black dark:hover:text-white"
                 >
                     Cancel
                 </Button>
@@ -583,8 +579,9 @@ function NewTagForm({
                     type="submit"
                     disabled={submitting || !name.trim()}
                     className={cn(
-                        "px-2.5 py-1 text-[12px] rounded-md font-medium",
-                        "bg-black/10 dark:bg-white/10 hover:bg-black/15 dark:hover:bg-white/15",
+                        "px-2.5 py-1 text-[12px] sq-md font-medium",
+                        UDS.controlSurface,
+                        UDS.itemHover,
                         "disabled:opacity-50 disabled:pointer-events-none",
                     )}
                 >

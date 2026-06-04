@@ -13,69 +13,83 @@ import * as React from "react"
 import { EmptyState } from "@/components/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TabSwitcher, TabSwitcherItem } from "@/components/ui/tab-switcher"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import type { DashboardIcon } from "@/components/dashboard/types"
 
 export const DASHBOARD_GLASS_SURFACE = cn(
-    PRISM.cardSurface,
-    "spotlight-surface relative",
+    UDS.cardSurface,
+    "relative",
     "text-foreground",
 )
 
 export const DASHBOARD_INLINE_SURFACE = cn(
-    PRISM.cardSurface,
+    UDS.cardSurface,
 )
 
 export const DASHBOARD_FLAT_SURFACE_SHADOW =
-    PRISM.cardFlatShadow
+    UDS.cardFlatShadow
 
 export const DASHBOARD_ACTION_SURFACE = cn(
     DASHBOARD_INLINE_SURFACE,
-    PRISM.cardHover,
-    "text-foreground-secondary transition-colors hover:text-foreground",
+    UDS.cardHover,
+    "text-foreground-secondary hover:text-foreground",
 )
 
-export const DASHBOARD_ROW_HOVER = "rounded-[12px] transition-colors hover:bg-white/40 dark:hover:bg-white/[0.045]"
+export const DASHBOARD_ROW_HOVER = cn("sq-12 transition-colors", UDS.itemHover)
 
 export const DASHBOARD_TITLE_CLASS = "truncate text-[13px] font-medium tracking-tight text-foreground-secondary sm:text-[14px]"
 
-export const DASHBOARD_ACTION_BUTTON_CLASS = "size-7 rounded-full text-foreground-secondary hover:text-foreground"
+export const DASHBOARD_ACTION_BUTTON_CLASS = "size-7 sq-full text-foreground-secondary hover:text-foreground"
+
+export const DASHBOARD_ACTION_ACTIVE_CLASS = cn(UDS.selectedControl, "text-foreground")
 
 export const DASHBOARD_ACTION_ICON_CLASS = "size-3.5"
 
+export const DASHBOARD_TOOLBAR_CLASS = "flex min-h-7 shrink-0 items-center justify-end gap-1.5 overflow-hidden"
+
 export type DashboardCardTone = "neutral" | "positive" | "negative" | "warning" | "accent"
 
-const DASHBOARD_CARD_TONE_STYLES: Record<DashboardCardTone, { icon: string; value: string; dot: string }> = {
+const DASHBOARD_CARD_TONE_STYLES: Record<DashboardCardTone, { card: string; glow: string; icon: string; value: string; dot: string }> = {
     positive: {
-        icon: "text-emerald-400",
-        value: "text-emerald-400",
+        card: UDS.statCardTone.positive.card,
+        glow: UDS.statCardTone.positive.glow,
+        icon: UDS.statCardTone.positive.icon,
+        value: UDS.statCardTone.positive.value,
         dot: "bg-emerald-500",
     },
     negative: {
-        icon: "text-red-400",
-        value: "text-red-400",
+        card: UDS.statCardTone.negative.card,
+        glow: UDS.statCardTone.negative.glow,
+        icon: UDS.statCardTone.negative.icon,
+        value: UDS.statCardTone.negative.value,
         dot: "bg-red-500",
     },
     warning: {
-        icon: "text-amber-400",
-        value: "text-amber-400",
+        card: UDS.statCardTone.warning.card,
+        glow: UDS.statCardTone.warning.glow,
+        icon: UDS.statCardTone.warning.icon,
+        value: UDS.statCardTone.warning.value,
         dot: "bg-amber-500",
     },
     accent: {
-        icon: "text-foreground-secondary",
-        value: "text-foreground",
+        card: UDS.statCardTone.accent.card,
+        glow: UDS.statCardTone.accent.glow,
+        icon: UDS.statCardTone.accent.icon,
+        value: UDS.statCardTone.accent.value,
         dot: "bg-foreground-secondary",
     },
     neutral: {
-        icon: "text-foreground-secondary",
-        value: "text-foreground",
-        dot: "bg-muted-foreground",
+        card: UDS.statCardTone.neutral.card,
+        glow: UDS.statCardTone.neutral.glow,
+        icon: UDS.statCardTone.neutral.icon,
+        value: UDS.statCardTone.neutral.value,
+        dot: "bg-foreground-secondary",
     },
 }
 
 export const DASHBOARD_CARD_SURFACE = cn(
-    PRISM.cardSurface,
+    UDS.cardSurface,
     DASHBOARD_FLAT_SURFACE_SHADOW,
     "relative flex min-w-0 flex-col justify-between gap-4 overflow-hidden p-4 text-foreground",
 )
@@ -102,6 +116,35 @@ export function DashboardIconBadge({
     )
 }
 
+export function DashboardCardToolbar({
+    ariaLabel,
+    children,
+    className,
+}: {
+    ariaLabel?: string
+    children?: React.ReactNode
+    className?: string
+}) {
+    const toolItems = React.Children.toArray(children)
+    const hasTools = toolItems.length > 0
+
+    return (
+        <div
+            data-dashboard-card-toolbar
+            role={hasTools ? "toolbar" : undefined}
+            aria-label={hasTools ? ariaLabel : undefined}
+            aria-hidden={hasTools ? undefined : true}
+            className={cn(
+                DASHBOARD_TOOLBAR_CLASS,
+                !hasTools && "invisible pointer-events-none",
+                className,
+            )}
+        >
+            {toolItems}
+        </div>
+    )
+}
+
 export interface DashboardMetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
     action?: React.ReactNode
     detail?: React.ReactNode
@@ -113,6 +156,9 @@ export interface DashboardMetricCardProps extends React.HTMLAttributes<HTMLDivEl
     label: React.ReactNode
     labelClassName?: string
     tone?: DashboardCardTone
+    toolbarClassName?: string
+    toolbarLabel?: string
+    tools?: React.ReactNode
     value: React.ReactNode
     valueClassName?: string
 }
@@ -131,18 +177,24 @@ export const DashboardMetricCard = React.forwardRef<HTMLDivElement, DashboardMet
         label,
         labelClassName,
         tone = "neutral",
+        toolbarClassName,
+        toolbarLabel,
+        tools,
         value,
         valueClassName,
         ...props
     }, ref) {
         const toneStyles = getDashboardCardToneStyles(tone)
+        const toolbarContent = tools ?? action
+        const resolvedToolbarLabel = toolbarLabel ?? (typeof label === "string" ? `${label} tools` : "Card tools")
 
         return (
             <div
                 ref={ref}
-                className={cn(DASHBOARD_CARD_SURFACE, className)}
+                className={cn(DASHBOARD_CARD_SURFACE, toneStyles.card, className)}
                 {...props}
             >
+                <div aria-hidden className={cn("pointer-events-none absolute inset-0 opacity-80", toneStyles.glow)} />
                 <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
                         {icon && (
@@ -156,11 +208,12 @@ export const DashboardMetricCard = React.forwardRef<HTMLDivElement, DashboardMet
                             {label}
                         </div>
                     </div>
-                    {action && (
-                        <div className="shrink-0 text-muted-foreground">
-                            {action}
-                        </div>
-                    )}
+                    <DashboardCardToolbar
+                        ariaLabel={resolvedToolbarLabel}
+                        className={toolbarClassName}
+                    >
+                        {toolbarContent}
+                    </DashboardCardToolbar>
                 </div>
 
                 <div className="min-w-0">
@@ -169,7 +222,7 @@ export const DashboardMetricCard = React.forwardRef<HTMLDivElement, DashboardMet
                     </div>
                     {detail && (
                         <div className={cn("mt-2 flex min-w-0 items-center gap-2 text-[11px] font-medium text-muted-foreground", detailClassName)}>
-                            <span className={cn("size-1.5 shrink-0 rounded-full", toneStyles.dot)} />
+                            <span className={cn("size-1.5 shrink-0 sq-full", toneStyles.dot)} />
                             <div className="min-w-0 truncate">
                                 {detail}
                             </div>
@@ -193,10 +246,10 @@ export function DashboardMetricCardSkeleton({ className, showIcon = true }: { cl
         <div className={cn(DASHBOARD_CARD_SURFACE, "min-h-[112px]", className)}>
             <div className="flex min-w-0 items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
-                    {showIcon && <Skeleton className="size-4 rounded-md" />}
+                    {showIcon && <Skeleton className="size-4 sq-md" />}
                     <Skeleton className="h-3.5 w-24 max-w-full" />
                 </div>
-                <Skeleton className="size-4 rounded-md" />
+                <Skeleton className="size-4 sq-md" />
             </div>
             <div className="space-y-2">
                 <Skeleton className="h-6 w-28 max-w-full" />
@@ -213,6 +266,9 @@ export function DashboardSurface({
     children,
     className,
     bodyClassName,
+    toolbarClassName,
+    toolbarLabel,
+    tools,
 }: {
     title: string
     icon: DashboardIcon
@@ -220,12 +276,17 @@ export function DashboardSurface({
     children: React.ReactNode
     className?: string
     bodyClassName?: string
+    toolbarClassName?: string
+    toolbarLabel?: string
+    tools?: React.ReactNode
 }) {
+    const toolbarContent = tools ?? action
+
     return (
         <div
             className={cn(
                 DASHBOARD_GLASS_SURFACE,
-                "relative flex h-full min-h-0 flex-col overflow-hidden p-4",
+                "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden p-4",
                 className,
             )}
         >
@@ -236,9 +297,14 @@ export function DashboardSurface({
                         {title}
                     </h2>
                 </div>
-                {action}
+                <DashboardCardToolbar
+                    ariaLabel={toolbarLabel ?? `${title} tools`}
+                    className={toolbarClassName}
+                >
+                    {toolbarContent}
+                </DashboardCardToolbar>
             </div>
-            <div aria-hidden className={cn(PRISM.separator, "my-0 mb-3 mt-2 shrink-0")} />
+            <div aria-hidden className={cn(UDS.separator, "my-0 mb-3 mt-2 shrink-0")} />
             <div className={cn("min-h-0 flex-1 overflow-hidden", bodyClassName)}>
                 {children}
             </div>
@@ -315,7 +381,7 @@ export function DashboardLinesSkeleton({ rows = 4 }: { rows?: number }) {
         <div className="space-y-3">
             {Array.from({ length: rows }).map((_, index) => (
                 <div key={index} className="flex items-center gap-3 px-1 py-1.5">
-                    <Skeleton className="size-8 rounded-lg" />
+                    <Skeleton className="size-8 sq-lg" />
                     <div className="min-w-0 flex-1 space-y-1.5">
                         <Skeleton className="h-3.5 w-36 max-w-full" />
                         <Skeleton className="h-3 w-28 max-w-full" />

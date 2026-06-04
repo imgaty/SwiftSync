@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { UDS } from "@/lib/UDS"
 
 interface Goal {
     id: string; name: string; targetAmount: number; currentAmount: number
@@ -58,9 +59,9 @@ function formatCurrency(v: number) {
 
 function goalStatusBadge(status: string, labels: Record<string, string>) {
     switch (status) {
-        case "active": return <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs"><Target className="size-3" />{labels.active || "Active"}</Badge>
-        case "completed": return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs"><CheckCircle className="size-3" />{labels.done || "Done"}</Badge>
-        case "cancelled": return <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-400 text-xs"><XCircle className="size-3" />{labels.cancelled || "Cancelled"}</Badge>
+        case "active": return <Badge variant="outline" className={`${UDS.semanticBadge.info} text-xs`}><Target className="size-3" />{labels.active || "Active"}</Badge>
+        case "completed": return <Badge variant="outline" className={`${UDS.semanticBadge.positive} text-xs`}><CheckCircle className="size-3" />{labels.done || "Done"}</Badge>
+        case "cancelled": return <Badge variant="outline" className={`${UDS.semanticBadge.neutral} text-xs`}><XCircle className="size-3" />{labels.cancelled || "Cancelled"}</Badge>
         default: return <Badge variant="outline" className="text-xs capitalize">{status}</Badge>
     }
 }
@@ -123,7 +124,7 @@ export default function AdminGoalsPage() {
                 />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[140px]" size="sm">
-                        <Filter className="size-4" />
+                        <Filter className="size-3.5" />
                         <SelectValue placeholder={gp.status || "Status"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -144,17 +145,17 @@ export default function AdminGoalsPage() {
             />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="grid grid-cols-3 gap-4">
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400 flex items-center gap-1"><Target className="size-3" /> {gp.total_goals || "Total Goals"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : pagination.total}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}><Target className="size-3.5" /> {gp.total_goals || "Total Goals"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-16" /> : pagination.total}</p>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400">{gp.target_total || "Target Total"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(summary.totalTarget)}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}>{gp.target_total || "Target Total"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-28" /> : formatCurrency(summary.totalTarget)}</p>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400">{gp.saved_so_far || "Saved So Far"}</p>
-                        <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(summary.totalCurrent)}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}>{gp.saved_so_far || "Saved So Far"}</p>
+                        <p className={`${UDS.summaryValue} text-emerald-600 dark:text-emerald-400`}>{loading ? <Skeleton className="h-6 w-28" /> : formatCurrency(summary.totalCurrent)}</p>
                     </div>
                 </div>
 
@@ -220,8 +221,8 @@ export default function AdminGoalsPage() {
                                             <TableCell>{goalStatusBadge(g.status, gp)}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-20 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
-                                                        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
+                                                    <div className={`${UDS.subtleFill} h-2 w-20 sq-full overflow-hidden`}>
+                                                        <div className="h-full sq-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
                                                     </div>
                                                     <span className="text-xs text-neutral-400">{pct}%</span>
                                                 </div>

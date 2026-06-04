@@ -10,7 +10,7 @@
 "use client"
 
 import * as React from "react"
-import type { ChartContextValue } from "@/lib/chart-types"
+import type { ChartContextValue } from "@/lib/chart"
 
 // ==============================================================================
 // CHART CONTEXT

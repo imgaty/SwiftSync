@@ -23,7 +23,7 @@ import { X } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Button } from "@/components/ui/button"
 import { AnimatedToggle } from "@/components/ui/animated-toggle"
 import {
@@ -149,27 +149,27 @@ export function PropagateTagModal({
     return (
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogPortal>
-                <DialogOverlay className={PRISM.overlay} />
+                <DialogOverlay className={UDS.overlay} />
                 <DialogPrimitive.Content
                     className={cn(
-                        "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
+                        "fixed left-1/2 top-1/2 z-[1000] -translate-x-1/2 -translate-y-1/2",
                         "w-[calc(100vw-2rem)] max-w-[480px]",
-                        PRISM.container,
+                        UDS.containerClass({ padding: false }),
                         "p-6",
                         "data-[state=open]:animate-in data-[state=closed]:animate-out",
                         "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
                         "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 duration-200",
                     )}
                 >
-                    <DialogTitle className={PRISM.title}>
+                    <DialogTitle className={UDS.title}>
                         Apply to similar transactions?
                     </DialogTitle>
-                    <DialogDescription className={cn(PRISM.description, "mt-1")}>
+                    <DialogDescription className={cn(UDS.description, "mt-1")}>
                         Add{" "}
                         {addedSlugs.map((s, i) => (
                             <React.Fragment key={s}>
                                 {i > 0 && ", "}
-                                <code className="px-1 py-0.5 rounded bg-black/8 dark:bg-white/8 text-[12px]">
+                                <code className={cn("px-1 py-0.5 text-[12px]", UDS.pillSurface)}>
                                     {s}
                                 </code>
                             </React.Fragment>
@@ -204,7 +204,7 @@ export function PropagateTagModal({
                         />
                     </div>
 
-                    <div className="mt-5 px-3 py-2.5 rounded-lg bg-black/4 dark:bg-white/4 text-[13px]">
+                    <div className={`${UDS.inlineSurface} mt-5 px-3 py-2.5 text-[13px]`}>
                         {noDims ? (
                             <span className="text-neutral-400">Select at least one dimension.</span>
                         ) : previewError ? (
@@ -232,7 +232,7 @@ export function PropagateTagModal({
                     </div>
 
                     <DialogPrimitive.Close
-                        className={cn("absolute right-4 top-4", PRISM.closeButton)}
+                        className={cn("absolute right-4 top-4", UDS.closeButton)}
                     >
                         <X className="size-4" />
                         <span className="sr-only">Close</span>

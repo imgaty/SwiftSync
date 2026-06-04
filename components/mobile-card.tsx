@@ -12,6 +12,7 @@
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { UDS } from "@/lib/UDS"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
@@ -78,7 +79,7 @@ export function MobileCard<T>({
         >
             <Card className={cn(
                 "relative overflow-hidden transition-all",
-                isSelected && "ring-2 ring-primary"
+                isSelected && cn(UDS.selectionSurface, UDS.selectedRing)
             )}>
                 <CardHeader className="flex flex-row items-start gap-3 pb-2">
                     {/* Selection checkbox */}
@@ -92,7 +93,7 @@ export function MobileCard<T>({
                     
                     {/* Icon */}
                     {icon && (
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-black/5 dark:bg-white/5 shrink-0">
+                        <div className={`${UDS.inlineSurface} flex size-10 shrink-0 items-center justify-center`}>
                             {icon}
                         </div>
                     )}
@@ -153,7 +154,8 @@ export function MobileCard<T>({
                                 <div
                                     key={i}
                                     className={cn(
-                                        "min-w-[148px] max-w-[80vw] snap-start rounded-lg border border-black/6 bg-black/3 px-2.5 py-2 dark:border-white/8 dark:bg-white/4",
+                                        UDS.inlineSurface,
+                                        "min-w-[148px] max-w-[80vw] snap-start px-2.5 py-2",
                                         field.className,
                                     )}
                                 >

@@ -63,6 +63,8 @@ import { toast } from "sonner"
 
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 import { MobileCard, MobileCardList, useIsMobileView } from "@/components/mobile-card"
 
 export const billSchema = z.object({
@@ -173,7 +175,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                 const config = categoryConfig[category] || categoryConfig.Other
                 return (
                     <div className="flex items-center gap-2">
-                        <div className={`size-8 rounded-lg ${config.color} flex items-center justify-center text-white text-sm`}>
+                        <div className={`size-8 sq-lg ${config.color} flex items-center justify-center text-white text-sm`}>
                             {config.icon}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -190,7 +192,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
             header: () => <div className="text-right">{bl.amount}</div>,
             cell: ({ row }) => {
                 const formatted = formatCurrency(row.original.amount)
-                return <div className="text-right font-medium">{formatted}</div>
+                return <div className="text-right font-medium tabular-nums">{formatted}</div>
             },
         },
         {
@@ -383,7 +385,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                 {/* Summary Cards skeleton */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[0, 1, 2, 3].map(i => (
-                        <div key={i} className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                        <div key={i} className={`${UDS.tileSurface} p-3.5`}>
                             <Skeleton className="h-4 w-24 mb-2" />
                             <Skeleton className="h-8 w-32" />
                         </div>
@@ -395,7 +397,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
+                                <TableHead className="w-8"><Skeleton className="size-4" /></TableHead>
                                 {[120, 80, 80, 100, 80, 80, 80, 40].map((w, i) => (
                                     <TableHead key={i}><Skeleton className="h-4" style={{ width: w }} /></TableHead>
                                 ))}
@@ -404,23 +406,23 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                         <TableBody>
                             {[...Array(8)].map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                    <TableCell><Skeleton className="size-4" /></TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
-                                            <Skeleton className="h-10 w-10 rounded-lg" />
+                                            <Skeleton className="size-10 sq-lg" />
                                             <div>
                                                 <Skeleton className="h-4 w-24 mb-1" />
                                                 <Skeleton className="h-3 w-20" />
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-16 sq-full" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                    <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-4 rounded-full" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-16 sq-full" /></TableCell>
+                                    <TableCell><Skeleton className="size-4 sq-full" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                    <TableCell><Skeleton className="h-6 w-6 rounded" /></TableCell>
+                                    <TableCell><Skeleton className="size-6 sq" /></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -431,7 +433,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-40 hidden lg:block" />
                     <div className="flex items-center gap-2">
-                        {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-8 w-8" />)}
+                        {[0, 1, 2, 3].map(i => <Skeleton key={i} className="size-8" />)}
                     </div>
                 </div>
             </div>
@@ -486,27 +488,27 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.monthly_bills}</p>
-                    <p className="text-lg font-bold mt-1">
+                    <p className="text-lg font-bold mt-1 tabular-nums">
                         {formatCurrency(totals.totalMonthly)}
                     </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.pending_amount}</p>
-                    <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400 mt-1">
+                    <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400 mt-1 tabular-nums">
                         {formatCurrency(totals.totalPending)}
                     </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.overdue}</p>
-                    <p className="text-lg font-bold text-negative mt-1">
+                    <p className="text-lg font-bold text-negative mt-1 tabular-nums">
                         {totals.overdueCount}
                     </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.upcoming}</p>
-                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
+                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1 tabular-nums">
                         {totals.upcomingCount}
                     </p>
                 </div>
@@ -530,7 +532,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                                         isSelected={row.getIsSelected()}
                                         onSelect={(checked) => row.toggleSelected(checked)}
                                         icon={
-                                            <div className={`size-8 rounded-lg ${(categoryConfig[bill.category] || categoryConfig.Other).color} flex items-center justify-center text-white text-sm`}>
+                                            <div className={`size-8 sq-lg ${(categoryConfig[bill.category] || categoryConfig.Other).color} flex items-center justify-center text-white text-sm`}>
                                                 {(categoryConfig[bill.category] || categoryConfig.Other).icon}
                                             </div>
                                         }
@@ -543,7 +545,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                                         fields={[
                                             {
                                                 label: bl.amount || "Amount",
-                                                value: formatCurrency(bill.amount),
+                                                value: <span className="tabular-nums">{formatCurrency(bill.amount)}</span>,
                                             },
                                             {
                                                 label: bl.due_date || "Due Date",
@@ -604,7 +606,7 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
                                             if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
                                             row.toggleSelected()
                                         }}
-                                        className="group/row cursor-pointer transition-colors hover:bg-black/2.5 dark:hover:bg-white/4 data-[state=selected]:bg-primary/5 dark:data-[state=selected]:bg-primary/10"
+                                        className={cn("group/row cursor-pointer transition-colors", UDS.itemHover, UDS.rowSelected)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>

@@ -11,10 +11,10 @@
 
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { GlideHighlight, useGlideHighlight } from "@/components/ui/glide-highlight"
 
 function Select({
@@ -48,16 +48,12 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-[13px] leading-snug outline-none transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150",
-        // Lighter glass surface — was reading as a heavy "dark pill" next to
-        // similar-shaped buttons in toolbars. Now feels like a subtle inline
-        // control with the text carrying the visual weight.
-        "border-black/8 dark:border-white/10 bg-white/60 dark:bg-white/4 backdrop-blur-sm",
+        "flex w-fit items-center justify-between gap-2 whitespace-nowrap sq-lg border px-3 py-2 text-[13px] leading-snug outline-none transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150",
+        UDS.surface,
         "text-neutral-700 dark:text-neutral-300",
-        "hover:bg-white/80 dark:hover:bg-white/7 hover:border-black/12 dark:hover:border-white/12",
-        "data-[state=open]:bg-white/90 dark:data-[state=open]:bg-white/10",
-        "data-[state=open]:border-black/15 dark:data-[state=open]:border-white/15",
-        "focus-visible:border-primary/30 focus-visible:ring-2 focus-visible:ring-primary/20",
+        UDS.itemHover,
+        UDS.itemOpen,
+        UDS.focusRing,
         "disabled:cursor-not-allowed disabled:opacity-50",
         "font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',sans-serif]",
         "data-[size=default]:h-9 data-[size=sm]:h-8",
@@ -96,11 +92,11 @@ function SelectContent({
         collisionPadding={16}
         avoidCollisions={true}
         className={cn(
-          PRISM.container,
-          PRISM.glideSurface,
-          PRISM.animateIn,
-          PRISM.animateOut,
-          "relative z-999 max-h-(--radix-select-content-available-height) w-[220px] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          UDS.transientSurface,
+          UDS.glideSurface,
+          UDS.animateIn,
+          UDS.animateOut,
+          "relative z-[999] max-h-(--radix-select-content-available-height) w-[220px] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className
@@ -115,9 +111,9 @@ function SelectContent({
           <SelectScrollUpButton />
           <SelectPrimitive.Viewport
             className={cn(
-              "p-0",
+              "space-y-0.5 p-0",
               position === "popper" &&
-                "h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width) scroll-my-1"
+                "max-h-(--radix-select-content-available-height) w-full min-w-(--radix-select-trigger-width) scroll-my-1"
             )}
           >
             {children}
@@ -136,7 +132,7 @@ function SelectLabel({
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
-      className={cn(PRISM.label, className)}
+      className={cn(UDS.label, className)}
       {...props}
     />
   )
@@ -158,21 +154,16 @@ function SelectItem({
       data-slot="select-item"
       data-glide-item={dataGlideItem}
       className={cn(
-        PRISM.item,
-        PRISM.glideItem,
-        PRISM.itemDisabled,
-        PRISM.itemIcon,
-        "w-full pr-8",
+        UDS.item,
+        UDS.glideItem,
+        UDS.itemDisabled,
+        UDS.itemIcon,
+        "w-full",
         "*:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}
     >
-      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
-        </SelectPrimitive.ItemIndicator>
-      </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   )
@@ -185,7 +176,7 @@ function SelectSeparator({
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn(PRISM.separator, "pointer-events-none", className)}
+      className={cn(UDS.separator, "pointer-events-none", className)}
       {...props}
     />
   )

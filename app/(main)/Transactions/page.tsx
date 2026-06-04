@@ -77,10 +77,10 @@ export default function TransactionsPage() {
         const net = totalIn - totalOut
         const fmt = (n: number) => formatCurrency(Math.abs(n))
         return [
-            { label: "Income", value: fmt(totalIn), change: `${countIn} transactions`, trend: "up" as const, icon: <TrendingUp className="h-4 w-4" /> },
-            { label: "Expenses", value: fmt(totalOut), change: `${countOut} transactions`, trend: "down" as const, icon: <TrendingDown className="h-4 w-4" /> },
-            { label: "Net", value: `${net >= 0 ? "" : "-"}${fmt(net)}`, change: net >= 0 ? "Positive flow" : "Negative flow", trend: net >= 0 ? "up" as const : "down" as const, icon: <ArrowLeftRight className="h-4 w-4" /> },
-            { label: "Transactions", value: String(transactionsData.length), icon: <Hash className="h-4 w-4" /> },
+            { label: "Income", value: fmt(totalIn), change: `${countIn} transactions`, trend: "up" as const, icon: <TrendingUp className="size-4" /> },
+            { label: "Expenses", value: fmt(totalOut), change: `${countOut} transactions`, trend: "down" as const, icon: <TrendingDown className="size-4" /> },
+            { label: "Net", value: `${net >= 0 ? "" : "-"}${fmt(net)}`, change: net >= 0 ? "Positive flow" : "Negative flow", trend: net >= 0 ? "up" as const : "down" as const, icon: <ArrowLeftRight className="size-4" /> },
+            { label: "Transactions", value: String(transactionsData.length), icon: <Hash className="size-4" /> },
         ]
     }, [transactionsData, isLoading, formatCurrency])
 

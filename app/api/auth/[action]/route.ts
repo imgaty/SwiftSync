@@ -29,11 +29,11 @@ import { createSessionToken, sessionVersionMatches, verifySessionToken } from '@
 import { EMAIL_RE } from '@/lib/validation';
 import { generateDefaultAvatarDataUrl } from '@/lib/avatar';
 import { clientIp } from '@/lib/rate-limit';
-import { consumeEncryptedBackupCode } from '@/lib/auth-backup-codes';
+import { consumeEncryptedBackupCode } from '@/lib/auth-2fa';
 import {
     replacePendingTwoFactorSession,
     type PendingTwoFactorSession,
-} from '@/lib/auth-pending-2fa';
+} from '@/lib/auth-2fa';
 
 export const dynamic = 'force-dynamic';
 

@@ -30,9 +30,9 @@ const securityHeaders = [
       // Next 16 still needs 'unsafe-inline' for some inline styles; tighten later with nonce.
       `script-src 'self'${isProd ? "" : " 'unsafe-eval'"} 'unsafe-inline'`,
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://graph.microsoft.com https://www.saltedge.com",
+      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.saltedge.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://www.saltedge.com https://api.resend.com https://open.er-api.com https://oauth2.googleapis.com https://login.microsoftonline.com https://github.com https://api.github.com https://www.googleapis.com https://graph.microsoft.com",
+      "connect-src 'self' https://www.saltedge.com https://api.resend.com https://open.er-api.com https://oauth2.googleapis.com https://github.com https://api.github.com https://www.googleapis.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -42,6 +42,7 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   poweredByHeader: false,
   reactStrictMode: true,
   async headers() {

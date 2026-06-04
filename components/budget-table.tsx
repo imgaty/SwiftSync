@@ -57,6 +57,8 @@ import {
 import { EmptyStateInline } from "@/components/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 
 import { useLanguage } from "@/components/language-provider"
 
@@ -85,9 +87,9 @@ function ProgressBar({ percent, status }: { percent: number; status: string }) {
     }
 
     return (
-        <div className="w-full bg-black/6 dark:bg-white/8 rounded-full h-2.5">
+        <div className={cn("w-full h-2.5", UDS.pillSurface)}>
             <div
-                className={`h-2.5 rounded-full transition-all duration-300 ${getColor()}`}
+                className={`h-2.5 sq-full transition-all duration-300 ${getColor()}`}
                 style={{ width: `${Math.min(percent, 100)}%` }}
             />
         </div>
@@ -177,7 +179,7 @@ export function BudgetTable({
             header: bt.category,
             cell: ({ row }) => (
                 <div className="flex items-center gap-2 min-w-0">
-                    <div className={`size-3 rounded-full shrink-0 ${categoryColors[row.original.category] || categoryColors.Other}`} />
+                    <div className={`size-3 sq-full shrink-0 ${categoryColors[row.original.category] || categoryColors.Other}`} />
                     <span className="auto-scroll font-medium">{categoryLabels[row.original.category] || row.original.category}</span>
                 </div>
             ),
@@ -191,7 +193,7 @@ export function BudgetTable({
                     style: "currency",
                     currency: "EUR",
                 }).format(row.original.budgetAmount)
-                return <div className="text-right font-medium">{formatted}</div>
+                return <div className="text-right font-medium tabular-nums">{formatted}</div>
             },
         },
         {
@@ -203,7 +205,7 @@ export function BudgetTable({
                     currency: "EUR",
                 }).format(row.original.spentAmount)
                 return (
-                    <div className={`text-right font-medium ${row.original.status === "over_budget" ? "text-red-600" : ""}`}>
+                    <div className={`text-right font-medium tabular-nums ${row.original.status === "over_budget" ? "text-red-600" : ""}`}>
                         {formatted}
                     </div>
                 )
@@ -219,7 +221,7 @@ export function BudgetTable({
                     currency: "EUR",
                 }).format(Math.abs(remaining))
                 return (
-                    <div className={`text-right font-medium ${remaining < 0 ? "text-red-600" : "text-green-600"}`}>
+                    <div className={`text-right font-medium tabular-nums ${remaining < 0 ? "text-red-600" : "text-green-600"}`}>
                         {remaining < 0 ? "-" : ""}{formatted}
                     </div>
                 )
@@ -231,7 +233,7 @@ export function BudgetTable({
             cell: ({ row }) => (
                 <div className="flex items-center gap-2 min-w-[150px]">
                     <ProgressBar percent={row.original.percentUsed ?? 0} status={row.original.status ?? 'on_track'} />
-                    <span className="text-sm text-neutral-500 dark:text-neutral-400 w-12">
+                    <span className="text-sm text-neutral-500 dark:text-neutral-400 w-12 tabular-nums">
                         {(row.original.percentUsed ?? 0).toFixed(0)}%
                     </span>
                 </div>
@@ -380,7 +382,7 @@ export function BudgetTable({
                 {/* Summary Cards skeleton */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[0, 1, 2, 3].map(i => (
-                        <div key={i} className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                        <div key={i} className={`${UDS.tileSurface} p-3.5`}>
                             <Skeleton className="h-4 w-24 mb-2" />
                             <Skeleton className="h-8 w-32" />
                         </div>
@@ -392,7 +394,7 @@ export function BudgetTable({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-8"><Skeleton className="h-4 w-4" /></TableHead>
+                                <TableHead className="w-8"><Skeleton className="size-4" /></TableHead>
                                 {[120, 80, 80, 80, 120, 80, 40].map((w, i) => (
                                     <TableHead key={i}><Skeleton className="h-4" style={{ width: w }} /></TableHead>
                                 ))}
@@ -401,10 +403,10 @@ export function BudgetTable({
                         <TableBody>
                             {[...Array(8)].map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                    <TableCell><Skeleton className="size-4" /></TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
-                                            <Skeleton className="h-6 w-6 rounded" />
+                                            <Skeleton className="size-6 sq" />
                                             <Skeleton className="h-4 w-24" />
                                         </div>
                                     </TableCell>
@@ -413,12 +415,12 @@ export function BudgetTable({
                                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
-                                            <Skeleton className="h-2.5 w-full rounded-full" />
+                                            <Skeleton className="h-2.5 w-full sq-full" />
                                             <Skeleton className="h-4 w-10" />
                                         </div>
                                     </TableCell>
-                                    <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                                    <TableCell><Skeleton className="h-6 w-6 rounded" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20 sq-full" /></TableCell>
+                                    <TableCell><Skeleton className="size-6 sq" /></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -429,7 +431,7 @@ export function BudgetTable({
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-40 hidden lg:block" />
                     <div className="flex items-center gap-2">
-                        {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-8 w-8" />)}
+                        {[0, 1, 2, 3].map(i => <Skeleton key={i} className="size-8" />)}
                     </div>
                 </div>
             </div>
@@ -487,27 +489,27 @@ export function BudgetTable({
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.total_budget}</p>
-                    <p className="text-lg font-bold mt-1">
+                    <p className="text-lg font-bold mt-1 tabular-nums">
                         {formatCurrency(totals.totalBudget)}
                     </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.total_spent}</p>
-                    <p className="text-lg font-bold text-orange-600 dark:text-orange-400 mt-1">
+                    <p className="text-lg font-bold text-orange-600 dark:text-orange-400 mt-1 tabular-nums">
                         {formatCurrency(totals.totalSpent)}
                     </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.remaining}</p>
-                    <p className={`text-lg font-bold mt-1 ${totals.totalRemaining >= 0 ? "text-positive" : "text-negative"}`}>
+                    <p className={`text-lg font-bold mt-1 tabular-nums ${totals.totalRemaining >= 0 ? "text-positive" : "text-negative"}`}>
                         {formatCurrency(totals.totalRemaining)}
                     </p>
                 </div>
-                <div className="p-3.5 rounded-xl bg-black/2 dark:bg-white/3 border border-black/4 dark:border-white/4">
+                <div className={`${UDS.tileSurface} p-3.5`}>
                     <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.categories_over}</p>
-                    <p className="text-lg font-bold text-negative mt-1">
+                    <p className="text-lg font-bold text-negative mt-1 tabular-nums">
                         {totals.overBudgetCount}
                     </p>
                 </div>
@@ -552,7 +554,7 @@ export function BudgetTable({
                                             if (target.closest("button, a, input, select, textarea, [role=checkbox], [data-no-row-click]")) return
                                             row.toggleSelected()
                                         }}
-                                        className="group/row cursor-pointer transition-colors hover:bg-black/2.5 dark:hover:bg-white/4 data-[state=selected]:bg-primary/5 dark:data-[state=selected]:bg-primary/10"
+                                        className={cn("group/row cursor-pointer transition-colors", UDS.itemHover, UDS.rowSelected)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>

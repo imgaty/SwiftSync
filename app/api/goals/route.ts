@@ -11,6 +11,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthContext } from "@/lib/auth-helpers"
 import { scopeFilter, scopeCreateData, requirePermission } from "@/lib/data-access"
+import { formatGoal, goalAccountName, goalTransferReference } from "@/lib/goal-account"
 
 // GET /api/goals — List all financial goals
 export async function GET() {
@@ -23,23 +24,13 @@ export async function GET() {
 
   const goals = await prisma.financialGoal.findMany({
     where: scopeFilter(ctx),
+    include: {
+      accountLinks: { orderBy: { createdAt: "asc" } },
+    },
     orderBy: { createdAt: "desc" },
   })
 
-  const formatted = goals.map((g) => ({
-    id: g.id,
-    name: g.name,
-    targetAmount: Number(g.targetAmount),
-    currentAmount: Number(g.currentAmount),
-    deadline: g.deadline?.toISOString().slice(0, 10) || null,
-    category: g.category,
-    color: g.color,
-    status: g.status,
-    percentage: Number(g.targetAmount) > 0
-      ? Math.round((Number(g.currentAmount) / Number(g.targetAmount)) * 100)
-      : 0,
-    createdAt: g.createdAt.toISOString(),
-  }))
+  const formatted = goals.map(formatGoal)
 
   return NextResponse.json(formatted)
 }
@@ -54,17 +45,19 @@ export async function POST(request: Request) {
   if (permissionError) return permissionError
 
   const body = await request.json()
-  const { name, targetAmount, currentAmount, deadline, category, color } = body
+  const { name, targetAmount, deadline, category, color } = body
+  const goalName = typeof name === "string" ? name.trim() : ""
   const parsedTargetAmount = Number(targetAmount)
-  const parsedCurrentAmount = currentAmount === undefined || currentAmount === null || currentAmount === ""
-    ? 0
-    : Number(currentAmount)
+  const initialAmount = body.currentAmount !== undefined ? Number(body.currentAmount) : 0
+  const currency = typeof body.currency === "string" && body.currency.trim().length > 0
+    ? body.currency.trim().toUpperCase()
+    : "EUR"
 
-  if (!name || !Number.isFinite(parsedTargetAmount) || parsedTargetAmount <= 0) {
+  if (!goalName || !Number.isFinite(parsedTargetAmount) || parsedTargetAmount <= 0) {
     return NextResponse.json({ error: "Name and target amount are required" }, { status: 400 })
   }
 
-  if (!Number.isFinite(parsedCurrentAmount) || parsedCurrentAmount < 0) {
+  if (!Number.isFinite(initialAmount) || initialAmount < 0) {
     return NextResponse.json({ error: "Current amount must be a valid non-negative number" }, { status: 400 })
   }
 
@@ -72,17 +65,28 @@ export async function POST(request: Request) {
     const created = await tx.financialGoal.create({
       data: {
         ...scopeCreateData(ctx),
-        name,
+        name: goalName,
         targetAmount: parsedTargetAmount,
-        currentAmount: parsedCurrentAmount,
+        currentAmount: initialAmount,
         deadline: deadline ? new Date(deadline) : null,
         category: category || "savings",
         color: color || "#6366f1",
-        status: parsedCurrentAmount >= parsedTargetAmount ? "completed" : "active",
+        status: initialAmount >= parsedTargetAmount ? "completed" : "active",
       },
     })
 
-    if (parsedCurrentAmount >= parsedTargetAmount) {
+    await tx.financialGoalAccount.create({
+      data: {
+        ...scopeCreateData(ctx),
+        goalId: created.id,
+        name: goalAccountName(goalName),
+        balance: initialAmount,
+        currency,
+        transferReference: goalTransferReference(created.id),
+      },
+    })
+
+    if (initialAmount >= parsedTargetAmount) {
       await tx.notification.create({
         data: {
           ...scopeCreateData(ctx),
@@ -94,21 +98,13 @@ export async function POST(request: Request) {
       })
     }
 
-    return created
+    return tx.financialGoal.findFirstOrThrow({
+      where: { id: created.id, ...scopeFilter(ctx) },
+      include: {
+        accountLinks: { orderBy: { createdAt: "asc" } },
+      },
+    })
   })
 
-  return NextResponse.json({
-    id: goal.id,
-    name: goal.name,
-    targetAmount: Number(goal.targetAmount),
-    currentAmount: Number(goal.currentAmount),
-    deadline: goal.deadline?.toISOString().slice(0, 10) || null,
-    category: goal.category,
-    color: goal.color,
-    status: goal.status,
-    percentage: Number(goal.targetAmount) > 0
-      ? Math.round((Number(goal.currentAmount) / Number(goal.targetAmount)) * 100)
-      : 0,
-    createdAt: goal.createdAt.toISOString(),
-  }, { status: 201 })
+  return NextResponse.json(formatGoal(goal), { status: 201 })
 }

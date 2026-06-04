@@ -14,7 +14,7 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { GlideHighlight, useGlideHighlight } from "@/components/ui/glide-highlight"
 
 function ContextMenu({
@@ -84,11 +84,11 @@ function ContextMenuSubTrigger({
       data-glide-item={dataGlideItem}
       data-inset={inset}
       className={cn(
-        PRISM.item,
-        PRISM.itemIcon,
-        PRISM.glideItem,
-        PRISM.itemIconFocus,
-        "data-[inset]:pl-8 data-[state=open]:bg-transparent data-[state=open]:shadow-none",
+        UDS.item,
+        UDS.itemIcon,
+        UDS.glideItem,
+        UDS.itemIconFocus,
+        "data-[inset]:pl-8",
         className
       )}
       {...props}
@@ -115,11 +115,11 @@ function ContextMenuSubContent({
       ref={contentRef}
       data-slot="context-menu-sub-content"
       className={cn(
-        PRISM.container,
-        PRISM.glideSurface,
-        PRISM.animateIn,
-        PRISM.animateOut,
-        "z-50 origin-(--radix-context-menu-content-transform-origin) overflow-hidden",
+        UDS.transientSurface,
+        UDS.glideSurface,
+        UDS.animateIn,
+        UDS.animateOut,
+        "z-[999] origin-(--radix-context-menu-content-transform-origin) overflow-hidden",
         className
       )}
       {...props}
@@ -152,11 +152,11 @@ function ContextMenuContent({
         collisionPadding={16}
         avoidCollisions={true}
         className={cn(
-          PRISM.container,
-          PRISM.glideSurface,
-          PRISM.animateIn,
-          PRISM.animateOut,
-          "z-50 max-h-(--radix-context-menu-content-available-height) origin-(--radix-context-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          UDS.transientSurface,
+          UDS.glideSurface,
+          UDS.animateIn,
+          UDS.animateOut,
+          "z-[999] max-h-(--radix-context-menu-content-available-height) origin-(--radix-context-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
           className
         )}
         {...props}
@@ -193,11 +193,11 @@ function ContextMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        PRISM.item,
-        PRISM.glideItem,
-        PRISM.itemDisabled,
-        PRISM.itemIcon,
-        PRISM.itemDestructive,
+        UDS.item,
+        UDS.glideItem,
+        UDS.itemDisabled,
+        UDS.itemIcon,
+        UDS.itemDestructive,
         "data-[inset]:pl-8",
         className
       )}
@@ -222,10 +222,10 @@ function ContextMenuCheckboxItem({
       data-slot="context-menu-checkbox-item"
       data-glide-item={dataGlideItem}
       className={cn(
-        PRISM.checkboxItem,
-        PRISM.glideItem,
-        PRISM.itemDisabled,
-        PRISM.itemIcon,
+        UDS.checkboxItem,
+        UDS.glideItem,
+        UDS.itemDisabled,
+        UDS.itemIcon,
         className
       )}
       {...props}
@@ -256,10 +256,10 @@ function ContextMenuRadioItem({
       data-slot="context-menu-radio-item"
       data-glide-item={dataGlideItem}
       className={cn(
-        PRISM.checkboxItem,
-        PRISM.glideItem,
-        PRISM.itemDisabled,
-        PRISM.itemIcon,
+        UDS.checkboxItem,
+        UDS.glideItem,
+        UDS.itemDisabled,
+        UDS.itemIcon,
         className
       )}
       {...props}
@@ -286,7 +286,7 @@ function ContextMenuLabel({
       data-slot="context-menu-label"
       data-inset={inset}
       className={cn(
-        PRISM.label, "data-[inset]:pl-8",
+        UDS.label, "data-[inset]:pl-8",
         className
       )}
       {...props}
@@ -301,7 +301,7 @@ function ContextMenuSeparator({
   return (
     <ContextMenuPrimitive.Separator
       data-slot="context-menu-separator"
-      className={cn(PRISM.separator, className)}
+      className={cn(UDS.separator, className)}
       {...props}
     />
   )
@@ -315,7 +315,7 @@ function ContextMenuShortcut({
     <span
       data-slot="context-menu-shortcut"
       className={cn(
-        PRISM.shortcut,
+        UDS.shortcut,
         className
       )}
       {...props}

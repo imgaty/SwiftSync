@@ -17,7 +17,7 @@ import { Input, OTPInput } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { OAuthButtons } from '@/components/oauth-buttons'
 import { AuthShell, AuthHeader, BackButton, ErrorAlert } from '@/components/auth'
-import { PRISM } from '@/lib/PRISM'
+import { UDS } from '@/lib/UDS'
 import { useLanguage, useTranslationNamespace } from '@/components/language-provider'
 import { postAuth as postAuthBase } from '@/lib/auth-fetch'
 import { isAdminPath, safeRedirectPath } from '@/lib/auth-redirect'
@@ -158,7 +158,7 @@ export default function LoginPage() {
 
 
     return (
-        <AuthShell>
+        <AuthShell cornerHighlight={false}>
             <form onSubmit = {needs2FA ? handle2FASubmit : handleSubmit} noValidate className = "flex flex-col gap-7 | w-full | animate-slide-in-right">
                 <ErrorAlert message={error} />
 
@@ -195,25 +195,27 @@ export default function LoginPage() {
                             />
                         )}
 
-                        <Button variant="ghost"
+                        <Button
+                            variant="glass"
+                            size="sm"
                             type="button"
                             onClick={() => {
                                 setUseBackupCode((value) => !value)
                                 setError('')
                             }}
-                            className="rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/70"
+                            className="text-xs text-muted-foreground hover:text-foreground"
                         >
                             {useBackupCode
                                 ? (le.use_authenticator_code || 'Use authenticator code')
                                 : (le.use_backup_code || 'Use backup code')}
                         </Button>
 
-                        <label className = "group flex w-full cursor-pointer select-none items-center justify-center gap-2 rounded-xl border border-[color:var(--border)] bg-[var(--surface)] px-3 py-2.5 transition-colors hover:border-[color:var(--border-strong)]">
+                        <label className = {`${UDS.surface} ${UDS.itemHover} group flex w-full cursor-pointer select-none items-center justify-center gap-2 px-3 py-2.5 transition-colors`}>
                             <Checkbox
                                 checked = {trustDevice}
                                 onCheckedChange = {(v) => setTrustDevice(v === true)}
                                 disabled = {loading}
-                                className = "h-4 w-4 rounded-[5px]"
+                                className = "size-4 sq-5"
                             />
                             <span className = "text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">{page?.trust_device}</span>
                         </label>
@@ -229,7 +231,7 @@ export default function LoginPage() {
                 )}
 
                 <div className = "flex flex-col gap-4 | w-full | animate-slide-in-right">
-                    <Button type = "submit" variant = "solid" size="lg" className = "w-full" disabled = {loading}>
+                    <Button type = "submit" variant = "solid" size="lg" className = "auth-primary-button w-full" disabled = {loading}>
                         {loading
                             ? <><Loader2 className = "w-4 h-4 | animate-spin" />{needs2FA ? (page?.verifying) : (page?.signing_in)}</>
                             : <>{needs2FA ? (page?.verify) : (page?.sign_in)}<ArrowRight className = "w-4 h-4" /></>
@@ -241,9 +243,9 @@ export default function LoginPage() {
                     ) : (
                         <>
                             <div className = "flex items-center gap-4">
-                                <div className = {PRISM.dividerLine} />
-                                <span className = {PRISM.dividerLabel}>{t.oauth_buttons?.divider_label}</span>
-                                <div className = {PRISM.dividerLine} />
+                                <div className = {UDS.dividerLine} />
+                                <span className = {UDS.dividerLabel}>{t.oauth_buttons?.divider_label}</span>
+                                <div className = {UDS.dividerLine} />
                             </div>
 
                             <div className = "pb-2">

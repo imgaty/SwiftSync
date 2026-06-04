@@ -11,6 +11,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthContext } from "@/lib/auth-helpers"
 import { scopeCreateData, scopeRecordFilter, requirePermission } from "@/lib/data-access"
+import { formatGoal, goalAccountName, goalTransferReference, toAmount } from "@/lib/goal-account"
 
 // PUT /api/goals/[id] — Update a financial goal
 export async function PUT(
@@ -29,13 +30,22 @@ export async function PUT(
 
   const existing = await prisma.financialGoal.findFirst({
     where: scopeRecordFilter(ctx, id),
-    select: { name: true, currentAmount: true, targetAmount: true, status: true },
+    include: {
+      accountLinks: { orderBy: { createdAt: "asc" } },
+    },
   })
   if (!existing) {
     return NextResponse.json({ error: "Goal not found" }, { status: 404 })
   }
 
-  const newCurrentAmount = body.currentAmount !== undefined ? Number(body.currentAmount) : Number(existing.currentAmount)
+  const currentAmountWasProvided = body.currentAmount !== undefined
+  const accountCurrentAmount = existing.accountLinks.length > 0
+    ? existing.accountLinks.reduce((sum, account) => sum + toAmount(account.balance), 0)
+    : toAmount(existing.currentAmount)
+  const nextName = typeof body.name === "string" ? body.name.trim() : undefined
+  const newCurrentAmount = currentAmountWasProvided
+    ? Number(body.currentAmount)
+    : accountCurrentAmount
   const targetAmount = body.targetAmount !== undefined ? Number(body.targetAmount) : Number(existing.targetAmount)
 
   if (!Number.isFinite(targetAmount) || targetAmount <= 0) {
@@ -59,9 +69,9 @@ export async function PUT(
     const { count } = await tx.financialGoal.updateMany({
       where: scopeRecordFilter(ctx, id),
       data: {
-        ...(body.name && { name: body.name }),
+        ...(nextName && { name: nextName }),
         ...(body.targetAmount !== undefined && { targetAmount }),
-        ...(body.currentAmount !== undefined && { currentAmount: newCurrentAmount }),
+        currentAmount: newCurrentAmount,
         ...(body.deadline !== undefined && { deadline: body.deadline ? new Date(body.deadline) : null }),
         ...(body.category && { category: body.category }),
         ...(body.color && { color: body.color }),
@@ -70,7 +80,30 @@ export async function PUT(
     })
     if (count === 0) return null
 
-    const goal = await tx.financialGoal.findFirstOrThrow({ where: scopeRecordFilter(ctx, id) })
+    await tx.financialGoalAccount.upsert({
+      where: { goalId: id },
+      update: {
+        ...(nextName && { name: goalAccountName(nextName) }),
+        ...(currentAmountWasProvided && { balance: newCurrentAmount }),
+        status: nextStatus === "cancelled" ? "cancelled" : "active",
+      },
+      create: {
+        ...scopeCreateData(ctx),
+        goalId: id,
+        name: goalAccountName(nextName || existing.name),
+        balance: newCurrentAmount,
+        currency: existing.accountLinks[0]?.currency || "EUR",
+        status: nextStatus === "cancelled" ? "cancelled" : "active",
+        transferReference: goalTransferReference(id),
+      },
+    })
+
+    const goal = await tx.financialGoal.findFirstOrThrow({
+      where: scopeRecordFilter(ctx, id),
+      include: {
+        accountLinks: { orderBy: { createdAt: "asc" } },
+      },
+    })
 
     if (shouldNotifyReached) {
       await tx.notification.create({
@@ -90,19 +123,7 @@ export async function PUT(
     return NextResponse.json({ error: "Goal not found" }, { status: 404 })
   }
 
-  return NextResponse.json({
-    id: updated.id,
-    name: updated.name,
-    targetAmount: Number(updated.targetAmount),
-    currentAmount: Number(updated.currentAmount),
-    deadline: updated.deadline?.toISOString().slice(0, 10) || null,
-    category: updated.category,
-    color: updated.color,
-    status: updated.status,
-    percentage: Number(updated.targetAmount) > 0
-      ? Math.round((Number(updated.currentAmount) / Number(updated.targetAmount)) * 100)
-      : 0,
-  })
+  return NextResponse.json(formatGoal(updated))
 }
 
 // DELETE /api/goals/[id]

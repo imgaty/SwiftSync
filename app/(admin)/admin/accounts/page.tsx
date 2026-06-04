@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { UDS } from "@/lib/UDS"
 
 interface Account {
     id: string; cardName: string; accountType: string; balance: number
@@ -113,7 +114,7 @@ export default function AdminAccountsPage() {
                 />
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-[150px]" size="sm">
-                        <Filter className="size-4" />
+                        <Filter className="size-3.5" />
                         <SelectValue placeholder={ap.col_type || "Type"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -135,13 +136,13 @@ export default function AdminAccountsPage() {
             />
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400 flex items-center gap-1"><Wallet className="size-3" /> {ap.total_accounts || "Total Accounts"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-16" /> : pagination.total}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}><Wallet className="size-3.5" /> {ap.total_accounts || "Total Accounts"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-16" /> : pagination.total}</p>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <p className="text-xs text-neutral-400">{ap.combined_balance || "Combined Balance"}</p>
-                        <p className="text-xl font-bold">{loading ? <Skeleton className="h-7 w-28" /> : formatCurrency(totalBalance)}</p>
+                    <div className={UDS.summaryTileSurface}>
+                        <p className={UDS.summaryLabel}>{ap.combined_balance || "Combined Balance"}</p>
+                        <p className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-28" /> : formatCurrency(totalBalance)}</p>
                     </div>
                 </div>
 
@@ -204,8 +205,8 @@ export default function AdminAccountsPage() {
                                         </TableCell>
                                         <TableCell>
                                             {acc.isActive
-                                                ? <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs">{ad.active || "Active"}</Badge>
-                                                : <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-400 text-xs">{ap.inactive || "Inactive"}</Badge>}
+                                                ? <Badge variant="outline" className={`${UDS.semanticBadge.positive} text-xs`}>{ad.active || "Active"}</Badge>
+                                                : <Badge variant="outline" className={`${UDS.semanticBadge.neutral} text-xs`}>{ap.inactive || "Inactive"}</Badge>}
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-sm">{formatCurrency(Number(acc.balance))}</TableCell>
                                         <TableCell className="text-sm text-neutral-400">{new Date(acc.createdAt).toLocaleDateString()}</TableCell>

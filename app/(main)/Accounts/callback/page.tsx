@@ -10,6 +10,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { Loader2, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { queryKeys } from "@/lib/query-keys"
 import { useLanguage } from "@/components/language-provider"
 import { getTranslations } from "@/lib/translation-utils"
+import { safeRedirectPath } from "@/lib/auth-redirect"
 
 /**
  * Callback page after Salt Edge Connect widget.
@@ -42,7 +44,7 @@ export default function BankCallbackPage() {
   const connectionId = searchParams.get("connection_id")
   const errorClass = searchParams.get("error_class")
   const errorMsg = searchParams.get("error_message")
-  const redirectTo = searchParams.get("redirect") || "/Accounts"
+  const redirectTo = safeRedirectPath(searchParams.get("redirect"), "/Accounts")
 
   useEffect(() => {
     let cancelled = false
@@ -162,9 +164,11 @@ export default function BankCallbackPage() {
             <AlertCircle className="mx-auto size-12 text-red-500" />
             <h2 className="text-xl font-semibold">{bc.connection_failed || "Connection Failed"}</h2>
             <p className="text-sm text-neutral-400">{errorMessage}</p>
-            <Button onClick={() => router.push(redirectTo)} variant="glass">
-              <ArrowLeft className="mr-2 size-4" />
-              {bc.back_to_accounts || "Back to Accounts"}
+            <Button asChild variant="glass">
+              <Link href={redirectTo}>
+                <ArrowLeft className="mr-2 size-4" />
+                {bc.back_to_accounts || "Back to Accounts"}
+              </Link>
             </Button>
           </div>
         )}

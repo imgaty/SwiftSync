@@ -13,6 +13,7 @@ import type { Bill, Budget } from "@/lib/types"
 export interface DashboardTranslations {
     dashboard?: {
         export?: string
+        import?: string
         good_morning?: string
         good_afternoon?: string
         good_evening?: string

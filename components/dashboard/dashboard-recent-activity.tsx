@@ -50,7 +50,7 @@ export function DashboardRecentActivity({
             title={dashboardLabels.recentActivity}
             icon={ReceiptText}
             className="min-h-[260px] lg:min-h-0"
-            action={
+            tools={
                 <Button asChild variant="glass" size="icon-sm" className={DASHBOARD_ACTION_BUTTON_CLASS}>
                     <Link href="/Transactions" aria-label={transactionsLabel}>
                         <ArrowUpRight className={DASHBOARD_ACTION_ICON_CLASS} />
@@ -72,7 +72,7 @@ export function DashboardRecentActivity({
                         return (
                             <Link
                                 key={transaction.id}
-                                href="/Transactions"
+                                href={`/Transactions/${encodeURIComponent(transaction.id)}`}
                                 className={cn(DASHBOARD_ROW_HOVER, "flex min-w-0 items-center gap-3 px-2.5 py-2.5")}
                             >
                                 <DashboardIconBadge

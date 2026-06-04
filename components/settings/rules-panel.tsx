@@ -39,6 +39,7 @@ import {
     type RuleOp,
     type RuleFilter,
 } from "@/lib/PACE"
+import { UDS } from "@/lib/UDS"
 
 // ---------------------------------------------------------------------------
 // Types & labels
@@ -199,7 +200,7 @@ function FilterRow({
                 disabled={!canRemove}
                 aria-label="Remove filter"
                 className={cn(
-                    "shrink-0 mt-1 p-1.5 rounded-md text-neutral-400 transition-all duration-150",
+                    "shrink-0 mt-1 p-1.5 sq-md text-neutral-400 transition-all duration-150",
                     canRemove
                         ? "hover:text-red-400 hover:bg-red-500/10"
                         : "opacity-30 pointer-events-none",
@@ -499,7 +500,7 @@ function RuleRow({
     const summary = rule.filters.map(describeFilter).join("  ·  ")
 
     return (
-        <div className="flex items-center gap-3 py-3 border-t border-black/8 dark:border-white/8 first:border-t-0">
+        <div className={cn("flex items-center gap-3 border-t py-3 first:border-t-0", UDS.cardDivider)}>
             <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                     <p className="text-[13px] font-medium truncate">{rule.name}</p>
@@ -507,7 +508,7 @@ function RuleRow({
                         {rule.addTagSlugs.map((slug) => (
                             <span
                                 key={slug}
-                                className="text-[11px] px-1.5 py-0.5 rounded bg-black/6 dark:bg-white/8 text-neutral-400"
+                                className={cn("px-1.5 py-0.5 text-[11px] text-neutral-400", UDS.pillSurface)}
                             >
                                 {slug}
                             </span>
@@ -523,7 +524,7 @@ function RuleRow({
                 type="button"
                 onClick={onEdit}
                 aria-label="Edit rule"
-                className="p-1.5 rounded-md text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/6 dark:hover:bg-white/8 transition-colors"
+                className={cn("p-1.5 sq-md text-neutral-400 transition-colors hover:text-black dark:hover:text-white", UDS.itemHover)}
             >
                 <Pencil className="size-4" />
             </Button>
@@ -531,7 +532,7 @@ function RuleRow({
                 type="button"
                 onClick={onDelete}
                 aria-label="Delete rule"
-                className="p-1.5 rounded-md text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                className="p-1.5 sq-md text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
             >
                 <Trash2 className="size-4" />
             </Button>
@@ -619,7 +620,7 @@ export function RulesPanel() {
                 )}
 
                 {rules && rules.length > 0 && (
-                    <div className="rounded-lg border border-black/8 dark:border-white/8 px-3">
+                    <div className={`${UDS.inlineSurface} px-3`}>
                         {rules.map((r) => (
                             <RuleRow
                                 key={r.id}

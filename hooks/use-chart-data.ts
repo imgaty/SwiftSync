@@ -11,9 +11,8 @@
 
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/chart-constants"
-import type { DailyData, ExpenseCategory, IncomeCategory } from "@/lib/chart-types"
-import { createEmptyDailyData } from "@/lib/chart-utils"
+import { createEmptyDailyData, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/chart"
+import type { DailyData, ExpenseCategory, IncomeCategory } from "@/lib/chart"
 import { AppErrors } from "@/components/error-state"
 import { queryKeys } from "@/lib/query-keys"
 

@@ -241,6 +241,17 @@ Both cascade-delete with their parent `SpreadsheetDocument` and with the user.
 
 ---
 
+migrate:
+
+pnpm prisma migrate dev
+pnpm prisma generate
+pnpm prisma migrate status
+pnpm prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+pnpm run typecheck
+
+---
+
+
 **Previous file:** [← Technical Documentation](Technical%20Documentation.md)
 
 **Next file:** [Authentication & Security](Authentication%20%26%20Security.md) →

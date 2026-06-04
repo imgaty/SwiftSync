@@ -7,7 +7,7 @@
 //  business operations, and response formatting at the route boundary.
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
-/* Single-transaction endpoint (PUT to update, DELETE to remove).
+/* Single-transaction endpoint (GET to read, PUT to update, DELETE to remove).
  *
  * Both writes use scope-in-write — the caller's scope filter is merged into
  * the where clause of `updateMany` / `deleteMany`, so a row outside the
@@ -20,6 +20,62 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthContext } from "@/lib/auth-helpers"
 import { scopeFilter, scopeRecordFilter, requirePermission } from "@/lib/data-access"
+
+// GET /api/transactions/[id] — Fetch a single transaction
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const ctx = await getAuthContext()
+  if (!ctx) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  }
+  const permissionError = await requirePermission(ctx, "data:read")
+  if (permissionError) return permissionError
+
+  const { id } = await params
+  const transaction = await prisma.transaction.findFirst({
+    where: scopeRecordFilter(ctx, id),
+    include: {
+      account: { include: { bank: true } },
+      counterparty: true,
+    },
+  })
+
+  if (!transaction) {
+    return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
+  }
+
+  return NextResponse.json({
+    id: transaction.id,
+    date: transaction.date.toISOString().slice(0, 10),
+    type: transaction.type,
+    amount: Number(transaction.amount),
+    description: transaction.description,
+    tags: transaction.tags,
+    accountId: transaction.accountId,
+    saltEdgeId: transaction.saltEdgeId,
+    counterpartyRaw: transaction.counterpartyRaw,
+    createdAt: transaction.createdAt.toISOString(),
+    updatedAt: transaction.updatedAt.toISOString(),
+    account: {
+      id: transaction.account.id,
+      name: transaction.account.cardName,
+      type: transaction.account.accountType,
+      institution: transaction.account.bank.name,
+      color: transaction.account.color,
+      currency: transaction.account.currency,
+      iban: transaction.account.iban,
+    },
+    counterparty: transaction.counterparty
+      ? {
+        id: transaction.counterparty.id,
+        displayName: transaction.counterparty.displayName,
+        normalizedKey: transaction.counterparty.normalizedKey,
+      }
+      : null,
+  })
+}
 
 // PUT /api/transactions/[id] — Update a transaction
 export async function PUT(

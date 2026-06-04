@@ -18,13 +18,22 @@ import { Dropdown, DropdownContent, DropdownTrigger, DropdownCheckboxItem, Dropd
 import { TabSwitcher, TabSwitcherIconButton, TabSwitcherItem } from "@/components/ui/tab-switcher"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
-import { DISPLAY_MODE_ICONS, DATE_FORMAT_OPTIONS, DISPLAY_MODES, METRIC_TYPES } from "@/lib/chart-constants"
-import { getOffsetDate, getFilteredPeriodData, getFilteredCustomRangeData, getCategoryOptions, getConfigColor } from "@/lib/chart-utils"
-import type { ChartInstance, DailyData, MetricType, DisplayMode, CustomDateRange } from "@/lib/chart-types"
+import {
+    DATE_FORMAT_OPTIONS,
+    DISPLAY_MODE_ICONS,
+    DISPLAY_MODES,
+    getCategoryOptions,
+    getConfigColor,
+    getFilteredCustomRangeData,
+    getFilteredPeriodData,
+    getOffsetDate,
+    METRIC_TYPES,
+} from "@/lib/chart"
+import type { ChartInstance, CustomDateRange, DailyData, DisplayMode, MetricType } from "@/lib/chart"
 import { DatePicker } from "@/components/date-picker"
 import { useCurrency } from "@/components/currency-provider"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 interface ExpandedChartViewProps {
@@ -137,20 +146,20 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                     {labels.customize_chart_desc ?? "Expanded chart view with customization options"}
                 </DialogDescription>
                 {/* Header */}
-                <div className="flex shrink-0 flex-col gap-4 px-6 pt-5 pb-4 border-b border-black/6 dark:border-white/8">
+                <div className={cn("flex shrink-0 flex-col gap-4 border-b px-6 pb-4 pt-5", UDS.cardDivider)}>
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 flex-1 flex-col gap-2">
-                            <span className="auto-scroll text-3xl font-semibold tracking-tight leading-none text-black dark:text-white">{formatCurrency(total, { locale })}</span>
-                            <div className={cn("flex items-center gap-2 text-[13px]", PRISM.muted)}>
+                            <span className="auto-scroll text-3xl font-semibold tracking-tight leading-none text-black dark:text-white tabular-nums">{formatCurrency(total, { locale })}</span>
+                            <div className={cn("flex items-center gap-2 text-[13px]", UDS.muted)}>
                                 <span className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: metricColor }} />
+                                    <span className="w-2 h-2 sq-full shrink-0" style={{ backgroundColor: metricColor }} />
                                     <span className="auto-scroll font-medium text-black/80 dark:text-white/80">{chartConfig[metricType]?.label}</span>
                                 </span>
                                 <span className="text-neutral-400/50 shrink-0">•</span>
                                 <span className="auto-scroll">{filterLabel}</span>
                             </div>
                         </div>
-                        <Button variant="ghost" type="button" onClick={onClose} className={cn(PRISM.closeButton, "shrink-0")} aria-label={labels.close ?? "Close"}><X className="w-4 h-4" /></Button>
+                        <Button variant="ghost" type="button" onClick={onClose} className={cn(UDS.closeButton, "shrink-0")} aria-label={labels.close ?? "Close"}><X className="w-4 h-4" /></Button>
                     </div>
 
                     {/* Controls — matches the non-expanded chart toolbar style */}
@@ -189,7 +198,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                                             >
                                                 <Filter className="w-4 h-4" />
                                                 {!showTotal && selectedCategories.length > 0 && (
-                                                    <span className="flex items-center justify-center w-4 h-4 bg-primary text-xs text-white dark:text-black rounded-full">
+                                                    <span className="flex items-center justify-center w-4 h-4 bg-primary text-xs text-white dark:text-black sq-full">
                                                         {selectedCategories.length}
                                                     </span>
                                                 )}
@@ -209,7 +218,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                                     {categoryOptions.map(cat => (
                                         <DropdownCheckboxItem key={cat} checked={selectedCategories.includes(cat)} onCheckedChange={() => onCategoryToggle(cat)} disabled={showTotal}>
                                             <span className="flex items-center gap-2">
-                                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getConfigColor(chartConfig, cat) }} />
+                                                <span className="w-2 h-2 sq-full" style={{ backgroundColor: getConfigColor(chartConfig, cat) }} />
                                                 {chartConfig[cat]?.label ?? cat}
                                             </span>
                                         </DropdownCheckboxItem>
@@ -253,7 +262,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                             <div className="sm:hidden flex items-center min-w-0">
                                 <Select value={customDateRange ? 'custom' : periodType} onValueChange={handlePeriodChange} disabled={!!customDateRange}>
                                     <SelectTrigger
-                                        className="min-w-[92px] rounded-full border-transparent bg-transparent px-2 text-[12px] font-semibold text-foreground-secondary shadow-none hover:bg-white/70 hover:text-foreground focus:ring-0 data-[size=sm]:h-7 dark:hover:bg-white/[0.08]"
+                                        className={cn("min-w-[92px] sq-full border-transparent sq-border-muted bg-transparent px-2 text-[12px] font-semibold text-foreground-secondary hover:text-foreground focus:ring-0 data-[size=sm]:h-7", UDS.itemHover)}
                                         size="sm"
                                     >
                                         <SelectValue />
@@ -286,12 +295,12 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                             trigger={
                                 <TabSwitcher
                                     ariaLabel={labels.custom_date_range ?? "Custom date range"}
-                                    className={cn("shrink-0", customDateRange && "border-primary/30 bg-primary/10 dark:bg-primary/15")}
+                                    className={cn("shrink-0", customDateRange && UDS.selectedControl)}
                                 >
                                     <TabSwitcherIconButton
                                         isActive={!!customDateRange}
                                         aria-label={labels.custom_date_range ?? "Custom date range"}
-                                        className={cn("w-auto px-2", customDateRange && "border-primary/30 bg-primary/10 text-primary shadow-none dark:bg-primary/15")}
+                                        className={cn("w-auto px-2", customDateRange && "text-foreground")}
                                     >
                                         <CalendarRange className="w-4 h-4" />
                                         {customDateRange?.startDate && customDateRange?.endDate && (
@@ -343,7 +352,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                     </div>
                 </div>
 
-                <div className={cn("flex justify-center py-2.5 border-t border-black/6 dark:border-white/8 text-[12px]", PRISM.muted)}>{labels.press_esc_to_close ?? "Press ESC or click × to close"}</div>
+                <div className={cn("flex justify-center border-t py-2.5 text-[12px]", UDS.cardDivider, UDS.muted)}>{labels.press_esc_to_close ?? "Press ESC or click × to close"}</div>
             </DialogContent>
         </Dialog>
     )

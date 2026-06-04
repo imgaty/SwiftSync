@@ -26,7 +26,7 @@ import {
 } from "recharts"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 
@@ -201,7 +201,7 @@ function ChartTooltipContent({
 
         if (labelFormatter) {
             return (
-                <div className={cn(PRISM.label, "auto-scroll", labelClassName)}>
+                <div className={cn(UDS.label, "auto-scroll", labelClassName)}>
                     {labelFormatter(label, payload)}
                 </div>
             )
@@ -211,7 +211,7 @@ function ChartTooltipContent({
             return null
         }
 
-        return <div className={cn(PRISM.label, "auto-scroll", labelClassName)}>{value}</div>
+        return <div className={cn(UDS.label, "auto-scroll", labelClassName)}>{value}</div>
     }, [
         label,
         labelFormatter,
@@ -231,8 +231,8 @@ function ChartTooltipContent({
     return (
         <div
             className={cn(
-                PRISM.container,
-                "z-9999 grid w-[220px] items-start gap-0",
+                UDS.transientSurface,
+                "z-[9999] grid w-[220px] items-start gap-0",
                 className
             )}
         >
@@ -254,7 +254,7 @@ function ChartTooltipContent({
                             <div
                                 key={item.dataKey}
                                 className={cn(
-                                    "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[13px]",
+                                    "flex w-full items-center gap-2 sq-lg px-2 py-2 text-[13px]",
                                 )}
                             >
                                 {formatter &&
@@ -275,7 +275,7 @@ function ChartTooltipContent({
                                             !hideIndicator && (
                                                 <div
                                                     className={cn(
-                                                        "shrink-0 rounded-sm border-(--color-border) bg-(--color-bg)",
+                                                        "shrink-0 sq-sm border-(--color-border) bg-(--color-bg)",
                                                         {
                                                             "size-2.5":
                                                                 indicator ===
@@ -299,7 +299,7 @@ function ChartTooltipContent({
                                         )}
                                         <span className="auto-scroll flex-1 min-w-0 text-black dark:text-white">
                                             {nestLabel && tooltipLabel ? (
-                                                <span className={PRISM.muted}>{tooltipLabel} · </span>
+                                                <span className={UDS.muted}>{tooltipLabel} · </span>
                                             ) : null}
                                             {itemConfig?.label || item.name}
                                         </span>
@@ -370,7 +370,7 @@ function ChartLegendContent({
                                 <itemConfig.icon />
                             ) : (
                                 <div
-                                    className="h-2 w-2 shrink-0 rounded-[2px]"
+                                    className="h-2 w-2 shrink-0 sq-2"
                                     style={{
                                         backgroundColor: item.color,
                                     }}
@@ -648,7 +648,8 @@ function AreaChartComponent({
             {isMobile && activePayload && activePayload.length > 0 && (
                 <div 
                     className={cn(
-                        "absolute right-0 top-0 bottom-0 w-[120px] bg-background/90 backdrop-blur-sm border-l border-border p-2 flex flex-col gap-2 z-50 transition-all duration-300 ease-in-out",
+                        UDS.cardSurface,
+                        "absolute right-0 top-0 bottom-0 w-[120px] sq-none border-y-0 border-r-0 p-2 flex flex-col gap-2 z-50 transition-all duration-300 ease-in-out",
                         isSelected ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
                     )}
                 >
@@ -659,7 +660,7 @@ function AreaChartComponent({
                     {activePayload.map((item: any) => (
                         <div key={item.name} className="flex flex-col gap-0.5">
                             <span className="text-[10px] text-neutral-400 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                                <span className="w-1.5 h-1.5 sq-full" style={{ backgroundColor: item.color }} />
                                 {config[item.name]?.label ?? item.name}
                             </span>
                             <span className="text-xs font-medium tabular-nums">
@@ -765,7 +766,8 @@ function BarChartComponent({
             {isMobile && activePayload && activePayload.length > 0 && (
                 <div 
                     className={cn(
-                        "absolute right-0 top-0 bottom-0 w-[120px] bg-background/90 backdrop-blur-sm border-l border-border p-2 flex flex-col gap-2 z-50 transition-all duration-300 ease-in-out",
+                        UDS.cardSurface,
+                        "absolute right-0 top-0 bottom-0 w-[120px] sq-none border-y-0 border-r-0 p-2 flex flex-col gap-2 z-50 transition-all duration-300 ease-in-out",
                         isSelected ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full pointer-events-none"
                     )}
                 >
@@ -776,7 +778,7 @@ function BarChartComponent({
                     {activePayload.map((item: any) => (
                         <div key={item.name} className="flex flex-col gap-0.5">
                             <span className="text-[10px] text-neutral-400 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                                <span className="w-1.5 h-1.5 sq-full" style={{ backgroundColor: item.color }} />
                                 {config[item.name]?.label ?? item.name}
                             </span>
                             <span className="text-xs font-medium tabular-nums">
@@ -901,14 +903,14 @@ function PieLegendScroll({
                             return (
                                 <tr 
                                     key={idx} 
-                                    className="cursor-pointer rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                                    className={cn("cursor-pointer sq-md transition-colors", UDS.itemHover)}
                                     onMouseEnter={() => setHoverIndex(idx)}
                                     onMouseLeave={() => setHoverIndex(null)}
                                 >
                                     <td className="py-0.5 pr-4 whitespace-nowrap">
                                         <span className="flex items-center gap-1.5">
-                                            <span 
-                                                className="w-2 h-2 rounded-full shrink-0" 
+                                            <span
+                                                className="w-2 h-2 sq-full shrink-0"
                                                 style={{ backgroundColor: item.fill as string }}
                                             />
                                             <span className="text-neutral-400">
@@ -925,7 +927,7 @@ function PieLegendScroll({
             </div>
             {/* Gradient fade at bottom when scrollable - uses mask to inherit background */}
             <div 
-                className={`pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-card transition-opacity duration-200 ${showFade ? 'opacity-100' : 'opacity-0'}`}
+                className={`pointer-events-none absolute bottom-0 left-0 right-0 h-8 uds-bg-elevated transition-opacity duration-200 ${showFade ? 'opacity-100' : 'opacity-0'}`}
                 style={{
                     maskImage: 'linear-gradient(to bottom, transparent, black)',
                     WebkitMaskImage: 'linear-gradient(to bottom, transparent, black)'
@@ -1067,7 +1069,7 @@ function PieLegendCarousel({
                                     >
                                         <span className="auto-scroll flex items-center gap-1.5">
                                             <span 
-                                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                                className="w-2.5 h-2.5 sq-full shrink-0"
                                                 style={{ backgroundColor: item.fill as string }}
                                             />
                                             <span className="auto-scroll text-neutral-400">
@@ -1088,20 +1090,22 @@ function PieLegendCarousel({
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
                     <Button variant="ghost"
                         onClick={() => setActiveView('chart')}
-                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                        className={cn(
+                            "h-2 w-2 sq-full transition-all duration-200",
                             activeView === 'chart'
-                                ? 'bg-foreground scale-100'
-                                : 'bg-muted-foreground/40 scale-90 hover:bg-muted-foreground/60'
-                        }`}
+                                ? "scale-100 bg-foreground"
+                                : cn(UDS.subtleFill, "scale-90 hover:opacity-80")
+                        )}
                         aria-label="Show chart"
                     />
                     <Button variant="ghost"
                         onClick={() => setActiveView('legend')}
-                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                        className={cn(
+                            "h-2 w-2 sq-full transition-all duration-200",
                             activeView === 'legend'
-                                ? 'bg-foreground scale-100'
-                                : 'bg-muted-foreground/40 scale-90 hover:bg-muted-foreground/60'
-                        }`}
+                                ? "scale-100 bg-foreground"
+                                : cn(UDS.subtleFill, "scale-90 hover:opacity-80")
+                        )}
                         aria-label="Show legend"
                     />
                 </div>
@@ -1182,7 +1186,7 @@ function PieChartComponent({
     const renderCenterLabel = () => {
         return (
             <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
-                <tspan x="50%" dy="-0.4em" className="fill-foreground font-bold text-lg">
+                <tspan x="50%" dy="-0.4em" className="fill-foreground font-bold text-lg font-mono tabular-nums">
                     {total.toLocaleString(locale, { style: 'currency', currency: currencyCode, maximumFractionDigits: 0 })}
                 </tspan>
                 <tspan x="50%" dy="1.4em" className="fill-muted-foreground text-[10px]">
@@ -1204,19 +1208,19 @@ function PieChartComponent({
             const fill = item.payload?.fill
             
             return (
-                <div className={cn(PRISM.container, "z-9999 grid min-w-[220px] max-w-[min(320px,calc(100vw-24px))] gap-0")}>
-                    <div className={cn(PRISM.label, "auto-scroll")}>
+                <div className={cn(UDS.transientSurface, "z-[9999] grid min-w-[220px] max-w-[min(320px,calc(100vw-24px))] gap-0")}>
+                    <div className={cn(UDS.label, "auto-scroll")}>
                         {label}
                     </div>
-                    <div className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-[13px]">
+                    <div className="flex items-center justify-between gap-3 sq-lg px-2 py-2 text-[13px]">
                         <span className="flex min-w-0 items-center gap-2.5">
-                            <span className="h-2.5 w-2.5 shrink-0 rounded-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" style={{ backgroundColor: fill }} />
+                            <span className="h-2.5 w-2.5 shrink-0 sq-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" style={{ backgroundColor: fill }} />
                             <span className="auto-scroll text-black dark:text-white">Value</span>
                         </span>
                         <span className="text-[13px] font-mono font-semibold tabular-nums tracking-tight text-black dark:text-white">
                             {value.toLocaleString(locale, { style: 'currency', currency: currencyCode, minimumFractionDigits: 2 })}
                         </span>
-                        <span className={cn(PRISM.muted, "tabular-nums")}>{percentage}%</span>
+                        <span className={cn(UDS.muted, "tabular-nums")}>{percentage}%</span>
                     </div>
                 </div>
             )
@@ -1327,7 +1331,7 @@ function ListChartComponent({
     return (
         <div className="h-full w-full pr-2 overflow-auto">
             <table className="w-full text-sm text-left">
-                <thead className="sticky top-0 bg-card text-neutral-400">
+                <thead className="sticky top-0 uds-bg-elevated text-neutral-400">
                     <tr>
                         <th className="pb-2 font-medium">{dateHeader}</th>
                         {chartKeys.map((key) => (

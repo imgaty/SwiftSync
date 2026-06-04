@@ -8,6 +8,8 @@
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
 import { memo, useMemo } from 'react'
+import { UDS } from '@/lib/UDS'
+import { cn } from '@/lib/utils'
 
 const STRENGTH_COLORS = ['text-red-500 dark:text-red-400', 'text-amber-500 dark:text-amber-400', 'text-emerald-500 dark:text-emerald-400']
 const STRENGTH_LABELS = ['Weak', 'Medium', 'Strong']
@@ -42,9 +44,10 @@ export const PasswordStrength = memo(function PasswordStrength({ password, stren
         {[1, 2, 3].map(level => (
           <div
             key={level}
-            className={`w-5 h-1 rounded-full transition-all duration-500 ${
-              strength >= level ? `${BAR_COLORS[level - 1]} scale-100` : 'bg-black/10 dark:bg-white/10 scale-90'
-            }`}
+            className={cn(
+              "h-1 w-5 sq-full transition-all duration-500",
+              strength >= level ? `${BAR_COLORS[level - 1]} scale-100` : cn(UDS.subtleFill, "scale-90"),
+            )}
           />
         ))}
       </div>
@@ -55,11 +58,12 @@ export const PasswordStrength = memo(function PasswordStrength({ password, stren
         {checks.map((c, i) => (
           <span
             key={c.label}
-            className={`text-[10px] font-mono w-5 h-4 flex items-center justify-center rounded transition-all duration-300 ${
+            className={cn(
+              'text-[10px] font-mono w-5 h-4 flex items-center justify-center sq transition-all duration-300',
               checkResults[i]
                 ? 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400'
-                : 'bg-black/5 dark:bg-white/5 text-neutral-400'
-            }`}
+                : cn(UDS.pillSurface, 'text-neutral-400')
+            )}
           >
             {c.label}
           </span>

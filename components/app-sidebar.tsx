@@ -12,7 +12,6 @@
 import Image from "next/image"
 import Link from "next/link"
 import * as React from "react"
-import { useEffect, useState } from "react"
 
 import { NavPages } from "@/components/nav-pages"
 import { NavUser } from "@/components/nav-user"
@@ -30,122 +29,30 @@ import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/components/auth-provider"
 import { getSidebarPageDefinitions } from "@/lib/sidebar-pages"
 import { useSidebarPagePreferences } from "@/hooks/use-sidebar-page-preferences"
-
-function ArgentMarkIcon({ className }: { className?: string }) {
-    const maskId = React.useId()
-
-    return (
-        <svg
-            aria-hidden
-            focusable="false"
-            viewBox="0 0 151 131"
-            fill="none"
-            className={className}
-        >
-            <mask id={maskId} maskUnits="userSpaceOnUse" x="-5" y="-4" width="161" height="142">
-                <path d="M151 0.273399H0V130.273H151V0.273399Z" fill="white" />
-                <path d="M0 130.273L151 2.2734" stroke="black" strokeWidth="15" />
-                <path d="M0 130.273L151 78.2734" stroke="black" strokeWidth="15" />
-            </mask>
-            <g mask={`url(#${maskId})`}>
-                <path d="M0 130.273L75.214 0L150.428 130.273H0Z" fill="currentColor" />
-            </g>
-        </svg>
-    )
-}
-
-interface UserProfile {
-    id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-    role: string;
-    dateOfBirth: string;
-    initials: string;
-    createdAt: string;
-}
+import { useUserProfile } from "@/hooks/use-user-profile"
+import { AuthError } from "@/lib/query-keys"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { t, language } = useLanguage()
     const { logout } = useAuth()
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-    const [isLoadingUser, setIsLoadingUser] = useState(true)
+    const { data: userProfile, isLoading: isLoadingUser, error, refetch } = useUserProfile()
 
-    // Function to fetch user profile
-    const fetchProfile = React.useCallback(async () => {
-        try {
-            const response = await fetch('/api/auth/profile', {
-                cache: 'no-store',
-                credentials: 'include',
-                headers: {
-                    'cache-control': 'no-cache',
-                    pragma: 'no-cache',
-                },
-            })
-            if (response.ok) {
-                const data = await response.json()
-                setUserProfile(data)
-                return true
-            } else if (response.status === 401) {
-                await logout()
-                return false
-            } else {
-                setUserProfile(null)
-                return false
-            }
-        } catch (error) {
-            console.error('Failed to fetch user profile:', error)
-            setUserProfile(null)
-            return false
-        } finally {
-            setIsLoadingUser(false)
+    React.useEffect(() => {
+        if (error instanceof AuthError) {
+            void logout()
         }
-    }, [logout])
-
-    const fetchProfileWithRetry = React.useCallback(async () => {
-        setIsLoadingUser(true)
-        const attempts = 3
-        for (let attempt = 0; attempt < attempts; attempt++) {
-            const ok = await fetchProfile()
-            if (ok) return
-            if (attempt < attempts - 1) {
-                await new Promise((resolve) => setTimeout(resolve, 350))
-            }
-        }
-    }, [fetchProfile])
-
-    // Fetch user profile on mount
-    useEffect(() => {
-        fetchProfileWithRetry()
-    }, [fetchProfileWithRetry])
+    }, [error, logout])
 
     // Listen for profile updates from settings dialog
-    useEffect(() => {
+    React.useEffect(() => {
         const handleProfileUpdate = () => {
-            fetchProfileWithRetry()
+            void refetch()
         }
         window.addEventListener('profile-updated', handleProfileUpdate)
         return () => {
             window.removeEventListener('profile-updated', handleProfileUpdate)
         }
-    }, [fetchProfileWithRetry])
-
-    useEffect(() => {
-        const onFocus = () => {
-            fetchProfileWithRetry()
-        }
-        const onVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                fetchProfileWithRetry()
-            }
-        }
-        window.addEventListener('focus', onFocus)
-        document.addEventListener('visibilitychange', onVisibilityChange)
-        return () => {
-            window.removeEventListener('focus', onFocus)
-            document.removeEventListener('visibilitychange', onVisibilityChange)
-        }
-    }, [fetchProfileWithRetry])
+    }, [refetch])
 
     // User data for NavUser
     const userData = {
@@ -179,22 +86,51 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarHeader className="px-2 pt-2 pb-1">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <CollapsedTooltip asChild size="lg" tooltip="Argent" className="group-data-[collapsible=icon]:p-2!">
+                        <CollapsedTooltip asChild size="lg" tooltip="Argent" className="group-data-[collapsible=icon]:p-1!">
                             <Link href="/" aria-label="Argent">
                                 <span className="flex min-w-0 flex-1 items-center justify-start text-sidebar-foreground group-data-[collapsible=icon]:hidden">
                                     <Image
                                         src="/full-icon-black.svg"
                                         alt=""
-                                        width={632}
-                                        height={167}
+                                        width={369}
+                                        height={104}
                                         priority
                                         aria-hidden
                                         draggable={false}
-                                        className="h-8 w-[121px] max-w-full shrink-0 object-contain dark:invert"
+                                        className="h-8 w-[114px] max-w-full shrink-0 object-contain dark:hidden"
+                                    />
+                                    <Image
+                                        src="/full-icon-white.svg"
+                                        alt=""
+                                        width={369}
+                                        height={104}
+                                        priority
+                                        aria-hidden
+                                        draggable={false}
+                                        className="hidden h-8 w-[114px] max-w-full shrink-0 object-contain dark:block"
                                     />
                                 </span>
                                 <span className="hidden shrink-0 items-center justify-start text-sidebar-foreground group-data-[collapsible=icon]:flex">
-                                    <ArgentMarkIcon className="block size-4 shrink-0 text-current" />
+                                    <Image
+                                        src="/icon-black.svg"
+                                        alt=""
+                                        width={84}
+                                        height={78}
+                                        priority
+                                        aria-hidden
+                                        draggable={false}
+                                        className="block size-6 shrink-0 object-contain dark:hidden"
+                                    />
+                                    <Image
+                                        src="/icon-white.svg"
+                                        alt=""
+                                        width={84}
+                                        height={78}
+                                        priority
+                                        aria-hidden
+                                        draggable={false}
+                                        className="hidden size-6 shrink-0 object-contain dark:block"
+                                    />
                                 </span>
                             </Link>
                         </CollapsedTooltip>

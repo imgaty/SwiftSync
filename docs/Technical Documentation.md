@@ -75,7 +75,7 @@ lib/                                    # Server-side logic (never sent to the b
   ├── bank-api.ts                       #   Card/IBAN lookup (Luhn, BIN, IBAN parsing)
   ├── PACE.ts                           #   Shared PACE rule types and evaluators
   ├── PACE.server.ts                    #   Server-side PACE execution against Prisma data
-  ├── PRISM.ts                          #   Shared overlay styling tokens (glass morphism)
+  ├── UDS.ts                            #   Shared overlay styling tokens (glass morphism)
   ├── data-access.ts                    #   Personal user-scoping helpers
   ├── permissions.ts                    #   Permission labels used by route guards
   ├── spreadsheet-utils.ts              #   Spreadsheet calculation engine and cell utilities
@@ -222,7 +222,7 @@ User
 | 8   | [API Reference](API%20Reference.md)                             | Endpoint overview for auth, banking, data, spreadsheets, and admin routes. |
 | 9   | [Future Implementation](Future%20Implementation.md)             | Planned improvements and currently unimplemented items.                       |
 | 10  | [Setup Guide](Setup%20Guide.md)                                 | Local setup and environment configuration.                                    |
-| 11  | [Visual Identity & Styling](Visual%20Identity%20%26%20Styling.md) | Design system, PRISM tokens, button variants, and glass morphism guide.     |
+| 11  | [Visual Identity & Styling](Visual%20Identity%20%26%20Styling.md) | Design system, UDS tokens, button variants, and glass morphism guide.     |
 | 12  | [Squircles](Squircles.md)                                      | Global squircle corner geometry, fallback behavior, and usage rules.         |
 
 <br>

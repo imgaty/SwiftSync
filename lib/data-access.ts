@@ -9,7 +9,15 @@
 //
 import { NextResponse } from "next/server"
 import type { AuthContext } from "@/lib/auth-helpers"
-import type { Permission } from "@/lib/permissions"
+
+export type Permission =
+    | "data:write"        // Create, update, delete financial data
+    | "data:read"         // View financial data
+    | "data:export"       // Export data
+    | "data:import"       // Import data
+    | "data:delete"       // Delete financial data
+    | "pace:manage"       // Create/edit PACE rules
+    | "bank:connect"      // Connect bank accounts
 
 // Build Prisma filters for the current personal account.
 export function scopeFilter(ctx: AuthContext): { userId: string } {

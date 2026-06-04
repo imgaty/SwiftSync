@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { TableInlineInput, TableToolbar, TableToolbarGroup } from "@/components/ui/table"
 import { useLanguage } from "@/components/language-provider"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 interface Notification {
@@ -47,10 +48,10 @@ interface Pagination {
 }
 
 const typeBadgeClasses: Record<string, string> = {
-    bill_due: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
-    budget_exceeded: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20",
-    goal_reached: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
-    general: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
+    bill_due: UDS.semanticBadge.warning,
+    budget_exceeded: UDS.destructiveBadge,
+    goal_reached: UDS.semanticBadge.positive,
+    general: UDS.semanticBadge.info,
 }
 
 function formatTimeAgo(dateStr: string, isPt: boolean) {
@@ -212,16 +213,16 @@ export default function NotificationsPage() {
                             icon={<Bell className="size-7" />}
                         />
                     ) : (
-                        <div className="divide-y divide-black/6 dark:divide-white/8">
+                        <div className="divide-y divide-black/12 dark:divide-white/14">
                             {notifications.map((notif) => (
                                 <div
                                     key={notif.id}
                                     className={cn(
                                         "flex items-start gap-3 px-5 py-4 md:px-6",
-                                        !notif.read && "bg-black/2 dark:bg-white/3",
+                                        !notif.read && UDS.subtleFill,
                                     )}
                                 >
-                                    <div className={cn("mt-2 size-2 rounded-full", notif.read ? "bg-neutral-400/60" : "bg-primary")} />
+                                    <div className={cn("mt-2 size-2 sq-full", notif.read ? "bg-neutral-400/60" : "bg-primary")} />
 
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">

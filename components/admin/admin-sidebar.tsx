@@ -44,7 +44,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/components/language-provider"
+import { UDS } from "@/lib/UDS"
 import { getTranslations, type LooseTranslations } from "@/lib/translation-utils"
+import { cn } from "@/lib/utils"
 
 interface AdminUser {
     id: string
@@ -139,9 +141,9 @@ export function AdminSidebar({ user }: { user: AdminUser }) {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <div className="flex items-center gap-2 px-2 py-1.5">
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                                <Shield className="h-4 w-4" />
+                        <div className={cn(UDS.commandTriggerSurface, "flex items-center gap-2 px-2 py-1.5")}>
+                            <div className={cn(UDS.surfaceClass({ background: "raised", blur: true, border: "muted", radius: "md", shadow: "flat" }), "flex size-7 shrink-0 items-center justify-center text-primary")}>
+                                <Shield className="size-4" />
                             </div>
                             <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
                                 <span className="font-semibold text-sm">Argent</span>
@@ -166,7 +168,7 @@ export function AdminSidebar({ user }: { user: AdminUser }) {
                     <SidebarMenuItem>
                         <CollapsedTooltip asChild tooltip={a.back_to_app || "Back to App"}>
                             <Link href="/">
-                                <LogOut className="h-4 w-4 rotate-180" />
+                                <LogOut className="size-4 rotate-180" />
                                 <span>{a.back_to_app || "Back to App"}</span>
                             </Link>
                         </CollapsedTooltip>
@@ -177,9 +179,9 @@ export function AdminSidebar({ user }: { user: AdminUser }) {
                     {/* Admin user */}
                     <SidebarMenuItem>
                         <div className="flex items-center gap-2 px-2 py-1.5">
-                            <Avatar className="h-7 w-7 rounded-md">
+                            <Avatar className="size-7 sq-md">
                                 <AvatarImage src={user.avatar || ""} alt={user.name} />
-                                <AvatarFallback className="rounded-md text-[10px] bg-primary/10 text-primary">
+                                <AvatarFallback className={cn(UDS.surfaceClass({ background: "subtle", blur: false, border: "muted", radius: "md", shadow: "flat" }), "text-[10px] text-primary")}>
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>

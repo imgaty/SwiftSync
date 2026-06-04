@@ -14,6 +14,8 @@ import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 
 // ==============================================================================
 // ADD CHART DIVIDER COMPONENT
@@ -54,11 +56,11 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                 onMouseLeave={() => { setIsHovered(false); setIsCenterHovered(false) }}
             >
                 {/* Left half of line */}
-                <div className={`absolute left-0 top-1/2 h-px transition-all duration-200 ease-out ${isHovered ? 'bg-border/40' : 'bg-transparent'} ${isCenterHovered ? 'right-[calc(50%+16px)]' : 'right-1/2'}`} />
+                <div className={`absolute left-0 top-1/2 h-px transition-all duration-200 ease-out ${isHovered ? UDS.hairline : 'bg-transparent'} ${isCenterHovered ? 'right-[calc(50%+16px)]' : 'right-1/2'}`} />
                 {/* Right half of line */}
-                <div className={`absolute right-0 top-1/2 h-px transition-all duration-200 ease-out ${isHovered ? 'bg-border/40' : 'bg-transparent'} ${isCenterHovered ? 'left-[calc(50%+16px)]' : 'left-1/2'}`} />
+                <div className={`absolute right-0 top-1/2 h-px transition-all duration-200 ease-out ${isHovered ? UDS.hairline : 'bg-transparent'} ${isCenterHovered ? 'left-[calc(50%+16px)]' : 'left-1/2'}`} />
                 {/* Center line (connects the two halves when not hovering center) */}
-                {!isCenterHovered && <div className={`absolute left-1/2 -translate-x-1/2 top-1/2 h-px w-px transition-all duration-200 ${isHovered ? 'bg-border/40' : 'bg-transparent'}`} />}
+                {!isCenterHovered && <div className={`absolute left-1/2 -translate-x-1/2 top-1/2 h-px w-px transition-all duration-200 ${isHovered ? UDS.hairline : 'bg-transparent'}`} />}
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button variant="ghost"
@@ -66,13 +68,14 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                             disabled={disabled}
                             onMouseEnter={() => setIsCenterHovered(true)}
                             onMouseLeave={() => setIsCenterHovered(false)}
-                            className={`relative z-10 flex items-center justify-center w-6 h-6 rounded-full border transition-all duration-200
-                                ${disabled 
-                                    ? 'opacity-30 cursor-not-allowed border-transparent' 
-                                    : isHovered 
-                                        ? 'opacity-100 border-border/50 bg-background text-neutral-400 hover:border-primary/50 hover:text-primary hover:scale-110' 
-                                        : 'opacity-0 border-transparent'
-                                }`}
+                            className={cn(
+                                "relative z-10 flex size-6 items-center justify-center sq-full transition-all duration-200",
+                                disabled
+                                    ? "cursor-not-allowed border border-transparent opacity-30"
+                                    : isHovered
+                                        ? cn("opacity-100 text-foreground-secondary hover:text-primary hover:scale-110", UDS.floatingPillSurface)
+                                        : "border border-transparent opacity-0"
+                            )}
                         >
                             <Plus className="w-3.5 h-3.5" />
                         </Button>
@@ -111,11 +114,11 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                     />
                 )}
                 {/* Top half of line */}
-                <div className={`absolute top-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? 'bg-border/50' : 'bg-transparent'} ${isCenterHovered ? 'bottom-[calc(50%+16px)]' : 'bottom-1/2'}`} />
+                <div className={`absolute top-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? UDS.hairlineStrong : 'bg-transparent'} ${isCenterHovered ? 'bottom-[calc(50%+16px)]' : 'bottom-1/2'}`} />
                 {/* Bottom half of line */}
-                <div className={`absolute bottom-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? 'bg-border/50' : 'bg-transparent'} ${isCenterHovered ? 'top-[calc(50%+16px)]' : 'top-1/2'}`} />
+                <div className={`absolute bottom-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? UDS.hairlineStrong : 'bg-transparent'} ${isCenterHovered ? 'top-[calc(50%+16px)]' : 'top-1/2'}`} />
                 {/* Center line */}
-                {!isCenterHovered && <div className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-px h-px transition-all duration-200 ${isHovered ? 'bg-border/50' : 'bg-transparent'}`} />}
+                {!isCenterHovered && <div className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-px h-px transition-all duration-200 ${isHovered ? UDS.hairlineStrong : 'bg-transparent'}`} />}
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button variant="ghost"
@@ -123,13 +126,14 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                             disabled={disabled}
                             onMouseEnter={() => setIsCenterHovered(true)}
                             onMouseLeave={() => setIsCenterHovered(false)}
-                            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex items-center justify-center w-6 h-6 rounded-full border transition-all duration-200
-                                ${disabled 
-                                    ? 'opacity-30 cursor-not-allowed border-transparent' 
-                                    : isHovered 
-                                        ? 'opacity-100 border-border/50 bg-background text-neutral-400 hover:border-primary/50 hover:text-primary hover:scale-110' 
-                                        : 'opacity-0 border-transparent pointer-events-none'
-                                }`}
+                            className={cn(
+                                "absolute left-1/2 top-1/2 z-40 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center sq-full transition-all duration-200",
+                                disabled
+                                    ? "cursor-not-allowed border border-transparent opacity-30"
+                                    : isHovered
+                                        ? cn("opacity-100 text-foreground-secondary hover:text-primary hover:scale-110", UDS.floatingPillSurface)
+                                        : "pointer-events-none border border-transparent opacity-0"
+                            )}
                         >
                             <Plus className="w-3.5 h-3.5" />
                         </Button>
@@ -154,11 +158,11 @@ export const AddChartDivider = React.memo(function AddChartDivider({
             onMouseLeave={() => { setIsHovered(false); setIsCenterHovered(false) }}
         >
             {/* Top half of line */}
-            <div className={`absolute top-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? 'bg-border/50' : 'bg-transparent'} ${isCenterHovered ? 'bottom-[calc(50%+16px)]' : 'bottom-1/2'}`} />
+            <div className={`absolute top-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? UDS.hairlineStrong : 'bg-transparent'} ${isCenterHovered ? 'bottom-[calc(50%+16px)]' : 'bottom-1/2'}`} />
             {/* Bottom half of line */}
-            <div className={`absolute bottom-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? 'bg-border/50' : 'bg-transparent'} ${isCenterHovered ? 'top-[calc(50%+16px)]' : 'top-1/2'}`} />
+            <div className={`absolute bottom-0 left-1/2 w-px -translate-x-1/2 transition-all duration-200 ease-out ${isHovered ? UDS.hairlineStrong : 'bg-transparent'} ${isCenterHovered ? 'top-[calc(50%+16px)]' : 'top-1/2'}`} />
             {/* Center line */}
-            {!isCenterHovered && <div className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-px h-px transition-all duration-200 ${isHovered ? 'bg-border/50' : 'bg-transparent'}`} />}
+            {!isCenterHovered && <div className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-px h-px transition-all duration-200 ${isHovered ? UDS.hairlineStrong : 'bg-transparent'}`} />}
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost"
@@ -166,13 +170,14 @@ export const AddChartDivider = React.memo(function AddChartDivider({
                         disabled={disabled}
                         onMouseEnter={() => setIsCenterHovered(true)}
                         onMouseLeave={() => setIsCenterHovered(false)}
-                        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 flex items-center justify-center w-6 h-6 rounded-full border transition-all duration-200
-                            ${disabled 
-                                ? 'opacity-30 cursor-not-allowed border-transparent' 
-                                : isHovered 
-                                    ? 'opacity-100 border-border/50 bg-background text-neutral-400 hover:border-primary/50 hover:text-primary hover:scale-110' 
-                                    : 'opacity-0 border-transparent pointer-events-none'
-                            }`}
+                        className={cn(
+                            "absolute left-1/2 top-1/2 z-40 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center sq-full transition-all duration-200",
+                            disabled
+                                ? "cursor-not-allowed border border-transparent opacity-30"
+                                : isHovered
+                                    ? cn("opacity-100 text-foreground-secondary hover:text-primary hover:scale-110", UDS.floatingPillSurface)
+                                    : "pointer-events-none border border-transparent opacity-0"
+                        )}
                     >
                         <Plus className="w-3.5 h-3.5" />
                     </Button>

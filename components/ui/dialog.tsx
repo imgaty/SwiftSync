@@ -14,7 +14,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 
 function Dialog({
     ...props
@@ -54,7 +54,7 @@ function DialogOverlay({
             className={cn(
                 "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
                 "fixed inset-0 z-50",
-                PRISM.overlay,
+                UDS.overlay,
                 className,
             )}
             {...props}
@@ -62,40 +62,42 @@ function DialogOverlay({
     )
 }
 
-// Inset highlight only — the dim is now on the overlay, not the content.
-const DIALOG_GLOW =
-    "shadow-[0_10px_28px_rgba(0,0,0,0.14),inset_0_0.5px_0_rgba(255,255,255,0.34)] " +
-    "dark:shadow-[0_10px_28px_rgba(0,0,0,0.22),inset_0_0.5px_0_rgba(255,255,255,0.18)]"
-
 function DialogContent({
     className,
     children,
+    hideOverlay = false,
+    overlayClassName,
     showCloseButton = true,
     variant = "default",
     ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
+    hideOverlay?: boolean
+    overlayClassName?: string
     showCloseButton?: boolean
     variant?: "default" | "form"
 }) {
     return (
         <DialogPortal>
-            <DialogOverlay />
+            {!hideOverlay && <DialogOverlay className={overlayClassName} />}
             <DialogPrimitive.Content
                 data-slot="dialog-content"
                 className={cn(
                     "data-[state=open]:animate-in data-[state=closed]:animate-out",
                     "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
                     "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
-                    "fixed left-1/2 top-[50dvh] -translate-x-1/2 -translate-y-1/2 z-50",
+                    "fixed left-1/2 top-[50dvh] -translate-x-1/2 -translate-y-1/2",
                     "flex flex-col gap-4",
                     variant === "default" && [
+                        "z-[1000]",
                         "w-[min(calc(100vw-2rem),440px)] max-h-[calc(100dvh-2rem)] overflow-y-auto",
-                        PRISM.container, "p-6 duration-200",
-                        DIALOG_GLOW,
+                        UDS.containerClass({ padding: false }), "p-6 duration-200",
+                        UDS.panelGlow,
                     ],
                     variant === "form" && [
-                        "w-full max-h-[calc(100dvh-2rem)] overflow-y-auto",
-                        "p-0 text-foreground outline-none focus:outline-none focus-visible:outline-none",
+                        "z-[1000]",
+                        "w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] overflow-y-auto",
+                        UDS.containerClass({ padding: false }), "p-6 duration-200",
+                        UDS.panelGlow,
                     ],
                     className,
                 )}
@@ -103,8 +105,8 @@ function DialogContent({
             >
                 {children}
                 {showCloseButton && (
-                    <DialogPrimitive.Close className={cn("absolute right-4 top-4", PRISM.closeButton)}>
-                        <X className="h-4 w-4" />
+                    <DialogPrimitive.Close className={cn("absolute right-4 top-4", UDS.closeButton)}>
+                        <X className="size-4" />
                         <span className="sr-only">Close</span>
                     </DialogPrimitive.Close>
                 )}
@@ -153,7 +155,7 @@ function DialogTitle({
         <DialogPrimitive.Title
         data-slot = "dialog-title"
         className={cn(
-            PRISM.title,
+            UDS.title,
             className
         )}
         {...props}
@@ -168,7 +170,7 @@ function DialogDescription({
     return (
         <DialogPrimitive.Description
         data-slot = "dialog-description"
-        className = {cn(PRISM.description, className)}
+        className = {cn(UDS.description, className)}
         {...props}
         />
     )

@@ -10,7 +10,6 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,7 +26,7 @@ import {
   PasswordStrength,
   usePasswordStrength,
 } from '@/components/auth'
-import { PRISM } from '@/lib/PRISM'
+import { UDS } from '@/lib/UDS'
 import { cn } from '@/lib/utils'
 import { postAuth } from '@/lib/auth-fetch'
 import { EMAIL_RE } from '@/lib/validation'
@@ -49,11 +48,11 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
         <div
           key={i}
           className={cn(
-            "h-[5px] rounded-full transition-all duration-300 ease-out",
+            "h-[5px] sq-full transition-all duration-300 ease-out",
             i <= current ? "w-10" : "w-6",
             i < current && "bg-primary",
             i === current && "bg-primary",
-            i > current && "bg-muted",
+            i > current && UDS.subtleFill,
           )}
         />
       ))}
@@ -64,7 +63,6 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 /* ═══════════════════════════════════════════════════════════════════════ */
 
 export default function RegisterPage() {
-  const router = useRouter()
   const { language, t } = useLanguage()
   const re = useTranslationNamespace('register_page_extra')
 
@@ -265,7 +263,7 @@ export default function RegisterPage() {
         /* ── 2FA Setup step ─────────────────────────────────────── */
         <div className="space-y-4 animate-fade-in">
           <div className="flex flex-col items-center text-center gap-3 mb-2">
-            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-500/10 mb-1">
+            <div className="flex items-center justify-center w-14 h-14 sq-full bg-blue-500/10 mb-1">
               <ShieldCheck className="w-7 h-7 text-blue-500 dark:text-blue-400" />
             </div>
             <h1 className="text-[22px] font-bold tracking-tight text-black dark:text-white">Set up Two-Factor Authentication</h1>
@@ -281,16 +279,18 @@ export default function RegisterPage() {
           {setupState === 'scanning' && qrDataUrl && (
             <div className="space-y-5">
               <div className="flex justify-center">
-                <div className="p-4 bg-white rounded-2xl shadow-sm border border-black/8">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- QR is a generated data URL; next/image adds no value here */}
-                  <img src={qrDataUrl} alt="2FA QR Code" className="w-[180px] h-[180px]" />
+                <div className={cn(UDS.largeTileSurface, "p-3")}>
+                  <div className="sq-xl p-1" style={{ backgroundColor: "#fff" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- QR is a generated data URL; next/image adds no value here */}
+                    <img src={qrDataUrl} alt="2FA QR Code" className="h-[180px] w-[180px]" />
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <p className="text-[12px] font-medium text-neutral-400 text-center">Or enter this code manually:</p>
                 <div className="flex items-center justify-center gap-2">
-                  <code className="px-3 py-2 rounded-lg bg-neutral-100 dark:bg-white/5 border border-black/8 dark:border-white/10 text-[13px] font-mono tracking-wider text-neutral-900 dark:text-white select-all">
+                  <code className={`${UDS.inlineSurface} select-all px-3 py-2 text-[13px] font-mono tracking-wider text-neutral-900 dark:text-white`}>
                     {secret}
                   </code>
                   <Button type="button" variant="glass" size="icon" onClick={copySecret}>
@@ -327,7 +327,7 @@ export default function RegisterPage() {
                     type="button"
                     variant="solid"
                     size="lg"
-                    className="flex-1"
+                    className="auth-primary-button flex-1"
                     onClick={handleVerify2FA}
                     disabled={is2FAVerifying || verifyCode.length < 6}
                   >
@@ -347,7 +347,7 @@ export default function RegisterPage() {
                 <Button type="button" variant="glass" size="lg" className="flex-1" onClick={() => { setTwoFAStep(false); setBankStep(true) }}>
                   Skip
                 </Button>
-                <Button type="button" variant="solid" size="lg" className="flex-1" onClick={start2FASetup}>
+                <Button type="button" variant="solid" size="lg" className="auth-primary-button flex-1" onClick={start2FASetup}>
                   Try again
                 </Button>
               </div>
@@ -358,7 +358,7 @@ export default function RegisterPage() {
         /* ── Step 4 — Bank connection ──────────────────────────────── */
         <div className="space-y-4 animate-fade-in">
           <div className="flex flex-col items-center text-center gap-3 mb-2">
-            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 mb-1">
+            <div className="flex items-center justify-center w-14 h-14 sq-full bg-emerald-500/10 mb-1">
               <CheckCircle2 className="w-7 h-7 text-emerald-500 dark:text-emerald-400" />
             </div>
             <h1 className="text-[22px] font-bold tracking-tight text-black dark:text-white">Account created!</h1>
@@ -367,9 +367,9 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <div className={`${PRISM.surface} p-4`}>
+          <div className={`${UDS.surface} p-4`}>
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex items-center justify-center w-8 h-8 shrink-0 rounded-full bg-blue-500/10">
+              <div className="mt-0.5 flex items-center justify-center w-8 h-8 shrink-0 sq-full bg-blue-500/10">
                 <Building2 className="w-4 h-4 text-blue-500 dark:text-blue-400" />
               </div>
               <div className="text-sm">
@@ -384,7 +384,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className={`${PRISM.surface} border-dashed p-3 text-center text-xs text-neutral-400`}>
+          <div className={`${UDS.surface} border-dashed p-3 text-center text-xs text-neutral-400`}>
             <p>Your banking credentials are handled directly by your bank.</p>
             <p className="mt-1">Argent never sees or stores your login details.</p>
           </div>
@@ -392,11 +392,13 @@ export default function RegisterPage() {
           <ErrorAlert message={connectError} />
 
           <div className="space-y-4 pt-2">
-            <Button type="button" variant="solid" size="lg" className="w-full gap-2" disabled={isConnectingBank} onClick={handleBankConnect}>
+            <Button type="button" variant="solid" size="lg" className="auth-primary-button w-full gap-2" disabled={isConnectingBank} onClick={handleBankConnect}>
               {isConnectingBank ? <><Loader2 className="w-5 h-5 animate-spin" />Connecting...</> : <><Building2 className="w-5 h-5" />Connect Your Bank</>}
             </Button>
-            <Button variant="ghost" type="button" onClick={() => router.push('/')} className="w-full h-10 text-[13px] font-medium text-neutral-400 hover:text-black dark:hover:text-neutral-400 transition-colors cursor-pointer">
-              Skip for now — I&apos;ll add accounts later
+            <Button asChild variant="glass" size="lg" className="w-full">
+              <Link href="/">
+                Skip for now — I&apos;ll add accounts later
+              </Link>
             </Button>
           </div>
         </div>
@@ -428,16 +430,16 @@ export default function RegisterPage() {
                     required
                   />
 
-                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className="auth-primary-button w-full" disabled={loading}>
                     {loading
                       ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Checking...</>
                       : <>Continue<ArrowRight className="w-4 h-4" /></>}
                   </Button>
 
                   <div className="flex items-center gap-3">
-                    <div className={PRISM.dividerLine} />
-                    <span className={PRISM.dividerLabel}>{t.oauth_buttons?.divider_label ?? 'or'}</span>
-                    <div className={PRISM.dividerLine} />
+                    <div className={UDS.dividerLine} />
+                    <span className={UDS.dividerLabel}>{t.oauth_buttons?.divider_label ?? 'or'}</span>
+                    <div className={UDS.dividerLine} />
                   </div>
 
                   <div className="pb-2"><OAuthButtons mode="register" /></div>
@@ -473,7 +475,7 @@ export default function RegisterPage() {
                     dobMode
                   />
 
-                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className="auth-primary-button w-full" disabled={loading}>
                     Continue
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -509,14 +511,14 @@ export default function RegisterPage() {
                       onChange={e => setConfirmPassword(e.target.value)}
                       disabled={loading}
                       required
-                      className={confirmPassword && password !== confirmPassword ? PRISM.destructiveValidation : ''}
+                      className={confirmPassword && password !== confirmPassword ? UDS.destructiveValidation : ''}
                     />
                     {confirmPassword && password !== confirmPassword && (
                       <p className="text-xs text-red-400 mt-1 ml-1">Passwords don&apos;t match</p>
                     )}
                   </div>
 
-                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading || (!!password && !allPassed)}>
+                  <Button type="submit" variant="solid" size="lg" className="auth-primary-button w-full" disabled={loading || (!!password && !allPassed)}>
                     Continue
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -539,11 +541,11 @@ export default function RegisterPage() {
                     {/* Recovery Email toggle */}
                     <AccordionItem value="recovery">
                       <AccordionTrigger asChild>
-                        <div className={`${PRISM.surface} p-4 transition-colors duration-200 ${enableRecoveryEmail ? 'ring-1 ring-emerald-500/20' : ''}`}>
+                        <div className={`${UDS.surface} p-4 transition-colors duration-200 ${enableRecoveryEmail ? 'ring-1 ring-emerald-500/20' : ''}`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className={cn(
-                                "flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200",
+                                "flex items-center justify-center w-9 h-9 sq-full transition-colors duration-200",
                                 enableRecoveryEmail ? "bg-emerald-500/15" : "bg-emerald-500/10"
                               )}>
                                 <Shield className={cn(
@@ -582,11 +584,11 @@ export default function RegisterPage() {
                     {/* 2FA toggle */}
                     <AccordionItem value="2fa" className="mt-4">
                       <AccordionTrigger asChild>
-                        <div className={`${PRISM.surface} p-4 transition-colors duration-200 ${enable2FA ? 'ring-1 ring-blue-500/20' : ''}`}>
+                        <div className={`${UDS.surface} p-4 transition-colors duration-200 ${enable2FA ? 'ring-1 ring-blue-500/20' : ''}`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className={cn(
-                                "flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200",
+                                "flex items-center justify-center w-9 h-9 sq-full transition-colors duration-200",
                                 enable2FA ? "bg-blue-500/15" : "bg-blue-500/10"
                               )}>
                                 <Smartphone className={cn(
@@ -609,7 +611,7 @@ export default function RegisterPage() {
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="px-1">
-                          <div className={`${PRISM.surface} border-dashed p-3 text-xs text-neutral-400`}>
+                          <div className={`${UDS.surface} border-dashed p-3 text-xs text-neutral-400`}>
                             <p>After creating your account, you&apos;ll scan a QR code with your authenticator app (Google Authenticator, Authy, etc.) and enter a 6-digit code to confirm.</p>
                           </div>
                         </div>
@@ -617,7 +619,7 @@ export default function RegisterPage() {
                     </AccordionItem>
                   </Accordion>
 
-                  <Button type="submit" variant="solid" size="lg" className="w-full" disabled={loading}>
+                  <Button type="submit" variant="solid" size="lg" className="auth-primary-button w-full" disabled={loading}>
                     {loading
                       ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Creating account...</>
                       : <>Create account<ArrowRight className="w-4 h-4" /></>}

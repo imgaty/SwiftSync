@@ -17,6 +17,7 @@ const PUBLIC_PREFIXES = [
   "/forgot-password",
   "/reset-password",
   "/docs",
+  "/logo-demo",
 ]
 
 function isPublic(pathname: string): boolean {

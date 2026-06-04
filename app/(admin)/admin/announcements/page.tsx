@@ -18,12 +18,13 @@ import {
 import { AdminHeader } from "@/components/admin/admin-header"
 import { EmptyState } from "@/components/empty-state"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { getTranslations } from "@/lib/translation-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
@@ -56,10 +57,10 @@ function typeIcon(type: string) {
 
 function typeBadge(type: string) {
     const styles: Record<string, string> = {
-        info: "border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400",
-        warning: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-        critical: PRISM.destructiveBadge,
-        maintenance: "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+        info: UDS.semanticBadge.info,
+        warning: UDS.semanticBadge.warning,
+        critical: UDS.destructiveBadge,
+        maintenance: UDS.semanticBadge.info,
     }
     return <Badge variant="outline" className={`capitalize text-xs ${styles[type] || ""}`}>{type}</Badge>
 }
@@ -187,7 +188,7 @@ export default function AdminAnnouncementsPage() {
                 {loading ? (
                     <div className="space-y-4">
                         {[...Array(4)].map((_, i) => (
-                            <div key={i} className="rounded-xl border border-black/10 dark:border-white/10 p-4">
+                            <div key={i} className={`${UDS.panelSurface} p-4`}>
                                 <div className="flex items-start justify-between">
                                     <div className="space-y-2">
                                         <Skeleton className="h-5 w-48" />
@@ -215,7 +216,7 @@ export default function AdminAnnouncementsPage() {
                 ) : (
                     <div className="space-y-4">
                         {data.map(a => (
-                            <div key={a.id} className={`rounded-xl border p-4 transition-colors ${a.isActive ? "border-black/10 dark:border-white/10" : "border-black/5 dark:border-white/5 opacity-60"}`}>
+                            <div key={a.id} className={`${UDS.panelSurface} p-4 transition-colors ${a.isActive ? "" : "opacity-60"}`}>
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
@@ -223,8 +224,8 @@ export default function AdminAnnouncementsPage() {
                                             <h3 className="font-semibold text-sm">{a.title}</h3>
                                             {typeBadge(a.type)}
                                             {a.isActive
-                                                ? <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs">Active</Badge>
-                                                : <Badge variant="outline" className="text-neutral-400 text-xs">Inactive</Badge>}
+                                                ? <Badge variant="outline" className={`${UDS.semanticBadge.positive} text-xs`}>Active</Badge>
+                                                : <Badge variant="outline" className={`${UDS.semanticBadge.neutral} text-xs`}>Inactive</Badge>}
                                         </div>
                                         <p className="text-sm text-neutral-400 mb-2">{a.message}</p>
                                         <div className="flex items-center gap-3 text-xs text-neutral-400">
@@ -268,8 +269,8 @@ export default function AdminAnnouncementsPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>{ap.message || "Message"}</Label>
-                            <textarea
-                                className="min-h-24 w-full resize-none rounded-xl border border-[color:var(--input)] bg-[var(--surface)] px-4 py-3 text-[15px] text-foreground shadow-[var(--shadow-subtle)] outline-none transition-all placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-focus/70 focus:ring-offset-2 focus:ring-offset-background"
+                            <Textarea
+                                className="resize-none"
                                 value={form.message}
                                 onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                                 placeholder={ap.message || "Announcement message..."}

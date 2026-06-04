@@ -45,7 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/components/auth-provider"
 import { useSettings } from "@/hooks/use-settings"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 export function NavUser({
@@ -67,6 +67,7 @@ export function NavUser({
   const settings = useSettings()
   const isAdmin = user.role === "admin" || user.role === "superadmin"
   const [dropdownOpen, setDropdownOpen] = React.useState(false)
+  const sidebarSkeletonClass = "!bg-sidebar-foreground/10 dark:!bg-sidebar-foreground/15"
 
   // Generate initials from name
   const initials = user.name
@@ -80,20 +81,28 @@ export function NavUser({
     await logout()
   }
 
-  const handleOpenAccountSettings = React.useCallback(() => {
+  const openSettingsPage = React.useCallback((page: "account" | "customization") => {
     setDropdownOpen(false)
-    settings.open("account")
+    window.requestAnimationFrame(() => settings.open(page))
   }, [settings])
+
+  const handleOpenAccountSettings = React.useCallback(() => {
+    openSettingsPage("account")
+  }, [openSettingsPage])
+
+  const handleOpenCustomizationSettings = React.useCallback(() => {
+    openSettingsPage("customization")
+  }, [openSettingsPage])
 
   if (isLoading) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
           <div className="flex items-center gap-2 p-2">
-            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className={cn("size-8 sq-lg", sidebarSkeletonClass)} />
             <div className="flex-1 group-data-[collapsible=icon]:hidden">
-              <Skeleton className="h-4 w-24 mb-1" />
-              <Skeleton className="h-3 w-32" />
+              <Skeleton className={cn("h-4 w-24 mb-1", sidebarSkeletonClass)} />
+              <Skeleton className={cn("h-3 w-32", sidebarSkeletonClass)} />
             </div>
           </div>
         </SidebarMenuItem>
@@ -107,15 +116,15 @@ export function NavUser({
         <Dropdown open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownTrigger asChild>
             <CollapsedTooltip size="lg">
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className="size-8 sq-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                <AvatarFallback className="sq-lg !bg-sidebar-foreground/10 text-sidebar-accent-foreground dark:!bg-sidebar-foreground/15">{initials}</AvatarFallback>
               </Avatar>
-              <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+              <div className="grid min-w-0 flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="auto-scroll font-medium">{user.name}</span>
                 <span className="auto-scroll text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
             </CollapsedTooltip>
           </DropdownTrigger>
           <DropdownContent
@@ -131,15 +140,15 @@ export function NavUser({
                 data-glide-item="account-settings"
                 onClick={handleOpenAccountSettings}
                 className={cn(
-                  PRISM.item,
-                  PRISM.glideItem,
-                  PRISM.itemIcon,
-                  "w-full cursor-pointer px-4 py-2 text-left text-sm"
+                  UDS.item,
+                  UDS.glideItem,
+                  UDS.itemIcon,
+                  "h-auto min-h-12 w-full cursor-pointer px-4 py-2 text-left text-sm"
                 )}
               >
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar className="size-8 sq-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                  <AvatarFallback className="sq-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
                   <span className="auto-scroll font-medium">{user.name}</span>
@@ -159,7 +168,7 @@ export function NavUser({
               onSelectSide={(s) => setSide(s as "left" | "right")}
             />
             <DropdownSeparator />
-            <DropdownSectionItem onSelect={() => settings.open("customization")} icon={<Settings />}>
+            <DropdownSectionItem onSelect={handleOpenCustomizationSettings} icon={<Settings />}>
               {language === 'pt' ? 'Configurações' : 'Settings'}
             </DropdownSectionItem>
             {isAdmin && (

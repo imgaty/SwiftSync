@@ -287,7 +287,7 @@ This checklist tracks source-owned files only. Generated, dependency, build, loc
 - [ ] [lib/PACE.ts](<lib/PACE.ts>)
 - [ ] [lib/password.ts](<lib/password.ts>)
 - [ ] [lib/permissions.ts](<lib/permissions.ts>)
-- [ ] [lib/PRISM.ts](<lib/PRISM.ts>)
+- [ ] [lib/UDS.ts](<lib/UDS.ts>)
 - [ ] [lib/prisma.ts](<lib/prisma.ts>)
 - [ ] [lib/query-keys.ts](<lib/query-keys.ts>)
 - [ ] [lib/query-utils.ts](<lib/query-utils.ts>)

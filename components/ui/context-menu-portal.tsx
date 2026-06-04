@@ -12,19 +12,19 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { ChevronRight } from "lucide-react"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PrismGlideMenu, PrismGlideMenuItem } from "@/components/ui/glide-highlight"
+import { UDSGlideMenu, UDSGlideMenuItem } from "@/components/ui/glide-highlight"
 
 /* ─── Constants ────────────────────────────────────────────────────── */
 const ANIM_OUT_MS = 120
 const VIEWPORT_MARGIN = 16 // 1rem
 
 const MENU_ITEM_DESTRUCTIVE = [
-    PRISM.item,
-    PRISM.glideItem,
-    PRISM.itemIcon,
+    UDS.item,
+    UDS.glideItem,
+    UDS.itemIcon,
     "text-red-400",
     "hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400",
     "data-[active=true]:bg-red-500/10 data-[active=true]:text-red-500 dark:data-[active=true]:text-red-400",
@@ -34,9 +34,9 @@ const MENU_ITEM_DESTRUCTIVE = [
 ].join(" ")
 
 const MENU_ITEM_DEFAULT = cn(
-    PRISM.item,
-    PRISM.glideItem,
-    PRISM.itemIcon,
+    UDS.item,
+    UDS.glideItem,
+    UDS.itemIcon,
     "min-h-11 w-full cursor-pointer text-left",
     "[&>span:first-of-type]:flex-1 [&>span:first-of-type]:min-w-0 [&>span:first-of-type]:truncate",
 )
@@ -234,15 +234,15 @@ export function ContextMenuPortal({
     }, [doClose])
 
     return createPortal(
-        <PrismGlideMenu
+        <UDSGlideMenu
             ref={ref}
             role="menu"
             aria-label="Context menu"
             className={cn(
                 "fixed w-[220px] max-w-[calc(100vw-2rem)]",
-                "rounded-[calc(var(--radius)+0.875rem)]",
-                PRISM.container,
-                closing ? PRISM.animateOut.replace('data-[state=closed]:', '') : PRISM.animateIn.replace('data-[state=open]:', ''),
+                "sq-radius-plus",
+                UDS.transientSurface,
+                closing ? UDS.animateOut.replace('data-[state=closed]:', '') : UDS.animateIn.replace('data-[state=open]:', ''),
             )}
             contentClassName="space-y-0.5"
             style={anchor === "bottom-right" ? {
@@ -270,11 +270,11 @@ export function ContextMenuPortal({
         >
                 {menuEntries.map(({ id, item }) => (
                     <React.Fragment key={id}>
-                        {item.separator && <div className={PRISM.separator} />}
+                        {item.separator && <div className={UDS.separator} />}
                         {item.sub ? (
                             <SubMenu item={item} glideId={id} active={activeId === id} onClose={doClose} />
                         ) : (
-                            <PrismGlideMenuItem
+                            <UDSGlideMenuItem
                                 role="menuitem"
                                 glideId={id}
                                 data-active={activeId === id}
@@ -284,18 +284,18 @@ export function ContextMenuPortal({
                             >
                                 {item.icon ? <span className="flex shrink-0 items-center justify-center">{item.icon}</span> : null}
                                 <span className="flex-1 min-w-0 truncate">{item.label}</span>
-                                {item.shortcut ? <span className={PRISM.shortcut}>{item.shortcut}</span> : null}
-                            </PrismGlideMenuItem>
+                                {item.shortcut ? <span className={UDS.shortcut}>{item.shortcut}</span> : null}
+                            </UDSGlideMenuItem>
                         )}
                     </React.Fragment>
                 ))}
                 {segmentEntries.length > 0 ? (
                     <>
-                        <div className={PRISM.separator} />
+                        <div className={UDS.separator} />
                         <div
                             role="group"
                             aria-label={segmentLabel}
-                            className={PRISM.glideSegmentGroup}
+                            className={UDS.glideSegmentGroup}
                             style={{ gridTemplateColumns: `repeat(${segmentEntries.length}, minmax(0, 1fr))` }}
                         >
                             {segmentEntries.map(({ id, segment }) => (
@@ -308,7 +308,7 @@ export function ContextMenuPortal({
                                     id={id}
                                     disabled={segment.disabled}
                                     tabIndex={activeId === id ? 0 : -1}
-                                    className={PRISM.glideSegmentItem}
+                                    className={UDS.glideSegmentItem}
                                 >
                                     {segment.icon ? <span className="flex shrink-0 items-center justify-center">{segment.icon}</span> : null}
                                     <span className="truncate">{segment.label}</span>
@@ -317,7 +317,7 @@ export function ContextMenuPortal({
                         </div>
                     </>
                 ) : null}
-            </PrismGlideMenu>,
+            </UDSGlideMenu>,
         document.body,
     )
 }
@@ -414,7 +414,7 @@ function SubMenu({
 
     return (
         <div ref={triggerRef} className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-            <PrismGlideMenuItem
+            <UDSGlideMenuItem
                 role="menuitem"
                 aria-haspopup="menu"
                 aria-expanded={open}
@@ -436,14 +436,14 @@ function SubMenu({
             >
                 {item.icon ? <span className="flex shrink-0 items-center justify-center">{item.icon}</span> : null}
                 <span className="flex-1 min-w-0 truncate">{item.label}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5" />
-            </PrismGlideMenuItem>
+                <ChevronRight className="ml-auto size-3.5" />
+            </UDSGlideMenuItem>
             {visible && item.sub && createPortal(
-                <PrismGlideMenu
+                <UDSGlideMenu
                     ref={subRef}
                     role="menu"
                     aria-label={`${item.label} submenu`}
-                    className={cn("fixed w-[220px]", PRISM.container, closing ? PRISM.animateOut.replace('data-[state=closed]:', '') : PRISM.animateIn.replace('data-[state=open]:', ''))}
+                    className={cn("fixed w-[220px]", UDS.transientSurface, closing ? UDS.animateOut.replace('data-[state=closed]:', '') : UDS.animateIn.replace('data-[state=open]:', ''))}
                     contentClassName="space-y-0.5"
                     style={{ position: "fixed", left: subPos.left, top: subPos.top, pointerEvents: closing ? "none" : undefined }}
                     defaultActiveId={defaultActiveId}
@@ -463,11 +463,11 @@ function SubMenu({
                 >
                     {subEntries.map(({ id, item: subItem }) => (
                         <React.Fragment key={id}>
-                            {subItem.separator && <div className={PRISM.separator} />}
+                            {subItem.separator && <div className={UDS.separator} />}
                             {subItem.sub ? (
                                 <SubMenu item={subItem} glideId={id} active={activeId === id} onClose={onClose} />
                             ) : (
-                                <PrismGlideMenuItem
+                                <UDSGlideMenuItem
                                     role="menuitem"
                                     glideId={id}
                                     data-active={activeId === id}
@@ -477,12 +477,12 @@ function SubMenu({
                                 >
                                     {subItem.icon ? <span className="flex shrink-0 items-center justify-center">{subItem.icon}</span> : null}
                                     <span className="flex-1 min-w-0 truncate">{subItem.label}</span>
-                                    {subItem.shortcut ? <span className={PRISM.shortcut}>{subItem.shortcut}</span> : null}
-                                </PrismGlideMenuItem>
+                                    {subItem.shortcut ? <span className={UDS.shortcut}>{subItem.shortcut}</span> : null}
+                                </UDSGlideMenuItem>
                             )}
                         </React.Fragment>
                     ))}
-                </PrismGlideMenu>,
+                </UDSGlideMenu>,
                 document.body,
             )}
         </div>

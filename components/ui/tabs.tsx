@@ -12,6 +12,7 @@
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Tabs({
@@ -35,7 +36,8 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "bg-muted text-neutral-400 inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+        UDS.surface,
+        "inline-flex h-9 w-fit items-center justify-center p-[3px] text-neutral-400",
         className
       )}
       {...props}
@@ -51,7 +53,13 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-neutral-400 inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        UDS.item,
+        UDS.itemHover,
+        UDS.itemStateActive,
+        "inline-flex h-[calc(100%-1px)] flex-1 justify-center gap-1.5 sq-full border border-transparent sq-border-muted px-2 py-1 text-[13px] font-medium whitespace-nowrap text-foreground dark:text-neutral-400",
+        "data-[state=active]:text-foreground",
+        "focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.9]",
         className
       )}
       {...props}

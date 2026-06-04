@@ -28,7 +28,7 @@ import {
 } from "@/components/dashboard/dashboard-primitives"
 import { Button } from "@/components/ui/button"
 import { TabSwitcher, TabSwitcherItem } from "@/components/ui/tab-switcher"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import type {
     CompactCurrencyFormatter,
@@ -50,34 +50,29 @@ interface AnalyticsInsight {
     value: string
 }
 
-const ANALYTICS_CARD_RADIUS_CLASS = "rounded-[10px]"
+const ANALYTICS_CARD_RADIUS_CLASS = "sq-10"
 const ANALYTICS_CARD_PADDING_CLASS = "px-3 py-2.5"
 const ANALYTICS_ACTION_BUTTON_CLASS = cn(DASHBOARD_ACTION_BUTTON_CLASS, "hover:scale-100 active:scale-100")
 const ANALYTICS_ACTION_ICON_CLASS = "size-3.5"
 const ANALYTICS_SECTION_GAP_CLASS = "gap-3"
-const ANALYTICS_TOGGLE_CLASS = "h-7 min-h-7 gap-0.5 p-0.5"
-const ANALYTICS_TOGGLE_ITEM_CLASS = "h-6 px-2.5 text-[12px]"
+const ANALYTICS_TOGGLE_CLASS = "h-8 min-h-8 gap-0.5 p-0.5"
+const ANALYTICS_TOGGLE_ITEM_CLASS = "h-7 min-w-8 px-2.5 text-[12px] leading-none sm:min-w-[7rem] sm:px-3"
 
-const ANALYTICS_METRIC_TONE_STYLES: Record<AnalyticsInsightTone, { icon: string; rail: string }> = {
+const ANALYTICS_METRIC_TONE_STYLES: Record<AnalyticsInsightTone, { icon: string }> = {
     negative: {
         icon: "text-red-500 dark:text-red-400",
-        rail: "before:bg-red-500",
     },
     warning: {
         icon: "text-amber-500 dark:text-amber-400",
-        rail: "before:bg-amber-500",
     },
     positive: {
         icon: "text-emerald-500 dark:text-emerald-400",
-        rail: "before:bg-emerald-500",
     },
     accent: {
         icon: "text-sky-500 dark:text-sky-400",
-        rail: "before:bg-sky-500",
     },
     neutral: {
         icon: "text-muted-foreground",
-        rail: "before:bg-muted-foreground",
     },
 }
 
@@ -162,22 +157,20 @@ function AnalyticsInsightStrip({
                         key={insight.id}
                         role="listitem"
                         className={cn(
-                            "relative min-w-0 overflow-hidden border",
-                            PRISM.cardSurface,
+                            "relative min-w-0 overflow-hidden",
+                            UDS.cardSurface,
                             ANALYTICS_CARD_RADIUS_CLASS,
                             ANALYTICS_CARD_PADDING_CLASS,
-                            "shadow-none transition-colors duration-150 hover:bg-[color:color-mix(in_srgb,var(--surface-elevated)_70%,transparent)] dark:hover:bg-white/[0.055]",
-                            isLead && [
-                                "pl-4 ring-1 ring-black/[0.035] dark:ring-white/[0.07]",
-                                "before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-full before:content-['']",
-                                toneStyles.rail,
-                            ],
+                            UDS.cardFlatShadow,
+                            "transition-colors duration-150",
+                            UDS.cardHover,
+                            isLead && UDS.cardSelected,
                         )}
                         data-analytics-insight={insight.id}
                         data-lead={isLead ? "true" : undefined}
                     >
                         <div className="flex min-w-0 items-center gap-2">
-                            <Icon className={cn("size-3.5 shrink-0", toneStyles.icon)} />
+                            <Icon className={cn("size-4 shrink-0", toneStyles.icon)} />
                             <span className="min-w-0 truncate text-[11px] font-semibold text-foreground-secondary">
                                 {insight.label}
                             </span>
@@ -256,7 +249,7 @@ export function DashboardAnalyticsPanel({
             title={dashboardLabels.analytics}
             icon={BarChart3}
             className="min-h-0 gap-0"
-            action={
+            tools={
                 <div className="flex items-center gap-1.5">
                     <TabSwitcher ariaLabel={dashboardLabels.analytics} className={ANALYTICS_TOGGLE_CLASS}>
                         <TabSwitcherItem
@@ -287,24 +280,16 @@ export function DashboardAnalyticsPanel({
             }
         >
             <div className={cn("flex h-full min-h-0 min-w-0 flex-col overflow-hidden", ANALYTICS_SECTION_GAP_CLASS)}>
-                <div className={cn(
-                    "min-h-0 min-w-0 flex-1 overflow-hidden",
-                    showCashFlow && "grid gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.42fr)]",
-                )}>
-                    <div className={cn("h-full min-h-0 overflow-hidden", showCashFlow && "hidden 2xl:block")}>
+                <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+                    {!showCashFlow ? (
                         <ChartAreaInteractive accountIds={selectedAccountIds} compact transactions={transactions} />
-                    </div>
-                    {showCashFlow && (
-                        <div className="h-full min-h-0 overflow-hidden 2xl:grid 2xl:grid-cols-[auto_minmax(0,1fr)] 2xl:gap-3">
-                            <div aria-hidden className={cn(PRISM.separator, "my-0 mb-3 2xl:hidden")} />
-                            <div aria-hidden className={cn(PRISM.separatorVertical, "hidden h-full 2xl:block")} />
-                            <div className="h-full min-h-0 overflow-hidden">
-                                <CashFlowCard accountIds={selectedAccountIds} compact />
-                            </div>
+                    ) : (
+                        <div className="h-full min-h-0 overflow-hidden">
+                            <CashFlowCard accountIds={selectedAccountIds} compact />
                         </div>
                     )}
                 </div>
-                <div aria-hidden className={cn(PRISM.separator, "my-0")} />
+                <div aria-hidden className={cn(UDS.separator, "my-0")} />
                 <AnalyticsInsightStrip
                     ariaLabel={`${dashboardLabels.analytics} ${dashboardLabels.overview}`}
                     insights={analyticsInsights}

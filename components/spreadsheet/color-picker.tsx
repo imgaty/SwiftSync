@@ -13,6 +13,8 @@ import * as React from "react"
 import { Dropdown, DropdownTrigger, DropdownContent } from "@/components/ui/dropdown"
 import { Button } from "@/components/ui/button"
 import { COLOR_PRESETS } from "@/lib/spreadsheet-utils"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 
 /**
  * Color picker dropdown. Renders the children as the trigger (Radix asChild)
@@ -51,11 +53,11 @@ export function ColorPickerPopover({
                 {showAutomatic && (
                     <Button variant="ghost"
                         type="button"
-                        className="mb-2 flex w-full items-center gap-2 rounded-md px-2 py-1 text-[12px] hover:bg-black/5 dark:hover:bg-white/5"
+                        className={cn("mb-2 flex w-full items-center gap-2 sq-md px-2 py-1 text-[12px]", UDS.itemHover)}
                         onClick={() => pick(automaticColor)}
                     >
                         <span
-                            className="inline-block h-4 w-4 rounded-sm border border-black/10 dark:border-white/10"
+                            className="inline-block size-4 sq-sm border sq-border-muted"
                             style={{ backgroundColor: automaticColor }}
                         />
                         {automaticLabel}
@@ -69,10 +71,10 @@ export function ColorPickerPopover({
                             key={c}
                             type="button"
                             className={[
-                                "h-5 w-5 cursor-pointer rounded-sm border transition-transform hover:scale-105",
-                                selectedColor.toLowerCase() === c.toLowerCase()
-                                    ? "border-primary ring-2 ring-primary/30"
-                                    : "border-black/10 dark:border-white/10",
+                                "size-5 cursor-pointer sq-sm border transition-transform hover:scale-105",
+	                                selectedColor.toLowerCase() === c.toLowerCase()
+	                                    ? UDS.selectedRing
+	                                    : "sq-border-muted",
                             ].join(" ")}
                             style={{ backgroundColor: c }}
                             onClick={() => pick(c)}
@@ -81,13 +83,13 @@ export function ColorPickerPopover({
                     ))}
                 </div>
 
-                <div className="mt-2 flex items-center gap-2 rounded-md border border-black/10 bg-black/2 px-2 py-1.5 dark:border-white/10 dark:bg-white/2">
-                    <span className="h-4 w-4 rounded-sm border border-black/10 dark:border-white/10" style={{ backgroundColor: selectedColor }} />
+                <div className={`${UDS.inlineSurface} mt-2 flex items-center gap-2 px-2 py-1.5`}>
+                    <span className="size-4 sq-sm border sq-border-muted" style={{ backgroundColor: selectedColor }} />
                     <span className="font-mono text-[10px] text-neutral-500">{selectedColor.toUpperCase()}</span>
                     <input
                         type="color"
                         value={customColor}
-                        className="ml-auto h-6 w-8 cursor-pointer rounded border-0"
+                        className="ml-auto h-6 w-8 cursor-pointer sq border-0"
                         onChange={(e) => {
                             setCustomColor(e.target.value)
                             pick(e.target.value)
@@ -95,7 +97,7 @@ export function ColorPickerPopover({
                     />
                     <Button variant="ghost"
                         type="button"
-                        className="cursor-pointer rounded px-1.5 py-0.5 text-[11px] text-neutral-500 hover:bg-black/5 hover:text-neutral-800 dark:hover:bg-white/5 dark:hover:text-neutral-200"
+                        className={cn("cursor-pointer sq px-1.5 py-0.5 text-[11px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200", UDS.itemHover)}
                         onClick={() => pick("")}
                     >
                         No color

@@ -16,7 +16,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 
 export function SettingRow({
     label,
@@ -80,5 +80,5 @@ export function SettingsSection({
 }
 
 export function SettingsDivider() {
-    return <div className={cn(PRISM.separator, "my-5")} />
+    return <div className={cn(UDS.separator, "my-5")} />
 }

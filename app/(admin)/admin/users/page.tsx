@@ -19,7 +19,7 @@ import {
 
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -96,13 +96,13 @@ type AdminCopy = Record<string, string | undefined> & {
 function statusBadge(status: string, ad: Record<string, string | undefined> = {}) {
     switch (status) {
         case "active":
-            return <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{ad.active || "Active"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.positive}>{ad.active || "Active"}</Badge>
         case "suspended":
-            return <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">{ad.suspended || "Suspended"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.warning}>{ad.suspended || "Suspended"}</Badge>
         case "banned":
-            return <Badge variant="outline" className={PRISM.destructiveBadge}>{ad.banned || "Banned"}</Badge>
+            return <Badge variant="outline" className={UDS.destructiveBadge}>{ad.banned || "Banned"}</Badge>
         case "deleted":
-            return <Badge variant="outline" className="border-neutral-500/30 bg-neutral-500/10 text-neutral-400">{ad.deleted || "Deleted"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.neutral}>{ad.deleted || "Deleted"}</Badge>
         default:
             return <Badge variant="outline">{status}</Badge>
     }
@@ -111,11 +111,11 @@ function statusBadge(status: string, ad: Record<string, string | undefined> = {}
 function roleBadge(role: string, up: Record<string, string | undefined> = {}) {
     switch (role) {
         case "superadmin":
-            return <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400"><ShieldAlert className="size-3" />{up.super_admin || "Super"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.accent}><ShieldAlert className="size-3" />{up.super_admin || "Super"}</Badge>
         case "admin":
-            return <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"><ShieldCheck className="size-3" />{up.admin_role || "Admin"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.info}><ShieldCheck className="size-3" />{up.admin_role || "Admin"}</Badge>
         default:
-            return <Badge variant="outline" className="text-neutral-400">{up.user_role || "User"}</Badge>
+            return <Badge variant="outline" className={UDS.semanticBadge.neutral}>{up.user_role || "User"}</Badge>
     }
 }
 
@@ -261,7 +261,7 @@ export default function AdminUsersPage() {
                 />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[135px]" size="sm">
-                        <Filter className="size-4" />
+                        <Filter className="size-3.5" />
                         <SelectValue placeholder={up.status || "Status"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -313,34 +313,34 @@ export default function AdminUsersPage() {
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                            <Users className="size-4" /> {up.total_users || "Total Users"}
+                    <div className={UDS.summaryTileSurface}>
+                        <div className={UDS.summaryLabel}>
+                            <Users className="size-3.5" /> {up.total_users || "Total Users"}
                         </div>
-                        <div className="mt-1 text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : pagination.total}</div>
+                        <div className={UDS.summaryValue}>{loading ? <Skeleton className="h-6 w-16" /> : pagination.total}</div>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                            <Shield className="size-4" /> {ad.active || "Active"}
+                    <div className={UDS.summaryTileSurface}>
+                        <div className={UDS.summaryLabel}>
+                            <Shield className="size-3.5" /> {ad.active || "Active"}
                         </div>
-                        <div className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                            {loading ? <Skeleton className="h-8 w-16" /> : users.filter(u => u.status === "active").length}
-                        </div>
-                    </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                            <Lock className="size-4" /> {ad.suspended || "Suspended"}
-                        </div>
-                        <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
-                            {loading ? <Skeleton className="h-8 w-16" /> : users.filter(u => u.status === "suspended").length}
+                        <div className={`${UDS.summaryValue} text-emerald-600 dark:text-emerald-400`}>
+                            {loading ? <Skeleton className="h-6 w-16" /> : users.filter(u => u.status === "active").length}
                         </div>
                     </div>
-                    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-black/2 dark:bg-white/3 p-3">
-                        <div className="flex items-center gap-2 text-sm text-neutral-400">
-                            <Ban className="size-4" /> {ad.banned || "Banned"}
+                    <div className={UDS.summaryTileSurface}>
+                        <div className={UDS.summaryLabel}>
+                            <Lock className="size-3.5" /> {ad.suspended || "Suspended"}
                         </div>
-                        <div className={`mt-1 text-2xl font-bold ${PRISM.destructiveText}`}>
-                            {loading ? <Skeleton className="h-8 w-16" /> : users.filter(u => u.status === "banned").length}
+                        <div className={`${UDS.summaryValue} text-amber-600 dark:text-amber-400`}>
+                            {loading ? <Skeleton className="h-6 w-16" /> : users.filter(u => u.status === "suspended").length}
+                        </div>
+                    </div>
+                    <div className={UDS.summaryTileSurface}>
+                        <div className={UDS.summaryLabel}>
+                            <Ban className="size-3.5" /> {ad.banned || "Banned"}
+                        </div>
+                        <div className={`${UDS.summaryValue} ${UDS.destructiveText}`}>
+                            {loading ? <Skeleton className="h-6 w-16" /> : users.filter(u => u.status === "banned").length}
                         </div>
                     </div>
                 </div>
@@ -409,7 +409,7 @@ export default function AdminUsersPage() {
                                     <TableRow key={user.id} className="group">
                                         <TableCell>
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <div className="flex size-8 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-semibold shrink-0">
+                                                <div className="flex size-8 items-center justify-center sq-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-semibold shrink-0">
                                                     {user.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="min-w-0">
@@ -475,7 +475,7 @@ export default function AdminUsersPage() {
                                                     )}
                                                     {user.status !== "banned" && (
                                                         <DropdownMenuItem
-                                                            className={PRISM.destructiveText}
+                                                            className={UDS.destructiveText}
                                                             onClick={() => openAction(user, "ban", up.ban_user || "Ban User", `${up.ban_confirm || "Permanently ban"} ${user.name}? ${up.ban_warning || "This cannot be undone easily."}`, true)}
                                                         >
                                                             <Ban className="size-4 mr-2" /> {up.ban_user || "Ban"}

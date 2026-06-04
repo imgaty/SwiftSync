@@ -15,7 +15,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 
 // Global tooltip delay - use this for consistent timing across all tooltips
 export const TOOLTIP_DELAY = 400
@@ -361,12 +361,12 @@ export function SmartTooltip({
                     data-state="open"
                     data-side={computedSide}
                     className={cn(
-                        PRISM.animateIn,
+                        UDS.animateIn,
                         "w-fit max-w-[220px]",
-                        PRISM.container,
+                        UDS.transientSurface,
                         "text-balance",
                         isDisabled
-                            ? "bg-white/3 text-neutral-400"
+                            ? UDS.disabledSurface
                             : "",
                         className
                     )}
@@ -408,15 +408,15 @@ export function SmartTooltip({
                     collisionPadding={16}
                     avoidCollisions={true}
                     className={cn(
-                        PRISM.animateIn,
-                        PRISM.animateOut,
+                        UDS.animateIn,
+                        UDS.animateOut,
                         "data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1",
                         "data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1",
                         "w-fit max-w-[220px] origin-(--radix-tooltip-content-transform-origin)",
-                        PRISM.container,
+                        UDS.transientSurface,
                         "text-balance",
                         isDisabled
-                            ? "bg-white/3 text-neutral-400"
+                            ? UDS.disabledSurface
                             : "",
                         className
                     )}
@@ -434,7 +434,7 @@ export function SmartTooltip({
 // ==============================================================================
 
 function TooltipProvider({
-    delayDuration = 0,
+    delayDuration = TOOLTIP_DELAY,
     ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
     return (
@@ -485,14 +485,14 @@ function TooltipContent({
                 collisionPadding={collisionPadding}
                 avoidCollisions={true}
                 className={cn(
-                    PRISM.animateIn,
-                    PRISM.animateOut,
+                    UDS.animateIn,
+                    UDS.animateOut,
                     "data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1",
                     "w-fit max-w-[calc(100vw-2rem)] origin-(--radix-tooltip-content-transform-origin)",
-                    PRISM.container,
+                    UDS.transientSurface,
                     "text-balance",
                     disabled
-                        ? "bg-white/3 text-neutral-400"
+                        ? UDS.disabledSurface
                         : "",
                     className
                 )}
@@ -533,7 +533,7 @@ function TooltipContent({
  *             {tooltip.isVisible && (
  *                 <div
  *                     ref={tooltip.ref}
- *                     className="fixed px-3 py-1.5 text-white text-xs bg-foreground rounded-md pointer-events-none z-1000"
+ *                     className="fixed px-3 py-1.5 text-white text-xs bg-foreground sq-md pointer-events-none z-1000"
  *                     style={{ left: tooltip.position.x, top: tooltip.position.y }}
  *                 >
  *                     Tooltip content here

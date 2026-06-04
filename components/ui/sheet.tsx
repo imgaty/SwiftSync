@@ -14,7 +14,7 @@ import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -47,7 +47,7 @@ function SheetOverlay({
       data-slot="sheet-overlay"
       className={cn(
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50",
-        PRISM.overlay,
+        UDS.overlay,
         className
       )}
       {...props}
@@ -69,23 +69,23 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          PRISM.container, "p-0 data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+          UDS.containerClass({ padding: false }), "p-0 data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 transition ease-in-out data-[state=closed]:duration-[180ms] data-[state=open]:duration-[280ms]",
           "z-[1000]",
-          "shadow-[0_10px_28px_rgba(0,0,0,0.14),inset_0_0.5px_0_rgba(255,255,255,0.34)] dark:shadow-[0_10px_28px_rgba(0,0,0,0.22),inset_0_0.5px_0_rgba(255,255,255,0.18)]",
+          UDS.panelGlow,
           side === "right" &&
-            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 md:inset-y-2 right-0 md:right-2 h-full md:h-auto w-3/4 sm:max-w-sm md:rounded-xl",
+            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 md:inset-y-2 right-0 md:right-2 h-full md:h-auto w-3/4 sm:max-w-sm md:sq-xl",
           side === "left" &&
-            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 md:inset-y-2 left-0 md:left-2 h-full md:h-auto w-3/4 sm:max-w-sm md:rounded-xl",
+            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 md:inset-y-2 left-0 md:left-2 h-full md:h-auto w-3/4 sm:max-w-sm md:sq-xl",
           side === "top" &&
-            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 md:inset-x-2 top-0 md:top-2 h-auto md:rounded-xl",
+            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 md:inset-x-2 top-0 md:top-2 h-auto md:sq-xl",
           side === "bottom" &&
-            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 md:inset-x-2 bottom-0 md:bottom-2 h-auto md:rounded-xl",
+            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 md:inset-x-2 bottom-0 md:bottom-2 h-auto md:sq-xl",
           className
         )}
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className={cn("absolute top-4 right-4", PRISM.closeButton)}>
+        <SheetPrimitive.Close className={cn("absolute top-4 right-4", UDS.closeButton)}>
           <XIcon className="size-4" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>
@@ -121,7 +121,7 @@ function SheetTitle({
   return (
     <SheetPrimitive.Title
       data-slot="sheet-title"
-      className={cn(PRISM.title, className)}
+      className={cn(UDS.title, className)}
       {...props}
     />
   )
@@ -134,7 +134,7 @@ function SheetDescription({
   return (
     <SheetPrimitive.Description
       data-slot="sheet-description"
-      className={cn(PRISM.description, className)}
+      className={cn(UDS.description, className)}
       {...props}
     />
   )

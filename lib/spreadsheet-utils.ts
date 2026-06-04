@@ -17,9 +17,9 @@ import type { BorderStyle, FinanceData, SpreadsheetCellData, SpreadsheetSheetTab
 export type FinanceContext = FinanceData | null | undefined
 
 /* ─── Constants ────────────────────────────────────────────────────────── */
-export const DEFAULT_COL_W = 100
-export const MIN_COL_W = 40
-export const ROW_H = 28
+export const DEFAULT_COL_W = 112
+export const MIN_COL_W = 48
+export const ROW_H = 32
 export const HEADER_W = 50
 export const BUFFER = 5
 

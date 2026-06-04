@@ -13,6 +13,7 @@ import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
 import { CheckIcon } from "lucide-react"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Checkbox({
@@ -23,9 +24,11 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer size-4 shrink-0 rounded-[4px] border border-input bg-[var(--surface)] shadow-xs outline-none transition-all",
+        "peer size-4 shrink-0 outline-none transition-[background-color,border-color,color,box-shadow,opacity] duration-150",
+        UDS.inputSurface,
+        "sq-4",
         "data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
-        "focus-visible:border-transparent focus-visible:ring-[3px] focus-visible:ring-focus/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+        "focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className

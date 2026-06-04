@@ -16,6 +16,7 @@ import { PanelLeftIcon } from "lucide-react"
 import { useOS } from "@/hooks/use-os"
 
 import { useIsMobile } from "@/hooks/use-mobile"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -260,7 +261,7 @@ const Sidebar = React.forwardRef<
                         data-sidebar = "sidebar" data-mobile = "true"
                         className = {cn(
                             "p-0 | w-(--sidebar-width)",
-                            "bg-sidebar | text-sidebar-foreground ",
+                            "bg-sidebar | text-sidebar-foreground",
                             "[&>button]:hidden",
                             "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar", className )}
                         
@@ -288,7 +289,7 @@ const Sidebar = React.forwardRef<
                 data-side = {side}
                 className = {cn(
                     "sticky top-0 | md:flex flex-col self-start shrink-0 | w-(--sidebar-width) h-svh",
-                    "bg-sidebar | text-sidebar-foreground",
+                    "uds-bg-glass uds-backdrop | text-sidebar-foreground",
                     "group peer",
 
                     side === "left" ? "order-first" : "order-last",
@@ -454,7 +455,7 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
                 className = {cn(
                     "absolute top-0 bottom-0 | w-3 p-0 | cursor-grab touch-none | z-50",
                     "bg-transparent outline-hidden",
-                    "after:absolute after:top-6 after:bottom-6 | after:w-0.5 | after:rounded-full",
+                    "after:absolute after:top-6 after:bottom-6 | after:w-0.5 | after:sq-full",
 
                     "hover:after:bg-[rgba(0,0,0,0.125)]",
                     isResizing && "after:bg-[rgba(0,0,0,0.25)]",
@@ -519,17 +520,21 @@ function componentFactory<T extends React.ElementType>(
 // ==============================================================================
 
 const SidebarInset = componentFactory("main", [
-    "relative | flex min-w-0 flex-col flex-1 | w-full h-svh",
-    "text-foreground | order-1 | overflow-y-auto",
-
-    "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 | md:peer-data-[variant=inset]:h-[calc(100svh-16px)]",
-    "md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
-    "md:peer-data-[side=right]:peer-data-[variant=inset]:ml-2 md:peer-data-[side=right]:peer-data-[variant=inset]:mr-0"
+    "app-framework-surface sq-xl | relative | flex min-w-0 flex-col flex-1 | w-full min-h-svh",
+    "text-foreground | order-1 | overflow-x-hidden border border-transparent shadow-none",
+    "md:m-2 md:min-h-[calc(100svh-16px)]"
 ], "inset")
 
-const SidebarInput = componentFactory(Input, "h-8 w-full | bg-background shadow-none", "input")                 // Search/filter input for sidebar
-const SidebarHeader = componentFactory("div", "flex flex-col gap-2 | p-2", "header")
-const SidebarFooter = componentFactory("div", "flex flex-col gap-2 | p-2", "footer")
+const collapsedRailBalance = [
+    "group-data-[collapsible=icon]:group-data-[side=left]:pl-3",
+    "group-data-[collapsible=icon]:group-data-[side=left]:pr-1",
+    "group-data-[collapsible=icon]:group-data-[side=right]:pl-1",
+    "group-data-[collapsible=icon]:group-data-[side=right]:pr-3",
+]
+
+const SidebarInput = componentFactory(Input, cn("h-8 w-full", UDS.cardFlatShadow), "input")                  // Search/filter input for sidebar
+const SidebarHeader = componentFactory("div", ["flex flex-col gap-2 | p-2", ...collapsedRailBalance], "header")
+const SidebarFooter = componentFactory("div", ["flex flex-col gap-2 | p-2", ...collapsedRailBalance], "footer")
 const SidebarSeparator = componentFactory(Separator, "mx-2 | w-auto | bg-sidebar-border", "separator")
 
 const SidebarContent = componentFactory("div", [
@@ -538,14 +543,14 @@ const SidebarContent = componentFactory("div", [
     "group-data-[collapsible=icon]:overflow-hidden"
 ], "content")
 
-const SidebarGroup = componentFactory("div", "relative | flex flex-col | w-full min-w-0 | p-2", "group")        // Group container for related menu items
+const SidebarGroup = componentFactory("div", ["relative | flex flex-col | w-full min-w-0 | p-2", ...collapsedRailBalance], "group")        // Group container for related menu items
 const SidebarGroupContent = componentFactory("div", "w-full | text-sm", "group-content")                        // Content wrapper inside a group
 const SidebarMenu = componentFactory("ul", "flex flex-col gap-1 | w-full min-w-0", "menu")                      // Unordered list for menu items
 const SidebarMenuItem = componentFactory("li", "group/menu-item | relative", "menu-item")                       // List item wrapper for menu buttons
 
 const SidebarMenuBadge = componentFactory("div", [                                                              // Badge displayed next to menu item (e.g., notification count)
     "absolute right-1 | flex items-center justify-center | px-1 | min-w-5 h-5",
-    "rounded-md | text-sidebar-foreground text-xs font-medium tabular-nums select-none pointer-events-none",
+    "sq-md | text-sidebar-foreground text-xs font-medium tabular-nums select-none pointer-events-none",
 
     "group-data-[collapsible=icon]:hidden",
     "peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
@@ -563,7 +568,7 @@ const SidebarMenuSubItem = componentFactory("li", "group/menu-sub-item | relativ
 
 const SidebarGroupLabel = componentFactory("div", [
     " flex items-center shrink-0 | px-2 | h-8",
-    "rounded-md ring-sidebar-ring focus-visible:ring-2 outline-hidden | text-sidebar-foreground/70 text-xs font-medium",
+    "sq-lg ring-sidebar-ring focus-visible:ring-2 outline-hidden | text-sidebar-foreground/70 text-xs font-medium",
     "transition-[margin,opacity] duration-200 ease-linear",
 
     "[&>svg]:size-4 [&>svg]:shrink-0",
@@ -571,8 +576,9 @@ const SidebarGroupLabel = componentFactory("div", [
 ], "group-label")
 
 const SidebarGroupAction = componentFactory("button", [                                                         // Action button in group header (e.g., "Add new")
-    "absolute top-3.5 right-3 | flex items-center justify-center aspect-square | p-0 | w-5",
-    "rounded-md ring-sidebar-ring focus-visible:ring-2 outline-hidden hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] | text-sidebar-foreground hover:text-sidebar-accent-foreground",
+    "absolute top-2.5 right-2 | flex size-7 items-center justify-center | p-0",
+    "sq-full ring-sidebar-ring focus-visible:ring-2 outline-hidden | text-sidebar-foreground hover:text-sidebar-accent-foreground",
+    UDS.itemHover,
     "transition-transform",
     "after:absolute after:-inset-2 md:after:hidden",
 
@@ -590,17 +596,18 @@ const SidebarGroupAction = componentFactory("button", [                         
 const sidebarMenuButtonVariants = cva(
     [
         "peer/menu-button | flex items-center gap-2 | p-2 | w-full",
-        "rounded-md ring-sidebar-ring outline-hidden focus-visible:ring-2",
-        "hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
-        "active:bg-black/[0.06] dark:active:bg-white/[0.12] active:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+        "sq-xl ring-sidebar-ring outline-hidden focus-visible:ring-2",
+        UDS.itemHover,
+        UDS.itemPressed,
         "text-sm text-left hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground disabled:pointer-events-none",
         "transition-all duration-150 | disabled:opacity-50 | overflow-hidden",
 
         "[&>span:last-child]:auto-scroll [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:duration-150",
-        "data-[active=true]:bg-black/[0.06] dark:data-[active=true]:bg-white/[0.12] data-[active=true]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+        UDS.itemActive,
         "data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
-        "group-data-[collapsible=icon]:size-8! | group-data-[collapsible=icon]:p-2! group-has-data-[sidebar=menu-action]/menu-item:pr-8",
-        "data-[state=open]:bg-black/[0.06] dark:data-[state=open]:bg-white/[0.12] data-[state=open]:text-sidebar-accent-foreground data-[state=open]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+        "group-data-[collapsible=icon]:size-8! | group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! group-has-data-[sidebar=menu-action]/menu-item:pr-9",
+        UDS.itemOpen,
+        "data-[state=open]:text-sidebar-accent-foreground",
         "hover:[&>svg]:scale-110"
     ],
     
@@ -608,7 +615,7 @@ const sidebarMenuButtonVariants = cva(
         variants: {
             variant: {
                 default: "",
-                outline: "bg-background | shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent)),inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+                outline: cn(UDS.surface, "sq-xl"),
             },
 
             size: {
@@ -682,14 +689,15 @@ const SidebarActionDropdown = React.forwardRef<
                 ref = {ref}
                 data-sidebar = "menu-action"
                 className = {cn(
-                    "absolute top-1.5 right-1 | flex items-center justify-center aspect-square | p-0 | w-5",
-                    "rounded-md outline-hidden ring-sidebar-ring hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] focus-visible:ring-2 | text-sidebar-foreground hover:text-sidebar-accent-foreground",
+                    "absolute top-0.5 right-0.5 | flex size-7 items-center justify-center | p-0",
+                    "sq-full outline-hidden ring-sidebar-ring focus-visible:ring-2 | text-sidebar-foreground hover:text-sidebar-accent-foreground",
+                    UDS.itemHover,
                     "transition-transform",
                     "after:absolute md:after:hidden after:-inset-2",            // Larger touch target on mobile
                     
                     "[&>svg]:shrink-0 [&>svg]:size-4",
-                    "peer-data-[size=sm]/menu-button:top-1",
-                    "peer-data-[size=default]/menu-button:top-1.5",
+                    "peer-data-[size=sm]/menu-button:top-0",
+                    "peer-data-[size=default]/menu-button:top-0.5",
                     "peer-data-[size=lg]/menu-button:top-2.5",
                     "group-data-[collapsible=icon]:hidden",                     // Hide when sidebar is collapsed to icons
                     
@@ -727,14 +735,15 @@ const SidebarMenuSubButton = React.forwardRef<
                 data-active = {isActive}
                 className = {cn(
                     "flex items-center gap-2 | px-2 | min-w-0 h-7",
-                    "rounded-md ring-sidebar-ring focus-visible:ring-2 outline-hidden",
-                    "hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
-                    "active:bg-black/[0.06] dark:active:bg-white/[0.12] active:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)]",
+                    "sq-lg ring-sidebar-ring focus-visible:ring-2 outline-hidden",
+                    UDS.itemHover,
+                    UDS.itemPressed,
                     "disabled:opacity-50 | text-sidebar-foreground hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground aria-disabled:opacity-50 disabled:pointer-events-none aria-disabled:pointer-events-none",
                     "-translate-x-px | overflow-hidden",
 
                     "[&>span:last-child]:auto-scroll [&>svg]:shrink-0 [&>svg]:size-4 [&>svg]:text-sidebar-accent-foreground",
-                    "data-[active=true]:bg-black/[0.06] dark:data-[active=true]:bg-white/[0.12] data-[active=true]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] data-[active=true]:text-sidebar-accent-foreground",
+                    UDS.itemActive,
+                    "data-[active=true]:text-sidebar-accent-foreground",
                     "group-data-[collapsible=icon]:hidden",                     // Hide when sidebar is collapsed to icons
 
                     size === "sm" ? "text-xs" : "text-sm",

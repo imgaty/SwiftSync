@@ -12,6 +12,7 @@
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Accordion({
@@ -27,7 +28,7 @@ function AccordionItem({
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
-      className={cn(className)}
+      className={cn(UDS.cardSurface, "overflow-hidden", className)}
       {...props}
     />
   )
@@ -43,7 +44,7 @@ function AccordionTrigger({
       <div>
         <AccordionPrimitive.Trigger
           data-slot="accordion-trigger"
-          className={cn("w-full", className)}
+          className={cn("w-full px-4 py-3 text-left", UDS.item, UDS.itemHover, className)}
           {...props}
         >
           {children}
@@ -64,7 +65,7 @@ function AccordionContent({
       className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
       {...props}
     >
-      <div className={cn("pt-3 pb-1", className)}>{children}</div>
+      <div className={cn("px-4 pb-4 pt-2", className)}>{children}</div>
     </AccordionPrimitive.Content>
   )
 }

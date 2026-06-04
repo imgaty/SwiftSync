@@ -1,13 +1,18 @@
 //
-//  auth-backup-codes.ts
+//  auth-2fa.ts
 //  Argent
 //
 //  Created by hilario on 27 May 2026 at 17:07.
-//  Description: Provides shared auth backup codes logic for Argent, centralizing domain behavior,
-//  helpers, or integration code used by pages, routes, and components.
+//  Description: Provides shared 2FA backup code and pending-session helpers for Argent.
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
 import { timingSafeEqual } from "node:crypto"
+
+export type PendingTwoFactorSession = {
+    userId: string
+    expiresAt: number
+    attempts: number
+}
 
 export function normalizeBackupCode(code: string) {
     return String(code || "").trim().replace(/[\s-]/g, "").toLowerCase()
@@ -46,4 +51,32 @@ export function consumeEncryptedBackupCode(
     } catch {
         return null
     }
+}
+
+export function deletePendingTwoFactorSessionsForUser(
+    pending: Map<string, PendingTwoFactorSession>,
+    userId: string,
+) {
+    for (const [key, value] of pending) {
+        if (value.userId === userId) pending.delete(key)
+    }
+}
+
+export function replacePendingTwoFactorSession(
+    pending: Map<string, PendingTwoFactorSession>,
+    token: string,
+    options: PendingTwoFactorSession & { maxPending: number },
+) {
+    deletePendingTwoFactorSessionsForUser(pending, options.userId)
+
+    if (pending.size >= options.maxPending) {
+        const oldestKey = pending.keys().next().value
+        if (oldestKey) pending.delete(oldestKey)
+    }
+
+    pending.set(token, {
+        attempts: options.attempts,
+        expiresAt: options.expiresAt,
+        userId: options.userId,
+    })
 }

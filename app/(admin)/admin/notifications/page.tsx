@@ -16,7 +16,8 @@ import {
 } from "lucide-react"
 import { AdminHeader } from "@/components/admin/admin-header"
 import { useLanguage } from "@/components/language-provider"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
+import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -67,11 +68,11 @@ type AdminCopy = Record<string, string | undefined> & {
 }
 
 const typeColors: Record<string, string> = {
-    general: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    bill_due: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    budget_exceeded: `${PRISM.destructiveBadge} border-red-500/20`,
-    goal_reached: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    admin: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    general: UDS.semanticBadge.info,
+    bill_due: UDS.semanticBadge.warning,
+    budget_exceeded: UDS.destructiveBadge,
+    goal_reached: UDS.semanticBadge.positive,
+    admin: UDS.semanticBadge.accent,
 }
 
 export default function AdminNotificationsPage() {
@@ -119,7 +120,7 @@ export default function AdminNotificationsPage() {
                 />
                 <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1) }}>
                     <SelectTrigger className="w-40" size="sm">
-                        <Filter className="size-4" />
+                        <Filter className="size-3.5" />
                         <SelectValue placeholder={np.col_type || "Type"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -158,10 +159,10 @@ export default function AdminNotificationsPage() {
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 {/* Summary */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <SummaryCard label={np.total || "Total"} value={pagination?.total ?? 0} icon={<Bell className="size-5" />} />
-                    <SummaryCard label={np.unread || "Unread"} value={notifications.filter(n => !n.read).length} icon={<Mail className="size-5 text-blue-500" />} />
-                    <SummaryCard label={np.read || "Read"} value={notifications.filter(n => n.read).length} icon={<MailOpen className="size-5 text-emerald-500" />} />
-                    <SummaryCard label={np.types || "Types"} value={new Set(notifications.map(n => n.type)).size} icon={<Filter className="size-5 text-purple-500" />} />
+                    <SummaryCard label={np.total || "Total"} value={pagination?.total ?? 0} icon={<Bell className="size-3.5" />} />
+                    <SummaryCard label={np.unread || "Unread"} value={notifications.filter(n => !n.read).length} icon={<Mail className="size-3.5 text-blue-500" />} />
+                    <SummaryCard label={np.read || "Read"} value={notifications.filter(n => n.read).length} icon={<MailOpen className="size-3.5 text-emerald-500" />} />
+                    <SummaryCard label={np.types || "Types"} value={new Set(notifications.map(n => n.type)).size} icon={<Filter className="size-3.5 text-purple-500" />} />
                 </div>
 
                 <UniversalTable
@@ -323,7 +324,7 @@ function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; 
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="Notification message"
                             rows={3}
-                            className="rounded-xl bg-[var(--surface)] px-4 py-3 text-[15px] shadow-[var(--shadow-subtle)] focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="px-4 py-3 text-[15px] focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -354,9 +355,9 @@ function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; 
                                     value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
                             </div>
                             {foundUsers.length > 0 && (
-                                <div className="max-h-32 overflow-y-auto rounded border border-black/10 dark:border-white/10 divide-y divide-black/5 dark:divide-white/5">
+                                <div className={`${UDS.inlineSurface} max-h-32 overflow-y-auto divide-y divide-black/5 dark:divide-white/5`}>
                                     {foundUsers.filter(u => !selectedUsers.find(s => s.id === u.id)).map(u => (
-                                        <Button type="button" variant="ghost" key={u.id} className="w-full text-left px-3 py-2 text-sm hover:bg-black/3 dark:hover:bg-white/3"
+                                        <Button type="button" variant="ghost" key={u.id} className={cn("w-full text-left px-3 py-2 text-sm", UDS.itemHover)}
                                             onClick={() => { setSelectedUsers(prev => [...prev, u]); setFoundUsers([]); setUserSearch("") }}>
                                             <span className="font-medium">{u.name}</span>{" "}
                                             <span className="text-neutral-400">{u.email}</span>
@@ -393,9 +394,9 @@ function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; 
 // ----- Summary Card -----
 function SummaryCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
     return (
-        <div className="rounded-xl border border-black/10 dark:border-white/10 p-4">
-            <div className="flex items-center gap-2 text-neutral-400 text-xs mb-1">{icon}{label}</div>
-            <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+        <div className={UDS.summaryTileSurface}>
+            <div className={UDS.summaryLabel}>{icon}{label}</div>
+            <p className={UDS.summaryValue}>{value.toLocaleString()}</p>
         </div>
     )
 }

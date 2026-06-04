@@ -37,13 +37,16 @@ import {
 } from "@/components/ui/context-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationButton } from "@/components/notification-button"
+import { openCommandPalette } from "@/components/command-palette"
 import { SmartTooltip } from "@/components/ui/tooltip"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
-import { ClipboardCopy } from "lucide-react"
+import { ClipboardCopy, Search } from "lucide-react"
 import { toast } from "sonner"
 
 const STAT_CARD_SKELETON_KEYS = [0, 1, 2, 3] as const
+const STAT_CARD_DEFAULT_TONES = ["info", "positive", "negative", "accent", "warning", "neutral"] as const
+type StatCardTone = keyof typeof UDS.statCardTone
 
 // PAGE SHELL — Root wrapper
 interface PageShellProps {
@@ -54,7 +57,7 @@ interface PageShellProps {
 export function PageShell({ children, className }: PageShellProps) {
     return (
         <div className={cn(
-            "@container/main flex min-h-0 min-w-0 flex-col flex-1 gap-4 p-4 md:p-6",
+            "@container/main flex min-h-full min-w-0 flex-1 flex-col gap-4 p-4 md:p-6",
             className
         )}>
             {children}
@@ -169,6 +172,18 @@ export function PageHeader({ breadcrumbs, isLoading = false, actions }: PageHead
                 </Breadcrumb>
 
                 <div className="ml-auto flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={openCommandPalette}
+                        className={cn(UDS.commandTriggerSurface, "hidden min-w-40 items-center gap-2 px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:text-foreground lg:flex")}
+                        aria-label="Open command palette"
+                    >
+                        <Search className="size-3.5 shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">Search</span>
+                        <kbd className="shrink-0 rounded-[5px] border border-border/70 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
+                            Ctrl K
+                        </kbd>
+                    </button>
                     {actions && (
                         <>
                             {injectToplineStyle(actions)}
@@ -193,8 +208,9 @@ interface StatCardData {
     value: string
     /** e.g. "+12.5%" or "-€200" */
     change?: string
-    /** "up" = green, "down" = red, "neutral" = muted */
+    /** Kept for callers that describe trend semantics; the card shell stays neutral. */
     trend?: "up" | "down" | "neutral"
+    tone?: StatCardTone
     icon?: React.ReactNode
 }
 
@@ -204,40 +220,47 @@ interface StatCardsProps {
     className?: string
 }
 
-const TREND_STYLES: Record<NonNullable<StatCardData["trend"]>, { badge: string; dot: string }> = {
-    up: {
-        badge: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-        dot: "bg-emerald-500",
-    },
-    down: {
-        badge: "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300",
-        dot: "bg-rose-500",
-    },
-    neutral: {
-        badge: "border-border/60 bg-muted/60 text-neutral-400",
-        dot: "bg-muted-foreground/60",
-    },
+const STAT_CARD_SURFACE = cn(
+    UDS.cardSurface,
+    "relative flex h-full min-h-[132px] min-w-0 flex-col justify-between overflow-hidden p-4",
+    UDS.cardFlatShadow,
+)
+
+const STAT_CARD_GLOW =
+    "hidden"
+
+const STAT_CARD_TOP_LINE =
+    "hidden"
+
+function getStatCardTone(stat: StatCardData, index: number): StatCardTone {
+    if (stat.tone) return stat.tone
+    if (stat.trend === "up") return "positive"
+    if (stat.trend === "down") return "negative"
+    if (stat.trend === "neutral") return "neutral"
+    return STAT_CARD_DEFAULT_TONES[index % STAT_CARD_DEFAULT_TONES.length]
 }
 
 const StatCardSkeleton = React.memo(function StatCardSkeleton() {
     return (
-        <div className={cn(PRISM.cardSurface, "relative min-h-[148px] overflow-hidden p-5")}>
-            <div className="pointer-events-none absolute inset-0 rounded-xl bg-linear-to-br from-white/[0.035] via-transparent to-transparent dark:from-white/[0.025]" />
-            <div className="relative z-10 flex items-start justify-between gap-3">
-                <div className="space-y-2">
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                    <Skeleton className="h-8 w-28" />
+        <div className={STAT_CARD_SURFACE}>
+            <div aria-hidden className={STAT_CARD_GLOW} />
+            <div aria-hidden className={STAT_CARD_TOP_LINE} />
+            <div className="relative flex min-w-0 items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                    <Skeleton className="size-4 shrink-0 sq-md" />
+                    <Skeleton className="h-3.5 w-24 max-w-full" />
                 </div>
-                <Skeleton className="h-10 w-10 rounded-2xl" />
             </div>
-            <Skeleton className="relative z-10 mt-6 h-6 w-24 rounded-full" />
+            <div className="relative flex min-w-0 items-end justify-between gap-4">
+                <Skeleton className="h-4 w-28 max-w-full" />
+                <Skeleton className="h-8 w-20 shrink-0" />
+            </div>
         </div>
     )
 })
 
-const StatCardItem = React.memo(function StatCardItem({ stat }: { stat: StatCardData }) {
-    const trend = stat.trend ?? "neutral"
-    const trendStyles = TREND_STYLES[trend]
+const StatCardItem = React.memo(function StatCardItem({ index, stat }: { index: number; stat: StatCardData }) {
+    const toneStyles = UDS.statCardTone[getStatCardTone(stat, index)]
 
     const handleCopyValue = () => {
         navigator.clipboard.writeText(stat.value)
@@ -249,34 +272,39 @@ const StatCardItem = React.memo(function StatCardItem({ stat }: { stat: StatCard
             <ContextMenuTrigger asChild>
                 <div
                     className={cn(
-                        PRISM.cardSurface,
-                        "relative min-h-[148px] overflow-hidden p-5 transition-all duration-200"
+                        STAT_CARD_SURFACE,
+                        toneStyles.card,
+                        "outline-none focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                     )}
                 >
-                    <div className="pointer-events-none absolute inset-0 rounded-xl bg-linear-to-br from-white/[0.035] via-transparent to-transparent dark:from-white/[0.025]" />
+                    <div aria-hidden className={cn(STAT_CARD_GLOW, toneStyles.glow)} />
+                    <div aria-hidden className={cn(STAT_CARD_TOP_LINE, toneStyles.line)} />
 
-                    <div className="relative z-10 flex items-start justify-between gap-3">
-                        <div className="space-y-2">
-                            <span className="inline-flex items-center rounded-full bg-muted/70 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-neutral-400">
+                    <div className="relative flex min-w-0 items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                            {stat.icon && (
+                                <span className={cn("inline-flex shrink-0 items-center justify-center leading-none [&>svg]:size-4 [&>svg]:stroke-[1.9]", toneStyles.icon)}>
+                                    {stat.icon}
+                                </span>
+                            )}
+                            <span className="truncate text-[13px] font-medium leading-5 text-foreground-secondary sm:text-[14px]">
                                 {stat.label}
                             </span>
-                            <p className="text-[1.85rem] font-semibold leading-none tracking-tight text-foreground tabular-nums">
-                                {stat.value}
-                            </p>
                         </div>
-                        {stat.icon && (
-                            <div className="flex size-10 items-center justify-center rounded-xl border border-black/6 bg-black/2 text-neutral-400/80 dark:border-white/8 dark:bg-white/3 [&>svg]:size-5">
-                                {stat.icon}
-                            </div>
-                        )}
                     </div>
 
-                    {stat.change && (
-                        <div className={cn("relative z-10 mt-6 inline-flex w-fit items-center gap-2 rounded-full border px-2.5 py-1 text-[12px] font-medium", trendStyles.badge)}>
-                            <span className={cn("size-1.5 rounded-full", trendStyles.dot)} />
-                            {stat.change}
+                    <div className="relative flex min-w-0 items-end justify-between gap-2">
+                        <div className="min-w-0">
+                            {stat.change && (
+                                <span className={cn("block truncate text-[13px] font-medium leading-5", toneStyles.meta)}>
+                                    {stat.change}
+                                </span>
+                            )}
                         </div>
-                    )}
+                        <span className={cn("shrink-0 text-right text-2xl font-semibold leading-none tracking-normal tabular-nums", toneStyles.value)}>
+                            {stat.value}
+                        </span>
+                    </div>
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
@@ -301,12 +329,11 @@ const StatCardItem = React.memo(function StatCardItem({ stat }: { stat: StatCard
 export const StatCards = React.memo(function StatCards({ stats, isLoading = false, className }: StatCardsProps) {
     return (
         <div
-            className={cn("grid gap-4 animate-fade-in-up stagger-2", className)}
-            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))" }}
+            className={cn("grid grid-cols-1 gap-4 animate-fade-in-up stagger-2 @[520px]/main:grid-cols-2 @[1120px]/main:grid-cols-4", className)}
         >
             {isLoading
                 ? STAT_CARD_SKELETON_KEYS.map((key) => <StatCardSkeleton key={key} />)
-                : stats.map((stat, index) => <StatCardItem key={`${stat.label}-${index}`} stat={stat} />)}
+                : stats.map((stat, index) => <StatCardItem key={`${stat.label}-${index}`} index={index} stat={stat} />)}
         </div>
     )
 })
@@ -323,9 +350,9 @@ interface PageSectionProps {
     /** Wrap children in a glass surface card */
     glass?: boolean
     /**
-     * When true, the section flex-fills the remaining viewport height inside
-     * PageShell. Use this on table-heavy pages so the table scrolls in place
-     * instead of the whole page scrolling.
+     * When true, the section flex-fills the remaining PageShell space. Use this
+     * for dense widgets that intentionally own an inner scroll area, while the
+     * page itself remains allowed to grow and scroll.
      */
     fill?: boolean
     className?: string
@@ -333,7 +360,7 @@ interface PageSectionProps {
 
 export function PageSection({ children, stagger = 3, actions, glass = false, fill = false, className }: PageSectionProps) {
     const content = glass ? (
-        <div className={cn(PRISM.cardSurface, "p-5 md:p-6")}>
+        <div className={cn(UDS.cardSurface, "p-5 md:p-6")}>
             {children}
         </div>
     ) : children

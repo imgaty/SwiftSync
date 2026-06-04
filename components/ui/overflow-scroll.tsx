@@ -172,8 +172,27 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
         const PAUSE_DURATION = 2000
         const FADE_WIDTH = 20
 
+        const cleanupElement = (el: HTMLElement) => {
+            const cleanup = cleanupByElement.get(el)
+            if (!cleanup) return
+            cleanup()
+            cleanupByElement.delete(el)
+        }
+
+        const cleanupSubtree = (node: Node) => {
+            if (!(node instanceof HTMLElement)) return
+
+            if (node.classList.contains('auto-scroll')) {
+                cleanupElement(node)
+            }
+
+            node.querySelectorAll('.auto-scroll').forEach((el) => {
+                if (el instanceof HTMLElement) cleanupElement(el)
+            })
+        }
+
         const setupElement = (el: HTMLElement) => {
-            if (scrollStates.has(el)) return
+            if (cleanupByElement.has(el)) return
 
             const wrapper = document.createElement('div')
             wrapper.className = 'auto-scroll-wrapper'
@@ -203,6 +222,11 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
             }
 
             const checkAndAnimate = () => {
+                if (!el.isConnected) {
+                    cleanupElement(el)
+                    return
+                }
+
                 const containerWidth = wrapper.clientWidth
                 const contentWidth = content.scrollWidth
                 const isOverflowing = contentWidth > containerWidth
@@ -281,7 +305,7 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
             }
 
             // Initial check
-            setTimeout(checkAndAnimate, 100)
+            let initialCheckTimer: ReturnType<typeof setTimeout> | null = setTimeout(checkAndAnimate, 100)
 
             // Watch for resize
             const resizeObserver = new ResizeObserver(checkAndAnimate)
@@ -289,6 +313,10 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
             resizeObserver.observe(content)
 
             cleanupByElement.set(el, () => {
+                if (initialCheckTimer) {
+                    clearTimeout(initialCheckTimer)
+                    initialCheckTimer = null
+                }
                 resizeObserver.disconnect()
                 const state = scrollStates.get(el)
                 if (state?.animationId) cancelAnimationFrame(state.animationId)
@@ -308,6 +336,7 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
                         })
                     }
                 })
+                mutation.removedNodes.forEach(cleanupSubtree)
             })
         })
 
@@ -320,10 +349,11 @@ export function AutoScrollProvider({ children }: { children?: React.ReactNode })
 
         return () => {
             observer.disconnect()
+            Array.from(cleanupByElement.keys()).forEach(cleanupElement)
             scrollStates.forEach((state) => {
                 if (state.animationId) cancelAnimationFrame(state.animationId)
             })
-            cleanupByElement.forEach((cleanup) => cleanup())
+            scrollStates.clear()
             cleanupByElement.clear()
         }
     }, [])

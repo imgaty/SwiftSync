@@ -10,6 +10,7 @@
 "use client"
 
 import * as React from "react"
+import { usePathname } from "next/navigation"
 import { LoadingScreen } from "@/components/loading-screen"
 
 // ==============================================================================
@@ -28,18 +29,21 @@ const INITIAL_LOADING_DURATION_MS = 1600
 const LOADING_EXIT_DURATION_MS = 450
 
 export function AppLoadingProvider({ children }: { children: React.ReactNode }) {
-    const [isLoading, setIsLoading] = React.useState(true)
-    const [isVisible, setIsVisible] = React.useState(true)
-    const [isFilling, setIsFilling] = React.useState(false)
+    const pathname = usePathname()
+    const skipInitialLoading = pathname?.startsWith("/logo-demo") ?? false
+    const [isLoading, setIsLoading] = React.useState(() => !skipInitialLoading)
+    const [isVisible, setIsVisible] = React.useState(() => !skipInitialLoading)
 
     React.useEffect(() => {
-        const animationFrame = window.requestAnimationFrame(() => setIsFilling(true))
-        const timer = window.setTimeout(() => setIsLoading(false), INITIAL_LOADING_DURATION_MS)
-        return () => {
-            window.cancelAnimationFrame(animationFrame)
-            window.clearTimeout(timer)
+        if (skipInitialLoading) {
+            setIsLoading(false)
+            setIsVisible(false)
+            return
         }
-    }, [])
+
+        const timer = window.setTimeout(() => setIsLoading(false), INITIAL_LOADING_DURATION_MS)
+        return () => window.clearTimeout(timer)
+    }, [skipInitialLoading])
 
     React.useEffect(() => {
         if (isLoading) {
@@ -55,7 +59,7 @@ export function AppLoadingProvider({ children }: { children: React.ReactNode }) 
 
     return (
         <AppLoadingContext.Provider value={value}>
-            {isVisible ? <LoadingScreen exiting={!isLoading} filling={isFilling} /> : null}
+            {isVisible ? <LoadingScreen exiting={!isLoading} /> : null}
             {children}
         </AppLoadingContext.Provider>
     )

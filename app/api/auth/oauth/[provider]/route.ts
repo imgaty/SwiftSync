@@ -20,7 +20,7 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   const { provider } = await params
-  const validProviders = ["google", "apple", "github", "microsoft"]
+  const validProviders = ["google", "github"]
 
   if (!validProviders.includes(provider)) {
     return NextResponse.json({ error: "Invalid OAuth provider" }, { status: 400 })
@@ -32,17 +32,9 @@ export async function GET(
       authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
       clientIdEnv: "GOOGLE_CLIENT_ID",
     },
-    apple: {
-      authUrl: "https://appleid.apple.com/auth/authorize",
-      clientIdEnv: "APPLE_CLIENT_ID",
-    },
     github: {
       authUrl: "https://github.com/login/oauth/authorize",
       clientIdEnv: "GITHUB_CLIENT_ID",
-    },
-    microsoft: {
-      authUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-      clientIdEnv: "MICROSOFT_CLIENT_ID",
     },
   }
 
@@ -76,12 +68,6 @@ export async function GET(
       break
     case "github":
       authUrl = `${providerConfig.authUrl}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email&state=${state}`
-      break
-    case "microsoft":
-      authUrl = `${providerConfig.authUrl}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&state=${state}`
-      break
-    case "apple":
-      authUrl = `${providerConfig.authUrl}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=name%20email&state=${state}&response_mode=form_post`
       break
     default:
       return NextResponse.json({ error: "Invalid provider" }, { status: 400 })

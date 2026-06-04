@@ -27,7 +27,6 @@ import {
     Loader2,
     Trash2,
     AlertTriangle,
-    ChevronRight,
     ChevronLeft,
     X,
     Eye,
@@ -47,10 +46,20 @@ import { AnimatedToggle } from "@/components/ui/animated-toggle"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/date-picker"
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency, type SupportedCurrency } from "@/components/currency-provider"
-import { sidebarMenuButtonVariants, useSidebar } from "@/components/ui/sidebar"
+import {
+    CollapsedTooltip,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarHeader,
+    SidebarInput,
+    SidebarMenu,
+    SidebarMenuItem,
+    useSidebar,
+} from "@/components/ui/sidebar"
 import { useColorBlind, type ColorBlindMode } from "@/components/colorblind-provider"
 import { useOS } from "@/hooks/use-os"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -83,6 +92,16 @@ const settingsPages: { id: SettingsPage; icon: React.ElementType; labelKey: stri
     { id: "rules", icon: ListFilter, labelKey: "rules", defaultLabel: "Rules" },
 ]
 
+const settingsSidebarSurface = cn(
+    "bg-sidebar",
+    "text-sidebar-foreground",
+)
+
+const settingsOverlay = UDS.overlay
+
+const settingsSidebarRule = "border-sidebar-border"
+const settingsSidebarMuted = "text-sidebar-foreground/70"
+
 type SettingsSearchResult = {
     page: (typeof settingsPages)[number]
     matches: Array<{ text: string; targetKey?: string }>
@@ -106,7 +125,7 @@ function highlightSearchText(text: string, query: string): React.ReactNode {
 
     return parts.map((part, index) =>
         tokens.some((token) => part.toLowerCase() === token.toLowerCase()) ? (
-            <mark key={`${part}-${index}`} className="rounded bg-amber-300/50 px-0.5 text-current dark:bg-amber-500/30">
+            <mark key={`${part}-${index}`} className="sq bg-amber-300/50 px-0.5 text-current dark:bg-amber-500/30">
                 {part}
             </mark>
         ) : (
@@ -175,7 +194,7 @@ function SettingsSection({
 }
 
 function SettingsDivider() {
-    return <div className={cn(PRISM.separator, "my-5")} />
+    return <div className={cn(UDS.separator, "my-5")} />
 }
 
 /* ─── Main Dialog ─── */
@@ -354,64 +373,90 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
     /* ─── Shared nav list ─── */
     const navContent = (
         <>
-            {/* Search */}
-            <div className="px-3 pb-2">
-                <div className="relative">
-                    <Input
+            <SidebarHeader className="px-2 pt-2 pb-1">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <CollapsedTooltip
+                            asChild
+                            size="lg"
+                            tooltip={s.title || "Settings"}
+                            className="cursor-default hover:bg-transparent active:bg-transparent group-data-[collapsible=icon]:p-2!"
+                        >
+                            <div>
+                                <SlidersHorizontal className="text-sidebar-accent-foreground" />
+                                <div className="min-w-0 flex-1">
+                                    <DialogTitle className="truncate text-sm font-semibold leading-5 text-sidebar-accent-foreground">
+                                        {s.title || "Settings"}
+                                    </DialogTitle>
+                                    <DialogDescription className="truncate text-xs font-normal leading-4 text-sidebar-foreground/70">
+                                        {s.description || "Manage your preferences"}
+                                    </DialogDescription>
+                                </div>
+                            </div>
+                        </CollapsedTooltip>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+                {isMobile && (
+                    <DialogPrimitive.Close className={cn("absolute right-4 top-4", UDS.closeButton)}>
+                        <X className="size-4" />
+                        <span className="sr-only">Close</span>
+                    </DialogPrimitive.Close>
+                )}
+            </SidebarHeader>
+
+            <SidebarContent className="pt-1">
+                <SidebarGroup className="px-2 pt-1 pb-2">
+                    <SidebarInput
                         ref={searchRef}
                         id="settings-search"
                         type="search"
                         placeholder={s.search || "Search settings"}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pr-8 text-[13px]"
+                        className="mb-1 h-8 w-full"
+                        inputClassName="h-8 sq-md px-3 text-sm"
                     />
-                </div>
-            </div>
 
-            <nav
-                className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5"
-                onKeyDown={handleSidebarKeyDown}
-            >
-                {filteredPageResults.length === 0 && (
-                    <p className="px-2.5 py-4 text-center text-xs text-neutral-400">
-                        {s.no_results || "No results"}
-                    </p>
-                )}
-                {filteredPageResults.map((result) => {
-                    const page = result.page
-                    const Icon = page.icon
-                    const isActive = activePage === page.id
-                    const pageTitle = s[page.labelKey] || page.defaultLabel
-                    return (
-                        <Button variant="ghost"
-                            key={page.id}
-                            data-active={isActive}
-                            onClick={() => (search.trim() ? handleSearchResultSelect(result) : handlePageSelect(page.id))}
-                            className={cn(
-                                sidebarMenuButtonVariants({ size: "default" }),
-                                "h-auto min-h-8 cursor-pointer gap-2.5 px-2.5 py-2 text-[13px]",
-                            )}
-                        >
-                            <Icon />
-                            <span className="flex-1 text-left">
-                                <span className="block">{search.trim() ? highlightSearchText(pageTitle, search) : pageTitle}</span>
-                                {search.trim() && result.matches.length > 0 && (
-                                    <span className="mt-0.5 block text-[11px] font-normal text-neutral-400 line-clamp-2">
-                                        {result.matches.map((match, index) => (
-                                            <React.Fragment key={`${page.id}-match-${index}`}>
-                                                {index > 0 && " • "}
-                                                {highlightSearchText(match.text, search)}
-                                            </React.Fragment>
-                                        ))}
-                                    </span>
-                                )}
-                            </span>
-                            <ChevronRight className="size-3 opacity-60" />
-                        </Button>
-                    )
-                })}
-            </nav>
+                    <SidebarMenu onKeyDown={handleSidebarKeyDown}>
+                        {filteredPageResults.length === 0 && (
+                            <SidebarMenuItem>
+                                <p className={cn("px-2 py-4 text-center text-xs", settingsSidebarMuted)}>
+                                    {s.no_results || "No results"}
+                                </p>
+                            </SidebarMenuItem>
+                        )}
+                        {filteredPageResults.map((result) => {
+                            const page = result.page
+                            const Icon = page.icon
+                            const isActive = activePage === page.id
+                            const pageTitle = s[page.labelKey] || page.defaultLabel
+
+                            return (
+                                <SidebarMenuItem key={page.id}>
+                                    <CollapsedTooltip
+                                        asChild
+                                        tooltip={pageTitle}
+                                        isActive={isActive}
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => (search.trim() ? handleSearchResultSelect(result) : handlePageSelect(page.id))}
+                                            aria-current={isActive ? "page" : undefined}
+                                        >
+                                            <Icon />
+                                            <span>{search.trim() ? highlightSearchText(pageTitle, search) : pageTitle}</span>
+                                        </button>
+                                    </CollapsedTooltip>
+                                </SidebarMenuItem>
+                            )
+                        })}
+                    </SidebarMenu>
+                </SidebarGroup>
+            </SidebarContent>
+
+            <SidebarFooter>
+                <p className={cn("text-center text-[10px]", settingsSidebarMuted)}>Argent v1.0</p>
+            </SidebarFooter>
         </>
     )
 
@@ -462,16 +507,15 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogPortal>
-                <DialogOverlay />
+                <DialogOverlay className={settingsOverlay} />
                 <DialogPrimitive.Content
                     style={isMobile ? undefined : { width: 900, height: 600, maxWidth: "calc(100vw - 2rem)", maxHeight: "calc(100vh - 2rem)" }}
                     className={cn(
-                        "fixed z-50 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 duration-200",
-                        PRISM.container, "p-0",
+                        "fixed overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 duration-200",
+                        UDS.containerClass({ padding: false, zIndex: "z-[1000]" }), "p-0",
                         isMobile
-                            ? "inset-0 rounded-none"
+                            ? "inset-0 sq-none"
                             : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-                        !isMobile && "shadow-[0_10px_28px_rgba(0,0,0,0.14),inset_0_0.5px_0_rgba(255,255,255,0.34)] dark:shadow-[0_10px_28px_rgba(0,0,0,0.22),inset_0_0.5px_0_rgba(255,255,255,0.18)]",
                     )}
                 >
                     {isMobile ? (
@@ -479,34 +523,17 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                         <div className="flex flex-col w-full h-full">
                             {!showMobileContent ? (
                                 /* Mobile nav screen */
-                                <div className="flex flex-col h-full">
-                                    <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                                        <div>
-                                            <DialogTitle className={cn(PRISM.title, "text-[15px]")}>
-                                                {s.title || "Settings"}
-                                            </DialogTitle>
-                                            <DialogDescription className={cn(PRISM.description, "mt-0.5 text-xs")}>
-                                                {s.description || "Manage your preferences"}
-                                            </DialogDescription>
-                                        </div>
-                                        <DialogPrimitive.Close className={cn("absolute right-4 top-4", PRISM.closeButton)}>
-                                            <X className="h-4 w-4" />
-                                            <span className="sr-only">Close</span>
-                                        </DialogPrimitive.Close>
-                                    </div>
+                                <div className={cn("flex flex-col h-full", settingsSidebarSurface)}>
                                     {navContent}
-                                    <div className="border-t border-black/8 dark:border-white/8 px-4 py-2.5">
-                                        <p className="text-[10px] text-neutral-400/60 text-center">Argent v1.0</p>
-                                    </div>
                                 </div>
                             ) : (
                                 /* Mobile content screen */
                                 <div className="flex flex-col h-full">
-                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-black/8 dark:border-white/8">
+                                    <div className={cn("flex items-center gap-2 border-b px-3 pb-2 pt-3", UDS.cardDivider)}>
                                         <Button variant="ghost"
                                             type="button"
                                             onClick={() => setShowMobileContent(false)}
-                                            className="p-1.5 rounded-md text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/6 dark:hover:bg-white/6 transition-all duration-150"
+                                            className={cn("p-1.5 sq-md text-neutral-400 transition-all duration-150 hover:text-black dark:hover:text-white", UDS.itemHover)}
                                         >
                                             <ChevronLeft className="size-4" />
                                         </Button>
@@ -525,19 +552,8 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                     ) : (
                         /* ─── Desktop: side-by-side layout ─── */
                         <div className="flex w-full h-full">
-                            <aside className="flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-                                <div className="px-5 pt-5 pb-3">
-                                    <DialogTitle className={cn(PRISM.title, "text-[15px]")}>
-                                        {s.title || "Settings"}
-                                    </DialogTitle>
-                                    <DialogDescription className={cn(PRISM.description, "mt-0.5 text-xs")}>
-                                        {s.description || "Manage your preferences"}
-                                    </DialogDescription>
-                                </div>
+                            <aside className={cn("flex w-60 shrink-0 flex-col border-r", settingsSidebarRule, settingsSidebarSurface)}>
                                 {navContent}
-                                <div className="border-t border-black/8 dark:border-white/8 px-4 py-2.5">
-                                    <p className="text-[10px] text-neutral-400/60 text-center">Argent v1.0</p>
-                                </div>
                             </aside>
                             <div className="flex-1 relative overflow-hidden">
                                 <div className="absolute inset-0 overflow-y-auto">
@@ -551,8 +567,8 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
 
                     {/* Close button (desktop only) */}
                     {!isMobile && (
-                        <DialogPrimitive.Close className={cn("absolute right-4 top-4", PRISM.closeButton)}>
-                            <X className="h-4 w-4" />
+                        <DialogPrimitive.Close className={cn("absolute right-4 top-4", UDS.closeButton)}>
+                            <X className="size-4" />
                             <span className="sr-only">Close</span>
                         </DialogPrimitive.Close>
                     )}
@@ -674,10 +690,10 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
             />
 
             {/* Profile header with avatar */}
-            <div className={cn("flex items-center gap-4 px-4 py-4", PRISM.cardSurface)}>
-                <Avatar className="size-12 shrink-0 rounded-full">
+            <div className={cn("flex items-center gap-4 px-4 py-4", UDS.cardSurface)}>
+                <Avatar className="size-12 shrink-0 sq-full">
                     <AvatarImage src={profileAvatar} alt={profile.name || "User"} />
-                    <AvatarFallback className="rounded-full bg-primary/10 text-primary text-lg font-semibold">
+                    <AvatarFallback className="sq-full bg-primary/10 text-primary text-lg font-semibold">
                         {profile.name
                             .split(" ")
                             .map((n) => n[0])
@@ -719,7 +735,11 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         trigger={
                             <Button variant="ghost"
                                 type="button"
-                                className="relative flex h-11 w-full items-center rounded-xl border border-black/10 bg-black/5 px-4 pr-10 text-left text-[15px] text-neutral-900 transition-all duration-200 hover:bg-black/8 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/8"
+                                className={cn(
+                                    UDS.controlSurface,
+                                    UDS.inputHover,
+                                    "relative flex h-11 w-full items-center px-4 pr-10 text-left text-[15px] text-neutral-900 transition-all duration-200 focus:outline-none dark:text-white",
+                                )}
                             >
                                 <span className={cn("truncate", dobDisplay ? "text-neutral-900 dark:text-white" : "text-neutral-400/60") }>
                                     {dobDisplay || (s.dob || "Date of Birth")}
@@ -777,7 +797,7 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
 
             {/* Sticky save bar */}
             {hasChanges && (
-                <div className="sticky bottom-0 -mx-6 mt-auto flex items-center justify-end gap-3 border-t border-black/8 dark:border-white/8 bg-black/3 dark:bg-white/3 backdrop-blur-xl px-6 py-3">
+                <div className={cn("uds-bg-glass uds-backdrop sticky bottom-0 -mx-6 mt-auto flex items-center justify-end gap-3 border-t px-6 py-3", UDS.cardDivider)}>
                     <Button
                         variant="ghost"
                         size="sm"
@@ -833,7 +853,7 @@ function DeleteAccountSection({ s }: { s: SettingsTranslations }) {
 
     return (
         <>
-            <div className="rounded-xl border border-destructive/20 bg-destructive/4 overflow-hidden">
+            <div className="sq-xl border border-destructive/20 bg-destructive/4 overflow-hidden">
                 <div className="px-4 pt-4 pb-2">
                     <h4 className="text-[13px] font-semibold text-destructive">{s.danger_zone || "Danger Zone"}</h4>
                 </div>
@@ -854,7 +874,7 @@ function DeleteAccountSection({ s }: { s: SettingsTranslations }) {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-md p-0 overflow-hidden">
                     <div className="flex flex-col items-center px-6 pt-6 pb-2 text-center">
-                        <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 mb-3">
+                        <div className="flex size-12 items-center justify-center sq-full bg-destructive/10 mb-3">
                             <AlertTriangle className="size-5 text-destructive" />
                         </div>
                         <DialogTitle className="text-base font-semibold">{s.delete_account_title || "Delete Account"}</DialogTitle>
@@ -1004,7 +1024,7 @@ function CustomizationSettings({
             <SettingsSection title={s.general || "General"}>
                 <div
                     ref={(el) => { targetRefs.current["sidebar-position"] = el }}
-                    className={cn("rounded-lg px-2", flashTarget === "sidebar-position" && "ring-1 ring-amber-400/60")}
+                    className={cn("sq-lg px-2", flashTarget === "sidebar-position" && "ring-1 ring-amber-400/60")}
                 >
                     <SettingRow
                         label={searchHighlightQuery?.trim() ? highlightSearchText(s.sidebar_position || "Sidebar Position", searchHighlightQuery) : (s.sidebar_position || "Sidebar Position")}
@@ -1039,7 +1059,7 @@ function CustomizationSettings({
 
                 <div
                     ref={(el) => { targetRefs.current["language"] = el }}
-                    className={cn("rounded-lg px-2", flashTarget === "language" && "ring-1 ring-amber-400/60")}
+                    className={cn("sq-lg px-2", flashTarget === "language" && "ring-1 ring-amber-400/60")}
                 >
                     <SettingRow
                         label={searchHighlightQuery?.trim() ? highlightSearchText(s.language || "Language", searchHighlightQuery) : (s.language || "Language")}
@@ -1064,7 +1084,7 @@ function CustomizationSettings({
 
                 <div
                     ref={(el) => { targetRefs.current["currency"] = el }}
-                    className={cn("rounded-lg px-2", flashTarget === "currency" && "ring-1 ring-amber-400/60")}
+                    className={cn("sq-lg px-2", flashTarget === "currency" && "ring-1 ring-amber-400/60")}
                 >
                     <SettingRow
                         label={searchHighlightQuery?.trim() ? highlightSearchText(s.currency || "Currency", searchHighlightQuery) : (s.currency || "Currency")}
@@ -1098,7 +1118,7 @@ function CustomizationSettings({
             <SettingsSection title={s.appearance || "Appearance"}>
                 <div
                     ref={(el) => { targetRefs.current["theme"] = el }}
-                    className={cn("rounded-lg px-2", flashTarget === "theme" && "ring-1 ring-amber-400/60")}
+                    className={cn("sq-lg px-2", flashTarget === "theme" && "ring-1 ring-amber-400/60")}
                 >
                     <SettingRow
                         label={searchHighlightQuery?.trim() ? highlightSearchText(s.theme || "Theme", searchHighlightQuery) : (s.theme || "Theme")}
@@ -1132,7 +1152,7 @@ function CustomizationSettings({
 
                 <div
                     ref={(el) => { targetRefs.current["colorblind"] = el }}
-                    className={cn("rounded-lg px-2", flashTarget === "colorblind" && "ring-1 ring-amber-400/60")}
+                    className={cn("sq-lg px-2", flashTarget === "colorblind" && "ring-1 ring-amber-400/60")}
                 >
                     <SettingRow
                         label={searchHighlightQuery?.trim() ? highlightSearchText(s.colorblind || "Colorblind Mode", searchHighlightQuery) : (s.colorblind || "Colorblind Mode")}
@@ -1163,7 +1183,7 @@ function CustomizationSettings({
 
             <div
                 ref={(el) => { targetRefs.current["sidebar-pages"] = el }}
-                className={cn("rounded-lg px-2", flashTarget === "sidebar-pages" && "ring-1 ring-amber-400/60")}
+                className={cn("sq-lg px-2", flashTarget === "sidebar-pages" && "ring-1 ring-amber-400/60")}
             >
                 <SettingsSection
                     title={s.sidebar || "Sidebar Pages"}
@@ -1221,15 +1241,15 @@ function SortableSidebarRow({
             ref={setNodeRef}
             style={style}
             className={cn(
-                "flex items-center gap-2 rounded-lg border border-black/8 dark:border-white/8 px-2.5 py-2",
-                "bg-black/2 dark:bg-white/2",
-                hidden && "grayscale opacity-50 blur-[0.2px]",
-                isDragging && "z-20 border-primary/30 bg-black/8 dark:bg-white/8 shadow-lg",
+                UDS.inlineSurface,
+                "flex items-center gap-2 px-2.5 py-2",
+                hidden && "grayscale opacity-55",
+                isDragging && "z-20 sq-border-strong uds-bg-raised [box-shadow:var(--shadow-elevated)]",
             )}
         >
             <Button variant="ghost"
                 type="button"
-                className="rounded p-1 text-neutral-400 hover:bg-black/8 dark:hover:bg-white/8"
+                className={cn("sq p-1 text-foreground-secondary/70 hover:text-foreground", UDS.itemHover)}
                 aria-label={`Drag ${page.name}`}
                 {...attributes}
                 {...listeners}
@@ -1237,17 +1257,17 @@ function SortableSidebarRow({
                 <GripVertical className="size-4" />
             </Button>
 
-            <Icon className="size-4 text-neutral-400" />
+            <Icon className="size-4 text-foreground-secondary/70" />
             <span className="flex-1 text-[13px]">
                 {searchHighlightQuery?.trim() ? highlightSearchText(page.name, searchHighlightQuery) : page.name}
             </span>
-            {hidden && <span className="text-[10px] text-neutral-400">Hidden</span>}
+            {hidden && <span className="text-[10px] text-foreground-secondary/70">Hidden</span>}
 
             <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-7"
+                className="size-7 text-foreground-secondary/75 hover:bg-foreground/8 hover:text-foreground"
                 onClick={onToggleHidden}
             >
                 {hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
@@ -1369,13 +1389,13 @@ function ShortcutsSettings({ s }: { s: SettingsTranslations }) {
                             {group.shortcuts.map((shortcut, i) => (
                                 <div
                                     key={i}
-                                    className="flex items-center justify-between rounded-lg py-2"
+                                    className="flex items-center justify-between sq-lg py-2"
                                 >
                                     <span className="text-[13px]">{shortcut.action}</span>
                                     <div className="flex items-center gap-1">
                                         {shortcut.keys.map((key, j) => (
                                             <React.Fragment key={j}>
-                                                <kbd className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 text-[11px] font-mono font-medium rounded-md border border-black/8 dark:border-white/10 bg-black/3 dark:bg-white/4 text-neutral-400 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)]">
+                                                <kbd className={`${UDS.inlineSurface} inline-flex h-6 min-w-6 items-center justify-center px-1.5 text-[11px] font-mono font-medium text-neutral-400`}>
                                                     {key}
                                                 </kbd>
                                                 {j < shortcut.keys.length - 1 && <span className="text-[10px] text-neutral-400/60">+</span>}

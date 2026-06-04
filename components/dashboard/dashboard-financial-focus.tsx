@@ -23,7 +23,7 @@ import {
 } from "@/components/dashboard/dashboard-primitives"
 import { Button } from "@/components/ui/button"
 import { formatDaysUntil } from "@/components/dashboard/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import type {
     BudgetPressure,
@@ -55,7 +55,7 @@ export function DashboardFinancialFocus({
             icon={WalletCards}
             className="min-h-[300px] lg:min-h-0"
             bodyClassName="overflow-auto pr-1"
-            action={
+            tools={
                 <div className="flex items-center gap-1">
                     <Button asChild variant="glass" size="icon-sm" className={DASHBOARD_ACTION_BUTTON_CLASS}>
                         <Link href="/Budgets" aria-label={dashboardLabels.budgetPressure}>
@@ -78,7 +78,7 @@ export function DashboardFinancialFocus({
                         <section className="space-y-2.5">
                             <div className="flex items-center justify-between gap-3 px-1">
                                 <h3 className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
-                                    <span className="size-1.5 rounded-full bg-amber-500" />
+                                    <span className="size-1.5 sq-full bg-amber-500" />
                                     {dashboardLabels.budgetPressure}
                                 </h3>
                                 <span className="text-[11px] font-semibold text-muted-foreground">
@@ -103,7 +103,7 @@ export function DashboardFinancialFocus({
                                             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
                                                 <div className="flex min-w-0 items-center gap-2">
                                                     <span
-                                                        className="size-2.5 shrink-0 rounded-full"
+                                                        className="size-2.5 shrink-0 sq-full"
                                                         style={{ backgroundColor: budget.color || "var(--primary)" }}
                                                     />
                                                     <p className="truncate text-[13px] font-semibold">
@@ -117,9 +117,9 @@ export function DashboardFinancialFocus({
                                                     {formatCompactCurrency(Math.abs(budget.remainingAmount))} {isOver ? dashboardLabels.over : dashboardLabels.left}
                                                 </span>
                                             </div>
-                                            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                                            <div className={cn("h-1.5 overflow-hidden sq-full", UDS.subtleFill)}>
                                                 <div
-                                                    className={cn("h-full rounded-full transition-all", progressTone)}
+                                                    className={cn("h-full sq-full transition-all", progressTone)}
                                                     style={{ width: `${Math.min(100, Math.max(0, budget.percentUsed))}%` }}
                                                 />
                                             </div>
@@ -131,14 +131,14 @@ export function DashboardFinancialFocus({
                     )}
 
                     {budgetPressure.length > 0 && upcomingBills.length > 0 && (
-                        <div aria-hidden className={cn(PRISM.separator, "my-0")} />
+                        <div aria-hidden className={cn(UDS.separator, "my-0")} />
                     )}
 
                     {upcomingBills.length > 0 && (
                         <section className="space-y-2.5">
                             <div className="flex items-center justify-between gap-3 px-1">
                                 <h3 className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
-                                    <span className="size-1.5 rounded-full bg-muted-foreground" />
+                                    <span className="size-1.5 sq-full bg-foreground-secondary" />
                                     {dashboardLabels.upcomingBills}
                                 </h3>
                                 <span className="text-[11px] font-semibold text-muted-foreground">

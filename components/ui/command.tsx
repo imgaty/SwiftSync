@@ -15,7 +15,7 @@ import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 function Command({
@@ -26,7 +26,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "bg-transparent text-neutral-400 flex h-full w-full flex-col overflow-hidden rounded-lg font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',sans-serif]",
+        "bg-transparent text-neutral-400 flex h-full w-full flex-col overflow-hidden sq-lg font-sans",
         className
       )}
       {...props}
@@ -57,13 +57,13 @@ function CommandInput({
   return (
     <div
       data-slot="command-input-wrapper"
-      className="flex items-center border-b border-black/8 dark:border-white/8 px-3"
+      className={cn("flex items-center border-b px-3", UDS.cardDivider)}
     >
-      <Search className="mr-2 h-4 w-4 shrink-0 text-neutral-400" />
+      <Search className="mr-2 size-4 shrink-0 text-neutral-400" />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "placeholder:text-neutral-400 dark:placeholder:text-neutral-400 flex h-11 w-full rounded-lg bg-transparent py-3 text-[13px] outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "placeholder:text-neutral-400 dark:placeholder:text-neutral-400 flex h-11 w-full sq-lg bg-transparent py-3 text-[13px] outline-none disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
@@ -123,7 +123,7 @@ function CommandSeparator({
   return (
     <CommandPrimitive.Separator
       data-slot="command-separator"
-      className={cn("dark:bg-transparent -mx-[7px] h-px", PRISM.separator, className)}
+      className={cn("dark:bg-transparent -mx-[7px] h-px", UDS.separator, className)}
       {...props}
     />
   )
@@ -137,7 +137,10 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:bg-black/10 dark:data-[selected=true]:bg-white/[0.12] dark:data-[selected=true]:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.15)] data-[selected=true]:text-black dark:data-[selected=true]:text-white relative flex cursor-default select-none items-center gap-2 rounded-lg px-2 py-2 text-[13px] outline-none transition-colors duration-75 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+        UDS.item,
+        UDS.itemSelected,
+        UDS.itemIcon,
+        "px-2 py-2 transition-colors duration-150 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-40 [&_svg]:size-4",
         className
       )}
       {...props}
@@ -153,7 +156,7 @@ function CommandShortcut({
     <span
       data-slot="command-shortcut"
       className={cn(
-        "text-neutral-400 ml-auto text-[12px] tracking-wide",
+        UDS.shortcut,
         className
       )}
       {...props}

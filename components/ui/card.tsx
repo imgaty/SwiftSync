@@ -9,14 +9,14 @@
 //
 import * as React from "react"
 
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 
 
 function Card({ className, ...props }: React.ComponentProps<"div">) {
     return (
-        <div data-slot="card" className={cn(PRISM.cardSurface, "spotlight-surface relative flex flex-col justify-between gap-4 p-4 text-card-foreground transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-200", className)}
+        <div data-slot="card" className={cn(UDS.cardSurface, "spotlight-surface relative flex flex-col justify-between gap-4 p-4 text-card-foreground", className)}
             {...props}
         />
     )

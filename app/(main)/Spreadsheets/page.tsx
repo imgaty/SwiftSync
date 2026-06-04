@@ -39,7 +39,7 @@ export default function SpreadsheetsPage() {
 
     if (view.screen === "workspace") {
         return (
-            <PageShell className="gap-4 min-h-0 overflow-hidden">
+            <PageShell className="min-h-full gap-4 overflow-x-hidden overflow-y-visible p-3 md:p-4">
                 <SpreadsheetWorkspace
                     data={data}
                     isLoading={isLoading}

@@ -19,8 +19,11 @@ import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
 import {
     FormDialogActions,
+    FormDialogBody,
     FormDialogContent,
     FormDialogHeader,
+    FormSelectTrigger,
+    FormDialogStepIndicator,
 } from "@/components/form-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,7 +31,6 @@ import {
     Select,
     SelectContent,
     SelectItem,
-    SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
 import { useLanguage } from "@/components/language-provider"
@@ -64,6 +66,7 @@ export default function BudgetsPage() {
     const transactionsCount = data?.transactions?.length ?? 0
     const [dialogOpen, setDialogOpen] = React.useState(false)
     const [editingBudgetId, setEditingBudgetId] = React.useState<string | null>(null)
+    const [budgetStep, setBudgetStep] = React.useState(0)
     const [isSaving, setIsSaving] = React.useState(false)
     const [formData, setFormData] = React.useState({
         tag: defaultCategory.tag,
@@ -74,6 +77,7 @@ export default function BudgetsPage() {
 
     const openNewBudget = React.useCallback(() => {
         setEditingBudgetId(null)
+        setBudgetStep(0)
         setFormData({
             tag: defaultCategory.tag,
             category: defaultCategory.category,
@@ -92,6 +96,7 @@ export default function BudgetsPage() {
             limit: String(budget.limit ?? budget.budgetAmount ?? ""),
             color: budget.color || category?.color || defaultCategory.color,
         })
+        setBudgetStep(0)
         setDialogOpen(true)
     }, [])
 
@@ -172,10 +177,10 @@ export default function BudgetsPage() {
         const overallPercent = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0
         const fmt = (n: number) => formatCurrency(n)
         return [
-            { label: "Total Budget", value: fmt(totalBudget), change: `${budgetsData.length} categories`, trend: "neutral" as const, icon: <Target className="h-4 w-4" /> },
-            { label: "Total Spent", value: fmt(totalSpent), change: `${overallPercent}% used`, trend: overallPercent > 90 ? "down" as const : "up" as const, icon: <PiggyBank className="h-4 w-4" /> },
-            { label: "Remaining", value: fmt(remaining), change: remaining >= 0 ? "Under budget" : "Over budget", trend: remaining >= 0 ? "up" as const : "down" as const, icon: <TrendingUp className="h-4 w-4" /> },
-            { label: "Over Budget", value: String(overBudget), change: `${onTrack} on track`, trend: overBudget > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="h-4 w-4" /> },
+            { label: "Total Budget", value: fmt(totalBudget), change: `${budgetsData.length} categories`, trend: "neutral" as const, icon: <Target className="size-4" /> },
+            { label: "Total Spent", value: fmt(totalSpent), change: `${overallPercent}% used`, trend: overallPercent > 90 ? "down" as const : "up" as const, icon: <PiggyBank className="size-4" /> },
+            { label: "Remaining", value: fmt(remaining), change: remaining >= 0 ? "Under budget" : "Over budget", trend: remaining >= 0 ? "up" as const : "down" as const, icon: <TrendingUp className="size-4" /> },
+            { label: "Over Budget", value: String(overBudget), change: `${onTrack} on track`, trend: overBudget > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="size-4" /> },
         ]
     }, [budgetsData, isLoading, formatCurrency])
 
@@ -257,64 +262,90 @@ export default function BudgetsPage() {
             )}
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <FormDialogContent>
+                <FormDialogContent stableSize height="560px">
                     <FormDialogHeader
                         title={editingBudgetId
                             ? (isPt ? "Editar orçamento" : "Edit budget")
                             : (isPt ? "Novo orçamento" : "New budget")}
-                        description={isPt
-                            ? "Defina um limite mensal por categoria."
-                            : "Set a monthly limit for a category."}
+                        description={budgetStep === 0
+                            ? (isPt ? "Escolha a categoria que quer acompanhar." : "Choose the category you want to track.")
+                            : (isPt ? "Defina um limite mensal por categoria." : "Set a monthly limit for the month.")}
                     />
 
                     <form
                         onSubmit={(e) => {
                             e.preventDefault()
+                            if (budgetStep === 0) {
+                                setBudgetStep(1)
+                                return
+                            }
                             handleSaveBudget()
                         }}
                         className="flex flex-col gap-4"
                     >
-                        <div className="grid gap-2">
-                            <Label>{isPt ? "Categoria" : "Category"}</Label>
-                            <Select value={formData.tag} onValueChange={handleCategoryChange}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {BUDGET_CATEGORIES.map((item) => (
-                                        <SelectItem key={item.tag} value={item.tag}>
-                                            {isPt ? item.pt : item.en}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {budgetStep === 0 && (
+                            <FormDialogBody key="budget-category">
+                                <Select value={formData.tag} onValueChange={handleCategoryChange}>
+                                    <FormSelectTrigger label={isPt ? "Categoria" : "Category"}>
+                                        <SelectValue />
+                                    </FormSelectTrigger>
+                                    <SelectContent>
+                                        {BUDGET_CATEGORIES.map((item) => (
+                                            <SelectItem key={item.tag} value={item.tag}>
+                                                {isPt ? item.pt : item.en}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </FormDialogBody>
+                        )}
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="budget-limit">{isPt ? "Limite mensal" : "Monthly limit"}</Label>
-                            <Input
-                                id="budget-limit"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={formData.limit}
-                                onChange={(e) => setFormData((prev) => ({ ...prev, limit: e.target.value }))}
-                                placeholder="0.00"
-                            />
-                        </div>
+                        {budgetStep === 1 && (
+                            <FormDialogBody key="budget-limit">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="budget-limit">{isPt ? "Limite mensal" : "Monthly limit"}</Label>
+                                    <Input
+                                        id="budget-limit"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.limit}
+                                        onChange={(e) => setFormData((prev) => ({ ...prev, limit: e.target.value }))}
+                                        placeholder="0.00"
+                                        autoFocus
+                                    />
+                                </div>
+                            </FormDialogBody>
+                        )}
 
                         <FormDialogActions>
                             <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving}>
-                                {isSaving
+                                {budgetStep === 0
+                                    ? (isPt ? "Continuar" : "Continue")
+                                    : isSaving
                                     ? (isPt ? "A guardar..." : "Saving...")
                                     : editingBudgetId
                                         ? (isPt ? "Guardar" : "Save")
                                         : (isPt ? "Criar" : "Create")}
                             </Button>
-                            <Button type="button" variant="glass" size="lg" className="w-full" onClick={() => setDialogOpen(false)}>
-                                {isPt ? "Cancelar" : "Cancel"}
+                            <Button
+                                type="button"
+                                variant="glass"
+                                size="lg"
+                                className="w-full"
+                                onClick={() => {
+                                    if (budgetStep === 0) {
+                                        setDialogOpen(false)
+                                        return
+                                    }
+                                    setBudgetStep(0)
+                                }}
+                                disabled={isSaving}
+                            >
+                                {budgetStep === 0 ? (isPt ? "Cancelar" : "Cancel") : (isPt ? "Voltar" : "Back")}
                             </Button>
                         </FormDialogActions>
+                        <FormDialogStepIndicator current={budgetStep} total={2} />
                     </form>
                 </FormDialogContent>
             </Dialog>

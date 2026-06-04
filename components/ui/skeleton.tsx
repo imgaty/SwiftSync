@@ -7,11 +7,12 @@
 //  behavior, and accessibility-facing structure for consistent interfaces.
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
+import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
 	return (
-		<div data-slot = "skeleton" className = {cn("bg-[rgba(0,0,0,0.05)] | animate-pulse rounded-md", className)}
+		<div data-slot = "skeleton" className = {cn("animate-pulse sq-md", UDS.subtleFill, className)}
 			{...props}
 		/>
 	)

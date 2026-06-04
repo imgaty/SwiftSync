@@ -68,6 +68,10 @@ export function NavPages({
         if (isMobile) setOpenMobile(false)
     }, [isMobile, setOpenMobile])
 
+    const handleOpenCustomizationSettings = React.useCallback(() => {
+        window.requestAnimationFrame(() => open("customization"))
+    }, [open])
+
     if (isLoading) {
         return (
             <SidebarGroup className="px-2 pt-1 pb-2">
@@ -75,7 +79,7 @@ export function NavPages({
                     {[0, 1, 2, 3, 4, 5].map(i => (
                         <SidebarMenuItem key={i}>
                             <div className="flex items-center gap-2 p-2 w-full">
-                                <Skeleton className="h-4 w-4" />
+                                <Skeleton className="size-4" />
                                 <Skeleton className="h-4 w-24 group-data-[collapsible=icon]:hidden" />
                             </div>
                         </SidebarMenuItem>
@@ -100,7 +104,7 @@ export function NavPages({
                             >
                                 <Link href={item.url} onClick={handleNavClick} aria-current={isActive ? "page" : undefined}>
                                     <item.icon />
-                                    <span>{item.name}</span>
+                                    <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
                                 </Link>
                             </CollapsedTooltip>
 
@@ -137,7 +141,7 @@ export function NavPages({
 
                                     <DropdownSeparator />
 
-                                    <DropdownItem onSelect={() => open("customization")}>
+                                    <DropdownItem onSelect={handleOpenCustomizationSettings}>
                                         <ListTree className="text-muted-foreground" />
                                         <span>{nav.manage_pages || "Manage pages"}</span>
                                     </DropdownItem>

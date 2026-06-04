@@ -9,14 +9,14 @@
 //
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { PRISM } from '@/lib/PRISM'
+import { UDS } from '@/lib/UDS'
 
 type Tone = 'success' | 'error' | 'info'
 
 const toneStyles: Record<Tone, { badge: string; icon: string }> = {
   success: { badge: 'bg-emerald-500/10 border border-emerald-500/20', icon: 'text-emerald-500' },
   error: { badge: 'bg-red-500/10 border border-red-500/20', icon: 'text-red-500' },
-  info: { badge: 'bg-[var(--surface)] border border-[color:var(--border-strong)]', icon: 'text-foreground-secondary' },
+  info: { badge: UDS.iconSurface, icon: 'text-foreground-secondary' },
 }
 
 export function StatusCard({
@@ -37,7 +37,7 @@ export function StatusCard({
   return (
     <div className="flex flex-col gap-8 animate-slide-in-right">
       <div className="flex flex-col items-center gap-8">
-        <div className={`${PRISM.iconBadge} ${badge}`}>
+        <div className={`${UDS.iconBadge} ${badge}`}>
           <Icon className={`w-7 h-7 ${icon}`} />
         </div>
 

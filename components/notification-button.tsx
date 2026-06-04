@@ -11,6 +11,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query"
 import { Bell, Check, SquareArrowOutUpRight as ExternalLink, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,7 +22,8 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { useLanguage } from "@/components/language-provider"
 import { cn } from "@/lib/utils"
-import { PRISM } from "@/lib/PRISM"
+import { UDS } from "@/lib/UDS"
+import { queryKeys } from "@/lib/query-keys"
 
 interface Notification {
     id: string
@@ -43,51 +45,114 @@ const typeColors: Record<string, string> = {
     user_error: "bg-red-500",
 }
 
+const NOTIFICATION_CHECK_INTERVAL_MS = 5 * 60 * 1000
+const NOTIFICATION_CHECK_THROTTLE_MS = 30 * 1000
+
+let notificationCheckSubscribers = 0
+let notificationCheckInterval: ReturnType<typeof setInterval> | null = null
+let notificationCheckInFlight: Promise<void> | null = null
+let lastNotificationCheckAt = 0
+let notificationChangeSubscribers = 0
+let removeNotificationChangeListener: (() => void) | null = null
+
+async function fetchNotifications(signal?: AbortSignal): Promise<Notification[]> {
+    const res = await fetch("/api/notifications", {
+        credentials: "include",
+        signal,
+    })
+
+    if (res.status === 401) return []
+    if (!res.ok) throw new Error("Failed to fetch notifications")
+
+    return await res.json() as Notification[]
+}
+
+function invalidateNotifications(queryClient: QueryClient) {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
+}
+
+function runNotificationCheck(queryClient: QueryClient, force = false) {
+    const now = Date.now()
+    if (!force && now - lastNotificationCheckAt < NOTIFICATION_CHECK_THROTTLE_MS) {
+        return notificationCheckInFlight ?? Promise.resolve()
+    }
+    if (notificationCheckInFlight) return notificationCheckInFlight
+
+    lastNotificationCheckAt = now
+    notificationCheckInFlight = fetch("/api/notifications/check", {
+        method: "POST",
+        credentials: "include",
+    })
+        .then(() => invalidateNotifications(queryClient))
+        .catch(() => {})
+        .finally(() => {
+            notificationCheckInFlight = null
+        })
+
+    return notificationCheckInFlight
+}
+
+function subscribeNotificationChecks(queryClient: QueryClient) {
+    notificationCheckSubscribers += 1
+
+    if (notificationCheckSubscribers === 1) {
+        void runNotificationCheck(queryClient)
+        notificationCheckInterval = setInterval(() => {
+            void runNotificationCheck(queryClient, true)
+        }, NOTIFICATION_CHECK_INTERVAL_MS)
+    }
+
+    return () => {
+        notificationCheckSubscribers = Math.max(0, notificationCheckSubscribers - 1)
+        if (notificationCheckSubscribers === 0 && notificationCheckInterval) {
+            clearInterval(notificationCheckInterval)
+            notificationCheckInterval = null
+        }
+    }
+}
+
+function subscribeNotificationChanges(queryClient: QueryClient) {
+    notificationChangeSubscribers += 1
+
+    if (notificationChangeSubscribers === 1 && typeof window !== "undefined") {
+        const handler = () => invalidateNotifications(queryClient)
+        window.addEventListener("notifications:changed", handler)
+        removeNotificationChangeListener = () => window.removeEventListener("notifications:changed", handler)
+    }
+
+    return () => {
+        notificationChangeSubscribers = Math.max(0, notificationChangeSubscribers - 1)
+        if (notificationChangeSubscribers === 0) {
+            removeNotificationChangeListener?.()
+            removeNotificationChangeListener = null
+        }
+    }
+}
+
 export function NotificationButton() {
     const { language } = useLanguage()
-    const [notifications, setNotifications] = React.useState<Notification[]>([])
+    const queryClient = useQueryClient()
+    const { data: notifications = [] } = useQuery({
+        queryKey: queryKeys.notifications,
+        queryFn: ({ signal }) => fetchNotifications(signal),
+        staleTime: 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        retry: false,
+    })
     const [isOpen, setIsOpen] = React.useState(false)
     const [now, setNow] = React.useState(() => Date.now())
 
-    const fetchNotifications = React.useCallback(async () => {
-        try {
-            const res = await fetch("/api/notifications")
-            if (res.ok) {
-                const data = await res.json()
-                setNotifications(data)
-            }
-        } catch {
-            // Silently fail — notifications are non-critical
-        }
-    }, [])
-
-    // Check for new notifications periodically
     React.useEffect(() => {
-        fetchNotifications()
-
-        // Also trigger notification check
-        fetch("/api/notifications/check", { method: "POST" })
-            .then(() => fetchNotifications())
-            .catch(() => {})
-
-        const interval = setInterval(() => {
-            fetch("/api/notifications/check", { method: "POST" })
-                .then(() => fetchNotifications())
-                .catch(() => {})
-        }, 5 * 60 * 1000) // Check every 5 minutes
-
-        return () => clearInterval(interval)
-    }, [fetchNotifications])
+        return subscribeNotificationChecks(queryClient)
+    }, [queryClient])
 
     // Listen for `notifications:changed` events fired by the notify() helper
     // so client-side toasts that persist to the DB show up immediately
     // rather than waiting for the 5-minute polling cycle.
     React.useEffect(() => {
-        if (typeof window === "undefined") return
-        const handler = () => fetchNotifications()
-        window.addEventListener("notifications:changed", handler)
-        return () => window.removeEventListener("notifications:changed", handler)
-    }, [fetchNotifications])
+        return subscribeNotificationChanges(queryClient)
+    }, [queryClient])
 
     React.useEffect(() => {
         const interval = setInterval(() => setNow(Date.now()), 60_000)
@@ -95,15 +160,16 @@ export function NotificationButton() {
     }, [])
 
     const unreadCount = notifications.filter((n) => !n.read).length
+    const visibleNotifications = notifications.slice(0, 20)
 
     const markRead = async (id: string) => {
         await fetch(`/api/notifications/${id}`, { method: "PATCH" })
-        fetchNotifications()
+        invalidateNotifications(queryClient)
     }
 
     const deleteNotification = async (id: string) => {
         await fetch(`/api/notifications/${id}`, { method: "DELETE" })
-        fetchNotifications()
+        invalidateNotifications(queryClient)
     }
 
     const formatTimeAgo = (dateStr: string) => {
@@ -123,10 +189,10 @@ export function NotificationButton() {
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <TooltipTrigger asChild>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
+                <Button variant="ghost" size="icon" className="relative sq-overflow-visible">
                     <Bell />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-medium">
+                        <span className="absolute -top-0.5 -right-0.5 size-4 sq-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-medium">
                             {unreadCount > 9 ? "9+" : unreadCount}
                         </span>
                     )}
@@ -136,9 +202,9 @@ export function NotificationButton() {
             <TooltipContent side="bottom">
                 {language === "pt" ? "Notificações" : "Notifications"}
             </TooltipContent>
-            <PopoverContent align="end" className="w-fit min-w-[300px] max-w-[420px]">
-                {/* Notification list — each row is a rounded chip cell, same
-                    family as PRISM.item (used by the View all below and the
+            <PopoverContent align="end" className="w-[min(20rem,calc(100vw-1rem))] max-w-[20rem]">
+                {/* Notification list — each row is a sq chip cell, same
+                    family as UDS.item (used by the View all below and the
                     Clear filter row on the accounts dropdown). */}
                 <div className="max-h-[300px] overflow-y-auto">
                     {notifications.length === 0 ? (
@@ -146,93 +212,97 @@ export function NotificationButton() {
                             {language === "pt" ? "Sem notificações" : "No notifications"}
                         </div>
                     ) : (
-                        notifications.slice(0, 20).map((notif) => (
-                            <div
-                                key={notif.id}
-                                className={cn(
-                                    "flex gap-3 p-3 rounded-lg transition-colors",
-                                    "hover:bg-black/6 dark:hover:bg-white/12",
-                                    !notif.read && "bg-accent/30"
-                                )}
-                            >
-                                {/* Type indicator */}
-                                <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", typeColors[notif.type] || "bg-blue-500")} />
+                        visibleNotifications.map((notif, index) => (
+                            <React.Fragment key={notif.id}>
+                                <div
+                                    className={cn(
+                                        "flex gap-3 p-3 sq-lg transition-colors",
+                                        UDS.itemHover,
+                                        !notif.read && "bg-accent/30"
+                                    )}
+                                >
+                                    {/* Type indicator */}
+                                    <div className={cn("w-2 h-2 sq-full mt-1.5 shrink-0", typeColors[notif.type] || "bg-blue-500")} />
 
-                                <div className="flex-1 min-w-0">
-                                    {/* Title row — title flexes (auto-scroll
-                                        handles overflow), timestamp pinned right. */}
-                                    <div className="flex items-baseline justify-between gap-3">
-                                        <p className={cn("auto-scroll text-[13px] leading-snug", !notif.read && "font-semibold")}>
-                                            {notif.title}
+                                    <div className="flex-1 min-w-0">
+                                        {/* Title row — title flexes (auto-scroll
+                                            handles overflow), timestamp pinned right. */}
+                                        <div className="flex items-baseline justify-between gap-3">
+                                            <p className={cn("auto-scroll text-[13px] leading-snug", !notif.read && "font-semibold")}>
+                                                {notif.title}
+                                            </p>
+                                            <span className="text-[10.5px] text-neutral-400 whitespace-nowrap shrink-0 tabular-nums">
+                                                {formatTimeAgo(notif.createdAt)}
+                                            </span>
+                                        </div>
+                                        {/* Description — single-line marquee that
+                                            shifts left-to-right on overflow, same
+                                            idiom as nav-tabs / bills-table. */}
+                                        <p className="auto-scroll text-[12px] text-neutral-400 mt-0.5">
+                                            {notif.message}
                                         </p>
-                                        <span className="text-[10.5px] text-neutral-400 whitespace-nowrap shrink-0 tabular-nums">
-                                            {formatTimeAgo(notif.createdAt)}
-                                        </span>
-                                    </div>
-                                    {/* Description — single-line marquee that
-                                        shifts left-to-right on overflow, same
-                                        idiom as nav-tabs / bills-table. */}
-                                    <p className="auto-scroll text-[12px] text-neutral-400 mt-0.5">
-                                        {notif.message}
-                                    </p>
 
-                                    {/* Actions — right-aligned cluster. Primary
-                                        "View" keeps its label; secondary actions
-                                        (mark read / delete) are icon-only and
-                                        sit on a soft pill so they read as a
-                                        deliberate group. */}
-                                    <div className="flex items-center justify-end gap-1 mt-2">
-                                        {notif.actionUrl && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-6 px-2 text-[11px] gap-1"
-                                                asChild
-                                            >
-                                                <a href={notif.actionUrl}>
-                                                    <ExternalLink className="size-3" />
-                                                    {language === "pt" ? "Ver" : "View"}
-                                                </a>
-                                            </Button>
-                                        )}
-                                        <div className="flex items-center gap-0.5 rounded-md p-0.5 bg-black/3 dark:bg-white/4 border border-black/5 dark:border-white/6">
-                                            {!notif.read && (
+                                        {/* Actions — right-aligned cluster. Primary
+                                            "View" keeps its label; secondary actions
+                                            (mark read / delete) are icon-only and
+                                            sit on a soft pill so they read as a
+                                            deliberate group. */}
+                                        <div className="flex items-center justify-end gap-1 mt-2">
+                                            {notif.actionUrl && (
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="size-6 p-0 rounded"
-                                                    onClick={() => markRead(notif.id)}
-                                                    aria-label={language === "pt" ? "Marcar como lida" : "Mark read"}
+                                                    className="h-6 px-2 text-[11px] gap-1"
+                                                    asChild
                                                 >
-                                                    <Check className="size-3" />
+                                                    <a href={notif.actionUrl}>
+                                                        <ExternalLink className="size-3" />
+                                                        {language === "pt" ? "Ver" : "View"}
+                                                    </a>
                                                 </Button>
                                             )}
-                                            <Button
-                                                variant="ghost-destructive"
-                                                size="sm"
-                                                className="size-6 p-0 rounded"
-                                                onClick={() => deleteNotification(notif.id)}
-                                                aria-label={language === "pt" ? "Apagar" : "Delete"}
-                                            >
-                                                <Trash2 className="size-3" />
-                                            </Button>
+                                            <div className={`${UDS.inlineSurface} flex items-center gap-0.5 p-0.5`}>
+                                                {!notif.read && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="size-6 p-0 sq"
+                                                        onClick={() => markRead(notif.id)}
+                                                        aria-label={language === "pt" ? "Marcar como lida" : "Mark read"}
+                                                    >
+                                                        <Check className="size-3" />
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    variant="ghost-destructive"
+                                                    size="sm"
+                                                    className="size-6 p-0 sq"
+                                                    onClick={() => deleteNotification(notif.id)}
+                                                    aria-label={language === "pt" ? "Apagar" : "Delete"}
+                                                >
+                                                    <Trash2 className="size-3" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                                {index < visibleNotifications.length - 1 && (
+                                    <div aria-hidden className={cn(UDS.separator, "my-1")} />
+                                )}
+                            </React.Fragment>
                         ))
                     )}
                 </div>
-                {/* PRISM gradient separator — matches the divider above the
+                {/* UDS gradient separator — matches the divider above the
                     Clear filter row on the accounts dropdown. */}
-                <div className={PRISM.separator} />
+                <div className={UDS.separator} />
                 {/* View all — same chip cell shape as the notifications above
                     and the Clear filter row on the accounts dropdown. */}
                 <Link
                     href="/Notifications"
                     data-glide-item="notifications-view-all"
                     onClick={() => setIsOpen(false)}
-                    className={cn(PRISM.item, PRISM.glideItem, PRISM.itemIcon, "w-full")}
+                    className={cn(UDS.item, UDS.glideItem, UDS.itemIcon, "w-full")}
                 >
                     <ExternalLink className="size-4 shrink-0 text-neutral-400" />
                     <span className="text-neutral-400 text-[13px]">
