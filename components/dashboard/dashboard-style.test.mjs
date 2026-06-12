@@ -883,6 +883,11 @@ assert.match(
     "root layout should mount the app-wide squircle runtime",
 )
 assert.match(
+    rootLayout,
+    /const defaultTheme = isThemeCookie\(themeCookie\) \? themeCookie : "light"/,
+    "fresh installs should default to the light theme instead of drifting with system theme per origin",
+)
+assert.match(
     squircleProvider,
     /WIKIPEDIA_SQUIRCLE_EXPONENT\s*=\s*4/,
     "squircle provider fallback should match the p=4 superellipse model from the squircle formula",
