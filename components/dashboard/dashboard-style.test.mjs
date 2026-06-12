@@ -884,8 +884,8 @@ assert.match(
 )
 assert.match(
     rootLayout,
-    /const defaultTheme = isThemeCookie\(themeCookie\) \? themeCookie : "light"/,
-    "fresh installs should default to the light theme instead of drifting with system theme per origin",
+    /function isResolvedThemeCookie\(value: string \| undefined\): value is Exclude<ThemeCookie, "system">[\s\S]*value === "light" \|\| value === "dark"[\s\S]*const defaultTheme = isResolvedThemeCookie\(themeCookie\) \? themeCookie : "light"/,
+    "fresh installs and stale system cookies should default to the light theme instead of drifting with system theme per origin",
 )
 assert.match(
     squircleProvider,

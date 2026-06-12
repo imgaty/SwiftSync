@@ -24,8 +24,8 @@ import "./globals.css"
 
 type ThemeCookie = "light" | "dark" | "system"
 
-function isThemeCookie(value: string | undefined): value is ThemeCookie {
-    return value === "light" || value === "dark" || value === "system"
+function isResolvedThemeCookie(value: string | undefined): value is Exclude<ThemeCookie, "system"> {
+    return value === "light" || value === "dark"
 }
 
 export const metadata: Metadata = {
@@ -62,7 +62,7 @@ export default async function RootLayout({
     const colorblindCookie = (await cookies()).get("colorblind_mode")?.value as "deuteranopia" | "protanopia" | "tritanopia" | undefined
     const currencyCookie = (await cookies()).get("preferred_currency")?.value as "USD" | "GBP" | "BRL" | undefined
     const themeCookie = (await cookies()).get("theme")?.value
-    const defaultTheme = isThemeCookie(themeCookie) ? themeCookie : "light"
+    const defaultTheme = isResolvedThemeCookie(themeCookie) ? themeCookie : "light"
     const initialThemeClass = defaultTheme === "light" || defaultTheme === "dark" ? defaultTheme : undefined
     const htmlClassName = [
         GeistMono.variable,
