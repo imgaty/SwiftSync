@@ -38,6 +38,10 @@ type ThemeContextValue = {
 
 const THEME_OPTIONS: Theme[] = ["light", "dark", "system"]
 const RESOLVED_THEMES: ResolvedTheme[] = ["light", "dark"]
+const BROWSER_THEME_COLORS: Record<ResolvedTheme, string> = {
+    light: "#ffffff",
+    dark: "#000000",
+}
 const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined)
 
 function isTheme(value: string | null | undefined): value is Theme {
@@ -91,6 +95,35 @@ function applyThemeAttribute(attribute: ThemeAttribute | ThemeAttribute[], resol
     }
 }
 
+function upsertMeta(name: string, dataAttribute: string) {
+    const selector = `meta[name="${name}"][${dataAttribute}="true"]`
+    const existing = document.head.querySelector<HTMLMetaElement>(selector)
+
+    if (existing) return existing
+
+    const meta = document.createElement("meta")
+    meta.name = name
+    meta.setAttribute(dataAttribute, "true")
+    document.head.appendChild(meta)
+    return meta
+}
+
+function syncBrowserThemeChrome(resolvedTheme: ResolvedTheme) {
+    const color = BROWSER_THEME_COLORS[resolvedTheme]
+    const themeColor = upsertMeta("theme-color", "data-dynamic-theme-color")
+    const appleStatusBar = upsertMeta("apple-mobile-web-app-status-bar-style", "data-dynamic-status-bar-style")
+    const themeColorMetas = document.head.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+
+    for (const meta of themeColorMetas) {
+        meta.content = color
+    }
+
+    themeColor.content = color
+    appleStatusBar.content = resolvedTheme === "dark" ? "black-translucent" : "default"
+    document.documentElement.style.backgroundColor = color
+    document.body.style.backgroundColor = color
+}
+
 export function ThemeProvider({
     children,
     attribute = "data-theme",
@@ -141,6 +174,8 @@ export function ThemeProvider({
         if (enableColorScheme) {
             document.documentElement.style.colorScheme = resolvedTheme
         }
+
+        syncBrowserThemeChrome(resolvedTheme)
 
         restoreTransition?.()
     }, [attribute, disableTransitionOnChange, enableColorScheme, resolvedTheme])

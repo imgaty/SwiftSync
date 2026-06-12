@@ -10,7 +10,7 @@
 "use client"
 
 import Image from 'next/image'
-import { type ReactNode, useSyncExternalStore } from 'react'
+import { type ReactNode, useEffect, useSyncExternalStore } from 'react'
 import { Globe2, Moon, Sun } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
 import { useLanguage } from '@/components/language-provider'
@@ -47,9 +47,19 @@ export function AuthShell({
     const settingsCopy = getTranslations(t, 'settings')
     const commandCopy = getTranslations(t, 'command_palette')
 
+    useEffect(() => {
+        document.documentElement.classList.add('auth-route')
+        document.body.classList.add('auth-route')
+
+        return () => {
+            document.documentElement.classList.remove('auth-route')
+            document.body.classList.remove('auth-route')
+        }
+    }, [])
+
     return (
         <div
-            className="auth-shell relative isolate flex min-h-dvh w-full flex-col overflow-x-hidden overflow-y-auto bg-background text-foreground"
+            className="auth-shell relative isolate flex min-h-dvh w-full flex-col overflow-x-hidden overflow-y-auto bg-transparent text-foreground"
             data-corner-highlight={cornerHighlight ? 'on' : 'off'}
         >
             <CanvasBackground tone="auth" />

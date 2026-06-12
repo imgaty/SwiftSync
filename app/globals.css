@@ -1935,13 +1935,39 @@ code {
 /* AUTH PAGE EFFECTS */
 /* ============================================================================== */
 
-.auth-shell {
-    min-height: 100svh;
+html.auth-route,
+body.auth-route {
+    min-height: 100%;
+    background-color: var(--background);
+    background-image:
+        radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1.35px);
+    background-position: 0 0;
+    background-repeat: repeat;
+    background-size: 24px 24px;
+}
+
+html.auth-route.dark,
+html.auth-route.dark body.auth-route {
+    background-color: #000000;
+}
+
+body.auth-route {
     min-height: 100dvh;
 }
 
+.auth-shell {
+    min-height: 100svh;
+    min-height: 100dvh;
+    background-color: transparent;
+    background-image:
+        radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1.35px);
+    background-position: 0 0;
+    background-repeat: repeat;
+    background-size: 24px 24px;
+}
+
 .dark .auth-shell {
-    background-color: #000000;
+    background-color: transparent;
 }
 
 .auth-shell a[href]:not([data-slot="button"]) {

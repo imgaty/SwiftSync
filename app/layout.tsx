@@ -7,7 +7,7 @@
 //  shared wrappers that every route inherits.
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { cookies } from "next/headers"
 import { GeistMono } from "geist/font/mono"
 import { LanguageProvider } from "@/components/language-provider"
@@ -40,6 +40,16 @@ export const metadata: Metadata = {
         shortcut: [{ url: "/icon.svg", type: "image/svg+xml", sizes: "any" }],
         apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "180x180" }],
     },
+}
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+        { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    ],
 }
 
 export default async function RootLayout({

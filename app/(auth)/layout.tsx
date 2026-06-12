@@ -17,7 +17,7 @@ export default function AuthLayout({
   // AuthShell handles the vertical layout so the footer can sit in normal flow
   // beneath the auth content instead of overlapping it on mobile.
   return (
-    <div className="relative min-h-dvh w-full bg-background transition-colors duration-300">
+    <div className="relative min-h-dvh w-full bg-transparent transition-colors duration-300">
       <Toaster richColors closeButton position="bottom-right" />
       {children}
     </div>
