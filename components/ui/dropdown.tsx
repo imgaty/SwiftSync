@@ -231,15 +231,16 @@ export function DropdownLanguageSubmenu({
   label = 'Language',
 }: DropdownLanguageSubmenuProps) {
   const currentLabel = DROPDOWN_LANGUAGE_OPTIONS.find((option) => option.value === selectedLanguage)?.label ?? selectedLanguage
+  const languageLabel = typeof label === 'string' ? label : 'Language'
+  const currentLabelText = typeof currentLabel === 'string' ? currentLabel : selectedLanguage
 
   return (
     <DropdownSub>
-      <DropdownSubTrigger className="group cursor-pointer">
+      <DropdownSubTrigger className="group cursor-pointer" aria-label={`${languageLabel}: ${currentLabelText}`}>
         <span className="flex shrink-0 items-center justify-center text-neutral-400">
           <Globe className="size-4" />
         </span>
-        <span>{label}</span>
-        <span className="ml-auto pr-0.5 text-xs text-neutral-400">{currentLabel}</span>
+        <span>{currentLabel}</span>
       </DropdownSubTrigger>
       <DropdownPortal>
         <DropdownSubContent

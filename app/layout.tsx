@@ -34,6 +34,8 @@ export const metadata: Metadata = {
     manifest: "/manifest.webmanifest",
     icons: {
         icon: [
+            { url: "/icon-light.svg", type: "image/svg+xml", sizes: "any", media: "(prefers-color-scheme: light)" },
+            { url: "/icon-dark.svg", type: "image/svg+xml", sizes: "any", media: "(prefers-color-scheme: dark)" },
             { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
             { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
         ],

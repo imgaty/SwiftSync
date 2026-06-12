@@ -37,6 +37,7 @@ const eslintConfig = defineConfig([
         "build/**",
         "next-env.d.ts",
         "scripts/**/*.js",
+        "codex-review-reports/**",
         "lib/generated/**",
     ]),
 ]);

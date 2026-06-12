@@ -1059,10 +1059,10 @@ assert.match(
     /peer-data-\[side=left\]:md:ml-0![\s\S]*peer-data-\[side=right\]:md:mr-0!/,
     "the app framework should remove the gap between the sidebar and app frame on the active sidebar side",
 )
-assert.match(
+assert.doesNotMatch(
     sidebar,
-    /const collapsedRailBalance = \[[\s\S]*group-data-\[collapsible=icon\]:group-data-\[side=left\]:pl-3[\s\S]*group-data-\[collapsible=icon\]:group-data-\[side=right\]:pr-3[\s\S]*SidebarHeader[\s\S]*collapsedRailBalance[\s\S]*SidebarFooter[\s\S]*collapsedRailBalance[\s\S]*SidebarGroup[\s\S]*collapsedRailBalance/,
-    "collapsed sidebar containers should offset toward the app frame so the visible rail reads symmetrically",
+    /group-data-\[collapsible=icon\]:group-data-\[(?:side|rendered-side)=/,
+    "collapsed sidebar containers should not add side-specific padding",
 )
 assert.match(
     sidebar,

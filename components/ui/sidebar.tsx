@@ -554,18 +554,9 @@ const SidebarInset = componentFactory("main", [
     "md:m-2 md:h-[calc(100svh-16px)] peer-data-[side=left]:md:ml-0! peer-data-[side=right]:md:mr-0! peer-data-[rendered-side=left]:md:ml-0! peer-data-[rendered-side=right]:md:mr-0!"
 ], "inset")
 
-const collapsedRailBalance = [
-    "group-data-[collapsible=icon]:group-data-[side=left]:pl-3",
-    "group-data-[collapsible=icon]:group-data-[rendered-side=left]:pl-3",
-    "group-data-[collapsible=icon]:group-data-[rendered-side=left]:pr-1",
-    "group-data-[collapsible=icon]:group-data-[side=right]:pr-3",
-    "group-data-[collapsible=icon]:group-data-[rendered-side=right]:pl-1",
-    "group-data-[collapsible=icon]:group-data-[rendered-side=right]:pr-3",
-]
-
 const SidebarInput = componentFactory(Input, cn("h-8 w-full", UDS.cardFlatShadow), "input")                  // Search/filter input for sidebar
-const SidebarHeader = componentFactory("div", ["flex flex-col gap-2 | p-2", ...collapsedRailBalance], "header")
-const SidebarFooter = componentFactory("div", ["flex flex-col gap-2 | p-2", ...collapsedRailBalance], "footer")
+const SidebarHeader = componentFactory("div", "flex flex-col gap-2 | p-2", "header")
+const SidebarFooter = componentFactory("div", "flex flex-col gap-2 | p-2", "footer")
 const SidebarSeparator = componentFactory(Separator, "mx-2 | w-auto | bg-sidebar-border", "separator")
 
 const SidebarContent = componentFactory("div", [
@@ -574,7 +565,7 @@ const SidebarContent = componentFactory("div", [
     "group-data-[collapsible=icon]:overflow-hidden"
 ], "content")
 
-const SidebarGroup = componentFactory("div", ["relative | flex flex-col | w-full min-w-0 | p-2", ...collapsedRailBalance], "group")        // Group container for related menu items
+const SidebarGroup = componentFactory("div", "relative | flex flex-col | w-full min-w-0 | p-2", "group")        // Group container for related menu items
 const SidebarGroupContent = componentFactory("div", "w-full | text-sm", "group-content")                        // Content wrapper inside a group
 const SidebarMenu = componentFactory("ul", "flex flex-col gap-1 | w-full min-w-0", "menu")                      // Unordered list for menu items
 const SidebarMenuItem = componentFactory("li", "group/menu-item | relative", "menu-item")                       // List item wrapper for menu buttons
