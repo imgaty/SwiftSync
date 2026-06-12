@@ -19,27 +19,14 @@ import { QueryProvider } from "@/components/query-provider"
 import { AppLoadingProvider } from "@/components/loading-provider"
 import { SquircleProvider } from "@/components/squircle-provider"
 import { SurfaceSpotlightProvider } from "@/components/surface-spotlight-provider"
+import { getLanguageDefinition, normalizeLanguage } from "@/lib/languages"
 import "./globals.css"
 
-const themeInitScript = `
-(() => {
-    try {
-        const storedTheme = window.localStorage.getItem("theme");
-        const theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
-            ? storedTheme
-            : "system";
-        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const resolvedTheme = theme === "system" ? (prefersDark ? "dark" : "light") : theme;
-        const root = document.documentElement;
-        root.classList.remove("light", "dark");
-        root.classList.add(resolvedTheme);
-        root.style.colorScheme = resolvedTheme;
-    } catch {
-        document.documentElement.classList.add("light");
-        document.documentElement.style.colorScheme = "light";
-    }
-})();
-`
+type ThemeCookie = "light" | "dark" | "system"
+
+function isThemeCookie(value: string | undefined): value is ThemeCookie {
+    return value === "light" || value === "dark" || value === "system"
+}
 
 export const metadata: Metadata = {
     title: "Argent",
@@ -58,24 +45,30 @@ export const metadata: Metadata = {
 export default async function RootLayout({
     children
 }: Readonly<{ children: React.ReactNode; }>) {
-    const languageCookie = (await cookies()).get("language")?.value === "pt" ? "pt" as const : "en" as const
+    const languageCookie = normalizeLanguage((await cookies()).get("language")?.value)
+    const languageDefinition = getLanguageDefinition(languageCookie)
     const colorblindCookie = (await cookies()).get("colorblind_mode")?.value as "deuteranopia" | "protanopia" | "tritanopia" | undefined
     const currencyCookie = (await cookies()).get("preferred_currency")?.value as "USD" | "GBP" | "BRL" | undefined
+    const themeCookie = (await cookies()).get("theme")?.value
+    const defaultTheme = isThemeCookie(themeCookie) ? themeCookie : "system"
+    const initialThemeClass = defaultTheme === "light" || defaultTheme === "dark" ? defaultTheme : undefined
     const htmlClassName = [
         GeistMono.variable,
+        initialThemeClass,
         colorblindCookie ? `colorblind-${colorblindCookie}` : undefined,
     ].filter(Boolean).join(" ")
 
     return (
-        <html lang = {languageCookie} className = {htmlClassName} suppressHydrationWarning>
-            <head>
-                <script
-                    id="theme-init"
-                    dangerouslySetInnerHTML={{ __html: themeInitScript }}
-                />
-            </head>
+        <html
+            lang = {languageDefinition.htmlLang}
+            dir = {languageDefinition.direction}
+            data-language-direction = {languageDefinition.direction}
+            data-language-layout = {languageDefinition.layout}
+            className = {htmlClassName}
+            suppressHydrationWarning
+        >
             <body className = "font-sans antialiased">
-                <ThemeProvider attribute = "class" defaultTheme = "system" enableSystem storageKey = "theme" disableTransitionOnChange>
+                <ThemeProvider attribute = "class" defaultTheme = {defaultTheme} enableSystem storageKey = "theme" disableTransitionOnChange>
                     <ColorBlindProvider defaultMode = {colorblindCookie ?? "none"}>
                         <LanguageProvider defaultLanguage = {languageCookie}>
                             <CurrencyProvider defaultCurrency = {currencyCookie ?? "EUR"}>

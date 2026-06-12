@@ -28,12 +28,12 @@ export function SettingRow({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex items-center justify-between gap-4 py-1">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-1.5">
             <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="text-[13px] font-medium leading-tight">{label}</p>
+                <p className="text-sm font-medium leading-tight">{label}</p>
                 <p className="text-xs text-neutral-400 leading-snug">{description}</p>
             </div>
-            <div className="shrink-0">{children}</div>
+            <div className="flex h-7 shrink-0 items-center justify-end">{children}</div>
         </div>
     )
 }
@@ -48,7 +48,7 @@ export function SectionHeader({
     return (
         <div className="space-y-1">
             <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-            <p className="text-[13px] leading-relaxed text-neutral-400">{description}</p>
+            <p className="text-sm leading-relaxed text-neutral-400">{description}</p>
         </div>
     )
 }
@@ -70,7 +70,7 @@ export function SettingsSection({
         <section className={cn("space-y-3", className)}>
             {(title || description) && (
                 <div className="space-y-0.5">
-                    {title && <h4 className="text-[13px] font-semibold">{title}</h4>}
+                    {title && <h4 className="text-sm font-semibold">{title}</h4>}
                     {description && <p className="text-xs text-neutral-400">{description}</p>}
                 </div>
             )}

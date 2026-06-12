@@ -73,13 +73,13 @@ function SheetContent({
           "z-[1000]",
           UDS.panelGlow,
           side === "right" &&
-            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 md:inset-y-2 right-0 md:right-2 h-full md:h-auto w-3/4 sm:max-w-sm md:sq-xl",
+            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 md:inset-y-2 right-0 md:right-2 h-full md:h-auto w-3/4 sm:max-w-sm md:sq-big",
           side === "left" &&
-            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 md:inset-y-2 left-0 md:left-2 h-full md:h-auto w-3/4 sm:max-w-sm md:sq-xl",
+            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 md:inset-y-2 left-0 md:left-2 h-full md:h-auto w-3/4 sm:max-w-sm md:sq-big",
           side === "top" &&
-            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 md:inset-x-2 top-0 md:top-2 h-auto md:sq-xl",
+            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 md:inset-x-2 top-0 md:top-2 h-auto md:sq-big",
           side === "bottom" &&
-            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 md:inset-x-2 bottom-0 md:bottom-2 h-auto md:sq-xl",
+            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 md:inset-x-2 bottom-0 md:bottom-2 h-auto md:sq-big",
           className
         )}
         {...props}

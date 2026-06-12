@@ -38,7 +38,7 @@ export const DASHBOARD_ACTION_SURFACE = cn(
 
 export const DASHBOARD_ROW_HOVER = cn("sq-12 transition-colors", UDS.itemHover)
 
-export const DASHBOARD_TITLE_CLASS = "truncate text-[13px] font-medium tracking-tight text-foreground-secondary sm:text-[14px]"
+export const DASHBOARD_TITLE_CLASS = "truncate text-sm font-medium tracking-tight text-foreground-secondary"
 
 export const DASHBOARD_ACTION_BUTTON_CLASS = "size-7 sq-full text-foreground-secondary hover:text-foreground"
 
@@ -221,7 +221,7 @@ export const DashboardMetricCard = React.forwardRef<HTMLDivElement, DashboardMet
                         {value}
                     </div>
                     {detail && (
-                        <div className={cn("mt-2 flex min-w-0 items-center gap-2 text-[11px] font-medium text-muted-foreground", detailClassName)}>
+                        <div className={cn("mt-2 flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground", detailClassName)}>
                             <span className={cn("size-1.5 shrink-0 sq-full", toneStyles.dot)} />
                             <div className="min-w-0 truncate">
                                 {detail}

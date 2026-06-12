@@ -159,7 +159,7 @@ export function MobileCard<T>({
                                         field.className,
                                     )}
                                 >
-                                    <p className="text-[11px] text-neutral-400">{field.label}</p>
+                                    <p className="text-xs text-neutral-400">{field.label}</p>
                                     <p className="mt-0.5 text-sm font-medium auto-scroll">{field.value}</p>
                                 </div>
                             ))}

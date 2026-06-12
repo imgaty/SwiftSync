@@ -115,18 +115,15 @@ function ContextMenuSubContent({
       ref={contentRef}
       data-slot="context-menu-sub-content"
       className={cn(
-        UDS.transientSurface,
-        UDS.glideSurface,
-        UDS.animateIn,
-        UDS.animateOut,
-        "z-[999] origin-(--radix-context-menu-content-transform-origin) overflow-hidden",
+        UDS.dropdownSurface,
+        "z-[1100] origin-(--radix-context-menu-content-transform-origin) overflow-hidden",
         className
       )}
       {...props}
       {...menuHandlers}
     >
       <GlideHighlight rect={rect} visible={visible} />
-      <div className="relative z-[2] space-y-0.5">
+      <div className={UDS.dropdownContent}>
         {children}
       </div>
     </ContextMenuPrimitive.SubContent>
@@ -152,18 +149,15 @@ function ContextMenuContent({
         collisionPadding={16}
         avoidCollisions={true}
         className={cn(
-          UDS.transientSurface,
-          UDS.glideSurface,
-          UDS.animateIn,
-          UDS.animateOut,
-          "z-[999] max-h-(--radix-context-menu-content-available-height) origin-(--radix-context-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          UDS.dropdownSurface,
+          "z-[1100] max-h-(--radix-context-menu-content-available-height) origin-(--radix-context-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
           className
         )}
         {...props}
         {...menuHandlers}
       >
         <GlideHighlight rect={rect} visible={visible} />
-        <div className="relative z-[2] space-y-0.5">
+        <div className={UDS.dropdownContent}>
           {children}
         </div>
       </ContextMenuPrimitive.Content>

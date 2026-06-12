@@ -45,7 +45,7 @@ export function FindReplaceDialog({
         `${UDS.inlineSurface} h-8 w-full px-2 text-xs outline-none transition-colors focus:border-primary/50`
 
     const checkbox = (label: string, value: boolean, onChange: (v: boolean) => void) => (
-        <label className="flex items-center gap-2 text-[11px] text-neutral-600 dark:text-neutral-400">
+        <label className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
             <input
                 type="checkbox"
                 checked={value}
@@ -73,17 +73,17 @@ export function FindReplaceDialog({
                         <Search className="size-4" />
                         Find &amp; Replace
                     </DialogTitle>
-                    <DialogDescription className="text-[11px]">
+                    <DialogDescription className="text-xs">
                         Search across the active sheet
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3 py-2">
                     <div className="space-y-1.5">
-                        <label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">Find what</label>
+                        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Find what</label>
                         <input className={inputCls} value={find} onChange={(e) => setFind(e.target.value)} autoFocus />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">Replace with</label>
+                        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Replace with</label>
                         <input className={inputCls} value={replace} onChange={(e) => setReplace(e.target.value)} />
                     </div>
                     <div className="flex items-center gap-4">

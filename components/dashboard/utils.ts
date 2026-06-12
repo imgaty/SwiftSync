@@ -8,6 +8,7 @@
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
 import type { Bill } from "@/lib/types"
+import type { DashboardLabels } from "@/components/dashboard/types"
 
 export const DAY_MS = 1000 * 60 * 60 * 24
 
@@ -44,8 +45,8 @@ export function getMonthPrefix(date: Date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
 }
 
-export function formatDaysUntil(days: number, isPortuguese: boolean) {
-    if (days <= 0) return isPortuguese ? "Hoje" : "Today"
-    if (days === 1) return isPortuguese ? "Amanha" : "Tomorrow"
-    return isPortuguese ? `em ${days}d` : `in ${days}d`
+export function formatDaysUntil(days: number, labels: Pick<DashboardLabels, "today" | "tomorrow" | "inDays">) {
+    if (days <= 0) return labels.today
+    if (days === 1) return labels.tomorrow
+    return labels.inDays.replace("%count", String(days))
 }

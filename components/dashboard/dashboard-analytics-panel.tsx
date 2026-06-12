@@ -56,7 +56,7 @@ const ANALYTICS_ACTION_BUTTON_CLASS = cn(DASHBOARD_ACTION_BUTTON_CLASS, "hover:s
 const ANALYTICS_ACTION_ICON_CLASS = "size-3.5"
 const ANALYTICS_SECTION_GAP_CLASS = "gap-3"
 const ANALYTICS_TOGGLE_CLASS = "h-8 min-h-8 gap-0.5 p-0.5"
-const ANALYTICS_TOGGLE_ITEM_CLASS = "h-7 min-w-8 px-2.5 text-[12px] leading-none sm:min-w-[7rem] sm:px-3"
+const ANALYTICS_TOGGLE_ITEM_CLASS = "h-7 min-w-8 px-2.5 text-xs leading-none sm:min-w-[7rem] sm:px-3"
 
 const ANALYTICS_METRIC_TONE_STYLES: Record<AnalyticsInsightTone, { icon: string }> = {
     negative: {
@@ -171,15 +171,15 @@ function AnalyticsInsightStrip({
                     >
                         <div className="flex min-w-0 items-center gap-2">
                             <Icon className={cn("size-4 shrink-0", toneStyles.icon)} />
-                            <span className="min-w-0 truncate text-[11px] font-semibold text-foreground-secondary">
+                            <span className="min-w-0 truncate text-xs font-semibold text-foreground-secondary">
                                 {insight.label}
                             </span>
                         </div>
                         <div className="mt-2 grid min-w-0 gap-1">
-                            <span className="min-w-0 truncate text-[15px] font-semibold leading-none tabular-nums text-foreground">
+                            <span className="min-w-0 truncate text-base font-semibold leading-none tabular-nums text-foreground">
                                 {insight.value}
                             </span>
-                            <span className="min-w-0 truncate text-[11px] font-medium text-muted-foreground">
+                            <span className="min-w-0 truncate text-xs font-medium text-muted-foreground">
                                 {insight.detail}
                             </span>
                         </div>

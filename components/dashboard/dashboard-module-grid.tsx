@@ -38,7 +38,7 @@ function DashboardModuleSlot({
         <section
             aria-label={dashboardModule.title}
             className={cn(
-                "flex min-h-0 min-w-0 overflow-visible",
+                "flex min-h-0 min-w-0",
                 className,
             )}
             data-dashboard-module={dashboardModule.id}
@@ -83,7 +83,7 @@ export function DashboardModuleGrid({
 
     return (
         <div
-            className="grid min-w-0 items-stretch gap-4 overflow-visible @[900px]/main:min-h-0 @[900px]/main:flex-1 @[900px]/main:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] @[1320px]/main:grid-cols-5"
+            className="grid min-w-0 items-stretch gap-4 @[900px]/main:min-h-0 @[900px]/main:flex-1 @[900px]/main:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] @[1320px]/main:grid-cols-5"
             data-dashboard-grid
             data-dashboard-layout="command-center"
         >

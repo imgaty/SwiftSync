@@ -121,8 +121,8 @@ export async function POST(request: Request) {
       // configured, return the reset URL directly so password reset still works.
       if (process.env.NODE_ENV !== 'production' && isResendTestMode) {
         return successResponse({
-          message: 'Email delivery is unavailable in local test mode. Use the temporary reset link below.',
-          devNotice: 'Resend sandbox delivery blocked the email. Use the temporary reset link below for local development.',
+          message: 'Email delivery is unavailable in local test mode. Use the temporary reset link for local development.',
+          devNotice: 'Resend sandbox delivery blocked the email. Use the temporary reset link for local development.',
           devResetUrl: buildResetUrl(rawToken),
         });
       }
@@ -150,8 +150,8 @@ export async function POST(request: Request) {
 
     return successResponse({
       devNotice: devRecipientOverride
-        ? `Local development: the reset email was sent to ${devRecipientOverride} because RESEND_DEV_TO_EMAIL is set. You can also use the temporary reset link below.`
-        : 'Local development: use the temporary reset link below if email delivery is delayed.',
+        ? `Local development: the reset email was sent to ${devRecipientOverride} because RESEND_DEV_TO_EMAIL is set. You can also use the temporary reset link for local development.`
+        : 'Local development: use the temporary reset link for local development if email delivery is delayed.',
       devResetUrl: buildResetUrl(rawToken),
     });
   } catch (error) {

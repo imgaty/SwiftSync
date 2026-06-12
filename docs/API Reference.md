@@ -24,15 +24,12 @@ This means the API routes below are not just plain endpoints — they are common
 
 | Endpoint                              | Method | What it does                                         | Auth required | Source                                                                                                     |
 | :------------------------------------ | :----- | :--------------------------------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------- |
-| `/api/auth/register`                  | `POST` | Register a new user (hashes password with AES)       | No            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/%5Baction%5D/route.ts)                  |
+| `/api/auth/register`                  | `POST` | Register a new user (hashes password with scrypt)    | No            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/%5Baction%5D/route.ts)                  |
 | `/api/auth/login`                     | `POST` | Verify credentials, set session cookies              | No            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/%5Baction%5D/route.ts)                  |
 | `/api/auth/verify`                    | `GET`  | Check if the current session is valid                | Yes           | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/%5Baction%5D/route.ts)                  |
 | `/api/auth/logout`                    | `POST` | Clear session cookies                                | Yes           | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/%5Baction%5D/route.ts)                  |
 | `/api/auth/forgot-password`           | `POST` | Generate reset token and send email via Resend       | No            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/forgot-password/route.ts)               |
 | `/api/auth/reset-password`            | `POST` | Verify token and set new password                    | No            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/reset-password/route.ts)                |
-| `/api/auth/2fa/setup`                 | `POST` | Generate TOTP secret and QR code                     | Yes           | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/2fa/setup/route.ts)                     |
-| `/api/auth/2fa/verify`                | `POST` | Verify 2FA code during login                         | Partial       | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/2fa/verify/route.ts)                    |
-| `/api/auth/2fa/disable`               | `POST` | Turn off 2FA for the authenticated user              | Yes           | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/2fa/disable/route.ts)                   |
 | `/api/auth/oauth/[provider]`          | `GET`  | Redirect to OAuth provider consent screen            | No            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/oauth/%5Bprovider%5D/route.ts)          |
 | `/api/auth/oauth/[provider]/callback` | `GET`  | Handle OAuth callback, create/link user, set cookies | No            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/auth/oauth/%5Bprovider%5D/callback/route.ts) |
 
@@ -81,13 +78,13 @@ This means the API routes below are not just plain endpoints — they are common
 
 ## Admin
 
-All admin routes require `admin` or `superadmin` role. Destructive actions (delete, role change) require `superadmin`.
+All admin routes require `admin` or `superadmin` role. User deletion is an admin-side soft delete: normal admins can soft-delete non-superadmin users, but admins cannot delete themselves and non-superadmins cannot modify or delete superadmins. Role changes remain `superadmin` only.
 
 | Endpoint                   | Method       | What it does                                            | Source                                                                                       |
 | :------------------------- | :----------- | :------------------------------------------------------ | :------------------------------------------------------------------------------------------- |
 | `/api/admin/users`         | `GET`        | List users with filters and pagination                  | [View](https://github.com/HilFerr/Argent/blob/main/app/api/admin/users/route.ts)          |
 | `/api/admin/users/[id]`    | `GET`        | Detailed user profile                                   | [View](https://github.com/HilFerr/Argent/blob/main/app/api/admin/users/%5Bid%5D/route.ts) |
-| `/api/admin/users/[id]`    | `PATCH`      | Suspend, ban, unsuspend, delete, change role, reset 2FA | [View](https://github.com/HilFerr/Argent/blob/main/app/api/admin/users/%5Bid%5D/route.ts) |
+| `/api/admin/users/[id]`    | `PATCH`      | Suspend, ban, unsuspend, delete, change role            | [View](https://github.com/HilFerr/Argent/blob/main/app/api/admin/users/%5Bid%5D/route.ts) |
 | `/api/admin/audit-log`     | `GET`        | Paginated audit log with filters                        | [View](https://github.com/HilFerr/Argent/blob/main/app/api/admin/audit-log/route.ts)      |
 | `/api/admin/health`        | `GET`        | System health snapshot (DB latency, counts, runtime)    | [View](https://github.com/HilFerr/Argent/blob/main/app/api/admin/health/route.ts)         |
 | `/api/admin/announcements` | `GET / POST` | List or create system announcements                     | [View](https://github.com/HilFerr/Argent/blob/main/app/api/admin/announcements/route.ts)  |

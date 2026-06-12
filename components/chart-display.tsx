@@ -10,7 +10,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Settings, X, Calendar, Maximize2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Settings, X, Calendar, Maximize2, Plus } from "lucide-react"
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
@@ -339,7 +339,7 @@ export const ChartDisplay = React.memo(function ChartDisplay({
             {!compact && (
             <div className={`absolute bottom-0 left-0 right-0 z-10 pointer-events-none ${showBubbles ? 'opacity-100' : 'opacity-0'}`}>
                 <OverflowScroll className={`py-1.5 ${isHorizontal ? 'px-4' : 'px-3'}`} speed={25} pauseDuration={2500} center>
-                    <span className="flex items-center gap-3 text-[10px] text-neutral-400/70">
+                    <span className="flex items-center gap-3 text-xs text-neutral-400/70">
                         <span className="flex items-center gap-1">
                             <span className="w-1.5 h-1.5 sq-full shrink-0" style={{ backgroundColor: metricColor }} />
                             <span>{chartConfig[metricType]?.label}</span>
@@ -380,7 +380,9 @@ export const ChartDisplay = React.memo(function ChartDisplay({
                                             />
                                         ))}
                                         {selectedCategories.length > 5 && (
-                                            <span className="w-2 h-2 sq-full uds-bg-subtle ring-1 ring-background text-[6px]">+</span>
+                                            <span className="flex size-3 items-center justify-center sq-full uds-bg-subtle ring-1 ring-background">
+                                                <Plus className="size-2 text-neutral-400" aria-hidden="true" />
+                                            </span>
                                         )}
                                     </span>
                                     <span className="underline decoration-dotted underline-offset-2">{filterLabel}</span>

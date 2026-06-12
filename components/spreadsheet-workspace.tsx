@@ -275,7 +275,7 @@ export function SpreadsheetWorkspace({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
-                                "relative h-8 cursor-pointer select-none px-3.5 py-2 text-[13px] font-semibold transition-colors",
+                                "relative h-8 cursor-pointer select-none px-3.5 py-2 text-sm font-semibold transition-colors",
                                 activeTab === tab.id
                                     ? "text-primary"
                                     : "text-muted-foreground hover:text-foreground",
@@ -337,7 +337,7 @@ export function SpreadsheetWorkspace({
                             <ToolbarGroup>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 w-28 justify-between sq-lg px-2 text-[11px]" title="Font family">
+                                        <Button variant="ghost" size="sm" className="h-7 w-28 justify-between sq-lg px-2 text-xs" title="Font family">
                                             <span className="truncate" style={{ fontFamily: activeFontFamily }}>{activeFontFamily}</span>
                                             <ChevronDown className="size-3 shrink-0 opacity-60" />
                                         </Button>
@@ -352,7 +352,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 w-12 justify-between sq-lg px-2 text-[11px]" title="Font size">
+                                        <Button variant="ghost" size="sm" className="h-7 w-12 justify-between sq-lg px-2 text-xs" title="Font size">
                                             <span>{s.activeFormat.fontSize}</span>
                                             <ChevronDown className="size-3 shrink-0 opacity-60" />
                                         </Button>
@@ -417,7 +417,7 @@ export function SpreadsheetWorkspace({
                             <ToolbarGroup>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Alignment">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Alignment">
                                             <AlignLeft className="size-3.5" />
                                             Align
                                             <ChevronDown className="size-3" />
@@ -458,7 +458,7 @@ export function SpreadsheetWorkspace({
                             <ToolbarGroup>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 w-28 justify-between sq-lg px-2 text-[11px]" title="Number format">
+                                        <Button variant="ghost" size="sm" className="h-7 w-28 justify-between sq-lg px-2 text-xs" title="Number format">
                                             <span className="truncate">{activeNfLabel}</span>
                                             <ChevronDown className="size-3 shrink-0 opacity-60" />
                                         </Button>
@@ -467,8 +467,8 @@ export function SpreadsheetWorkspace({
                                         {NUMBER_FORMAT_OPTIONS.map((o) => (
                                             <DropdownSectionItem key={o.value} onSelect={() => s.applyNumberFormat(buildNumberFormat(o.value))}>
                                                 <div className="flex w-full items-center justify-between gap-2">
-                                                    <span className="text-[12px]">{o.label}</span>
-                                                    <span className="text-[10px] text-neutral-400">{o.sample}</span>
+                                                    <span className="text-xs">{o.label}</span>
+                                                    <span className="text-xs text-neutral-400">{o.sample}</span>
                                                 </div>
                                             </DropdownSectionItem>
                                         ))}
@@ -485,17 +485,17 @@ export function SpreadsheetWorkspace({
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="Comma style" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg px-2 text-[11px] font-semibold" onClick={() => s.applyNumberFormat(buildNumberFormat("comma"))}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg px-2 text-xs font-semibold" onClick={() => s.applyNumberFormat(buildNumberFormat("comma"))}>
                                         ,
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="Increase decimal" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg px-1.5 text-[10px] tracking-tight" onClick={() => s.bumpDecimals(1)}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg px-1.5 text-xs tracking-tight" onClick={() => s.bumpDecimals(1)}>
                                         ←.0
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="Decrease decimal" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg px-1.5 text-[10px] tracking-tight" onClick={() => s.bumpDecimals(-1)}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg px-1.5 text-xs tracking-tight" onClick={() => s.bumpDecimals(-1)}>
                                         .0→
                                     </Button>
                                 </SmartTooltip>
@@ -507,7 +507,7 @@ export function SpreadsheetWorkspace({
                             <ToolbarGroup>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Conditional formatting" aria-label="Conditional formatting">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Conditional formatting" aria-label="Conditional formatting">
                                             <Sparkles className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -533,7 +533,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Format as table" aria-label="Format as table">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Format as table" aria-label="Format as table">
                                             <TableIcon className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -546,7 +546,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Cell styles" aria-label="Cell styles">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Cell styles" aria-label="Cell styles">
                                             <LayoutGrid className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -572,7 +572,7 @@ export function SpreadsheetWorkspace({
                             <ToolbarGroup>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Insert" aria-label="Insert">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Insert" aria-label="Insert">
                                             <Plus className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -587,7 +587,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Delete" aria-label="Delete">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Delete" aria-label="Delete">
                                             <DeleteRow className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -599,7 +599,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Format" aria-label="Format">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Format" aria-label="Format">
                                             <Brush className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -618,7 +618,7 @@ export function SpreadsheetWorkspace({
                             <ToolbarGroup>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="AutoSum">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="AutoSum">
                                             <Sigma className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -633,7 +633,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Clear">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Clear">
                                             <Eraser className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -646,7 +646,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Sort & Filter">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Sort & Filter">
                                             <Filter className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -658,7 +658,7 @@ export function SpreadsheetWorkspace({
                                 </Dropdown>
                                 <Dropdown>
                                     <DropdownTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-[11px]" title="Find & Select (⌘F)">
+                                        <Button variant="ghost" size="sm" className="h-7 sq-lg gap-1 px-2 text-xs" title="Find & Select (⌘F)">
                                             <Search className="size-3.5" />
                                             <ChevronDown className="size-3" />
                                         </Button>
@@ -777,8 +777,8 @@ export function SpreadsheetWorkspace({
                                                 }}
                                             >
                                                 <div className="flex flex-col">
-                                                    <span className="text-[12px] font-medium">{fn.name}</span>
-                                                    <span className="text-[10px] text-neutral-400">{fn.desc}</span>
+                                                    <span className="text-xs font-medium">{fn.name}</span>
+                                                    <span className="text-xs text-neutral-400">{fn.desc}</span>
                                                 </div>
                                             </DropdownSectionItem>
                                         ))}
@@ -790,32 +790,32 @@ export function SpreadsheetWorkspace({
 
                             <ToolbarGroup label="Quick">
                                 <SmartTooltip text="SUM" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-[11px] text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=SUM()")}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-xs text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=SUM()")}>
                                         Σ SUM
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="AVERAGE" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-[11px] text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=AVERAGE()")}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-xs text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=AVERAGE()")}>
                                         x̄ AVG
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="COUNT" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-[11px] text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=COUNT()")}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-xs text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=COUNT()")}>
                                         # COUNT
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="MIN" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-[11px] text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=MIN()")}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-xs text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=MIN()")}>
                                         ↓ MIN
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="MAX" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-[11px] text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=MAX()")}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-xs text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=MAX()")}>
                                         ↑ MAX
                                     </Button>
                                 </SmartTooltip>
                                 <SmartTooltip text="IF" forceSide="bottom">
-                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-[11px] text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=IF()")}>
+                                    <Button variant="ghost" size="sm" className="h-7 sq-lg text-xs text-neutral-700 dark:text-neutral-200" onClick={() => s.startEdit(s.sel.col, s.sel.row, "=IF()")}>
                                         ? IF
                                     </Button>
                                 </SmartTooltip>
@@ -882,7 +882,7 @@ export function SpreadsheetWorkspace({
                     {activeTab === "view" && (
                         <>
                             <ToolbarGroup label="Zoom">
-                                <span className={`${UDS.inlineSurface} select-none px-2 py-1 text-[11px] font-medium text-neutral-500 dark:text-neutral-400`}>100%</span>
+                                <span className={`${UDS.inlineSurface} select-none px-2 py-1 text-xs font-medium text-neutral-500 dark:text-neutral-400`}>100%</span>
                             </ToolbarGroup>
 
                             <ToolbarDivider />
@@ -912,8 +912,8 @@ export function SpreadsheetWorkspace({
                                 }}
                                 className={`${UDS.itemHover} flex cursor-pointer flex-col items-start px-2 py-1.5 text-left transition-colors`}
                             >
-                                <span className="text-[11px] font-semibold text-foreground">{fn.syntax}</span>
-                                <span className="text-[10px] text-neutral-400 leading-tight">{fn.desc}</span>
+                                <span className="text-xs font-semibold text-foreground">{fn.syntax}</span>
+                                <span className="text-xs text-neutral-400 leading-tight">{fn.desc}</span>
                             </Button>
                         ))}
                     </div>
@@ -948,7 +948,7 @@ export function SpreadsheetWorkspace({
                             if (e.key === "Enter") { s.commitEdit(); gridRef.current?.focus() }
                             if (e.key === "Escape") { s.setEditing(null); gridRef.current?.focus() }
                         }}
-                        className="h-8 flex-1 bg-transparent px-1 text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+                        className="h-8 flex-1 bg-transparent px-1 text-sm text-foreground outline-none placeholder:text-muted-foreground"
                         placeholder="Enter a value or formula (e.g. =SUM(A1:A5))..."
                     />
                 </div>
@@ -1272,7 +1272,7 @@ export function SpreadsheetWorkspace({
                             <Plus className="size-3.5" />
                         </Button>
                     </div>
-                    <div className="hidden shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground sm:flex">
+                    <div className="hidden shrink-0 items-center gap-1.5 text-xs text-muted-foreground sm:flex">
                         <span className={`${UDS.pillSurface} px-2 py-1 font-mono font-semibold text-foreground/80`}>{s.selectionSummary.address}</span>
                         <span className="px-1.5 py-1">{formatStatusNumber.format(s.selectionSummary.cellCount)} cells</span>
                         <span className="px-1.5 py-1">Count {formatStatusNumber.format(s.selectionSummary.filledCount)}</span>

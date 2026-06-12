@@ -56,7 +56,7 @@ function TabsTrigger({
         UDS.item,
         UDS.itemHover,
         UDS.itemStateActive,
-        "inline-flex h-[calc(100%-1px)] flex-1 justify-center gap-1.5 sq-full border border-transparent sq-border-muted px-2 py-1 text-[13px] font-medium whitespace-nowrap text-foreground dark:text-neutral-400",
+        "inline-flex h-[calc(100%-1px)] flex-1 justify-center gap-1.5 sq-full border border-transparent sq-border-muted px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground dark:text-neutral-400",
         "data-[state=active]:text-foreground",
         "focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.9]",

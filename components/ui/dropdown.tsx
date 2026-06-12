@@ -10,7 +10,7 @@
 'use client'
 
 import type { ComponentProps, ReactNode } from 'react'
-import { Eye, Globe, Monitor, Moon, PanelLeft, PanelRight, Sun } from 'lucide-react'
+import { Check, Eye, Globe, Monitor, Moon, PanelLeft, PanelRight, Sun } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { UDS } from '@/lib/UDS'
+import { LANGUAGE_OPTIONS } from '@/lib/languages'
 import { cn } from '@/lib/utils'
 
 export const Dropdown = DropdownMenu
@@ -126,9 +127,10 @@ export function DropdownSectionItem({
   children,
   icon,
 }: DropdownSectionItemProps) {
+  const showsActiveIndicator = typeof active === 'boolean'
+
   return (
     <DropdownItem
-      data-active={active ? 'true' : undefined}
       onSelect={onSelect}
     >
       {icon ? (
@@ -137,6 +139,15 @@ export function DropdownSectionItem({
         </span>
       ) : null}
       <span className="auto-scroll flex-1 min-w-0">{children}</span>
+      {showsActiveIndicator ? (
+        <Check
+          aria-hidden="true"
+          className={cn(
+            "ml-auto size-4 shrink-0 transition-opacity",
+            active ? "opacity-100 !text-black dark:!text-white" : "opacity-0"
+          )}
+        />
+      ) : null}
     </DropdownItem>
   )
 }
@@ -167,7 +178,7 @@ export function DropdownOptionsSection({
           <span className="flex items-center gap-1">
             <span>{option.label}</span>
             {option.description ? (
-              <span className="text-[11px] text-neutral-400">{option.description}</span>
+              <span className="text-xs text-neutral-400">{option.description}</span>
             ) : null}
           </span>
         </DropdownSectionItem>
@@ -176,10 +187,10 @@ export function DropdownOptionsSection({
   )
 }
 
-const LANGUAGE_OPTIONS: DropdownOption[] = [
-  { value: 'en', label: 'English', icon: <Globe /> },
-  { value: 'pt', label: 'Português', icon: <Globe /> },
-]
+const DROPDOWN_LANGUAGE_OPTIONS: DropdownOption[] = LANGUAGE_OPTIONS.map((language) => ({
+  ...language,
+  icon: <Globe />,
+}))
 
 type DropdownLanguageSectionProps = {
   selectedLanguage: string
@@ -201,10 +212,60 @@ export function DropdownLanguageSection({
       title={title}
       showTitle={showTitle}
       showSeparator={withSeparator}
-      options={LANGUAGE_OPTIONS}
+      options={DROPDOWN_LANGUAGE_OPTIONS}
       selectedValue={selectedLanguage}
       onSelect={onSelectLanguage}
     />
+  )
+}
+
+type DropdownLanguageSubmenuProps = {
+  selectedLanguage: string
+  onSelectLanguage: (language: string) => void
+  label?: ReactNode
+}
+
+export function DropdownLanguageSubmenu({
+  selectedLanguage,
+  onSelectLanguage,
+  label = 'Language',
+}: DropdownLanguageSubmenuProps) {
+  const currentLabel = DROPDOWN_LANGUAGE_OPTIONS.find((option) => option.value === selectedLanguage)?.label ?? selectedLanguage
+
+  return (
+    <DropdownSub>
+      <DropdownSubTrigger className="group cursor-pointer">
+        <span className="flex shrink-0 items-center justify-center text-neutral-400">
+          <Globe className="size-4" />
+        </span>
+        <span>{label}</span>
+        <span className="ml-auto pr-0.5 text-xs text-neutral-400">{currentLabel}</span>
+      </DropdownSubTrigger>
+      <DropdownPortal>
+        <DropdownSubContent
+          className="max-h-[min(420px,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
+          style={{ width: 240 }}
+          sideOffset={8}
+          alignOffset={-4}
+        >
+          {DROPDOWN_LANGUAGE_OPTIONS.map((option) => (
+            <DropdownSectionItem
+              key={option.value}
+              active={selectedLanguage === option.value}
+              onSelect={() => onSelectLanguage(option.value)}
+              icon={option.icon}
+            >
+              <span className="flex min-w-0 items-center gap-1">
+                <span className="truncate">{option.label}</span>
+                {option.description ? (
+                  <span className="truncate text-xs text-neutral-400">{option.description}</span>
+                ) : null}
+              </span>
+            </DropdownSectionItem>
+          ))}
+        </DropdownSubContent>
+      </DropdownPortal>
+    </DropdownSub>
   )
 }
 
@@ -341,7 +402,7 @@ export function DropdownColorVisionSubmenu({
           <Eye className="size-4" />
         </span>
         <span>{label}</span>
-        <span className="ml-auto pr-0.5 text-[11px] text-neutral-400">{currentLabel}</span>
+        <span className="ml-auto pr-0.5 text-xs text-neutral-400">{currentLabel}</span>
       </DropdownSubTrigger>
       <DropdownPortal>
         <DropdownSubContent

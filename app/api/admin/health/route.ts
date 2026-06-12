@@ -44,7 +44,6 @@ export async function GET() {
         transactionsToday,
         transactionsThisWeek,
         oauthAccountCount,
-        twoFaEnabledCount,
         saltEdgeConnections,
     ] = await Promise.all([
         prisma.user.count(),
@@ -65,7 +64,6 @@ export async function GET() {
         prisma.transaction.count({ where: { createdAt: { gte: oneDayAgo } } }),
         prisma.transaction.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
         prisma.oAuthAccount.count(),
-        prisma.user.count({ where: { twoFactorEnabled: true } }),
         prisma.saltEdgeConnection.count(),
     ])
 
@@ -94,10 +92,6 @@ export async function GET() {
             activeAnnouncements,
             oauthAccounts: oauthAccountCount,
             saltEdgeConnections,
-        },
-        security: {
-            twoFaEnabled: twoFaEnabledCount,
-            twoFaPercentage: totalUsers > 0 ? Math.round((twoFaEnabledCount / totalUsers) * 100) : 0,
         },
         activity: {
             loginsToday,

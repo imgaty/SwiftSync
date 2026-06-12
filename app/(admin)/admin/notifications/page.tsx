@@ -324,7 +324,7 @@ function SendNotificationDialog({ open, onClose, onSent, np }: { open: boolean; 
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="Notification message"
                             rows={3}
-                            className="px-4 py-3 text-[15px] focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="px-4 py-3 text-base focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         />
                     </div>
                     <div className="space-y-1.5">

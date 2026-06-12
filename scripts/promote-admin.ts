@@ -21,8 +21,8 @@ async function main() {
     console.error('Usage: pnpm run admin:promote -- <email> <password>')
     process.exit(1)
   }
-  if (inputPassword.length < 8) {
-    console.error('Password must be at least 8 characters.')
+  if (inputPassword.length < 12) {
+    console.error('Password must be at least 12 characters.')
     process.exit(1)
   }
 
@@ -35,7 +35,13 @@ async function main() {
 
   const updated = await prisma.user.upsert({
     where: { email: inputEmail },
-    update: { role: 'admin', status: 'active', password: hashPassword(inputPassword) },
+    update: {
+      role: 'admin',
+      status: 'active',
+      password: hashPassword(inputPassword),
+      emailTwoFactorCode: null,
+      emailTwoFactorCodeExpiry: null,
+    },
     create: {
       email: inputEmail,
       name: inputEmail.split('@')[0],
@@ -61,5 +67,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect()
-    await pool.end()
   })

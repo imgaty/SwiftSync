@@ -30,7 +30,6 @@ interface HealthData {
     timestamp: string
     database: { connected: boolean; latencyMs: number; totalRecords: number }
     tables: Record<string, number>
-    security: { twoFaEnabled: number; twoFaPercentage: number }
     activity: Record<string, number>
     runtime: {
         nodeVersion: string; platform: string; uptime: number
@@ -92,7 +91,7 @@ export default function AdminHealthPage() {
                 {loading && !data ? <HealthSkeleton /> : data && (
                     <>
                         {/* Status Banner */}
-                        <div className={`sq-xl border p-4 flex items-center gap-3 ${data.status === "healthy" ? "border-emerald-500/30 bg-emerald-500/5" : "border-red-500/30 bg-red-500/5"}`}>
+                        <div className={`sq-normal border p-4 flex items-center gap-3 ${data.status === "healthy" ? "border-emerald-500/30 bg-emerald-500/5" : "border-red-500/30 bg-red-500/5"}`}>
                             {data.status === "healthy"
                                 ? <CheckCircle className="size-6 text-emerald-500" />
                                 : <Activity className="size-6 text-red-500" />}
@@ -143,12 +142,7 @@ export default function AdminHealthPage() {
                                 <Shield className="size-4 text-emerald-500" />
                                 <h3 className="font-semibold">{hp.security || "Security"}</h3>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                                <div>
-                                    <p className={UDS.summaryLabel}>{hp.twofa_adoption || "2FA Adoption"}</p>
-                                    <p className={UDS.summaryValue}>{data.security.twoFaPercentage}%</p>
-                                    <p className="text-[11px] text-muted-foreground">{data.security.twoFaEnabled} {ad.users || "users"}</p>
-                                </div>
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 <div>
                                     <p className={UDS.summaryLabel}>{hp.logins_today || "Logins Today"}</p>
                                     <p className={UDS.summaryValue}>{data.activity.loginsToday}</p>
@@ -242,7 +236,7 @@ function TableCount({ icon, label, count, active }: {
         <div className={`${UDS.inlineSurface} p-2.5`}>
             <div className={UDS.summaryLabel}>{icon} {label}</div>
             <p className={UDS.summaryValue}>{count.toLocaleString()}</p>
-            {active !== undefined && <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{active} active</p>}
+            {active !== undefined && <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{active} active</p>}
         </div>
     )
 }
@@ -250,14 +244,14 @@ function TableCount({ icon, label, count, active }: {
 function HealthSkeleton() {
     return (
         <div className="space-y-4">
-            <Skeleton className="h-16 w-full sq-xl" />
+            <Skeleton className="h-16 w-full sq-normal" />
             <div className="grid gap-4 lg:grid-cols-2">
-                <Skeleton className="h-40 sq-xl" />
-                <Skeleton className="h-40 sq-xl" />
+                <Skeleton className="h-40 sq-normal" />
+                <Skeleton className="h-40 sq-normal" />
             </div>
-            <Skeleton className="h-32 sq-xl" />
-            <Skeleton className="h-32 sq-xl" />
-            <Skeleton className="h-40 sq-xl" />
+            <Skeleton className="h-32 sq-normal" />
+            <Skeleton className="h-32 sq-normal" />
+            <Skeleton className="h-40 sq-normal" />
         </div>
     )
 }

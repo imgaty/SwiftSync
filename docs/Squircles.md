@@ -4,7 +4,7 @@
 
 Argent uses squircle corners for app surfaces. The intent is to keep surfaces feeling softer and more native while keeping the visible border and the corner shape on the same visual surface.
 
-Argent renders app squircles through one continuous-corner system. CSS utilities provide deterministic fallback clipping, radius metadata, and redrawn border tokens. Browsers with native `corner-shape: squircle` support use that path first for corner geometry. `SquircleProvider` keeps an exact measured superellipse fallback for browsers without native corner-shape support, while visible `sq-border-*` edges are redrawn by the shared CSS edge layer.
+Argent renders app squircles through one continuous-corner system. CSS utilities provide deterministic fallback clipping, radius metadata, and redrawn border tokens. Browsers that can render `clip-path: path(...)` use the same measured superellipse path, even when they also support native `corner-shape: squircle`. `SquircleProvider` keeps an exact measured path for those browsers and falls back to native corner-shape only when path clipping is unavailable, while visible `sq-border-*` edges are redrawn by the shared CSS edge layer.
 
 The `sq-*` utilities own geometry only. Visible glass borders are opt-in through `sq-border-muted`, `sq-border-soft`, or `sq-border-strong`; this prevents plain shape helpers, dots, avatars, and nested controls from getting an accidental second-looking edge.
 
@@ -24,7 +24,7 @@ Where:
 - `n = 4` is the common squircle prototype
 - higher values move toward a square-like shape
 
-In CSS, Argent uses `corner-shape: squircle` where the browser supports it, so shadows and material paint follow a native superellipse-style curve. The runtime keeps a base radius plus a bounded area response: `radius = clamp(base + scale * 320 * (1 - exp(-sqrt(width * height) / damping)), min(width, height) / 2)`. The default damping is `420`, which lets larger containers become visibly rounder without the oversized panel corners that come from an unbounded power curve. Short controls still clamp into capsules or circles. Older browsers get a first-paint `shape()`/polygon fallback, then the runtime applies a measured p=4 superellipse path that the shared border layer inherits.
+In CSS, Argent keeps deterministic `clip-path` geometry on squircle surfaces so Safari, Chromium, and embedded browser surfaces use the same visible corner path. The stylesheet still declares `corner-shape: squircle` for native-capable browsers, but it does not erase the fallback clip path. The runtime treats each element's configured base radius as the minimum, then applies an exponential area response until the measured radius approaches 1.35x that base: `radius = min(base * 1.35, base + base * (1 - exp(-sqrt(width * height) / damping)))`. The default damping is `1000`, which lets larger containers become visibly rounder without ordinary cards immediately hitting the maximum. `--sq-scale: 0` or `data-squircle-expand-radius="false"` keeps an element at its base radius. Short controls still resolve into capsules or circles as the browser and fallback path clamp the measured radius to the element dimensions. Older browsers get a first-paint `shape()`/polygon fallback, then the runtime applies a measured p=4 superellipse path that the shared border layer inherits when path clipping is available.
 
 ## Implementation
 
@@ -43,19 +43,18 @@ Fallback polygon paths are defined on `:root`:
 }
 ```
 
-Tailwind custom utilities apply metadata first, then the fallback paths:
+Tailwind custom utilities apply metadata first, then the fallback paths. The shared app sizes are `sq-normal` (`22px`) and `sq-big` (`36px`):
 
 ```css
-@utility sq-xl {
-    --sq-base-r: 14px;
+@utility sq-normal {
+    --sq-base-r: var(--squircle-normal);
     --sq-q: 0.6;
-    --sq-scale: 0.014;
-    --sq-growth-damping: 420;
+    --sq-scale: 0;
     clip-path: polygon(10% 0, 90% 0, /* ... */, 8% 1%);
     clip-path: shape(
-        from 14px 0,
-        hline to calc(100% - 14px),
-        curve to 100% 14px with calc(100% - 5px) 0 / 100% 5px,
+        from var(--squircle-normal) 0,
+        hline to calc(100% - var(--squircle-normal)),
+        curve to 100% var(--squircle-normal) with calc(100% - var(--squircle-normal-control)) 0 / 100% var(--squircle-normal-control),
         /* remaining sides */
         close
     );
@@ -65,7 +64,9 @@ Tailwind custom utilities apply metadata first, then the fallback paths:
 The global CSS maps those utilities to radius metadata and border tokens. `sq-border-*` keeps a transparent layout border, then redraws the visible edge through the shared pseudo-element. Once `SquircleProvider` has measured the element, that pseudo-element is clipped to the ring between the outer superellipse and a true inward normal offset of the same curve:
 
 ```css
-:where(.sq-xl, .squircle-surface) {
+:where(.sq-normal, .squircle-surface) {
+    --sq-base-r: var(--squircle-normal);
+    --sq-scale: 0;
     border-radius: var(--sq-r);
 }
 
@@ -99,7 +100,7 @@ The global CSS maps those utilities to radius metadata and border tokens. `sq-bo
 }
 ```
 
-The root layout mounts `SquircleProvider`. It detects native CSS corner-shape support first. If support exists, the provider measures each shared squircle and writes `--sq-measured-r`. If not, it scans shared squircle utilities, reads `--sq-base-r`, `--sq-scale`, `--sq-growth-damping`, and `--sq-q` from computed styles, and generates the p=4 superellipse path. For explicit `sq-border-*` edges, it also writes `--sq-border-clip-path` as an outer path plus a reversed inward offset path. CSS still owns the paint, while the runtime supplies the measured geometry that keeps the ring thickness constant through the corner.
+The root layout mounts `SquircleProvider`. It prefers measured `clip-path: path(...)` geometry whenever the browser supports it, even if native CSS corner-shape is also available. If path clipping is unavailable but native corner-shape exists, the provider measures each shared squircle and writes `--sq-measured-r` while CSS keeps the deterministic static clip path. Otherwise, it scans shared squircle utilities, reads `--sq-base-r`, `--sq-scale`, `--sq-growth-damping`, and `--sq-q` from computed styles, and generates the p=4 superellipse path. For explicit `sq-border-*` edges, it also writes `--sq-border-clip-path` as an outer path plus a reversed inward offset path. CSS still owns the paint, while the runtime supplies the measured geometry that keeps the ring thickness constant through the corner.
 
 UDS surfaces are configured through `udsSurface()` and `udsContainer()` in [lib/UDS.ts](../lib/UDS.ts). Each material feature is independently switchable:
 
@@ -124,18 +125,17 @@ udsSurface({
 
 UDS state styles change the `--sq-border-*` variables instead of adding detached ring or wrapper borders. The visible material lives on the same `.uds-surface` element, while the shared edge layer redraws the border, highlight, and inset shadow from those variables. The measured border path is an inward normal offset, so adjacent or nested squircle borders keep a stable visual gap around the corner. It does not cast an outer edge shadow, because that pools at the lower squircle corners. Card fills should stay quiet and near-neutral so the glass edge carries the surface definition.
 
-The app framework shell uses the same rule with a high-opacity glass fill in both light and dark modes. `SidebarInset` must carry a literal `sq-xl` class plus `app-framework-surface`; do not hide the squircle class behind a responsive or peer variant. Variant-prefixed squircle utilities set the fallback clip path but do not match the global native corner selectors, which can leave the framework border clipped with rectangular `border-radius: 0`.
+The app framework shell uses the same rule with a high-opacity glass fill in both light and dark modes. `SidebarInset` must carry a literal `sq-big` class plus `app-framework-surface`; do not hide the squircle class behind a responsive or peer variant.
 
 The shared card shell uses the same radius metadata and fallback path:
 
 ```css
 .squircle-surface {
-    --sq-base-r: 16px;
+    --sq-base-r: var(--squircle-normal);
     --sq-q: 0.6;
-    --sq-scale: 0.016;
-    --sq-growth-damping: 420;
+    --sq-scale: 0;
     clip-path: polygon(10% 0, 90% 0, /* ... */, 8% 1%);
-    clip-path: shape(from 16px 0, hline to calc(100% - 16px), /* ... */, close);
+    clip-path: shape(from var(--squircle-normal) 0, hline to calc(100% - var(--squircle-normal)), /* ... */, close);
 }
 ```
 
@@ -144,16 +144,19 @@ The shared card shell uses the same radius metadata and fallback path:
 Use the app squircle utilities instead of Tailwind corner utilities:
 
 ```tsx
-<div className="sq-xl border bg-card" />
+<div className="sq-normal border bg-card" />
+<aside className="sq-big app-framework-surface" />
 <Button variant="ghost" size="sm" />
 <Avatar className="sq-full" />
 ```
 
-Available utilities include `sq-sm`, `sq-md`, `sq-lg`, `sq-xl`, `sq-2xl`, `sq-full`, `sq-none`, and the small fixed-size aliases used by existing components.
+Available semantic utilities include `sq-normal`, `sq-big`, `sq-full`, and `sq-none`. Compatibility aliases such as `sq-lg`, `sq-xl`, `sq-2xl`, and the small fixed-size aliases still exist for older or micro UI, but new app surfaces should use the semantic names.
 
 Do not add local SVG masks, overlay strokes, or hand-built one-off paths for standard UI. The only visible squircle border path should be the shared CSS edge layer. If a new shape size is needed, add it to the global utility set first.
 
 ## App-Wide Policy
+
+Shared UI primitives that carry `data-slot` use `--app-control-radius` as their default base radius. That token resolves to `--squircle-normal` (`22px`), so buttons, cards, popovers, tabs, tables, tooltips, textareas, and related primitives keep the same normal corner language unless they intentionally opt into `sq-full` or the `sq-big` large surface token. Dialogs, sheets, auth panels, the mobile dock shell, and the app framework shell use `sq-big` (`36px`).
 
 Use the global squircle behavior for:
 
@@ -196,14 +199,14 @@ Avoid adding an extra bordered wrapper around dialogs, dropdowns, or popovers un
 
 ## Adjustment Guide
 
-To make all app corners larger or smaller, adjust the global `sq-*` utility metadata in [app/globals.css](../app/globals.css). Update the fallback `shape()` path only when the fallback geometry also needs to change.
+To make ordinary app control corners larger or smaller, adjust `--squircle-normal`, `--squircle-big`, and the shared `data-slot` squircle metadata in [app/globals.css](../app/globals.css). To adjust a named utility such as `sq-normal`, update that utility metadata and its fallback `shape()` path together.
 
 ```css
-@utility sq-xl {
-    --sq-base-r: 14px;
+@utility sq-normal {
+    --sq-base-r: var(--squircle-normal);
     --sq-q: 0.6;
-    --sq-scale: 0.014;
-    clip-path: shape(from 14px 0, hline to calc(100% - 14px), /* ... */, close);
+    --sq-scale: 0;
+    clip-path: shape(from var(--squircle-normal) 0, hline to calc(100% - var(--squircle-normal)), /* ... */, close);
 }
 ```
 

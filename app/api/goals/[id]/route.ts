@@ -10,8 +10,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthContext } from "@/lib/auth-helpers"
-import { scopeCreateData, scopeRecordFilter, requirePermission } from "@/lib/data-access"
-import { formatGoal, goalAccountName, goalTransferReference, toAmount } from "@/lib/goal-account"
+import { scopeCreateData, scopeFilter, scopeRecordFilter, requirePermission } from "@/lib/data-access"
+import { formatGoal, goalAccountName, goalProgressSnapshot, goalStatusForProgress, goalTransferReference, normalizeGoalTargetMode, toAmount } from "@/lib/goal-account"
 
 // PUT /api/goals/[id] — Update a financial goal
 export async function PUT(
@@ -32,6 +32,7 @@ export async function PUT(
     where: scopeRecordFilter(ctx, id),
     include: {
       accountLinks: { orderBy: { createdAt: "asc" } },
+      bankAccount: { include: { bank: true } },
     },
   })
   if (!existing) {
@@ -43,6 +44,48 @@ export async function PUT(
     ? existing.accountLinks.reduce((sum, account) => sum + toAmount(account.balance), 0)
     : toAmount(existing.currentAmount)
   const nextName = typeof body.name === "string" ? body.name.trim() : undefined
+  const currentTargetMode = normalizeGoalTargetMode(existing.targetMode)
+  const requestedTargetMode = body.targetMode
+  if (requestedTargetMode !== undefined && requestedTargetMode !== "total" && requestedTargetMode !== "additional") {
+    return NextResponse.json({ error: "Invalid target mode" }, { status: 400 })
+  }
+  const nextTargetMode = requestedTargetMode === undefined ? currentTargetMode : requestedTargetMode
+  const accountIdWasProvided = body.accountId !== undefined
+  if (accountIdWasProvided && typeof body.accountId !== "string") {
+    return NextResponse.json({ error: "A linked bank account is required" }, { status: 400 })
+  }
+  const nextAccountId = accountIdWasProvided && typeof body.accountId === "string"
+    ? body.accountId.trim()
+    : existing.accountId
+
+  if (accountIdWasProvided && !nextAccountId) {
+    return NextResponse.json({ error: "A linked bank account is required" }, { status: 400 })
+  }
+
+  let nextBankAccount = existing.bankAccount
+    ? { id: existing.bankAccount.id, currency: existing.bankAccount.currency }
+    : null
+  if (accountIdWasProvided && nextAccountId) {
+    nextBankAccount = await prisma.bankAccount.findFirst({
+      where: { ...scopeFilter(ctx), id: nextAccountId },
+      select: { id: true, currency: true },
+    })
+    if (!nextBankAccount) {
+      return NextResponse.json({ error: "Account not found" }, { status: 400 })
+    }
+  }
+
+  const isGoalDetailsUpdate = body.name !== undefined
+    || body.targetAmount !== undefined
+    || body.deadline !== undefined
+    || body.category !== undefined
+    || body.color !== undefined
+    || body.targetMode !== undefined
+    || body.accountId !== undefined
+  if (isGoalDetailsUpdate && !nextAccountId) {
+    return NextResponse.json({ error: "A linked bank account is required" }, { status: 400 })
+  }
+
   const newCurrentAmount = currentAmountWasProvided
     ? Number(body.currentAmount)
     : accountCurrentAmount
@@ -61,8 +104,27 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid goal status" }, { status: 400 })
   }
 
+  const accountChanged = accountIdWasProvided && nextAccountId !== existing.accountId
+  const baselineWasProvided = body.baselineAmount !== undefined
+  const requestedBaselineAmount = Number(body.baselineAmount)
+  if (baselineWasProvided && (!Number.isFinite(requestedBaselineAmount) || requestedBaselineAmount < 0)) {
+    return NextResponse.json({ error: "Baseline amount must be a valid non-negative number" }, { status: 400 })
+  }
+  const baselineAmount = nextTargetMode === "additional"
+    ? (baselineWasProvided
+        ? requestedBaselineAmount
+        : currentTargetMode !== "additional" || accountChanged
+          ? newCurrentAmount
+          : toAmount(existing.baselineAmount))
+    : 0
+  const progress = goalProgressSnapshot({
+    targetAmount,
+    currentAmount: newCurrentAmount,
+    baselineAmount,
+    targetMode: nextTargetMode,
+  })
   const keepCancelled = requestedStatus === "cancelled" || (existing.status === "cancelled" && requestedStatus === undefined)
-  const nextStatus = keepCancelled ? "cancelled" : newCurrentAmount >= targetAmount ? "completed" : "active"
+  const nextStatus = goalStatusForProgress(keepCancelled ? "cancelled" : "active", progress.progressAmount, progress.targetAmount)
   const shouldNotifyReached = existing.status !== "completed" && nextStatus === "completed"
 
   const updated = await prisma.$transaction(async (tx) => {
@@ -70,8 +132,11 @@ export async function PUT(
       where: scopeRecordFilter(ctx, id),
       data: {
         ...(nextName && { name: nextName }),
+        ...(accountIdWasProvided && { accountId: nextAccountId }),
         ...(body.targetAmount !== undefined && { targetAmount }),
         currentAmount: newCurrentAmount,
+        baselineAmount,
+        targetMode: nextTargetMode,
         ...(body.deadline !== undefined && { deadline: body.deadline ? new Date(body.deadline) : null }),
         ...(body.category && { category: body.category }),
         ...(body.color && { color: body.color }),
@@ -85,6 +150,7 @@ export async function PUT(
       update: {
         ...(nextName && { name: goalAccountName(nextName) }),
         ...(currentAmountWasProvided && { balance: newCurrentAmount }),
+        ...(accountIdWasProvided && nextBankAccount && { currency: nextBankAccount.currency }),
         status: nextStatus === "cancelled" ? "cancelled" : "active",
       },
       create: {
@@ -92,7 +158,7 @@ export async function PUT(
         goalId: id,
         name: goalAccountName(nextName || existing.name),
         balance: newCurrentAmount,
-        currency: existing.accountLinks[0]?.currency || "EUR",
+        currency: nextBankAccount?.currency || existing.accountLinks[0]?.currency || "EUR",
         status: nextStatus === "cancelled" ? "cancelled" : "active",
         transferReference: goalTransferReference(id),
       },
@@ -102,6 +168,7 @@ export async function PUT(
       where: scopeRecordFilter(ctx, id),
       include: {
         accountLinks: { orderBy: { createdAt: "asc" } },
+        bankAccount: { include: { bank: true } },
       },
     })
 

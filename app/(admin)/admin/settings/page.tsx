@@ -25,7 +25,7 @@ import { UDS } from "@/lib/UDS"
 
 interface AdminProfile {
     id: string; name: string; email: string; role: string
-    createdAt: string; lastLoginAt: string | null; twoFactorEnabled: boolean
+    createdAt: string; lastLoginAt: string | null
 }
 
 interface AdminUser {
@@ -86,11 +86,6 @@ export default function AdminSettingsPage() {
                                     <InfoRow label={sp.role || "Role"}>
                                         <Badge variant="outline" className={profile.role === "superadmin" ? "border-purple-500/30 text-purple-600 dark:text-purple-400" : "border-blue-500/30 text-blue-600 dark:text-blue-400"}>
                                             {profile.role === "superadmin" ? (sp.superadmin || "superadmin") : (sp.admin_role || "admin")}
-                                        </Badge>
-                                    </InfoRow>
-                                    <InfoRow label={sp.twofa || "2FA"}>
-                                        <Badge variant="outline" className={profile.twoFactorEnabled ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : "border-amber-500/30 text-amber-600 dark:text-amber-400"}>
-                                            {profile.twoFactorEnabled ? (ad.enabled || "Enabled") : (ad.disabled || "Disabled")}
                                         </Badge>
                                     </InfoRow>
                                     <InfoRow label={sp.account_created || "Account Created"} value={new Date(profile.createdAt).toLocaleDateString()} />
@@ -182,7 +177,7 @@ function ExportButton({ label, onClick, icon }: { label: string; onClick: () => 
 
 function QuickLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
     return (
-        <a href={href} className={`${UDS.inlineSurface} ${UDS.itemHover} flex items-center gap-2 px-3 py-2.5 text-[13px] font-medium transition-colors`}>
+        <a href={href} className={`${UDS.inlineSurface} ${UDS.itemHover} flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors`}>
             {icon} {label}
         </a>
     )
@@ -191,7 +186,7 @@ function QuickLink({ href, label, icon }: { href: string; label: string; icon: R
 function SettingsSkeleton() {
     return (
         <div className="space-y-4">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 w-full sq-xl" />)}
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 w-full sq-normal" />)}
         </div>
     )
 }

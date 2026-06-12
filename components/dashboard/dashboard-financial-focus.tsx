@@ -37,7 +37,6 @@ export function DashboardFinancialFocus({
     dashboardLabels,
     formatCompactCurrency,
     isLoading,
-    isPortuguese,
     locale,
     upcomingBills,
 }: {
@@ -45,7 +44,6 @@ export function DashboardFinancialFocus({
     dashboardLabels: DashboardLabels
     formatCompactCurrency: CompactCurrencyFormatter
     isLoading: boolean
-    isPortuguese: boolean
     locale: string
     upcomingBills: UpcomingBill[]
 }) {
@@ -77,11 +75,11 @@ export function DashboardFinancialFocus({
                     {budgetPressure.length > 0 && (
                         <section className="space-y-2.5">
                             <div className="flex items-center justify-between gap-3 px-1">
-                                <h3 className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
+                                <h3 className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                                     <span className="size-1.5 sq-full bg-amber-500" />
                                     {dashboardLabels.budgetPressure}
                                 </h3>
-                                <span className="text-[11px] font-semibold text-muted-foreground">
+                                <span className="text-xs font-semibold text-muted-foreground">
                                     {budgetPressure[0]?.percentUsed ?? 0}%
                                 </span>
                             </div>
@@ -106,12 +104,12 @@ export function DashboardFinancialFocus({
                                                         className="size-2.5 shrink-0 sq-full"
                                                         style={{ backgroundColor: budget.color || "var(--primary)" }}
                                                     />
-                                                    <p className="truncate text-[13px] font-semibold">
+                                                    <p className="truncate text-sm font-semibold">
                                                         {budget.category || budget.tag}
                                                     </p>
                                                 </div>
                                                 <span className={cn(
-                                                    "shrink-0 text-[12px] font-semibold tabular-nums",
+                                                    "shrink-0 text-xs font-semibold tabular-nums",
                                                     isOver ? "text-red-400" : "text-muted-foreground"
                                                 )}>
                                                     {formatCompactCurrency(Math.abs(budget.remainingAmount))} {isOver ? dashboardLabels.over : dashboardLabels.left}
@@ -137,11 +135,11 @@ export function DashboardFinancialFocus({
                     {upcomingBills.length > 0 && (
                         <section className="space-y-2.5">
                             <div className="flex items-center justify-between gap-3 px-1">
-                                <h3 className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
+                                <h3 className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                                     <span className="size-1.5 sq-full bg-foreground-secondary" />
                                     {dashboardLabels.upcomingBills}
                                 </h3>
-                                <span className="text-[11px] font-semibold text-muted-foreground">
+                                <span className="text-xs font-semibold text-muted-foreground">
                                     {upcomingBills.length}
                                 </span>
                             </div>
@@ -154,16 +152,16 @@ export function DashboardFinancialFocus({
                                     >
                                         <DashboardIconBadge icon={CalendarClock} />
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-[13px] font-semibold">
+                                            <p className="truncate text-sm font-semibold">
                                                 {bill.name}
                                             </p>
-                                            <p className="truncate text-[11px] text-muted-foreground">
+                                            <p className="truncate text-xs text-muted-foreground">
                                                 {bill.dueDate.toLocaleDateString(locale, { month: "short", day: "numeric" })}
                                                 {" - "}
-                                                {formatDaysUntil(bill.daysUntilDue, isPortuguese)}
+                                                {formatDaysUntil(bill.daysUntilDue, dashboardLabels)}
                                             </p>
                                         </div>
-                                        <span className="shrink-0 text-[13px] font-semibold tabular-nums">
+                                        <span className="shrink-0 text-sm font-semibold tabular-nums">
                                             {formatCompactCurrency(bill.amount)}
                                         </span>
                                     </Link>

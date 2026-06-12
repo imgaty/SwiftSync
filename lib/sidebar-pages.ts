@@ -36,7 +36,7 @@ export interface SidebarPageDefinition {
     icon: LucideIcon
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
 export function getSidebarPageDefinitions(t: any, language: string): SidebarPageDefinition[] {
     return [
         {
@@ -71,7 +71,7 @@ export function getSidebarPageDefinitions(t: any, language: string): SidebarPage
         },
         {
             id: "spreadsheets",
-            name: language === "pt" ? "Planilhas" : "Spreadsheets",
+            name: t.spreadsheets?.title || "Spreadsheets",
             url: "/Spreadsheets",
             icon: FileSpreadsheet,
         },
@@ -83,7 +83,7 @@ export function getSidebarPageDefinitions(t: any, language: string): SidebarPage
         },
         {
             id: "goals",
-            name: t.sidebar_goals || (language === "pt" ? "Metas" : "Goals"),
+            name: t.sidebar_goals || "Goals",
             url: "/Goals",
             icon: Target,
         },

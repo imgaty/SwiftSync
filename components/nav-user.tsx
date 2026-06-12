@@ -31,7 +31,7 @@ import {
   DropdownLabel,
   DropdownSeparator,
   DropdownTrigger,
-  DropdownLanguageSection,
+  DropdownLanguageSubmenu,
   DropdownSidebarPositionSection,
 } from "@/components/ui/dropdown"
 import {
@@ -46,6 +46,8 @@ import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/components/auth-provider"
 import { useSettings } from "@/hooks/use-settings"
 import { UDS } from "@/lib/UDS"
+import type { Language } from "@/lib/languages"
+import { getTranslations } from "@/lib/translation-utils"
 import { cn } from "@/lib/utils"
 
 export function NavUser({
@@ -61,13 +63,16 @@ export function NavUser({
   isLoading?: boolean
 }) {
   const router = useRouter()
-  const { isMobile, side, setSide } = useSidebar()
-  const { language, setLanguage } = useLanguage()
+  const { isMobile, side, renderedSide, setSide } = useSidebar()
+  const { t, language, setLanguage } = useLanguage()
   const { logout } = useAuth()
   const settings = useSettings()
   const isAdmin = user.role === "admin" || user.role === "superadmin"
   const [dropdownOpen, setDropdownOpen] = React.useState(false)
   const sidebarSkeletonClass = "!bg-sidebar-foreground/10 dark:!bg-sidebar-foreground/15"
+  const navCopy = React.useMemo(() => getTranslations(t, "nav"), [t])
+  const settingsCopy = React.useMemo(() => getTranslations(t, "settings"), [t])
+  const adminCopy = React.useMemo(() => getTranslations(t, "admin"), [t])
 
   // Generate initials from name
   const initials = user.name
@@ -129,7 +134,7 @@ export function NavUser({
           </DropdownTrigger>
           <DropdownContent
             width={260}
-            side={isMobile ? "bottom" : side === "left" ? "right" : "left"}
+            side={isMobile ? "bottom" : renderedSide === "left" ? "right" : "left"}
             align="end"
             sideOffset={4}
           >
@@ -158,26 +163,27 @@ export function NavUser({
               </Button>
             </DropdownLabel>
             <DropdownSeparator />
-            <DropdownLanguageSection
+            <DropdownLanguageSubmenu
               selectedLanguage={language}
-              onSelectLanguage={(lang) => setLanguage(lang as "en" | "pt")}
-              withSeparator
+              onSelectLanguage={(lang) => setLanguage(lang as Language)}
+              label={settingsCopy.language || "Language"}
             />
+            <DropdownSeparator />
             <DropdownSidebarPositionSection
               selectedSide={side}
               onSelectSide={(s) => setSide(s as "left" | "right")}
             />
             <DropdownSeparator />
             <DropdownSectionItem onSelect={handleOpenCustomizationSettings} icon={<Settings />}>
-              {language === 'pt' ? 'Configurações' : 'Settings'}
+              {settingsCopy.title || "Settings"}
             </DropdownSectionItem>
             {isAdmin && (
               <DropdownSectionItem onSelect={() => router.push("/admin")} icon={<Shield />}>
-                {language === 'pt' ? 'Painel Admin' : 'Admin Panel'}
+                {adminCopy.panel || navCopy.admin_panel || "Admin Panel"}
               </DropdownSectionItem>
             )}
             <DropdownSectionItem onSelect={handleLogout} icon={<LogOut />}>
-              {language === 'pt' ? 'Sair' : 'Log out'}
+              {navCopy.log_out || "Log out"}
             </DropdownSectionItem>
           </DropdownContent>
         </Dropdown>

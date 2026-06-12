@@ -254,7 +254,7 @@ function ChartTooltipContent({
                             <div
                                 key={item.dataKey}
                                 className={cn(
-                                    "flex w-full items-center gap-2 sq-lg px-2 py-2 text-[13px]",
+                                    "flex w-full items-center gap-2 sq-lg px-2 py-2 text-sm",
                                 )}
                             >
                                 {formatter &&
@@ -304,7 +304,7 @@ function ChartTooltipContent({
                                             {itemConfig?.label || item.name}
                                         </span>
                                         {item.value !== undefined && item.value !== null && (
-                                            <span className="shrink-0 text-[13px] text-black dark:text-white font-mono font-semibold tabular-nums tracking-tight">
+                                            <span className="shrink-0 text-sm text-black dark:text-white font-mono font-semibold tabular-nums tracking-tight">
                                                 {typeof item.value === 'number' 
                                                     ? item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                                                     : item.value}
@@ -659,7 +659,7 @@ function AreaChartComponent({
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {activePayload.map((item: any) => (
                         <div key={item.name} className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-neutral-400 flex items-center gap-1">
+                            <span className="text-xs text-neutral-400 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 sq-full" style={{ backgroundColor: item.color }} />
                                 {config[item.name]?.label ?? item.name}
                             </span>
@@ -777,7 +777,7 @@ function BarChartComponent({
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {activePayload.map((item: any) => (
                         <div key={item.name} className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-neutral-400 flex items-center gap-1">
+                            <span className="text-xs text-neutral-400 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 sq-full" style={{ backgroundColor: item.color }} />
                                 {config[item.name]?.label ?? item.name}
                             </span>
@@ -1189,7 +1189,7 @@ function PieChartComponent({
                 <tspan x="50%" dy="-0.4em" className="fill-foreground font-bold text-lg font-mono tabular-nums">
                     {total.toLocaleString(locale, { style: 'currency', currency: currencyCode, maximumFractionDigits: 0 })}
                 </tspan>
-                <tspan x="50%" dy="1.4em" className="fill-muted-foreground text-[10px]">
+                <tspan x="50%" dy="1.4em" className="fill-muted-foreground text-xs">
                     Total
                 </tspan>
             </text>
@@ -1212,12 +1212,12 @@ function PieChartComponent({
                     <div className={cn(UDS.label, "auto-scroll")}>
                         {label}
                     </div>
-                    <div className="flex items-center justify-between gap-3 sq-lg px-2 py-2 text-[13px]">
+                    <div className="flex items-center justify-between gap-3 sq-lg px-2 py-2 text-sm">
                         <span className="flex min-w-0 items-center gap-2.5">
                             <span className="h-2.5 w-2.5 shrink-0 sq-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" style={{ backgroundColor: fill }} />
                             <span className="auto-scroll text-black dark:text-white">Value</span>
                         </span>
-                        <span className="text-[13px] font-mono font-semibold tabular-nums tracking-tight text-black dark:text-white">
+                        <span className="text-sm font-mono font-semibold tabular-nums tracking-tight text-black dark:text-white">
                             {value.toLocaleString(locale, { style: 'currency', currency: currencyCode, minimumFractionDigits: 2 })}
                         </span>
                         <span className={cn(UDS.muted, "tabular-nums")}>{percentage}%</span>

@@ -35,11 +35,14 @@ import {
     ContextMenuItem,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationButton } from "@/components/notification-button"
 import { openCommandPalette } from "@/components/command-palette"
 import { SmartTooltip } from "@/components/ui/tooltip"
+import { useLanguage } from "@/components/language-provider"
 import { UDS } from "@/lib/UDS"
+import { getTranslations } from "@/lib/translation-utils"
 import { cn } from "@/lib/utils"
 import { ClipboardCopy, Search } from "lucide-react"
 import { toast } from "sonner"
@@ -47,6 +50,9 @@ import { toast } from "sonner"
 const STAT_CARD_SKELETON_KEYS = [0, 1, 2, 3] as const
 const STAT_CARD_DEFAULT_TONES = ["info", "positive", "negative", "accent", "warning", "neutral"] as const
 type StatCardTone = keyof typeof UDS.statCardTone
+const TOPLINE_BUTTON_VARIANT = "ghost" as const
+const TOPLINE_BUTTON_SIZE = "icon" as const
+const TOPLINE_NATIVE_BUTTON_CLASS = buttonVariants({ variant: TOPLINE_BUTTON_VARIANT, size: TOPLINE_BUTTON_SIZE })
 
 // PAGE SHELL — Root wrapper
 interface PageShellProps {
@@ -57,7 +63,7 @@ interface PageShellProps {
 export function PageShell({ children, className }: PageShellProps) {
     return (
         <div className={cn(
-            "@container/main flex min-h-full min-w-0 flex-1 flex-col gap-4 p-4 md:p-6",
+            "@container/main flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4 md:p-6",
             className
         )}>
             {children}
@@ -95,38 +101,58 @@ function normalizeBreadcrumbLabel(label: string, href: string): string {
     return text
 }
 
+type ToplineElementProps = Record<string, unknown> & {
+    asChild?: boolean
+    children?: React.ReactNode
+    className?: string
+    title?: string
+}
+
 /** Recursively normalize every <Button> in the actions tree to the shared icon button API.
  *  Also wraps elements that carry a `title` prop in a SmartTooltip (removes native title). */
 function injectToplineStyle(node: React.ReactNode): React.ReactNode {
-    return React.Children.map(node, (child) => {
+    const styledChildren = React.Children.map(node, (child) => {
         if (!React.isValidElement(child)) return child
 
-        // If the child renders a Button (data-slot="button"), clone with forced props
-        const el = child as React.ReactElement<Record<string, unknown>>
+        const el = child as React.ReactElement<ToplineElementProps>
 
         // Allow callers to keep their own action styling when needed.
         if (el.props["data-no-topline-style"]) return el
 
-        // Recurse into fragments / wrappers that have children
-        if (el.props.children && (el.type === React.Fragment || typeof el.type === "string")) {
-            return React.cloneElement(el, {}, injectToplineStyle(el.props.children as React.ReactNode))
+        const title = typeof el.props.title === "string" ? el.props.title : undefined
+        const hasChildren = el.props.children !== undefined && el.props.children !== null
+        const transformedChildren = hasChildren ? injectToplineStyle(el.props.children) : undefined
+
+        const cloneElement = (props: Partial<ToplineElementProps> = {}) => {
+            return hasChildren
+                ? React.cloneElement(el, props, transformedChildren)
+                : React.cloneElement(el, props)
         }
 
-        // For components that accept asChild (PopoverTrigger, etc.), recurse into their children
-        if (el.props.asChild && el.props.children) {
-            return React.cloneElement(el, {}, injectToplineStyle(el.props.children as React.ReactNode))
+        let styled: React.ReactElement<ToplineElementProps>
+
+        if (el.type === Button) {
+            styled = cloneElement({
+                variant: TOPLINE_BUTTON_VARIANT,
+                size: TOPLINE_BUTTON_SIZE,
+                className: el.props.className,
+                ...(title ? { title: undefined } : {}),
+            })
+        } else if (el.type === "button") {
+            styled = cloneElement({
+                className: cn(TOPLINE_NATIVE_BUTTON_CLASS, el.props.className),
+                ...(title ? { title: undefined } : {}),
+            })
+        } else if (!hasChildren && typeof el.type !== "string") {
+            styled = cloneElement({
+                variant: TOPLINE_BUTTON_VARIANT,
+                size: TOPLINE_BUTTON_SIZE,
+                className: el.props.className,
+                ...(title ? { title: undefined } : {}),
+            })
+        } else {
+            styled = cloneElement(title ? { title: undefined } : {})
         }
-
-        // Extract title for tooltip before removing it from the element
-        const title = el.props.title as string | undefined
-
-        // Direct Button or any component — inject variant/size/className
-        const styled = React.cloneElement(el, {
-            variant: "ghost",
-            size: "icon",
-            className: el.props.className as string | undefined,
-            ...(title ? { title: undefined } : {}),
-        })
 
         // Wrap with SmartTooltip if the element has a title
         if (title) {
@@ -135,6 +161,12 @@ function injectToplineStyle(node: React.ReactNode): React.ReactNode {
 
         return styled
     })
+
+    if (styledChildren === null || styledChildren === undefined) {
+        return styledChildren
+    }
+
+    return React.Children.count(node) === 1 ? styledChildren[0] : styledChildren
 }
 
 export function PageHeader({ breadcrumbs, isLoading = false, actions }: PageHeaderProps) {
@@ -180,7 +212,7 @@ export function PageHeader({ breadcrumbs, isLoading = false, actions }: PageHead
                     >
                         <Search className="size-3.5 shrink-0" />
                         <span className="min-w-0 flex-1 truncate">Search</span>
-                        <kbd className="shrink-0 rounded-[5px] border border-border/70 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
+                        <kbd className="shrink-0 rounded-[5px] border border-border/70 px-1.5 py-0.5 font-mono text-xs leading-none text-muted-foreground">
                             Ctrl K
                         </kbd>
                     </button>
@@ -261,10 +293,13 @@ const StatCardSkeleton = React.memo(function StatCardSkeleton() {
 
 const StatCardItem = React.memo(function StatCardItem({ index, stat }: { index: number; stat: StatCardData }) {
     const toneStyles = UDS.statCardTone[getStatCardTone(stat, index)]
+    const { t } = useLanguage()
+    const common = getTranslations(t, "common")
+    const dataLabels = getTranslations(t, "data_type_labels")
 
     const handleCopyValue = () => {
         navigator.clipboard.writeText(stat.value)
-        toast.success("Copied")
+        toast.success(common.copied || "Copied")
     }
 
     return (
@@ -287,7 +322,7 @@ const StatCardItem = React.memo(function StatCardItem({ index, stat }: { index: 
                                     {stat.icon}
                                 </span>
                             )}
-                            <span className="truncate text-[13px] font-medium leading-5 text-foreground-secondary sm:text-[14px]">
+                            <span className="truncate text-sm font-medium leading-5 text-foreground-secondary">
                                 {stat.label}
                             </span>
                         </div>
@@ -296,7 +331,7 @@ const StatCardItem = React.memo(function StatCardItem({ index, stat }: { index: 
                     <div className="relative flex min-w-0 items-end justify-between gap-2">
                         <div className="min-w-0">
                             {stat.change && (
-                                <span className={cn("block truncate text-[13px] font-medium leading-5", toneStyles.meta)}>
+                                <span className={cn("block truncate text-sm font-medium leading-5", toneStyles.meta)}>
                                     {stat.change}
                                 </span>
                             )}
@@ -310,15 +345,15 @@ const StatCardItem = React.memo(function StatCardItem({ index, stat }: { index: 
             <ContextMenuContent>
                 <ContextMenuItem onClick={handleCopyValue}>
                     <ClipboardCopy />
-                    Copy value
+                    {dataLabels.copy_value || "Copy value"}
                 </ContextMenuItem>
                 {stat.change && (
                     <ContextMenuItem onClick={() => {
                         navigator.clipboard.writeText(stat.change!)
-                        toast.success("Copied")
+                        toast.success(common.copied || "Copied")
                     }}>
                         <ClipboardCopy />
-                        Copy change
+                        {dataLabels.copy_change || "Copy change"}
                     </ContextMenuItem>
                 )}
             </ContextMenuContent>

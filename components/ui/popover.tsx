@@ -55,18 +55,15 @@ function PopoverContent({
         avoidCollisions={avoidCollisions}
         sticky={sticky}
         className={cn(
-          UDS.transientSurface,
-          UDS.glideSurface,
-          UDS.animateIn,
-          UDS.animateOut,
-          "z-[999] w-[220px] origin-(--radix-popover-content-transform-origin) outline-hidden max-h-[calc(100vh-4rem)] overflow-y-auto",
+          UDS.dropdownSurface,
+          "z-[1100] w-[220px] origin-(--radix-popover-content-transform-origin) outline-hidden max-h-[calc(100vh-4rem)] overflow-y-auto",
           className
         )}
         {...props}
         {...menuHandlers}
       >
         <GlideHighlight rect={rect} visible={visible} />
-        <div className="relative z-[2] space-y-0.5">
+        <div className={UDS.dropdownContent}>
           {children}
         </div>
       </PopoverPrimitive.Content>

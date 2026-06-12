@@ -37,18 +37,19 @@ import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
 import { queryKeys } from "@/lib/query-keys"
+import { getTranslations } from "@/lib/translation-utils"
 import { PiggyBank, Target, AlertTriangle, TrendingUp, Plus } from "lucide-react"
 
 const BUDGET_CATEGORIES = [
-    { tag: "food", category: "Food", color: "#f97316", pt: "Alimentação", en: "Food" },
-    { tag: "transport", category: "Transport", color: "#3b82f6", pt: "Transportes", en: "Transport" },
-    { tag: "bills", category: "Bills", color: "#ef4444", pt: "Contas", en: "Bills" },
-    { tag: "entertainment", category: "Entertainment", color: "#8b5cf6", pt: "Entretenimento", en: "Entertainment" },
-    { tag: "shopping", category: "Shopping", color: "#ec4899", pt: "Compras", en: "Shopping" },
-    { tag: "health", category: "Health", color: "#06b6d4", pt: "Saúde", en: "Health" },
-    { tag: "education", category: "Education", color: "#6366f1", pt: "Educação", en: "Education" },
-    { tag: "savings", category: "Savings", color: "#22c55e", pt: "Poupança", en: "Savings" },
-    { tag: "other", category: "Other", color: "#737373", pt: "Outros", en: "Other" },
+    { tag: "food", category: "Food", color: "#f97316" },
+    { tag: "transport", category: "Transport", color: "#3b82f6" },
+    { tag: "bills", category: "Bills", color: "#ef4444" },
+    { tag: "entertainment", category: "Entertainment", color: "#8b5cf6" },
+    { tag: "shopping", category: "Shopping", color: "#ec4899" },
+    { tag: "health", category: "Health", color: "#06b6d4" },
+    { tag: "education", category: "Education", color: "#6366f1" },
+    { tag: "savings", category: "Savings", color: "#22c55e" },
+    { tag: "other", category: "Other", color: "#737373" },
 ]
 
 const defaultCategory = BUDGET_CATEGORIES[0]
@@ -58,7 +59,10 @@ export default function BudgetsPage() {
     const { formatCurrency } = useCurrency()
     const queryClient = useQueryClient()
     const f = t.finance || {}
-    const isPt = (t.config?.locale || "en-US").startsWith("pt")
+    const pageCopy = getTranslations(t, "budgets_page")
+    const common = getTranslations(t, "common")
+    const statLabels = getTranslations(t, "stat_labels")
+    const categories = getTranslations(pageCopy, "categories")
     const { data, isLoading } = useFinanceData()
     const budgetsData = React.useMemo(() => (data?.budgets ?? []) as Budget[], [data?.budgets])
     const hasBudgets = budgetsData.length > 0
@@ -113,7 +117,7 @@ export default function BudgetsPage() {
     const handleSaveBudget = React.useCallback(async () => {
         const limit = Number(formData.limit)
         if (!Number.isFinite(limit) || limit <= 0) {
-            toast.error(isPt ? "Introduza um limite maior do que zero." : "Enter a limit greater than zero.")
+            toast.error(pageCopy.error_limit_positive || "Enter a limit greater than zero.")
             return
         }
 
@@ -137,16 +141,14 @@ export default function BudgetsPage() {
             }
 
             await queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
-            toast.success(isPt
-                ? (isEditing ? "Orçamento atualizado." : "Orçamento criado.")
-                : (isEditing ? "Budget updated." : "Budget created."))
+            toast.success(isEditing ? pageCopy.updated || "Budget updated." : pageCopy.created || "Budget created.")
             setDialogOpen(false)
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : (isPt ? "Não foi possível guardar." : "Could not save budget."))
+            toast.error(error instanceof Error ? error.message : pageCopy.error_save || "Could not save budget.")
         } finally {
             setIsSaving(false)
         }
-    }, [editingBudgetId, formData, isPt, queryClient])
+    }, [editingBudgetId, formData, pageCopy, queryClient])
 
     const handleDeleteBudget = React.useCallback(async (budget: Budget) => {
         if (!budget.id) return
@@ -157,11 +159,11 @@ export default function BudgetsPage() {
                 throw new Error(err?.error || "Failed to delete budget")
             }
             await queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
-            toast.success(isPt ? "Orçamento apagado." : "Budget deleted.")
+            toast.success(pageCopy.deleted || "Budget deleted.")
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : (isPt ? "Não foi possível apagar." : "Could not delete budget."))
+            toast.error(error instanceof Error ? error.message : pageCopy.error_delete || "Could not delete budget.")
         }
-    }, [isPt, queryClient])
+    }, [pageCopy, queryClient])
 
     // Compute stats from budgets
     const stats = React.useMemo(() => {
@@ -177,12 +179,12 @@ export default function BudgetsPage() {
         const overallPercent = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0
         const fmt = (n: number) => formatCurrency(n)
         return [
-            { label: "Total Budget", value: fmt(totalBudget), change: `${budgetsData.length} categories`, trend: "neutral" as const, icon: <Target className="size-4" /> },
-            { label: "Total Spent", value: fmt(totalSpent), change: `${overallPercent}% used`, trend: overallPercent > 90 ? "down" as const : "up" as const, icon: <PiggyBank className="size-4" /> },
-            { label: "Remaining", value: fmt(remaining), change: remaining >= 0 ? "Under budget" : "Over budget", trend: remaining >= 0 ? "up" as const : "down" as const, icon: <TrendingUp className="size-4" /> },
-            { label: "Over Budget", value: String(overBudget), change: `${onTrack} on track`, trend: overBudget > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="size-4" /> },
+            { label: statLabels.total_budget || "Total Budget", value: fmt(totalBudget), change: (statLabels.categories_count || "{count} categories").replace("{count}", String(budgetsData.length)), trend: "neutral" as const, icon: <Target className="size-4" /> },
+            { label: statLabels.total_spent || "Total Spent", value: fmt(totalSpent), change: (statLabels.percent_used || "{percent}% used").replace("{percent}", String(overallPercent)), trend: overallPercent > 90 ? "down" as const : "up" as const, icon: <PiggyBank className="size-4" /> },
+            { label: statLabels.remaining || "Remaining", value: fmt(remaining), change: remaining >= 0 ? statLabels.under_budget || "Under budget" : statLabels.over_budget || "Over budget", trend: remaining >= 0 ? "up" as const : "down" as const, icon: <TrendingUp className="size-4" /> },
+            { label: statLabels.over_budget || "Over Budget", value: String(overBudget), change: (statLabels.on_track_count || "{count} on track").replace("{count}", String(onTrack)), trend: overBudget > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="size-4" /> },
         ]
-    }, [budgetsData, isLoading, formatCurrency])
+    }, [budgetsData, isLoading, formatCurrency, statLabels])
 
     return (
         <PageShell className="gap-4 p-3 md:p-4">
@@ -193,7 +195,7 @@ export default function BudgetsPage() {
                 ]}
                 isLoading={isLoading}
                 actions={
-                    <Button onClick={openNewBudget} title={isPt ? "Novo orçamento" : "Add budget"}>
+                    <Button onClick={openNewBudget} title={pageCopy.add_budget || "Add budget"}>
                         <Plus />
                     </Button>
                 }
@@ -216,32 +218,26 @@ export default function BudgetsPage() {
                 <EmptyState
                     variant="no-budgets"
                     placement="page"
-                    title={isPt ? "Nada para mostrar aqui" : "Nothing to show here yet"}
+                    title={pageCopy.empty_title || "Nothing to show here yet"}
                     description={
                         accountsCount === 0
-                            ? (isPt
-                                ? "Ligue uma conta primeiro — os orçamentos fazem mais sentido quando já existe atividade financeira para acompanhar."
-                                : "Connect an account first — budgets make more sense once there is financial activity to track.")
+                            ? (pageCopy.empty_no_accounts || "Connect an account first — budgets make more sense once there is financial activity to track.")
                             : transactionsCount === 0
-                                ? (isPt
-                                    ? "Os orçamentos dependem do histórico de transações. Assim que houver movimento, poderá começar a organizar limites por categoria."
-                                    : "Budgets rely on transaction history. Once activity starts flowing in, you can organize limits by category.")
-                                : (isPt
-                                    ? "Ainda não há orçamentos configurados. Reveja as suas transações para começar a planear limites por categoria."
-                                    : "You have no budgets set up yet. Review your transactions to start planning category limits.")}
+                                ? (pageCopy.empty_no_transactions || "Budgets rely on transaction history. Once activity starts flowing in, you can organize limits by category.")
+                                : (pageCopy.empty_default || "You have no budgets set up yet. Review your transactions to start planning category limits.")}
                     action={
                         accountsCount === 0
                             ? {
-                                label: isPt ? "Ligar conta" : "Connect account",
+                                label: pageCopy.connect_account || "Connect account",
                                 href: "/Accounts",
                             }
                             : transactionsCount === 0
                                 ? {
-                                    label: isPt ? "Ver transações" : "Review transactions",
+                                    label: pageCopy.review_transactions || "Review transactions",
                                     href: "/Transactions",
                                 }
                                 : {
-                                    label: isPt ? "Criar orçamento" : "Create budget",
+                                    label: pageCopy.create_budget || "Create budget",
                                     onClick: openNewBudget,
                             }
                     }
@@ -265,11 +261,11 @@ export default function BudgetsPage() {
                 <FormDialogContent stableSize height="560px">
                     <FormDialogHeader
                         title={editingBudgetId
-                            ? (isPt ? "Editar orçamento" : "Edit budget")
-                            : (isPt ? "Novo orçamento" : "New budget")}
+                            ? (pageCopy.edit_budget || "Edit budget")
+                            : (pageCopy.new_budget || "New budget")}
                         description={budgetStep === 0
-                            ? (isPt ? "Escolha a categoria que quer acompanhar." : "Choose the category you want to track.")
-                            : (isPt ? "Defina um limite mensal por categoria." : "Set a monthly limit for the month.")}
+                            ? (pageCopy.choose_category || "Choose the category you want to track.")
+                            : (pageCopy.set_monthly_limit || "Set a monthly limit for the month.")}
                     />
 
                     <form
@@ -286,13 +282,13 @@ export default function BudgetsPage() {
                         {budgetStep === 0 && (
                             <FormDialogBody key="budget-category">
                                 <Select value={formData.tag} onValueChange={handleCategoryChange}>
-                                    <FormSelectTrigger label={isPt ? "Categoria" : "Category"}>
+                                    <FormSelectTrigger label={pageCopy.category || "Category"}>
                                         <SelectValue />
                                     </FormSelectTrigger>
                                     <SelectContent>
                                         {BUDGET_CATEGORIES.map((item) => (
                                             <SelectItem key={item.tag} value={item.tag}>
-                                                {isPt ? item.pt : item.en}
+                                                {categories[item.tag] || item.category}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -303,7 +299,7 @@ export default function BudgetsPage() {
                         {budgetStep === 1 && (
                             <FormDialogBody key="budget-limit">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="budget-limit">{isPt ? "Limite mensal" : "Monthly limit"}</Label>
+                                    <Label htmlFor="budget-limit">{pageCopy.monthly_limit || "Monthly limit"}</Label>
                                     <Input
                                         id="budget-limit"
                                         type="number"
@@ -321,12 +317,12 @@ export default function BudgetsPage() {
                         <FormDialogActions>
                             <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving}>
                                 {budgetStep === 0
-                                    ? (isPt ? "Continuar" : "Continue")
+                                    ? (common.continue || "Continue")
                                     : isSaving
-                                    ? (isPt ? "A guardar..." : "Saving...")
+                                    ? (common.saving || "Saving...")
                                     : editingBudgetId
-                                        ? (isPt ? "Guardar" : "Save")
-                                        : (isPt ? "Criar" : "Create")}
+                                        ? (common.save || "Save")
+                                        : (common.create || "Create")}
                             </Button>
                             <Button
                                 type="button"
@@ -342,7 +338,7 @@ export default function BudgetsPage() {
                                 }}
                                 disabled={isSaving}
                             >
-                                {budgetStep === 0 ? (isPt ? "Cancelar" : "Cancel") : (isPt ? "Voltar" : "Back")}
+                                {budgetStep === 0 ? (common.cancel || "Cancel") : (common.back || "Back")}
                             </Button>
                         </FormDialogActions>
                         <FormDialogStepIndicator current={budgetStep} total={2} />

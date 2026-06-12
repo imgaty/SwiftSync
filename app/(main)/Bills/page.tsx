@@ -39,6 +39,7 @@ import { useCurrency } from "@/components/currency-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
 import { queryKeys } from "@/lib/query-keys"
 import { UDS } from "@/lib/UDS"
+import { getTranslations } from "@/lib/translation-utils"
 import { Receipt, CalendarClock, AlertTriangle, CheckCircle2, Plus } from "lucide-react"
 
 export default function BillsPage() {
@@ -46,10 +47,14 @@ export default function BillsPage() {
     const { formatCurrency } = useCurrency()
     const queryClient = useQueryClient()
     const f = t.finance || {}
+    const pageCopy = getTranslations(t, "bills_page")
+    const common = getTranslations(t, "common")
+    const statLabels = getTranslations(t, "stat_labels")
+    const frequencyLabels = getTranslations(pageCopy, "frequency")
+    const categoryLabels = getTranslations(pageCopy, "categories")
     const { data, isLoading } = useFinanceData()
     const billsData = React.useMemo(() => (data?.bills ?? []) as Bill[], [data?.bills])
     const accounts = React.useMemo(() => data?.accounts ?? [], [data?.accounts])
-    const isPt = (t.config?.locale || "en-US").startsWith("pt")
     const hasBills = billsData.length > 0
 
     const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
@@ -88,7 +93,7 @@ export default function BillsPage() {
     const handleBillNext = React.useCallback(() => {
         if (billStep === 0) {
             if (!formData.name.trim()) {
-                toast.error(isPt ? "Introduza um nome." : "Enter a name.")
+                toast.error(pageCopy.error_name_required || "Enter a name.")
                 return
             }
             setBillStep(1)
@@ -99,11 +104,11 @@ export default function BillsPage() {
             const amount = Number(formData.amount)
             const dueDay = Number(formData.dueDay)
             if (!Number.isFinite(amount) || amount <= 0) {
-                toast.error(isPt ? "Introduza um valor maior do que zero." : "Enter an amount greater than zero.")
+                toast.error(pageCopy.error_amount_positive || "Enter an amount greater than zero.")
                 return
             }
             if (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) {
-                toast.error(isPt ? "Introduza um dia entre 1 e 31." : "Enter a day between 1 and 31.")
+                toast.error(pageCopy.error_due_day_range || "Enter a day between 1 and 31.")
                 return
             }
             setBillStep(2)
@@ -111,11 +116,11 @@ export default function BillsPage() {
         }
 
         if (billStep === 2) setBillStep(3)
-    }, [billStep, formData.amount, formData.dueDay, formData.name, isPt])
+    }, [billStep, formData.amount, formData.dueDay, formData.name, pageCopy])
 
     async function handleCreateBill() {
         if (!formData.name || !formData.amount || !formData.dueDay || !formData.accountId || !formData.category) {
-            toast.error(isPt ? "Preencha todos os campos obrigatórios." : "Please fill in all required fields.")
+            toast.error(pageCopy.error_required_fields || "Please fill in all required fields.")
             return
         }
 
@@ -143,14 +148,12 @@ export default function BillsPage() {
             }
 
             await queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
-            toast.success(isPt
-                ? (isEditing ? "Conta actualizada com sucesso." : "Conta adicionada com sucesso.")
-                : (isEditing ? "Bill updated successfully." : "Bill added successfully."))
+            toast.success(isEditing ? pageCopy.updated || "Bill updated successfully." : pageCopy.created || "Bill added successfully.")
             setIsAddDialogOpen(false)
             setEditingBillId(null)
             resetForm()
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : (isPt ? "Não foi possível guardar a conta." : "Could not save bill."))
+            toast.error(error instanceof Error ? error.message : pageCopy.error_save || "Could not save bill.")
         } finally {
             setIsSaving(false)
         }
@@ -176,9 +179,9 @@ export default function BillsPage() {
             const res = await fetch(`/api/bills/${bill.id}`, { method: "DELETE" })
             if (!res.ok) throw new Error("Failed to delete bill")
             await queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
-            toast.success(isPt ? "Conta apagada." : "Bill deleted.")
+            toast.success(pageCopy.deleted || "Bill deleted.")
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : (isPt ? "Não foi possível apagar." : "Could not delete."))
+            toast.error(error instanceof Error ? error.message : pageCopy.error_delete || "Could not delete.")
         }
     }
 
@@ -194,9 +197,9 @@ export default function BillsPage() {
                 throw new Error(err?.error || "Failed to mark bill as paid")
             }
             await queryClient.invalidateQueries({ queryKey: queryKeys.financeData })
-            toast.success(isPt ? "Conta marcada como paga." : "Bill marked as paid.")
+            toast.success(pageCopy.marked_paid || "Bill marked as paid.")
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : (isPt ? "Não foi possível atualizar." : "Could not update bill."))
+            toast.error(error instanceof Error ? error.message : pageCopy.error_update || "Could not update bill.")
         }
     }
 
@@ -212,12 +215,12 @@ export default function BillsPage() {
         }
         const fmt = (n: number) => formatCurrency(n)
         return [
-            { label: "Monthly Total", value: fmt(totalMonthly), change: `${countMonthly} bills`, trend: "neutral" as const, icon: <Receipt className="size-4" /> },
-            { label: "Yearly Total", value: fmt(totalYearly), change: `${countYearly} bills`, trend: "neutral" as const, icon: <CalendarClock className="size-4" /> },
-            { label: "Overdue", value: String(overdue), change: overdue > 0 ? "Needs attention" : "All good", trend: overdue > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="size-4" /> },
-            { label: "Paid", value: String(paid), change: `of ${billsData.length} total`, trend: "up" as const, icon: <CheckCircle2 className="size-4" /> },
+            { label: statLabels.monthly_total || "Monthly Total", value: fmt(totalMonthly), change: (statLabels.bills_count || "{count} bills").replace("{count}", String(countMonthly)), trend: "neutral" as const, icon: <Receipt className="size-4" /> },
+            { label: statLabels.yearly_total || "Yearly Total", value: fmt(totalYearly), change: (statLabels.bills_count || "{count} bills").replace("{count}", String(countYearly)), trend: "neutral" as const, icon: <CalendarClock className="size-4" /> },
+            { label: statLabels.overdue || "Overdue", value: String(overdue), change: overdue > 0 ? statLabels.needs_attention || "Needs attention" : statLabels.all_good || "All good", trend: overdue > 0 ? "down" as const : "up" as const, icon: <AlertTriangle className="size-4" /> },
+            { label: statLabels.paid || "Paid", value: String(paid), change: (statLabels.of_total || "of {count} total").replace("{count}", String(billsData.length)), trend: "up" as const, icon: <CheckCircle2 className="size-4" /> },
         ]
-    }, [billsData, isLoading, formatCurrency])
+    }, [billsData, isLoading, formatCurrency, statLabels])
 
     return (
         <PageShell className="gap-4 p-3 md:p-4">
@@ -230,7 +233,7 @@ export default function BillsPage() {
                 actions={
                     <Button
                         onClick={() => setIsAddDialogOpen(true)}
-                        title={isPt ? "Nova conta a pagar" : "Add bill"}
+                        title={pageCopy.add_bill || "Add bill"}
                     >
                         <Plus />
                     </Button>
@@ -256,10 +259,10 @@ export default function BillsPage() {
                 <EmptyState
                     variant="no-bills"
                     placement="page"
-                    title={isPt ? "Nada para mostrar aqui" : "Nothing to show here yet"}
-                    description={isPt ? "Adicione contas recorrentes para acompanhar pagamentos." : "Add recurring bills to stay on top of payments."}
+                    title={pageCopy.empty_title || "Nothing to show here yet"}
+                    description={pageCopy.empty_description || "Add recurring bills to stay on top of payments."}
                     action={{
-                        label: isPt ? "Adicionar conta" : "Add bill",
+                        label: pageCopy.add_bill || "Add bill",
                         onClick: () => setIsAddDialogOpen(true),
                         icon: <Plus className="size-4" />,
                     }}
@@ -286,17 +289,17 @@ export default function BillsPage() {
             }}>
                 <FormDialogContent stableSize>
                     <FormDialogHeader
-                        title={editingBillId ? (isPt ? "Editar conta a pagar" : "Edit bill") : (isPt ? "Adicionar conta a pagar" : "Add bill")}
+                        title={editingBillId ? (pageCopy.edit_bill || "Edit bill") : (pageCopy.add_bill || "Add bill")}
                         description={
                             billStep === 0
-                                ? (isPt ? "Comece pelo nome da despesa recorrente." : "Start with the recurring expense name.")
+                                ? (pageCopy.step_name || "Start with the recurring expense name.")
                                 : billStep === 1
-                                    ? (isPt ? "Defina o valor e o dia de vencimento." : "Set the amount and due day.")
+                                    ? (pageCopy.step_amount || "Set the amount and due day.")
                                     : billStep === 2
-                                        ? (isPt ? "Classifique a frequência e categoria." : "Classify the frequency and category.")
+                                        ? (pageCopy.step_classify || "Classify the frequency and category.")
                                         : accounts.length > 0
-                                            ? (isPt ? "Associe a despesa a uma conta." : "Link the bill to an account.")
-                                            : (isPt ? "Ligue primeiro uma conta na página Accounts." : "Connect an account first on the Accounts page.")}
+                                            ? (pageCopy.step_account || "Link the bill to an account.")
+                                            : (pageCopy.step_connect_account || "Connect an account first on the Accounts page.")}
                     />
 
                     <form
@@ -313,8 +316,8 @@ export default function BillsPage() {
                         {billStep === 0 && (
                             <FormDialogBody key="bill-name">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="bill-name">{isPt ? "Nome" : "Name"}</Label>
-                                    <Input id="bill-name" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} placeholder={isPt ? "Ex.: Internet" : "e.g. Internet"} autoFocus />
+                                    <Label htmlFor="bill-name">{common.name || "Name"}</Label>
+                                    <Input id="bill-name" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} placeholder={pageCopy.name_placeholder || "e.g. Internet"} autoFocus />
                                 </div>
                             </FormDialogBody>
                         )}
@@ -322,11 +325,11 @@ export default function BillsPage() {
                         {billStep === 1 && (
                             <FormDialogBody key="bill-amount">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="bill-amount">{isPt ? "Valor" : "Amount"}</Label>
+                                    <Label htmlFor="bill-amount">{pageCopy.amount || "Amount"}</Label>
                                     <Input id="bill-amount" type="number" min="0" step="0.01" value={formData.amount} onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))} autoFocus />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="bill-dueDay">{isPt ? "Dia de vencimento" : "Due day"}</Label>
+                                    <Label htmlFor="bill-dueDay">{pageCopy.due_day || "Due day"}</Label>
                                     <Input id="bill-dueDay" type="number" min="1" max="31" value={formData.dueDay} onChange={(e) => setFormData((prev) => ({ ...prev, dueDay: e.target.value }))} />
                                 </div>
                             </FormDialogBody>
@@ -335,27 +338,27 @@ export default function BillsPage() {
                         {billStep === 2 && (
                             <FormDialogBody key="bill-classify">
                                 <Select value={formData.frequency} onValueChange={(value) => setFormData((prev) => ({ ...prev, frequency: value }))}>
-                                    <FormSelectTrigger label={isPt ? "Frequência" : "Frequency"}>
+                                    <FormSelectTrigger label={pageCopy.frequency_label || "Frequency"}>
                                         <SelectValue />
                                     </FormSelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="weekly">{isPt ? "Semanal" : "Weekly"}</SelectItem>
-                                        <SelectItem value="monthly">{isPt ? "Mensal" : "Monthly"}</SelectItem>
-                                        <SelectItem value="yearly">{isPt ? "Anual" : "Yearly"}</SelectItem>
+                                        <SelectItem value="weekly">{frequencyLabels.weekly || "Weekly"}</SelectItem>
+                                        <SelectItem value="monthly">{frequencyLabels.monthly || "Monthly"}</SelectItem>
+                                        <SelectItem value="yearly">{frequencyLabels.yearly || "Yearly"}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Select value={formData.category} onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}>
-                                    <FormSelectTrigger label={isPt ? "Categoria" : "Category"}>
+                                    <FormSelectTrigger label={pageCopy.category || "Category"}>
                                         <SelectValue />
                                     </FormSelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="utilities">{isPt ? "Serviços" : "Utilities"}</SelectItem>
-                                        <SelectItem value="housing">{isPt ? "Habitação" : "Housing"}</SelectItem>
-                                        <SelectItem value="insurance">{isPt ? "Seguro" : "Insurance"}</SelectItem>
-                                        <SelectItem value="subscriptions">{isPt ? "Subscrições" : "Subscriptions"}</SelectItem>
-                                        <SelectItem value="services">{isPt ? "Serviços gerais" : "Services"}</SelectItem>
-                                        <SelectItem value="health">{isPt ? "Saúde" : "Health"}</SelectItem>
-                                        <SelectItem value="other">{isPt ? "Outros" : "Other"}</SelectItem>
+                                        <SelectItem value="utilities">{categoryLabels.utilities || "Utilities"}</SelectItem>
+                                        <SelectItem value="housing">{categoryLabels.housing || "Housing"}</SelectItem>
+                                        <SelectItem value="insurance">{categoryLabels.insurance || "Insurance"}</SelectItem>
+                                        <SelectItem value="subscriptions">{categoryLabels.subscriptions || "Subscriptions"}</SelectItem>
+                                        <SelectItem value="services">{categoryLabels.services || "Services"}</SelectItem>
+                                        <SelectItem value="health">{categoryLabels.health || "Health"}</SelectItem>
+                                        <SelectItem value="other">{categoryLabels.other || "Other"}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormDialogBody>
@@ -364,8 +367,8 @@ export default function BillsPage() {
                         {billStep === 3 && (
                             <FormDialogBody key="bill-account">
                                 <Select value={formData.accountId} onValueChange={(value) => setFormData((prev) => ({ ...prev, accountId: value }))} disabled={accounts.length === 0}>
-                                    <FormSelectTrigger label={isPt ? "Conta associada" : "Linked account"}>
-                                        <SelectValue placeholder={isPt ? "Escolha uma conta" : "Choose an account"} />
+                                    <FormSelectTrigger label={pageCopy.linked_account || "Linked account"}>
+                                        <SelectValue placeholder={pageCopy.choose_account || "Choose an account"} />
                                     </FormSelectTrigger>
                                     <SelectContent>
                                         {accounts.map((account) => (
@@ -377,7 +380,7 @@ export default function BillsPage() {
                                 <label className={`${UDS.surface} ${UDS.itemHover} group flex cursor-pointer select-none items-center justify-center gap-2 px-3 py-2.5 transition-colors`}>
                                     <Checkbox checked={formData.autopay} onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, autopay: checked === true }))} />
                                     <span className="text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
-                                        {isPt ? "Pagamento automático" : "Autopay enabled"}
+                                        {pageCopy.autopay || "Autopay enabled"}
                                     </span>
                                 </label>
                             </FormDialogBody>
@@ -386,12 +389,12 @@ export default function BillsPage() {
                         <FormDialogActions>
                             <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isSaving || (billStep === 3 && accounts.length === 0)}>
                                 {billStep < 3
-                                    ? (isPt ? "Continuar" : "Continue")
+                                    ? (common.continue || "Continue")
                                     : isSaving
-                                        ? (isPt ? "A guardar..." : "Saving...")
+                                        ? (common.saving || "Saving...")
                                         : editingBillId
-                                            ? (isPt ? "Guardar" : "Save")
-                                            : (isPt ? "Adicionar" : "Add bill")}
+                                            ? (common.save || "Save")
+                                            : (pageCopy.add_bill || "Add bill")}
                             </Button>
                             <Button
                                 type="button"
@@ -407,7 +410,7 @@ export default function BillsPage() {
                                 }}
                                 disabled={isSaving}
                             >
-                                {billStep === 0 ? (isPt ? "Cancelar" : "Cancel") : (isPt ? "Voltar" : "Back")}
+                                {billStep === 0 ? (common.cancel || "Cancel") : (common.back || "Back")}
                             </Button>
                         </FormDialogActions>
                         <FormDialogStepIndicator current={billStep} total={4} />

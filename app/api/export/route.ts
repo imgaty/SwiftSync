@@ -115,9 +115,12 @@ export async function GET(request: Request) {
             })),
             goals: goals.map((goal) => ({
               id: goal.id,
+              accountId: goal.accountId,
               name: goal.name,
               targetAmount: Number(goal.targetAmount),
               currentAmount: Number(goal.currentAmount),
+              baselineAmount: Number(goal.baselineAmount),
+              targetMode: goal.targetMode === "additional" ? "additional" : "total",
               deadline: goal.deadline?.toISOString().slice(0, 10) || null,
               category: goal.category,
               color: goal.color,

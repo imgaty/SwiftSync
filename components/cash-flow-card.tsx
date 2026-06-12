@@ -23,6 +23,7 @@ import {
 import { TrendingUp, AlertTriangle, ClipboardCopy, RefreshCw } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
+import { getTranslations } from "@/lib/translation-utils"
 import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -51,13 +52,13 @@ interface CashFlowCardProps {
 }
 
 export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps) {
-    const { language } = useLanguage()
+    const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const [data, setData] = React.useState<CashFlowData | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
     const shellClassName = compact
         ? "flex h-full min-h-[280px] flex-col overflow-hidden bg-transparent"
-        : cn("overflow-hidden sq-2xl", UDS.cardSurface)
+        : cn("overflow-hidden sq-big", UDS.cardSurface)
 
     const buildUrl = React.useCallback(() => {
         const params = new URLSearchParams({ months: compact ? "4" : "6" })
@@ -127,7 +128,8 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
         )
     }
 
-    const isPt = language === "pt"
+    const copy = getTranslations(t, "cash_flow_card")
+    const locale = t.config?.locale || "en-US"
 
     if (!data) {
         return (
@@ -135,8 +137,8 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                 <EmptyState
                     variant="no-data"
                     placement={compact ? "card" : "section"}
-                    title={isPt ? "Nada para mostrar aqui" : "Nothing to show here yet"}
-                    description={isPt ? "A previsão aparece quando houver histórico financeiro suficiente." : "The forecast appears once there is enough financial history."}
+                    title={copy.empty_title || "Nothing to show here yet"}
+                    description={copy.empty_description || "The forecast appears once there is enough financial history."}
                     className="h-full min-h-[220px]"
                 />
             </div>
@@ -150,13 +152,13 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
 
     const handleCopySummary = () => {
         const summary = [
-            `${isPt ? "Receita média" : "Avg. Income"}: ${fmt(data.avgIncome)}`,
-            `${isPt ? "Despesa média" : "Avg. Expenses"}: ${fmt(data.avgExpenses)}`,
-            `${isPt ? "Recorrentes" : "Recurring"}: ${fmt(data.recurringCosts)}`,
-            `${isPt ? "Líquido mensal" : "Monthly Net"}: ${isPositiveNet ? "+" : ""}${fmt(data.monthlyNet)}`,
+            `${copy.avg_income || "Avg. Income"}: ${fmt(data.avgIncome)}`,
+            `${copy.avg_expenses || "Avg. Expenses"}: ${fmt(data.avgExpenses)}`,
+            `${copy.recurring || "Recurring"}: ${fmt(data.recurringCosts)}`,
+            `${copy.monthly_net || "Monthly Net"}: ${isPositiveNet ? "+" : ""}${fmt(data.monthlyNet)}`,
         ].join("\n")
         navigator.clipboard.writeText(summary)
-        toast.success(isPt ? "Resumo copiado" : "Summary copied")
+        toast.success(copy.summary_copied || "Summary copied")
     }
 
     const handleRefresh = () => {
@@ -180,19 +182,17 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                             <TrendingUp className="size-4" />
                         </div>
                         <div>
-                            <h3 className="text-[15px] font-semibold leading-tight">
-                                {isPt ? "Previsão de Cash Flow" : "Cash Flow Forecast"}
+                            <h3 className="text-base font-semibold leading-tight">
+                                {copy.title || "Cash Flow Forecast"}
                             </h3>
-                            <p className="text-[12px] text-neutral-400">
-                                {isPt
-                                    ? `Projeção para os próximos ${compact ? 4 : 6} meses`
-                                    : `${compact ? 4 : 6}-month projection based on history`}
+                            <p className="text-xs text-neutral-400">
+                                {(copy.projection_description || "{months}-month projection based on history").replace("{months}", String(compact ? 4 : 6))}
                             </p>
                         </div>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-[11px] font-semibold tracking-wide text-neutral-400 mb-0.5">
-                            {isPt ? "Saldo atual" : "Current Balance"}
+                        <p className="text-xs font-semibold tracking-wide text-neutral-400 mb-0.5">
+                            {copy.current_balance || "Current Balance"}
                         </p>
                         <p className={cn("font-bold tracking-tight tabular-nums", compact ? "text-xl" : "text-2xl")}>{fmt(data.currentBalance)}</p>
                     </div>
@@ -202,26 +202,26 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                 {/* Summary Stats */}
                 <div className="grid grid-cols-2 gap-4 @[640px]/main:grid-cols-4">
                     <div className="space-y-1">
-                        <p className="text-[11px] font-semibold tracking-wide text-neutral-400">
-                            {isPt ? "Receita média" : "Avg. Income"}
+                        <p className="text-xs font-semibold tracking-wide text-neutral-400">
+                            {copy.avg_income || "Avg. Income"}
                         </p>
                         <p className={cn("font-bold tabular-nums text-emerald-600 dark:text-emerald-400", compact ? "text-base" : "text-lg")}>{fmt(data.avgIncome)}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[11px] font-semibold tracking-wide text-neutral-400">
-                            {isPt ? "Despesa média" : "Avg. Expenses"}
+                        <p className="text-xs font-semibold tracking-wide text-neutral-400">
+                            {copy.avg_expenses || "Avg. Expenses"}
                         </p>
                         <p className={cn("font-bold tabular-nums text-red-600 dark:text-red-400", compact ? "text-base" : "text-lg")}>{fmt(data.avgExpenses)}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[11px] font-semibold tracking-wide text-neutral-400">
-                            {isPt ? "Recorrentes" : "Recurring"}
+                        <p className="text-xs font-semibold tracking-wide text-neutral-400">
+                            {copy.recurring || "Recurring"}
                         </p>
                         <p className={cn("font-bold tabular-nums", compact ? "text-base" : "text-lg")}>{fmt(data.recurringCosts)}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[11px] font-semibold tracking-wide text-neutral-400">
-                            {isPt ? "Líquido mensal" : "Monthly Net"}
+                        <p className="text-xs font-semibold tracking-wide text-neutral-400">
+                            {copy.monthly_net || "Monthly Net"}
                         </p>
                         <p className={cn(
                             "font-bold tabular-nums",
@@ -235,23 +235,20 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
 
                 {/* Warning if negative */}
                 {!isPositiveNet && !compact && (
-                    <Alert variant="destructive" className="sq-xl border-destructive/20 bg-destructive/5">
+                    <Alert variant="destructive" className="sq-normal border-destructive/20 bg-destructive/5">
                         <AlertTriangle className="size-4" />
                         <AlertDescription>
-                            {isPt
-                                ? "Atenção: As suas despesas excedem as receitas. Considere rever o seu orçamento."
-                                : "Warning: Your expenses exceed your income. Consider reviewing your budget."}
+                            {copy.negative_warning || "Warning: Your expenses exceed your income. Consider reviewing your budget."}
                         </AlertDescription>
                     </Alert>
                 )}
 
                 {/* Projection Timeline */}
                 <div>
-                    <h4 className={cn("text-[13px] font-semibold", compact ? "mb-2" : "mb-3")}>
-                        {isPt ? "Saldo Projetado" : "Projected Balance"}
+                    <h4 className={cn("text-sm font-semibold", compact ? "mb-2" : "mb-3")}>
+                        {copy.projected_balance || "Projected Balance"}
                     </h4>
                     {(() => {
-                        const locale = isPt ? "pt-PT" : "en-US"
                         const maxBalance = Math.max(
                             Math.abs(data.currentBalance),
                             ...data.projections.map((pp) => Math.abs(pp.projected))
@@ -264,8 +261,8 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                             <div className="space-y-2">
                                 {/* Current balance baseline row */}
                                 <div className="flex items-center gap-3 group/bar">
-                                    <span className="text-[11px] font-semibold text-foreground w-16 shrink-0">
-                                        {isPt ? "Atual" : "Now"}
+                                    <span className="text-xs font-semibold text-foreground w-16 shrink-0">
+                                        {copy.now || "Now"}
                                     </span>
                                     <div className={cn("flex-1 sq-lg overflow-hidden", UDS.subtleFill, compact ? "h-6" : "h-7")}>
                                         <div
@@ -273,7 +270,7 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
                                             style={{ width: `${Math.min(100, currentBarWidth)}%` }}
                                         />
                                     </div>
-                                    <span className={`text-[11px] font-bold w-24 text-right tabular-nums ${currentNegative ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
+                                    <span className={`text-xs font-bold w-24 text-right tabular-nums ${currentNegative ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
                                         {fmt(data.currentBalance)}
                                     </span>
                                 </div>
@@ -287,14 +284,14 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
 
                                     return (
                                         <div key={p.date} className="flex items-center gap-3 group/bar">
-                                            <span className="text-[11px] font-medium text-neutral-400 w-16 shrink-0">{monthName}</span>
+                                            <span className="text-xs font-medium text-neutral-400 w-16 shrink-0">{monthName}</span>
                                             <div className={cn("flex-1 sq-lg overflow-hidden", UDS.subtleFill, compact ? "h-6" : "h-7")}>
                                                 <div
                                                     className={`h-full sq-lg transition-all duration-500 ${isNegative ? "bg-destructive/40 group-hover/bar:bg-destructive/60" : "bg-primary/40 group-hover/bar:bg-primary/60"}`}
                                                     style={{ width: `${Math.min(100, barWidth)}%` }}
                                                 />
                                             </div>
-                                            <span className={`text-[11px] font-semibold w-24 text-right tabular-nums ${isNegative ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
+                                            <span className={`text-xs font-semibold w-24 text-right tabular-nums ${isNegative ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
                                                 {fmt(p.projected)}
                                             </span>
                                         </div>
@@ -311,12 +308,12 @@ export function CashFlowCard({ accountIds, compact = false }: CashFlowCardProps)
 
                 <ContextMenuItem onClick={handleCopySummary}>
                     <ClipboardCopy />
-                    {isPt ? "Copiar resumo" : "Copy summary"}
+                    {copy.copy_summary || "Copy summary"}
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onClick={handleRefresh}>
                     <RefreshCw />
-                    {isPt ? "Atualizar previsão" : "Refresh forecast"}
+                    {copy.refresh_forecast || "Refresh forecast"}
                 </ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>

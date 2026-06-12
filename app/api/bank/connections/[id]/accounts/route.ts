@@ -12,7 +12,9 @@ import { listAccounts, listTransactions, getConnection, mapNatureToAccountType, 
 import { getAuthContext } from "@/lib/auth-helpers"
 import { requirePermission, scopeCreateData } from "@/lib/data-access"
 import { buildSaltEdgeCategorization, loadEnabledRules, loadAvailableTags } from "@/lib/PACE.server"
+import { resolveImportedTransactionTags } from "@/lib/PACE"
 import { prisma } from "@/lib/prisma"
+import { prepareSaltEdgeAccountsForImport } from "@/lib/salt-edge-account-import"
 
 /**
  * GET /api/bank/connections/[id]/accounts — Fetch accounts from a Salt Edge connection
@@ -132,6 +134,16 @@ export async function POST(
       }
     }
 
+    const saltEdgeAccounts = await listAccounts(connectionId)
+    const accountResolution = prepareSaltEdgeAccountsForImport(saltEdgeAccounts, accountsToImport)
+    if (!accountResolution.ok) {
+      return NextResponse.json(
+        { error: accountResolution.error },
+        { status: accountResolution.status },
+      )
+    }
+    const accountsData = accountResolution.accounts
+
     const dbConnection = await prisma.saltEdgeConnection.upsert({
       where: { connectionId },
       create: {
@@ -150,29 +162,12 @@ export async function POST(
       },
     })
 
-    // If no specific accounts provided, import all from connection
-    let saltEdgeAccounts
-    if (!accountsToImport || accountsToImport.length === 0) {
-      saltEdgeAccounts = await listAccounts(connectionId)
-    }
-
     // Upsert the bank
     const bank = await prisma.bank.upsert({
       where: { name: providerName },
       create: { name: providerName },
       update: {},
     })
-
-    const accountsData = saltEdgeAccounts
-      ? saltEdgeAccounts.map((a) => ({
-          saltEdgeAccountId: a.id,
-          name: a.name,
-          nature: a.nature,
-          balance: a.balance,
-          currencyCode: a.currency_code,
-          iban: a.extra?.iban,
-        }))
-      : accountsToImport!
 
     const imported = []
     const accountIdBySaltEdgeId = new Map<string, string>()
@@ -249,10 +244,15 @@ export async function POST(
           })
           const accountId = accountIdBySaltEdgeId.get(tx.account_id)
           if (!accountId) continue
-          const tags = cat.tags.length > 0 ? cat.tags : ["other"]
+          const inferredTags = cat.tags.length > 0 ? cat.tags : ["other"]
           const description = tx.description || tx.category || "Transaction"
           // Upsert by saltEdgeId to prevent duplicate transactions
           if (tx.id) {
+            const existing = await prisma.transaction.findUnique({
+              where: { saltEdgeId: tx.id },
+              select: { tags: true },
+            })
+            const tags = resolveImportedTransactionTags(existing?.tags, inferredTags)
             await prisma.transaction.upsert({
               where: { saltEdgeId: tx.id },
               create: {
@@ -286,7 +286,7 @@ export async function POST(
                 type: tx.amount >= 0 ? "in" : "out",
                 amount: Math.abs(tx.amount),
                 description,
-                tags,
+                tags: inferredTags,
                 accountId,
                 counterpartyId: cat.counterpartyId,
                 counterpartyRaw: cat.counterpartyRaw,

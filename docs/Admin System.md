@@ -18,18 +18,18 @@ The admin panel provides user management, audit logging, system monitoring, and 
 
 | Role         | Capabilities                                                                             |
 | :----------- | :--------------------------------------------------------------------------------------- |
-| `admin`      | View users, suspend/unsuspend accounts, reset 2FA, manage announcements, view audit logs |
-| `superadmin` | Everything above, plus: delete users, change roles, promote to admin/superadmin          |
+| `admin`      | View users, suspend/unsuspend/ban accounts, soft-delete non-superadmin users, manage announcements, view audit logs |
+| `superadmin` | Everything above, plus: change roles, promote to admin/superadmin, and modify superadmin accounts |
 
 Every admin API route calls `requireAdmin()`, which is the admin equivalent of `getAuthUserId()`. Here is what it does step by step:
 
 1. Read the `auth-token` cookie and verify the HMAC signature (same as `getAuthUserId()`).
 2. Look up the user in the database and confirm their status is `"active"`.
 3. Check that the user's `role` is in the allowed list (`["admin", "superadmin"]`). If not, return a 403 Forbidden error.
-4. For operations that require superadmin (like deleting users or changing roles), an additional check verifies `role === "superadmin"`.
+4. For operations that require superadmin, such as changing user roles or modifying a superadmin account, an additional check verifies `role === "superadmin"`.
 5. If all checks pass, return the admin user object so the route handler can proceed.
 
-As a safety measure, admins cannot perform actions on themselves — they cannot suspend, delete, or change their own role. This prevents accidental self-lockout and limits the damage from a compromised admin account.
+As a safety measure, admins cannot perform actions on themselves — they cannot suspend, soft-delete, or change their own role. A non-superadmin admin also cannot modify or delete a superadmin account. This prevents accidental self-lockout and limits the damage from a compromised admin account.
 
 ## How Admin Access Works
 
@@ -63,7 +63,7 @@ Every admin action creates a row in the `AuditLog` table with the following fiel
 
 - **`performerId`** — The ID of the admin who performed the action.
 - **`targetUserId`** — The ID of the user the action was performed on.
-- **`action`** — A machine-readable label describing the action (e.g., `user.suspend`, `user.delete`, `user.role_change`, `user.reset_2fa`).
+- **`action`** — A machine-readable label describing the action (e.g., `user.suspend`, `user.delete`, `user.role_change`).
 - **`entity`** — The type of entity affected (e.g., `"User"`).
 - **`entityId`** — The database ID of the affected entity.
 - **`details`** — An optional JSON object with additional context (e.g., `{"reason": "Suspicious activity"}` for suspensions, or `{"from": "user", "to": "admin"}` for role changes).
@@ -81,9 +81,8 @@ Audit logs are immutable — they are created, never updated or deleted. This en
 | Suspend     | User can't log in, data preserved, requires a reason | Admin, Superadmin |
 | Unsuspend   | Restores access                                      | Admin, Superadmin |
 | Ban         | Stronger signal than suspend, data preserved         | Admin, Superadmin |
-| Delete      | Removes user and all related data (cascading)        | Superadmin only   |
+| Delete      | Soft-deletes the user by setting `status = "deleted"`; admins cannot delete themselves, and non-superadmins cannot delete superadmins | Admin, Superadmin |
 | Change role | Promote or demote between user/admin/superadmin      | Superadmin only   |
-| Reset 2FA   | Disables 2FA on the user's account                   | Admin, Superadmin |
 
 ## System Health
 
@@ -93,7 +92,7 @@ The response includes:
 
 - **Database latency** — A simple query is timed to measure how long the database takes to respond (in milliseconds). A sudden spike indicates database performance issues.
 - **Table row counts** — The number of rows in major tables (Users, Transactions, BankAccounts, etc.). Useful for understanding system scale and spotting anomalies (e.g., a sudden drop in rows could indicate accidental deletion).
-- **Security metrics** — Aggregated statistics like the percentage of users with 2FA enabled, number of suspended/banned accounts, and number of active sessions.
+- **Security metrics** — Aggregated statistics like the number of suspended/banned accounts, active users, and active sessions.
 - **Activity trends** — Recent registration counts, login frequency, and transaction volume over time.
 - **Runtime information** — Node.js version, process uptime, and memory usage (heap used vs. total). Helps diagnose memory leaks or determine if the server needs to be restarted.
 

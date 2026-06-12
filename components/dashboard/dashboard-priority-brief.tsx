@@ -180,7 +180,7 @@ function PriorityBriefCard({
             <span className="relative flex min-w-0 items-center justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-2.5">
                     <Icon className={cn("size-5 shrink-0 stroke-[1.9]", itemStyles.icon)} />
-                    <span className="truncate text-[15px] font-medium leading-5 text-foreground-secondary sm:text-[16px]">
+                    <span className="truncate text-base font-medium leading-5 text-foreground-secondary">
                         {item.label}
                     </span>
                 </span>
@@ -189,14 +189,14 @@ function PriorityBriefCard({
 
             <span className="relative flex min-w-0 items-end justify-between gap-2">
                 <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-medium leading-5 text-muted-foreground">
+                    <span className="block truncate text-sm font-medium leading-5 text-muted-foreground">
                         {item.detail}
                     </span>
-                    <span className={cn("mt-1 block truncate text-[11px] font-semibold leading-4 tabular-nums", itemStyles.meta)}>
+                    <span className={cn("mt-1 block truncate text-xs font-semibold leading-4 tabular-nums", itemStyles.meta)}>
                         {status.label}
                     </span>
                 </span>
-                <span className={cn("shrink-0 text-right text-[1.6rem] font-semibold leading-none tracking-normal tabular-nums sm:text-[1.7rem]", itemStyles.value)}>
+                <span className={cn("shrink-0 text-right text-2xl font-semibold leading-none tracking-normal tabular-nums sm:text-3xl", itemStyles.value)}>
                     {item.value}
                 </span>
             </span>
@@ -233,18 +233,18 @@ function PriorityBriefDropdownRow({
             <Icon className={cn("mt-0.5 size-4 shrink-0 stroke-[1.9]", itemStyles.icon)} />
             <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-baseline justify-between gap-2">
-                    <span className="truncate text-[13px] font-medium leading-4 text-foreground-secondary">
+                    <span className="truncate text-sm font-medium leading-4 text-foreground-secondary">
                         {item.label}
                     </span>
-                    <span className={cn("shrink-0 text-[12px] font-semibold leading-4 tabular-nums", itemStyles.value)}>
+                    <span className={cn("shrink-0 text-xs font-semibold leading-4 tabular-nums", itemStyles.value)}>
                         {item.value}
                     </span>
                 </span>
                 <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2">
-                    <span className="truncate text-[11px] leading-4 text-muted-foreground">
+                    <span className="truncate text-xs leading-4 text-muted-foreground">
                         {item.detail}
                     </span>
-                    <span className={cn("shrink-0 text-[10.5px] font-semibold leading-4 tabular-nums", itemStyles.meta)}>
+                    <span className={cn("shrink-0 text-xs font-semibold leading-4 tabular-nums", itemStyles.meta)}>
                         {status.label}
                     </span>
                 </span>
@@ -347,7 +347,7 @@ export function DashboardPriorityBriefDropdown({
                 >
                     <ListChecks />
                     {priorityReviewCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center sq-full bg-destructive text-destructive-foreground text-[10px] font-medium">
+                        <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center sq-full bg-destructive text-destructive-foreground text-xs font-medium">
                             {priorityReviewCount > 9 ? "9+" : priorityReviewCount}
                         </span>
                     )}
@@ -366,10 +366,10 @@ export function DashboardPriorityBriefDropdown({
                 <div className="flex min-w-0 items-start gap-2.5 px-3 pb-2 pt-2.5">
                     <ListChecks className="mt-0.5 size-4 shrink-0 text-foreground-secondary" />
                     <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold leading-4 text-foreground">
+                        <p className="truncate text-sm font-semibold leading-4 text-foreground">
                             {dashboardLabels.priorityBrief}
                         </p>
-                        <p className="mt-1 truncate text-[11px] leading-4 text-muted-foreground">
+                        <p className="mt-1 truncate text-xs leading-4 text-muted-foreground">
                             {priorityStatus.label}
                         </p>
                     </div>

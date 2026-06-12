@@ -490,25 +490,25 @@ export function BudgetTable({
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.total_budget}</p>
+                    <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.total_budget}</p>
                     <p className="text-lg font-bold mt-1 tabular-nums">
                         {formatCurrency(totals.totalBudget)}
                     </p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.total_spent}</p>
+                    <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.total_spent}</p>
                     <p className="text-lg font-bold text-orange-600 dark:text-orange-400 mt-1 tabular-nums">
                         {formatCurrency(totals.totalSpent)}
                     </p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.remaining}</p>
+                    <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.remaining}</p>
                     <p className={`text-lg font-bold mt-1 tabular-nums ${totals.totalRemaining >= 0 ? "text-positive" : "text-negative"}`}>
                         {formatCurrency(totals.totalRemaining)}
                     </p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.categories_over}</p>
+                    <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">{bt.categories_over}</p>
                     <p className="text-lg font-bold text-negative mt-1 tabular-nums">
                         {totals.overBudgetCount}
                     </p>

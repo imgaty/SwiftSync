@@ -30,12 +30,25 @@ const SHAPE_CLASSES = [
     ".sq-lg",
     ".sq-10",
     ".sq-xl",
+    ".sq-normal",
     ".sq-12",
     ".sq-2xl",
+    ".sq-big",
     ".sq-radius-plus",
     ".sq-full",
     ".sq-l-md",
     ".sq-r-md",
+    '[data-slot="command-input"]',
+    '[data-slot="command-item"]',
+    '[data-slot="context-menu-checkbox-item"]',
+    '[data-slot="context-menu-item"]',
+    '[data-slot="context-menu-radio-item"]',
+    '[data-slot="context-menu-sub-trigger"]',
+    '[data-slot="dropdown-menu-checkbox-item"]',
+    '[data-slot="dropdown-menu-item"]',
+    '[data-slot="dropdown-menu-radio-item"]',
+    '[data-slot="dropdown-menu-sub-trigger"]',
+    '[data-slot="select-item"]',
     ".toaster [data-sonner-toast]",
 ]
 
@@ -46,8 +59,8 @@ const SQUIRCLE_SELECTOR = [
 
 const DEFAULT_SMOOTHING = 0.6
 const CAPSULE_SMOOTHING = 1
-const DEFAULT_RADIUS_GROWTH_DAMPING = 420
-const AREA_RADIUS_RESPONSE = 320
+const DEFAULT_RADIUS_GROWTH_DAMPING = 1000
+const MAXIMUM_RADIUS_MULTIPLIER = 1.35
 const MINIMUM_RENDERABLE_RADIUS = 0.5
 const WIKIPEDIA_SQUIRCLE_EXPONENT = 4
 const CIRCULAR_EXPONENT = 2
@@ -82,13 +95,17 @@ function roundRadius(radius: number) {
 
 function measuredRadius(baseRadius: number, scale: number, growthDamping: number, width: number, height: number) {
     if (baseRadius >= 9999) return clampRadius(baseRadius, width, height)
-    if (width <= 0 || height <= 0) return baseRadius
+    const radiusFloor = Math.max(0, baseRadius)
+    if (scale <= 0) return radiusFloor
+    if (width <= 0 || height <= 0) return radiusFloor
+
+    const radiusCeiling = radiusFloor * MAXIMUM_RADIUS_MULTIPLIER
 
     const lengthFromArea = Math.sqrt(width * height)
     const easedArea = 1 - Math.exp(-lengthFromArea / Math.max(1, growthDamping))
-    const proportionalLift = Math.max(0, scale) * AREA_RADIUS_RESPONSE * easedArea
+    const proportionalLift = Math.max(0, scale) * radiusFloor * easedArea
 
-    return clampRadius(baseRadius + proportionalLift, width, height)
+    return clampRadius(Math.min(radiusCeiling, radiusFloor + proportionalLift), width, height)
 }
 
 function writeMeasuredRadius(element: HTMLElement, radius: number) {
@@ -186,7 +203,9 @@ function readSquircleConfig(element: HTMLElement, width: number, height: number)
     const style = window.getComputedStyle(element)
     const fallbackRadius = readNumber(style.getPropertyValue("--sq-r"), 0)
     const baseRadius = readNumber(style.getPropertyValue("--sq-base-r"), fallbackRadius)
-    const scale = readNumber(style.getPropertyValue("--sq-scale"), 0)
+    const expandRadiusValue = element.getAttribute("data-squircle-expand-radius")
+    const expandsRadius = !["false", "0", "no", "off"].includes(expandRadiusValue ?? "")
+    const scale = expandsRadius ? readNumber(style.getPropertyValue("--sq-scale"), 0) : 0
     const growthDamping = readNumber(style.getPropertyValue("--sq-growth-damping"), DEFAULT_RADIUS_GROWTH_DAMPING)
     const isCapsule = element.classList.contains("sq-full") || baseRadius >= 9999
     const radius = measuredRadius(baseRadius, scale, growthDamping, width, height)
@@ -440,7 +459,7 @@ export function SquircleProvider() {
     React.useEffect(() => {
         clearLegacyRuntimeArtifacts()
 
-        if (supportsNativeCornerShape()) {
+        if (supportsNativeCornerShape() && !supportsCssPathClip()) {
             document.documentElement.dataset.squircleRenderer = "native"
             const measured = new Set<HTMLElement>()
             let frame = 0

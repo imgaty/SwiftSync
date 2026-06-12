@@ -13,7 +13,7 @@ import { getClientIp } from "@/lib/admin-auth"
 export interface AuditLogEntry {
     performerId: string       // Admin user ID who performed the action
     targetUserId?: string     // User affected (if applicable)
-    action: string            // e.g. "user.suspend", "user.delete", "user.reset_2fa"
+    action: string            // e.g. "user.suspend", "user.delete", "user.role_change"
     entity: string            // e.g. "user", "transaction", "system"
     entityId?: string         // ID of the affected entity
     details?: Record<string, unknown>  // Extra context (stored as JSON string)
@@ -49,7 +49,6 @@ export const ADMIN_ACTIONS = {
     USER_BAN: "user.ban",
     USER_DELETE: "user.delete",
     USER_FORCE_RESET_PASSWORD: "user.force_reset_password",
-    USER_RESET_2FA: "user.reset_2fa",
     USER_CHANGE_ROLE: "user.change_role",
     USER_IMPERSONATE: "user.impersonate",
 

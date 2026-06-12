@@ -28,12 +28,15 @@ const UDS_RADIUS_CLASSES = {
     md: "sq-md",
     lg: "sq-lg",
     xl: "sq-xl",
+    normal: "sq-xl",
     "2xl": "sq-2xl",
+    big: "sq-2xl",
     full: "sq-full",
 } as const
 
 const UDS_BACKGROUND_CLASSES = {
     glass: "bg-[color:color-mix(in_srgb,var(--background)_18%,transparent)]",
+    modal: "bg-white/[0.96] dark:bg-black/[0.94]",
     subtle: "bg-[color:color-mix(in_srgb,var(--background)_10%,transparent)]",
     surface: "bg-[color:color-mix(in_srgb,var(--background)_14%,transparent)]",
     elevated: "bg-[color:color-mix(in_srgb,var(--background)_18%,transparent)]",
@@ -53,8 +56,8 @@ const UDS_BORDER_HOVER =
     "hover:border-border"
 
 const UDS_TEXT_CLASSES = {
-    caption: "text-[11px] font-medium text-muted-foreground",
-    data: "text-[13px] leading-snug",
+    caption: "text-xs font-medium text-muted-foreground",
+    data: "text-sm leading-snug",
     iconSm: "size-3.5",
     icon: "size-4",
     iconLg: "size-5",
@@ -139,7 +142,7 @@ export type UDSSurfaceOptions = {
     shadow?: UDSShadow
     spotlight?: boolean
     text?: boolean
-    zIndex?: boolean | "z-50" | "z-[999]" | "z-[1000]" | "z-[9999]"
+    zIndex?: boolean | "z-50" | "z-[900]" | "z-[999]" | "z-[1000]" | "z-[1100]" | "z-[9999]"
 }
 
 function backgroundClass(background: UDSBackground = "glass") {
@@ -192,7 +195,7 @@ export function udsSurface(options: UDSSurfaceOptions = {}) {
         shadowClass(shadow),
         padding && "p-[7px]",
         focus && "outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0",
-        text && "text-[13px] text-black dark:text-white font-normal leading-snug",
+        text && "text-sm text-black dark:text-white font-normal leading-snug",
         zIndex === true ? "z-[999]" : zIndex || null,
         className,
     )
@@ -224,19 +227,19 @@ const UDS_INPUT_SURFACE = cn(
     }),
     "border-[color:color-mix(in_srgb,var(--border)_86%,transparent)]",
     "bg-[#ffffff]",
-    "shadow-[0_1px_2px_rgba(8,8,8,0.04),0_10px_22px_rgba(8,8,8,0.035),inset_0_1px_0_rgba(255,255,255,0.54)]",
+    "shadow-[0_1px_2px_rgba(8,8,8,0.04),0_10px_22px_rgba(8,8,8,0.035)]",
     "dark:border-[color:color-mix(in_srgb,var(--border)_88%,transparent)]",
     "dark:bg-[color:color-mix(in_srgb,var(--foreground)_5%,var(--background))]",
-    "dark:shadow-[0_12px_26px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.08)]",
+    "dark:shadow-[0_12px_26px_rgba(0,0,0,0.24)]",
 )
 
 const UDS_INPUT_HOVER = cn(
     "hover:border-[color:color-mix(in_srgb,var(--border)_88%,var(--foreground)_12%)]",
     "hover:bg-[color:color-mix(in_srgb,var(--surface-elevated)_96%,var(--background))]",
-    "hover:shadow-[0_1px_2px_rgba(8,8,8,0.05),0_12px_28px_rgba(8,8,8,0.05),inset_0_1px_0_rgba(255,255,255,0.62)]",
+    "hover:shadow-[0_1px_2px_rgba(8,8,8,0.05),0_12px_28px_rgba(8,8,8,0.05)]",
     "dark:hover:border-[color:color-mix(in_srgb,var(--border)_84%,var(--foreground)_16%)]",
     "dark:hover:bg-[color:color-mix(in_srgb,var(--foreground)_7%,var(--background))]",
-    "dark:hover:shadow-[0_14px_30px_rgba(0,0,0,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]",
+    "dark:hover:shadow-[0_14px_30px_rgba(0,0,0,0.30)]",
 )
 
 const UDS_INPUT_FOCUS = cn(
@@ -246,8 +249,33 @@ const UDS_INPUT_FOCUS = cn(
     "dark:focus-visible:bg-[color:color-mix(in_srgb,var(--foreground)_8%,var(--background))]",
     "focus-visible:ring-2 focus-visible:ring-blue-500/45 dark:focus-visible:ring-blue-400/35",
     "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-    "focus-visible:shadow-[0_0_0_1px_rgba(59,130,246,0.14),0_12px_30px_rgba(59,130,246,0.12),inset_0_1px_0_rgba(255,255,255,0.65)]",
-    "dark:focus-visible:shadow-[0_0_0_1px_rgba(96,165,250,0.12),0_16px_34px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.12)]",
+    "focus-visible:shadow-[0_0_0_1px_rgba(59,130,246,0.14),0_12px_30px_rgba(59,130,246,0.12)]",
+    "dark:focus-visible:shadow-[0_0_0_1px_rgba(96,165,250,0.12),0_16px_34px_rgba(0,0,0,0.34)]",
+)
+
+const UDS_GLIDE_SURFACE = cn(
+    "relative isolate overflow-hidden",
+    "[--spotlight-size:14rem]"
+)
+
+const UDS_ANIMATE_IN = "data-[state=open]:animate-[uds-surface-in_0.28s_cubic-bezier(0.16,1,0.3,1)]"
+const UDS_ANIMATE_OUT = "data-[state=closed]:animate-[uds-surface-out_0.18s_cubic-bezier(0.4,0,1,1)_forwards]"
+
+const UDS_TRANSIENT_SURFACE = udsContainer({
+    background: "glass",
+    blur: true,
+    border: "soft",
+    radius: "xl",
+    shadow: "panel",
+    spotlight: false,
+    zIndex: "z-[1100]",
+})
+
+const UDS_DROPDOWN_SURFACE = cn(
+    UDS_TRANSIENT_SURFACE,
+    UDS_GLIDE_SURFACE,
+    UDS_ANIMATE_IN,
+    UDS_ANIMATE_OUT,
 )
 
 export const UDS = {
@@ -259,7 +287,7 @@ export const UDS = {
 
     text: UDS_TEXT_CLASSES,
 
-    label: "px-2.5 py-1.5 | text-[11px] text-neutral-400 font-semibold tracking-wide",
+    label: "px-2.5 py-1.5 | text-xs text-neutral-400 font-semibold tracking-wide",
 
     separator: cn(
         "h-px | my-2",
@@ -277,7 +305,7 @@ export const UDS = {
     // Items
     item: cn(
         "relative | flex items-center gap-2 | px-4 py-2 | sq-lg",
-        "text-[13px] text-black dark:text-white text-left outline-hidden select-none cursor-default ",
+        "text-sm text-black dark:text-white text-left outline-hidden select-none cursor-default ",
         "transition-[background-color,color,box-shadow,opacity] duration-150 ease-out"
     ),
 
@@ -318,8 +346,7 @@ export const UDS = {
     ),
 
     glideSurface: cn(
-        "relative isolate overflow-hidden",
-        "[--spotlight-size:14rem]"
+        UDS_GLIDE_SURFACE
     ),
 
     glideHighlight: cn(
@@ -360,7 +387,7 @@ export const UDS = {
 
     glideSegmentItem: cn(
         "relative z-[2] flex min-h-10 items-center justify-center gap-2 sq-lg px-3 py-2",
-        "text-[13px] text-sidebar-foreground outline-hidden transition-colors duration-150",
+        "text-sm text-sidebar-foreground outline-hidden transition-colors duration-150",
         "hover:bg-black/[0.06] dark:hover:bg-white/[0.12] hover:text-sidebar-accent-foreground",
         "data-[active=true]:bg-black/[0.06] dark:data-[active=true]:bg-white/[0.12]",
         "data-[active=true]:text-sidebar-accent-foreground",
@@ -391,7 +418,7 @@ export const UDS = {
 
     checkboxItem: cn(
         "relative | flex items-center gap-2 | py-2 px-4 | sq-lg | cursor-default",
-        "text-[13px] | text-black dark:text-white | text-left",
+        "text-sm | text-black dark:text-white | text-left",
         "outline-hidden select-none | transition-[background-color,color,box-shadow,opacity] duration-150 ease-out"
     ),
 
@@ -399,9 +426,9 @@ export const UDS = {
     // Panels (dialog / sheet)
     overlay: "z-[999] | bg-black/12 dark:bg-black/25 | backdrop-blur-[3px]",
 
-    title: "text-[15px] text-black dark:text-white font-semibold tracking-tight leading-none",
+    title: "text-base text-black dark:text-white font-semibold tracking-tight leading-none",
 
-    description: "text-[13px] | text-neutral-400",
+    description: "text-sm | text-neutral-400",
 
     closeButton: cn(
         "p-1.5 | sq-lg opacity-70",
@@ -412,15 +439,15 @@ export const UDS = {
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10 focus-visible:ring-offset-2 | disabled:pointer-events-none"
     ),
 
-    shortcut: "ml-auto | text-[12px] text-neutral-400 | tracking-wide",
+    shortcut: "ml-auto | text-xs text-neutral-400 | tracking-wide",
 
     panelGlow: UDS_PANEL_SHADOW,
 
 
     // Animations
-    animateIn: "data-[state=open]:animate-[uds-surface-in_0.28s_cubic-bezier(0.16,1,0.3,1)]",
+    animateIn: UDS_ANIMATE_IN,
 
-    animateOut: "data-[state=closed]:animate-[uds-surface-out_0.18s_cubic-bezier(0.4,0,1,1)_forwards]",
+    animateOut: UDS_ANIMATE_OUT,
 
 
     // Shared design tokens
@@ -511,14 +538,11 @@ export const UDS = {
         shadow: "flat",
     }),
 
-    transientSurface: udsContainer({
-        background: "glass",
-        blur: true,
-        border: "soft",
-        radius: "xl",
-        shadow: "panel",
-        spotlight: false,
-    }),
+    transientSurface: UDS_TRANSIENT_SURFACE,
+
+    dropdownSurface: UDS_DROPDOWN_SURFACE,
+
+    dropdownContent: "relative z-[2] space-y-0.5",
 
     tileSurface: udsSurface({
         background: "subtle",
@@ -531,14 +555,14 @@ export const UDS = {
 
     summaryTileSurface: cn(
         udsSurface({
-            background: "subtle",
+            background: false,
             blur: false,
-            border: "muted",
+            border: "soft",
             className: "uds-card-surface",
             radius: "xl",
             shadow: "flat",
         }),
-        "p-3"
+        "relative min-h-[112px] min-w-0 overflow-hidden p-4 text-foreground"
     ),
 
     summaryLabel: cn("flex items-center gap-1.5", UDS_TEXT_CLASSES.caption),
@@ -610,7 +634,7 @@ export const UDS = {
             background: false,
             blur: false,
             border: "soft",
-            radius: "xl",
+            radius: "normal",
             shadow: "card",
         })
     ),
@@ -681,7 +705,7 @@ export const UDS = {
 
     dividerLine: "flex-1 h-px bg-black/10 dark:bg-white/8",
 
-    dividerLabel: "text-[11px] uppercase tracking-wider text-neutral-400",
+    dividerLabel: "text-xs uppercase tracking-wider text-neutral-400",
 
     iconBadge: "flex items-center justify-center w-14 h-14 sq-2xl",
 

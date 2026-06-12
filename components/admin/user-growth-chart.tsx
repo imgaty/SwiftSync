@@ -71,7 +71,7 @@ export function UserGrowthChart({ data }: UserGrowthChartProps) {
                         const d = new Date(v)
                         return `${d.getDate()}/${d.getMonth() + 1}`
                     }}
-                    tick={{ fontSize: 11 }}
+                    tick={{ className: "text-xs" }}
                     className="text-neutral-400"
                     interval="preserveStartEnd"
                     tickLine={false}
@@ -79,7 +79,7 @@ export function UserGrowthChart({ data }: UserGrowthChartProps) {
                     tickMargin={10}
                 />
                 <YAxis
-                    tick={{ fontSize: 11 }}
+                    tick={{ className: "text-xs" }}
                     className="text-neutral-400"
                     tickLine={false}
                     axisLine={false}

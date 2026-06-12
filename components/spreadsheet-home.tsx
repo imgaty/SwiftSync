@@ -422,7 +422,7 @@ export function SpreadsheetHome({
         <div className="flex flex-col items-center w-full min-h-[calc(100vh-220px)] py-10 px-4">
             {/* ═══ Hero / Title ═══════════════════════════════════════════ */}
             <div className="text-center mb-8 max-w-md">
-                <div className="inline-flex items-center justify-center size-12 sq-xl bg-primary/10 mb-5">
+                <div className="inline-flex items-center justify-center size-12 sq-normal bg-primary/10 mb-5">
                     <FileSpreadsheet className="size-6 text-primary" />
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground">{sp.title || "Spreadsheets"}</h1>
@@ -526,7 +526,7 @@ export function SpreadsheetHome({
                                         <span className="text-sm font-medium text-foreground truncate w-full text-left">
                                             {doc.name}
                                         </span>
-                                        <span className="text-[11px] text-neutral-400 mt-0.5">
+                                        <span className="text-xs text-neutral-400 mt-0.5">
                                             {timeAgo(doc.updatedAt)}
                                         </span>
                                     </div>

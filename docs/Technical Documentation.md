@@ -66,11 +66,9 @@ lib/                                    # Server-side logic (never sent to the b
   ├── prisma.ts                         #   Prisma client singleton using the PostgreSQL adapter
   ├── session.ts                        #   HMAC session token creation & verification
   ├── auth-helpers.ts                   #   getAuthUserId() — extracts user from cookies
-  ├── auth-backup-codes.ts              #   2FA backup-code hashing and verification
-  ├── auth-pending-2fa.ts               #   Short-lived pending 2FA login state
   ├── auth-redirect.ts                  #   Auth callback/redirect normalization
   ├── password.ts                       #   Password hashing and rehash checks
-  ├── encryption-v2.ts                  #   Server-only encryption helpers
+  ├── encryption.ts                     #   Server-only encryption helpers
   ├── salt-edge.ts                      #   Salt Edge Open Banking API client
   ├── bank-api.ts                       #   Card/IBAN lookup (Luhn, BIN, IBAN parsing)
   ├── PACE.ts                           #   Shared PACE rule types and evaluators
@@ -95,7 +93,7 @@ app/
   ├── (main)/                           # Authenticated pages: dashboard, accounts, transactions, etc.
   ├── (admin)/admin/                    # Admin panel pages (requires admin/superadmin role)
   ├── api/
-  │   ├── auth/                         #   Auth endpoints (login, register, 2FA, OAuth, password reset)
+  │   ├── auth/                         #   Auth endpoints (login, register, OAuth, password reset)
   │   ├── bank/                         #   Banking (connect, sync, providers, lookup)
   │   ├── admin/                        #   Admin operations (users, audit log, health, announcements)
   │   ├── PACE-rules/                   #   PACE rule CRUD
@@ -168,7 +166,7 @@ All models are defined in `prisma/schema.prisma`. The database is `PostgreSQL`, 
 
 ### Cascade Delete
 
-Every user-owned model has a `userId` foreign key with `onDelete: Cascade`. This means that when a user is deleted from the database, all rows in related tables that reference that user are automatically deleted too. For example, deleting a user also deletes all their transactions, bank accounts, bills, budgets, goals, notifications, PACE rules, OAuth accounts, trusted devices, Salt Edge connections, spreadsheet documents, and spreadsheet logs, all in a single database operation. No orphaned data is left behind.
+Every user-owned model has a `userId` foreign key with `onDelete: Cascade`. This means that when a user is deleted from the database, all rows in related tables that reference that user are automatically deleted too. For example, deleting a user also deletes all their transactions, bank accounts, bills, budgets, goals, notifications, PACE rules, OAuth accounts, Salt Edge connections, spreadsheet documents, and spreadsheet logs, all in a single database operation. No orphaned data is left behind.
 
 ### Entity Map
 
@@ -184,7 +182,6 @@ User
  ├── SpreadsheetDocument[]      — Workbook documents with JSON content
  │    └── SpreadsheetLog[]      — Change history per document
  ├── OAuthAccount[]             — Linked OAuth providers (Google, etc.)
- ├── TrustedDevice[]            — Devices that can skip 2FA
  └── SaltEdgeConnection[]       — Open Banking connections
        └── BankAccount[]        — Accounts imported from this connection
 ```
@@ -195,7 +192,7 @@ User
 
 | Field                                                               | Description                                                                                                                                                                |
 | :------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `User.role` / `User.status`                                         | These fields control permissions and account lifecycle. They determine who can access the admin area and whether an account is active, suspended, banned, or soft-deleted. |
+| `User.role` / `User.status`                                         | These fields control permissions and account lifecycle. `role` determines admin access and keeps role changes superadmin-only. `status` records active, suspended, banned, or soft-deleted states; normal admins can soft-delete non-superadmin users but cannot delete themselves or modify/delete superadmins. |
 | `Transaction.tags` / `Transaction.saltEdgeId`                       | These power categorization and deduplication. Tags are stored as a PostgreSQL string array, while `saltEdgeId` prevents duplicate imported transactions.                   |
 | `BankAccount.saltEdgeAccountId` / `SaltEdgeConnection.connectionId` | These link local records back to Salt Edge so the correct accounts and sync connections can be updated reliably.                                                           |
 | `PACERule.priority` / `AuditLog`                                    | These support rule ordering and admin traceability. PACE rules can be evaluated by priority, and audit records preserve important administrative actions.                  |
@@ -214,7 +211,7 @@ User
 | :-: | :-------------------------------------------------------------- | :---------------------------------------------------------------------------- |
 | 1   | **Technical Documentation**                                     | Product summary, tech stack, project structure, and high-level data model.    |
 | 2   | [Database Schema](Database%20Schema.md)                         | Model-by-model breakdown, relations, field meanings, and delete behavior.     |
-| 3   | [Authentication & Security](Authentication%20%26%20Security.md) | AES, sessions, 2FA, OAuth, and password recovery.                             |
+| 3   | [Authentication & Security](Authentication%20%26%20Security.md) | AES, sessions, OAuth, and password recovery.                                  |
 | 4   | [Bank Synchronization](Bank%20Synchronization.md)               | Salt Edge, connection flow, sync behavior, and card/IBAN lookup.              |
 | 5   | [PACE](PACE.md)                                                 | Automatic transaction categorization, matching logic, rules, and limitations. |
 | 6   | [Financial Features](Financial%20Features.md)                   | Bills, budgets, goals, notifications, and export.                             |

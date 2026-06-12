@@ -60,21 +60,18 @@ function DropdownMenuContent({
         ref={contentRef}
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
-        collisionPadding={16}
+        collisionPadding={8}
         avoidCollisions={true}
         className={cn(
-          UDS.transientSurface,
-          UDS.glideSurface,
-          UDS.animateIn,
-          UDS.animateOut,
-          "z-[999] w-[220px] max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          UDS.dropdownSurface,
+          "z-[1100] mb-2 w-[220px] max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto",
           className
         )}
         {...props}
         {...menuHandlers}
       >
         <GlideHighlight rect={rect} visible={visible} />
-        <div className="relative z-[2] space-y-0.5">
+        <div className={UDS.dropdownContent}>
           {children}
         </div>
       </DropdownMenuPrimitive.Content>
@@ -302,19 +299,18 @@ function DropdownMenuSubContent({
     <DropdownMenuPrimitive.SubContent
       ref={contentRef}
       data-slot="dropdown-menu-sub-content"
+      collisionPadding={8}
+      avoidCollisions={true}
       className={cn(
-        UDS.transientSurface,
-        UDS.glideSurface,
-        UDS.animateIn,
-        UDS.animateOut,
-        "z-[999] w-[220px] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden",
+        UDS.dropdownSurface,
+        "z-[1100] mb-2 w-[220px] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden",
         className
       )}
       {...props}
       {...menuHandlers}
     >
       <GlideHighlight rect={rect} visible={visible} />
-      <div className="relative z-[2] space-y-0.5">
+      <div className={UDS.dropdownContent}>
         {children}
       </div>
     </DropdownMenuPrimitive.SubContent>

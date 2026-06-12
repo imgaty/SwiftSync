@@ -73,7 +73,7 @@ export async function GET() {
             take: 8,
             select: {
                 id: true, name: true, email: true, role: true, status: true,
-                createdAt: true, lastLoginAt: true, twoFactorEnabled: true,
+                createdAt: true, lastLoginAt: true,
                 _count: { select: { transactions: true, bankAccounts: true } },
             },
         }),

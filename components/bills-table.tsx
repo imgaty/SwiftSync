@@ -489,25 +489,25 @@ export function BillsTable({ data: initialData, isLoading = false, onAddBill, on
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.monthly_bills}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{bl.monthly_bills}</p>
                     <p className="text-lg font-bold mt-1 tabular-nums">
                         {formatCurrency(totals.totalMonthly)}
                     </p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.pending_amount}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{bl.pending_amount}</p>
                     <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400 mt-1 tabular-nums">
                         {formatCurrency(totals.totalPending)}
                     </p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.overdue}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{bl.overdue}</p>
                     <p className="text-lg font-bold text-negative mt-1 tabular-nums">
                         {totals.overdueCount}
                     </p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{bl.upcoming}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{bl.upcoming}</p>
                     <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1 tabular-nums">
                         {totals.upcomingCount}
                     </p>

@@ -37,10 +37,19 @@ function getResend() {
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Argent <onboarding@resend.dev>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
 const DEV_TO_EMAIL = process.env.RESEND_DEV_TO_EMAIL?.trim() || '';
-const EMAIL_SQUIRCLE_CARD =
-  '-webkit-clip-path: polygon(4% 0, 96% 0, 98% 0.5%, 99.3% 2%, 99.8% 4%, 100% 8%, 100% 92%, 99.8% 96%, 99.3% 98%, 98% 99.5%, 96% 100%, 4% 100%, 2% 99.5%, 0.7% 98%, 0.2% 96%, 0 92%, 0 8%, 0.2% 4%, 0.7% 2%, 2% 0.5%); clip-path: polygon(4% 0, 96% 0, 98% 0.5%, 99.3% 2%, 99.8% 4%, 100% 8%, 100% 92%, 99.8% 96%, 99.3% 98%, 98% 99.5%, 96% 100%, 4% 100%, 2% 99.5%, 0.7% 98%, 0.2% 96%, 0 92%, 0 8%, 0.2% 4%, 0.7% 2%, 2% 0.5%);';
-const EMAIL_SQUIRCLE_CONTROL =
-  '-webkit-clip-path: polygon(8% 0, 92% 0, 96% 0.8%, 98% 2%, 99.2% 4%, 100% 8%, 100% 92%, 99.2% 96%, 98% 98%, 96% 99.2%, 92% 100%, 8% 100%, 4% 99.2%, 2% 98%, 0.8% 96%, 0 92%, 0 8%, 0.8% 4%, 2% 2%, 4% 0.8%); clip-path: polygon(8% 0, 92% 0, 96% 0.8%, 98% 2%, 99.2% 4%, 100% 8%, 100% 92%, 99.2% 96%, 98% 98%, 96% 99.2%, 92% 100%, 8% 100%, 4% 99.2%, 2% 98%, 0.8% 96%, 0 92%, 0 8%, 0.8% 4%, 2% 2%, 4% 0.8%);';
+const EMAIL_CARD_RADIUS = 'border-radius: 22px;';
+const EMAIL_CONTROL_RADIUS = 'border-radius: 8px;';
+const EMAIL_TEXT_SIZE = {
+  xs: '12px',
+  sm: '14px',
+  xl: '20px',
+  '2xl': '24px',
+  '3xl': '30px',
+} as const;
+
+function emailTextSize(size: keyof typeof EMAIL_TEXT_SIZE) {
+  return `font-size: ${EMAIL_TEXT_SIZE[size]};`;
+}
 
 function resolveRecipient(to: string) {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -111,20 +120,20 @@ export async function sendPasswordResetEmail(
                   <!-- Logo -->
                   <tr>
                     <td align="center" style="padding-bottom: 32px;">
-                      <span style="font-size: 20px; font-weight: 700; color: #18181b; letter-spacing: -0.03em;">Argent</span>
+                      <span style="${emailTextSize('xl')} font-weight: 700; color: #18181b; letter-spacing: -0.03em;">Argent</span>
                     </td>
                   </tr>
                   <!-- Card -->
                   <tr>
                     <td>
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; ${EMAIL_SQUIRCLE_CARD} overflow: hidden;">
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; ${EMAIL_CARD_RADIUS} overflow: hidden;">
                         <!-- Content -->
                         <tr>
                           <td style="padding: 40px 36px 36px;">
-                            <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #18181b; letter-spacing: -0.02em; text-align: center;">
+                            <h1 style="margin: 0 0 8px; ${emailTextSize('2xl')} font-weight: 700; color: #18181b; letter-spacing: -0.02em; text-align: center;">
                               Reset your password
                             </h1>
-                            <p style="margin: 0 0 28px; font-size: 14px; color: #71717a; line-height: 1.65; text-align: center;">
+                            <p style="margin: 0 0 28px; ${emailTextSize('sm')} color: #71717a; line-height: 1.65; text-align: center;">
                               We received a request to reset your password.<br/>Click the button below to choose a new one. This link expires in <strong style="color: #3f3f46;">1 hour</strong>.
                             </p>
                             <table cellpadding="0" cellspacing="0" style="margin: 0 auto 28px;" width="100%">
@@ -132,8 +141,8 @@ export async function sendPasswordResetEmail(
                                 <td align="center">
                                   <table cellpadding="0" cellspacing="0">
                                     <tr>
-                                      <td style="${EMAIL_SQUIRCLE_CONTROL} background-color: #18181b;" align="center">
-                                        <a href="${resetUrl}" style="display: inline-block; padding: 12px 36px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">
+                                      <td style="${EMAIL_CONTROL_RADIUS} background-color: #18181b;" align="center">
+                                        <a href="${resetUrl}" style="display: inline-block; padding: 12px 36px; color: #ffffff; text-decoration: none; ${EMAIL_CONTROL_RADIUS} ${emailTextSize('sm')} font-weight: 600; letter-spacing: -0.01em;">
                                           Reset Password
                                         </a>
                                       </td>
@@ -146,7 +155,7 @@ export async function sendPasswordResetEmail(
                             <!-- Divider -->
                             <div style="margin: 0 0 20px; height: 1px; background-color: #f4f4f5;"></div>
 
-                            <p style="margin: 0; font-size: 12px; color: #a1a1aa; line-height: 1.6; text-align: center;">
+                            <p style="margin: 0; ${emailTextSize('xs')} color: #a1a1aa; line-height: 1.6; text-align: center;">
                               If you didn&rsquo;t request this, you can safely ignore this email. Your password will remain unchanged.
                             </p>
                           </td>
@@ -157,7 +166,7 @@ export async function sendPasswordResetEmail(
                   <!-- Footer -->
                   <tr>
                     <td align="center" style="padding-top: 28px;">
-                      <p style="margin: 0; font-size: 11px; color: #a1a1aa; letter-spacing: 0.01em;">
+                      <p style="margin: 0; ${emailTextSize('xs')} color: #a1a1aa; letter-spacing: 0.01em;">
                         &copy; ${new Date().getFullYear()} Argent
                       </p>
                     </td>
@@ -173,14 +182,14 @@ export async function sendPasswordResetEmail(
 }
 
 // =============================================================================
-// SEND 2FA CODE EMAIL
+// SEND EMAIL TWO-FACTOR CODE
 // =============================================================================
 
-export async function send2FACode(to: string, code: string) {
+export async function sendEmailTwoFactorCode(to: string, code: string) {
   await sendEmailOrThrow({
     from: FROM_EMAIL,
     to,
-    subject: 'Your Verification Code — Argent',
+    subject: 'Your Login Code — Argent',
     html: `
       <!DOCTYPE html>
       <html>
@@ -202,50 +211,43 @@ export async function send2FACode(to: string, code: string) {
             <tr>
               <td align="center">
                 <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 460px;">
-                  <!-- Logo -->
                   <tr>
                     <td align="center" style="padding-bottom: 32px;">
-                      <span style="font-size: 20px; font-weight: 700; color: #18181b; letter-spacing: -0.03em;">Argent</span>
+                      <span style="${emailTextSize('xl')} font-weight: 700; color: #18181b;">Argent</span>
                     </td>
                   </tr>
-                  <!-- Card -->
                   <tr>
                     <td>
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; ${EMAIL_SQUIRCLE_CARD} overflow: hidden;">
-                        <!-- Content -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e4e4e7; ${EMAIL_CARD_RADIUS} overflow: hidden;">
                         <tr>
                           <td style="padding: 40px 36px 36px;">
-                            <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #18181b; letter-spacing: -0.02em; text-align: center;">
-                              Verification Code
+                            <h1 style="margin: 0 0 8px; ${emailTextSize('2xl')} font-weight: 700; color: #18181b; text-align: center;">
+                              Login code
                             </h1>
-                            <p style="margin: 0 0 28px; font-size: 14px; color: #71717a; line-height: 1.65; text-align: center;">
-                              Enter the code below to verify your identity.<br/>This code expires in <strong style="color: #3f3f46;">10 minutes</strong>.
+                            <p style="margin: 0 0 28px; ${emailTextSize('sm')} color: #71717a; line-height: 1.65; text-align: center;">
+                              Enter this code to finish signing in. It expires in <strong style="color: #3f3f46;">5 minutes</strong>.
                             </p>
                             <table cellpadding="0" cellspacing="0" style="margin: 0 auto 28px;" width="100%">
                               <tr>
                                 <td align="center">
-                                  <div style="display: inline-block; padding: 16px 40px; background-color: #f4f4f5; ${EMAIL_SQUIRCLE_CONTROL} font-size: 32px; font-weight: 700; letter-spacing: 0.3em; color: #18181b;">
+                                  <div style="${EMAIL_CONTROL_RADIUS} display: inline-block; padding: 16px 40px; background-color: #f4f4f5; ${emailTextSize('3xl')} font-weight: 700; letter-spacing: 0.3em; color: #18181b;">
                                     ${code}
                                   </div>
                                 </td>
                               </tr>
                             </table>
-
-                            <!-- Divider -->
                             <div style="margin: 0 0 20px; height: 1px; background-color: #f4f4f5;"></div>
-
-                            <p style="margin: 0; font-size: 12px; color: #a1a1aa; line-height: 1.6; text-align: center;">
-                              If you didn&rsquo;t request this code, you can safely ignore this email.
+                            <p style="margin: 0; ${emailTextSize('xs')} color: #a1a1aa; line-height: 1.6; text-align: center;">
+                              If you did not try to sign in, you can safely ignore this email.
                             </p>
                           </td>
                         </tr>
                       </table>
                     </td>
                   </tr>
-                  <!-- Footer -->
                   <tr>
                     <td align="center" style="padding-top: 28px;">
-                      <p style="margin: 0; font-size: 11px; color: #a1a1aa; letter-spacing: 0.01em;">
+                      <p style="margin: 0; ${emailTextSize('xs')} color: #a1a1aa;">
                         &copy; ${new Date().getFullYear()} Argent
                       </p>
                     </td>
@@ -257,5 +259,5 @@ export async function send2FACode(to: string, code: string) {
         </body>
       </html>
     `,
-  }, '2FA email');
+  }, 'email two-factor code');
 }

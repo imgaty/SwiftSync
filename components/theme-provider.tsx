@@ -61,6 +61,10 @@ function getStoredTheme(storageKey: string, defaultTheme: Theme): Theme {
     }
 }
 
+function persistThemeCookie(storageKey: string, theme: Theme) {
+    document.cookie = `${storageKey}=${theme}; Path=/; Max-Age=31536000; SameSite=Lax`
+}
+
 function withoutTransition() {
     const style = document.createElement("style")
     style.appendChild(document.createTextNode("*{-webkit-transition:none!important;transition:none!important}"))
@@ -120,6 +124,14 @@ export function ThemeProvider({
         window.addEventListener("storage", handleStorage)
         return () => window.removeEventListener("storage", handleStorage)
     }, [defaultTheme, storageKey])
+
+    React.useEffect(() => {
+        try {
+            persistThemeCookie(storageKey, theme)
+        } catch {
+            // Ignore blocked cookie writes.
+        }
+    }, [storageKey, theme])
 
     React.useEffect(() => {
         const restoreTransition = disableTransitionOnChange ? withoutTransition() : undefined

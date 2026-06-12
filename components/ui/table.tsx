@@ -101,7 +101,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
         <table
             data-slot="table"
             className={cn(
-                "w-full min-w-max caption-bottom border-separate border-spacing-0 text-[13px]",
+                "w-full min-w-max caption-bottom border-separate border-spacing-0 text-sm",
                 className,
             )}
             {...props}
@@ -178,7 +178,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
             data-slot="table-head"
             className={cn(
                 "h-10 px-4 text-left align-middle whitespace-nowrap",
-                "text-[11px] font-semibold uppercase tracking-[0.05em]",
+                "text-xs font-semibold uppercase tracking-[0.05em]",
                 "text-muted-foreground",
                 "[&:has([role=checkbox])]:px-4 *:[[role=checkbox]]:translate-y-0.5",
                 "select-none",
@@ -194,7 +194,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
         <td
             data-slot="table-cell"
             className={cn(
-                "h-11 px-4 py-2 align-middle whitespace-nowrap text-[13px] leading-tight",
+                "h-11 px-4 py-2 align-middle whitespace-nowrap text-sm leading-tight",
                 "text-foreground",
                 "border-b",
                 UDS.cardDivider,
@@ -502,7 +502,7 @@ function TableSearchControl<T>({
                 placeholder={placeholder}
                 onChange={(e) => update(e.target.value)}
                 className={cn(
-                    "h-8 w-full sq-lg pl-8 text-[13px]",
+                    "h-8 w-full sq-lg pl-8 text-sm",
                     UDS.inputSurface,
                     "text-foreground placeholder:text-muted-foreground/70",
                     UDS.inputHover,
@@ -620,7 +620,7 @@ function TableSortControl<T>({
                             >
                                 {dir === "asc" ? <ArrowUp /> : <ArrowDown />}
                                 <span className="flex-1">{opt.label}</span>
-                                <span className="text-[11px] text-neutral-400">
+                                <span className="text-xs text-neutral-400">
                                     {dir === "asc" ? "A→Z" : "Z→A"}
                                 </span>
                                 {isActive && <span className="ml-1 size-1.5 sq-full bg-primary" />}
@@ -724,7 +724,7 @@ function TableInlineInput({ className, ...props }: React.ComponentProps<"input">
         <input
             {...props}
             className={cn(
-                "h-8 w-44 sq-lg px-3 text-[13px]",
+                "h-8 w-44 sq-lg px-3 text-sm",
                 UDS.inputSurface,
                 "text-foreground placeholder:text-neutral-400/70",
                 UDS.inputFocus,

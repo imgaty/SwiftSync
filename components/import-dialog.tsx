@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
 import { notify } from "@/lib/notify"
 import { queryKeys } from "@/lib/query-keys"
+import { getTranslations } from "@/lib/translation-utils"
 import { cn } from "@/lib/utils"
 import { UDS } from "@/lib/UDS"
 
@@ -67,6 +68,11 @@ type ImportCopy = {
     created: string
     skipped: string
     received: string
+    data: string
+    argentBackup: string
+    currentExport: string
+    noImportableRows: string
+    row: string
 }
 
 const DOMAIN_ORDER: ImportDomain[] = [
@@ -88,7 +94,7 @@ interface ImportDialogProps {
 
 export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
     const queryClient = useQueryClient()
-    const { language } = useLanguage()
+    const { t } = useLanguage()
     const [file, setFile] = React.useState<File | null>(null)
     const [stepIndex, setStepIndex] = React.useState(0)
     const [preview, setPreview] = React.useState<ImportResponse | null>(null)
@@ -105,37 +111,43 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
     }, [open])
 
     const copy = React.useMemo(() => {
-        const pt = language === "pt"
+        const c = getTranslations(t, "import_dialog")
+        const common = getTranslations(t, "common")
         return {
-            title: pt ? "Importar Dados" : "Import Data",
-            chooseFile: pt ? "Escolha um ficheiro JSON ou CSV." : "Choose a JSON or CSV file.",
-            previewImport: pt ? "Pré-visualize o que será importado." : "Preview what will be imported.",
-            done: pt ? "Importação concluída." : "Import completed.",
-            chooseButton: pt ? "Escolher ficheiro" : "Choose file",
-            previewButton: pt ? "Pré-visualizar" : "Preview",
-            importButton: pt ? "Importar" : "Import",
-            importing: pt ? "A importar..." : "Importing...",
-            previewing: pt ? "A analisar..." : "Analyzing...",
-            close: pt ? "Fechar" : "Close",
-            back: pt ? "Voltar" : "Back",
-            cancel: pt ? "Cancelar" : "Cancel",
-            noFileTitle: pt ? "Sem ficheiro" : "No file selected",
-            noFileMessage: pt ? "Escolha um ficheiro para importar." : "Choose a file to import.",
-            previewFailed: pt ? "Falha ao analisar importação" : "Import preview failed",
-            importFailed: pt ? "Falha ao importar" : "Import failed",
-            importReady: pt ? "Importação pronta" : "Import ready",
-            importReadyMessage: pt ? "A pré-visualização não encontrou erros bloqueantes." : "The preview found no blocking errors.",
-            importDone: pt ? "Dados importados" : "Data imported",
-            format: pt ? "Formato" : "Format",
-            warnings: pt ? "Avisos" : "Warnings",
-            errors: pt ? "Erros" : "Errors",
-            created: pt ? "Criados" : "Created",
-            skipped: pt ? "Ignorados" : "Skipped",
-            received: pt ? "Recebidos" : "Received",
-            fileSelected: pt ? "Ficheiro selecionado" : "Selected file",
-            blockingErrors: pt ? "Corrija os erros antes de importar." : "Fix the errors before importing.",
+            title: c.title || "Import Data",
+            chooseFile: c.choose_file || "Choose a JSON or CSV file.",
+            previewImport: c.preview_import || "Preview what will be imported.",
+            done: c.done || "Import completed.",
+            chooseButton: c.choose_button || "Choose file",
+            previewButton: c.preview_button || "Preview",
+            importButton: c.import_button || "Import",
+            importing: c.importing || "Importing...",
+            previewing: c.previewing || "Analyzing...",
+            close: common.close || "Close",
+            back: common.back || "Back",
+            cancel: common.cancel || "Cancel",
+            noFileTitle: c.no_file_title || "No file selected",
+            noFileMessage: c.no_file_message || "Choose a file to import.",
+            previewFailed: c.preview_failed || "Import preview failed",
+            importFailed: c.import_failed || "Import failed",
+            importReady: c.import_ready || "Import ready",
+            importReadyMessage: c.import_ready_message || "The preview found no blocking errors.",
+            importDone: c.import_done || "Data imported",
+            format: c.format || "Format",
+            warnings: c.warnings || "Warnings",
+            errors: c.errors || "Errors",
+            created: c.created || "Created",
+            skipped: c.skipped || "Skipped",
+            received: c.received || "Received",
+            fileSelected: c.file_selected || "Selected file",
+            blockingErrors: c.blocking_errors || "Fix the errors before importing.",
+            data: c.data || "Data",
+            argentBackup: c.argent_backup || "Argent backup",
+            currentExport: c.current_export || "Current export",
+            noImportableRows: c.no_importable_rows || "No importable rows detected.",
+            row: c.row || "row",
         }
-    }, [language])
+    }, [t])
 
     async function submitImport(dryRun: boolean) {
         if (!file) {
@@ -314,7 +326,7 @@ function SummaryPanel({ summary, copy }: { summary: ImportResponse; copy: Import
                 <div>
                     <p className="text-sm font-semibold">{copy.format}</p>
                     <p className={cn("text-xs", UDS.muted)}>
-                        {summary.detectedFormat.kind === "backup" ? "Argent backup" : summary.detectedFormat.entity || "Current export"} · {summary.detectedFormat.source.toUpperCase()}
+                        {summary.detectedFormat.kind === "backup" ? copy.argentBackup : summary.detectedFormat.entity || copy.currentExport} · {summary.detectedFormat.source.toUpperCase()}
                     </p>
                 </div>
                 {summary.errors.length > 0 ? (
@@ -324,15 +336,15 @@ function SummaryPanel({ summary, copy }: { summary: ImportResponse; copy: Import
                 )}
             </div>
 
-            <div className="overflow-hidden sq-xl border border-border/60">
-                <div className={cn("grid grid-cols-[1fr_70px_70px_70px] gap-2 px-3 py-2 text-[11px] font-semibold uppercase", UDS.subtleFill)}>
-                    <span>Data</span>
+            <div className="overflow-hidden sq-normal border border-border/60">
+                <div className={cn("grid grid-cols-[1fr_70px_70px_70px] gap-2 px-3 py-2 text-xs font-semibold uppercase", UDS.subtleFill)}>
+                    <span>{copy.data}</span>
                     <span className="text-right">{copy.received}</span>
                     <span className="text-right">{copy.created}</span>
                     <span className="text-right">{copy.skipped}</span>
                 </div>
                 {rows.length === 0 ? (
-                    <div className={cn("px-3 py-4 text-sm", UDS.muted)}>No importable rows detected.</div>
+                    <div className={cn("px-3 py-4 text-sm", UDS.muted)}>{copy.noImportableRows}</div>
                 ) : rows.map((row) => (
                     <div key={row.domain} className="grid grid-cols-[1fr_70px_70px_70px] gap-2 border-t border-border/60 px-3 py-2 text-sm">
                         <span className="capitalize">{row.domain.replace(/([A-Z])/g, " $1")}</span>
@@ -350,7 +362,7 @@ function SummaryPanel({ summary, copy }: { summary: ImportResponse; copy: Import
             {summary.errors.length > 0 && (
                 <MessageList
                     title={copy.errors}
-                    messages={summary.errors.slice(0, 6).map((error) => `${error.entity}${error.row ? ` row ${error.row}` : ""}: ${error.message}`)}
+                    messages={summary.errors.slice(0, 6).map((error) => `${error.entity}${error.row ? ` ${copy.row} ${error.row}` : ""}: ${error.message}`)}
                     tone="error"
                 />
             )}

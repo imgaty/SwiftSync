@@ -9,6 +9,11 @@
 //
 "use client"
 
+import { Search } from "lucide-react"
+
+import { openCommandPalette } from "@/components/command-palette"
+import { NotificationButton } from "@/components/notification-button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -33,47 +38,66 @@ interface AdminHeaderProps {
 export function AdminHeader({ title, breadcrumbs, actions }: AdminHeaderProps) {
     const { t } = useLanguage()
     const a = getTranslations(t, "admin")
+    const trail = [
+        { label: a.admin_breadcrumb || "Admin", href: "/admin" },
+        ...(breadcrumbs?.length ? breadcrumbs : [{ label: title }]),
+    ]
 
     return (
-        <header className={cn(UDS.appChromeSurface, "mx-3 mt-3 flex h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12")}>
-            <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+        <header className="animate-fade-in-down px-4 pt-4 lg:px-6 lg:pt-6" style={{ animationDuration: "0.2s" }}>
+            <div className="flex min-w-0 items-center gap-3">
+                <SidebarTrigger />
 
-                {/* Breadcrumbs */}
+                <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+
                 <Breadcrumb>
                     <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink href="/admin">{a.admin_breadcrumb || "Admin"}</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        {breadcrumbs?.map((crumb, i) => (
-                            <span key={i} className="contents">
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    {crumb.href ? (
-                                        <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
-                                    ) : (
-                                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                                    )}
-                                </BreadcrumbItem>
-                            </span>
-                        )) ?? (
-                            <>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage>{title}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                            </>
-                        )}
+                        {trail.map((crumb, index) => {
+                            const isLast = index === trail.length - 1
+
+                            return (
+                                <span key={`${crumb.href ?? crumb.label}-${index}`} className="contents">
+                                    {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
+                                    <BreadcrumbItem className={index === 0 ? "hidden md:block" : ""}>
+                                        {isLast || !crumb.href ? (
+                                            <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                                        ) : (
+                                            <BreadcrumbLink href={crumb.href} className="transition-colors hover:text-primary">
+                                                {crumb.label}
+                                            </BreadcrumbLink>
+                                        )}
+                                    </BreadcrumbItem>
+                                </span>
+                            )
+                        })}
                     </BreadcrumbList>
                 </Breadcrumb>
 
-                {/* Right-side actions */}
-                {actions && (
-                    <div className="ml-auto flex items-center gap-2 *:sq-full *:transition-transform *:duration-200 hover:*:scale-105 active:*:scale-95">
-                        {actions}
-                    </div>
-                )}
+                <div className="ml-auto flex min-w-0 items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={openCommandPalette}
+                        className={cn(UDS.commandTriggerSurface, "hidden min-w-40 items-center gap-2 px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:text-foreground lg:flex")}
+                        aria-label="Open command palette"
+                    >
+                        <Search className="size-3.5 shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">Search</span>
+                        <kbd className="shrink-0 rounded-[5px] border border-border/70 px-1.5 py-0.5 font-mono text-xs leading-none text-muted-foreground">
+                            Ctrl K
+                        </kbd>
+                    </button>
+                    {actions && (
+                        <>
+                            <div className="flex min-w-0 items-center gap-2">
+                                {actions}
+                            </div>
+                            <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+                        </>
+                    )}
+                    <NotificationButton />
+                    <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+                    <ThemeToggle />
+                </div>
             </div>
         </header>
     )

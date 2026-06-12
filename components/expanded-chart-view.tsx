@@ -150,7 +150,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 flex-1 flex-col gap-2">
                             <span className="auto-scroll text-3xl font-semibold tracking-tight leading-none text-black dark:text-white tabular-nums">{formatCurrency(total, { locale })}</span>
-                            <div className={cn("flex items-center gap-2 text-[13px]", UDS.muted)}>
+                            <div className={cn("flex items-center gap-2 text-sm", UDS.muted)}>
                                 <span className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 sq-full shrink-0" style={{ backgroundColor: metricColor }} />
                                     <span className="auto-scroll font-medium text-black/80 dark:text-white/80">{chartConfig[metricType]?.label}</span>
@@ -175,7 +175,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                                             <TabSwitcherItem
                                                 isActive={isActive}
                                                 onClick={() => handleMetricChange(type)}
-                                                className="px-4 text-[13px]"
+                                                className="px-4 text-sm"
                                             >
                                                 {typeLabel}
                                             </TabSwitcherItem>
@@ -252,7 +252,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                                             isActive={isActive}
                                             onClick={() => handlePeriodChange(opt.value)}
                                             disabled={!!customDateRange}
-                                            className="px-3 text-[13px]"
+                                            className="px-3 text-sm"
                                         >
                                             {lbl}
                                         </TabSwitcherItem>
@@ -262,7 +262,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                             <div className="sm:hidden flex items-center min-w-0">
                                 <Select value={customDateRange ? 'custom' : periodType} onValueChange={handlePeriodChange} disabled={!!customDateRange}>
                                     <SelectTrigger
-                                        className={cn("min-w-[92px] sq-full border-transparent sq-border-muted bg-transparent px-2 text-[12px] font-semibold text-foreground-secondary hover:text-foreground focus:ring-0 data-[size=sm]:h-7", UDS.itemHover)}
+                                        className={cn("min-w-[92px] sq-full border-transparent sq-border-muted bg-transparent px-2 text-xs font-semibold text-foreground-secondary hover:text-foreground focus:ring-0 data-[size=sm]:h-7", UDS.itemHover)}
                                         size="sm"
                                     >
                                         <SelectValue />
@@ -352,7 +352,7 @@ export const ExpandedChartView = React.memo(function ExpandedChartView({
                     </div>
                 </div>
 
-                <div className={cn("flex justify-center border-t py-2.5 text-[12px]", UDS.cardDivider, UDS.muted)}>{labels.press_esc_to_close ?? "Press ESC or click × to close"}</div>
+                <div className={cn("flex justify-center border-t py-2.5 text-xs", UDS.cardDivider, UDS.muted)}>{labels.press_esc_to_close ?? "Press ESC or click × to close"}</div>
             </DialogContent>
         </Dialog>
     )

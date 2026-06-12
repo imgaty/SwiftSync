@@ -84,7 +84,7 @@ export function AccountFilter({
                 >
                     <SlidersHorizontal />
                     {!allSelected && (
-                        <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center sq-full bg-primary text-primary-foreground text-[10px] font-medium">
+                        <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center sq-full bg-primary text-primary-foreground text-xs font-medium">
                             {selectedCount}
                         </span>
                     )}
@@ -151,7 +151,7 @@ export function AccountFilter({
                             className={cn(UDS.item, UDS.glideItem, UDS.itemIcon, "w-full")}
                         >
                             <X className="size-4 shrink-0 text-neutral-400" />
-                            <span className="text-neutral-400 text-[13px]">{af.clear_filter || "Clear filter"}</span>
+                            <span className="text-neutral-400 text-sm">{af.clear_filter || "Clear filter"}</span>
                         </Button>
                     </div>
                 </div>

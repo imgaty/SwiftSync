@@ -45,7 +45,7 @@ function ResetPasswordForm() {
     setError('')
     if (!password || !confirmPassword) { setError(rp.error_both_required || 'Both fields are required'); return }
     if (password !== confirmPassword) { setError(rp.error_passwords_dont_match || 'Passwords do not match'); return }
-    if (!allPassed) { setError(rp.error_password_requirements || 'Password does not meet requirements'); return }
+    if (!allPassed) { setError(rp.error_password_requirements || 'Password must be at least 12 characters and include a letter and a number.'); return }
 
     setLoading(true)
     try {
@@ -113,7 +113,7 @@ function ResetPasswordForm() {
                 className={confirmPassword && !passwordsMatch ? UDS.destructiveValidation : ''}
               />
               {confirmPassword && !passwordsMatch && (
-                <p className="text-[11px] text-red-500 dark:text-red-400 ml-1 mt-1.5">{rp.error_passwords_dont_match || 'Passwords do not match'}</p>
+                <p className="text-xs text-red-500 dark:text-red-400 ml-1 mt-1.5">{rp.error_passwords_dont_match || 'Passwords do not match'}</p>
               )}
             </div>
 

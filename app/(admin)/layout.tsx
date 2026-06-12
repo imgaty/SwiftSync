@@ -12,10 +12,13 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { verifySessionToken } from "@/lib/session"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
+import { AdminMobileDock } from "@/components/admin/admin-mobile-dock"
+import { CommandPalette } from "@/components/command-palette"
+import { SettingsRouter } from "@/components/settings-router"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
-import { CanvasBackground } from "@/components/canvas-background"
 import { sessionVersionMatches } from "@/lib/session"
+import { getLanguageDefinition, isSidebarSide, normalizeLanguage } from "@/lib/languages"
 
 export default async function AdminLayout({
     children,
@@ -51,17 +54,28 @@ export default async function AdminLayout({
         redirect("/")
     }
 
+    const openCookie = cookieStore.get("sidebar_state")?.value
+    const defaultOpen = openCookie ? openCookie === "true" : true
+    const language = normalizeLanguage(cookieStore.get("language")?.value)
+    const languageDefinition = getLanguageDefinition(language)
+    const sideCookie = cookieStore.get("sidebar_side")?.value
+    const defaultSide = isSidebarSide(sideCookie) ? sideCookie : languageDefinition.sidebarSide
+    const savedWidth = parseInt(cookieStore.get("sidebar_width")?.value || "240", 10)
+    const defaultWidth = !isNaN(savedWidth) && savedWidth >= 200 && savedWidth <= 400 ? savedWidth : 240
+
     return (
         <>
+            <CommandPalette />
             <Toaster richColors closeButton position="bottom-right" />
-            <SidebarProvider defaultOpen={true}>
+            <SidebarProvider defaultOpen={defaultOpen} defaultSide={defaultSide} defaultWidth={defaultWidth} showRail>
                 <AdminSidebar user={user} />
                 <SidebarInset>
-                    <CanvasBackground inset />
-                    <div className="relative z-1 flex flex-col flex-1 min-h-0">
+                    <div className="relative z-1 flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
                         {children}
                     </div>
                 </SidebarInset>
+                <AdminMobileDock />
+                <SettingsRouter />
             </SidebarProvider>
         </>
     )

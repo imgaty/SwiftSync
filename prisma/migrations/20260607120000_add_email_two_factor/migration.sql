@@ -1,0 +1,5 @@
+ALTER TABLE "User"
+  ADD COLUMN IF NOT EXISTS "emailTwoFactorEnabled" BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS "emailTwoFactorCode" TEXT,
+  ADD COLUMN IF NOT EXISTS "emailTwoFactorCodeExpiry" TIMESTAMP(3),
+  DROP COLUMN IF EXISTS "twoFactorLastTimestep";

@@ -144,13 +144,13 @@ export function TransactionsTable({
             cell: ({ row }) => {
                 const date = new Date(row.original.date)
                 const isValid = !isNaN(date.getTime())
-                if (!isValid) return <span className="text-[13px] text-neutral-400">{row.original.date}</span>
+                if (!isValid) return <span className="text-sm text-neutral-400">{row.original.date}</span>
                 return (
                     <div className="flex flex-col leading-tight">
-                        <span className="text-[13px] font-medium tabular-nums">
+                        <span className="text-sm font-medium tabular-nums">
                             {date.toLocaleDateString(t.config?.locale || "en-US", { month: "short", day: "numeric" })}
                         </span>
-                        <span className="text-[11px] text-neutral-400 tabular-nums">
+                        <span className="text-xs text-neutral-400 tabular-nums">
                             {date.toLocaleDateString(t.config?.locale || "en-US", { year: "numeric" })}
                         </span>
                     </div>
@@ -164,7 +164,7 @@ export function TransactionsTable({
             accessorKey: "description",
             header: tt.description,
             cell: ({ row }) => (
-                <span className="auto-scroll block max-w-[260px] text-[13px] font-medium">{row.original.description}</span>
+                <span className="auto-scroll block max-w-[260px] text-sm font-medium">{row.original.description}</span>
             ),
             enableHiding: false,
             size: 220,
@@ -192,7 +192,7 @@ export function TransactionsTable({
                 return (
                     <span
                         className={cn(
-                            "inline-flex items-center gap-1.5 h-5 px-2 sq-full text-[11px] font-medium",
+                            "inline-flex items-center gap-1.5 h-5 px-2 sq-full text-xs font-medium",
                             isIncome
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                 : "bg-red-500/10 text-red-600 dark:text-red-400",
@@ -219,7 +219,7 @@ export function TransactionsTable({
 
                 return (
                     <div className={cn(
-                        "text-right text-[13px] font-semibold tabular-nums",
+                        "text-right text-sm font-semibold tabular-nums",
                         type === "in" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
                     )}>
                         {type === "in" ? "+" : "−"}{formatted}
@@ -241,7 +241,7 @@ export function TransactionsTable({
                             className="size-2 sq-full shrink-0"
                             style={{ backgroundColor: account?.color || "var(--muted-foreground)" }}
                         />
-                        <span className="truncate text-[13px]">
+                        <span className="truncate text-sm">
                             {account?.name || row.original.accountId}
                         </span>
                     </div>
@@ -256,7 +256,7 @@ export function TransactionsTable({
         if (actionsEnabled) {
             baseColumns.push({
             id: "actions",
-            header: () => <span className="text-[11px] uppercase tracking-wider text-neutral-400">{fActions.actions || "Actions"}</span>,
+            header: () => <span className="text-xs uppercase tracking-wider text-neutral-400">{fActions.actions || "Actions"}</span>,
             cell: ({ row }) => (
                 <TableActionsCell>
                     <TableActionButton

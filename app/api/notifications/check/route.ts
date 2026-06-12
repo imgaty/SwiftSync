@@ -20,7 +20,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthContext } from "@/lib/auth-helpers"
 import { scopeFilter, scopeCreateData } from "@/lib/data-access"
-import { toAmount } from "@/lib/goal-account"
+import { goalProgressSnapshot, toAmount } from "@/lib/goal-account"
 export async function POST() {
   const ctx = await getAuthContext()
   if (!ctx) {
@@ -168,7 +168,14 @@ export async function POST() {
       ? goal.accountLinks.reduce((sum, account) => sum + toAmount(account.balance), 0)
       : toAmount(goal.currentAmount)
 
-    if (linkedCurrentAmount >= Number(goal.targetAmount)) {
+    const progress = goalProgressSnapshot({
+      targetAmount: goal.targetAmount,
+      currentAmount: linkedCurrentAmount,
+      baselineAmount: goal.baselineAmount,
+      targetMode: goal.targetMode,
+    })
+
+    if (progress.progressAmount >= progress.targetAmount) {
       // Re-apply the scope filter on the write so a future refactor of the read
       // query above can't accidentally turn this into a cross-scope write.
       await prisma.financialGoal.updateMany({

@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/date-picker"
+import { TabSwitcher, TabSwitcherItem } from "@/components/ui/tab-switcher"
 import {
     Select,
     SelectContent,
@@ -66,24 +67,47 @@ interface GoalLinkedAccount {
     reference: string
 }
 
+interface GoalBankAccount {
+    id: string
+    name: string
+    type: string
+    institution: string
+    balance: number
+    currency: string
+    color: string
+    isActive: boolean
+}
+
+type GoalTargetMode = "total" | "additional"
+
 interface FinancialGoal {
     id: string
+    accountId: string | null
     name: string
     targetAmount: number
     currentAmount: number
+    balanceAmount: number
+    baselineAmount: number
+    targetMode: GoalTargetMode
+    targetTotalAmount: number
+    remainingAmount: number
     deadline: string | null
     category: string
     color: string
     status: string
     percentage: number
+    linkedAccount: GoalBankAccount | null
     accounts: GoalLinkedAccount[]
     createdAt: string
 }
 
 interface GoalFormData {
     name: string
+    accountId: string
     targetAmount: string
     currentAmount: string
+    baselineAmount: string
+    targetMode: GoalTargetMode
     deadline: string
     category: string
 }
@@ -118,13 +142,20 @@ export default function GoalsPage() {
         queryKey: queryKeys.goals,
         queryFn: () => apiFetch<FinancialGoal[]>("/api/goals"),
     })
+    const { data: bankAccounts = [], isLoading: accountsLoading } = useQuery({
+        queryKey: queryKeys.accounts,
+        queryFn: () => apiFetch<GoalBankAccount[]>("/api/accounts"),
+    })
     const [editingGoal, setEditingGoal] = React.useState<FinancialGoal | null>(null)
     const [goalStep, setGoalStep] = React.useState(0)
     const [isSaving, setIsSaving] = React.useState(false)
     const [formData, setFormData] = React.useState<GoalFormData>({
         name: "",
+        accountId: "",
         targetAmount: "",
         currentAmount: "0",
+        baselineAmount: "0",
+        targetMode: "total",
         deadline: "",
         category: "savings",
     })
@@ -138,10 +169,83 @@ export default function GoalsPage() {
         return Number.isFinite(amount) ? amount : 0
     }, [formData.currentAmount])
 
+    const displayedBaselineAmount = React.useMemo(() => {
+        const amount = Number(formData.baselineAmount)
+        return Number.isFinite(amount) ? amount : 0
+    }, [formData.baselineAmount])
+
+    const displayedTargetAmount = React.useMemo(() => {
+        const amount = Number(formData.targetAmount)
+        return Number.isFinite(amount) ? amount : 0
+    }, [formData.targetAmount])
+
+    const displayedProgressAmount = formData.targetMode === "additional"
+        ? Math.max(0, displayedCurrentAmount - displayedBaselineAmount)
+        : displayedCurrentAmount
+    const displayedTargetTotalAmount = formData.targetMode === "additional"
+        ? displayedBaselineAmount + displayedTargetAmount
+        : displayedTargetAmount
+
+    const defaultAccount = React.useMemo(
+        () => bankAccounts.find((account) => account.isActive) ?? bankAccounts[0] ?? null,
+        [bankAccounts],
+    )
+
+    const selectedBankAccount = React.useMemo(
+        () => bankAccounts.find((account) => account.id === formData.accountId) ?? null,
+        [bankAccounts, formData.accountId],
+    )
+
+    const resetForm = React.useCallback((account: GoalBankAccount | null = defaultAccount) => {
+        const balance = account ? String(account.balance) : "0"
+        setFormData({
+            name: "",
+            accountId: account?.id ?? "",
+            targetAmount: "",
+            currentAmount: balance,
+            baselineAmount: "0",
+            targetMode: "total",
+            deadline: "",
+            category: "savings",
+        })
+    }, [defaultAccount])
+
+    const updateTargetMode = React.useCallback((targetMode: GoalTargetMode) => {
+        setFormData((current) => ({
+            ...current,
+            targetMode,
+            baselineAmount: targetMode === "additional" ? current.currentAmount : "0",
+        }))
+    }, [])
+
+    const updateLinkedAccount = React.useCallback((accountId: string) => {
+        const account = bankAccounts.find((item) => item.id === accountId)
+        setFormData((current) => {
+            const nextBalance = account ? String(account.balance) : current.currentAmount
+            return {
+                ...current,
+                accountId,
+                currentAmount: editingGoal ? current.currentAmount : nextBalance,
+                baselineAmount: current.targetMode === "additional"
+                    ? (editingGoal ? current.baselineAmount : nextBalance)
+                    : "0",
+            }
+        })
+    }, [bankAccounts, editingGoal])
+
+    React.useEffect(() => {
+        if (!showDialog || editingGoal || formData.accountId || !defaultAccount) return
+        resetForm(defaultAccount)
+    }, [defaultAccount, editingGoal, formData.accountId, resetForm, showDialog])
+
     const handleGoalNext = React.useCallback(() => {
         if (goalStep === 0) {
             if (!formData.name.trim()) {
                 toast.error(settings.name || "Name is required")
+                return
+            }
+            if (!formData.accountId) {
+                toast.error(g.account_required || "Pick an account")
                 return
             }
             setGoalStep(1)
@@ -159,17 +263,25 @@ export default function GoalsPage() {
                 toast.error(g.current_amount || "Enter a current amount")
                 return
             }
+            const baselineAmount = Number(formData.baselineAmount)
+            if (!Number.isFinite(baselineAmount) || baselineAmount < 0) {
+                toast.error(g.current_amount || "Enter a current amount")
+                return
+            }
             setGoalStep(2)
         }
-    }, [formData.currentAmount, formData.name, formData.targetAmount, g, goalStep, settings.name])
+    }, [formData.accountId, formData.baselineAmount, formData.currentAmount, formData.name, formData.targetAmount, g, goalStep, settings.name])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (isSaving) return
         const body = {
             name: formData.name,
+            accountId: formData.accountId,
             targetAmount: parseFloat(formData.targetAmount),
             currentAmount: parseFloat(formData.currentAmount),
+            baselineAmount: formData.targetMode === "additional" ? parseFloat(formData.baselineAmount) : 0,
+            targetMode: formData.targetMode,
             deadline: formData.deadline || null,
             category: formData.category,
             color: categoryColors[formData.category] || "#6366f1",
@@ -188,7 +300,7 @@ export default function GoalsPage() {
                 )
                 setShowDialog(false)
                 setEditingGoal(null)
-                setFormData({ name: "", targetAmount: "", currentAmount: "0", deadline: "", category: "savings" })
+                resetForm()
                 queryClient.invalidateQueries({ queryKey: queryKeys.goals })
             } else {
                 const err = await res.json()
@@ -233,8 +345,11 @@ export default function GoalsPage() {
         setEditingGoal(goal)
         setFormData({
             name: goal.name,
+            accountId: goal.accountId || goal.linkedAccount?.id || "",
             targetAmount: String(goal.targetAmount),
-            currentAmount: String(goal.currentAmount),
+            currentAmount: String(goal.balanceAmount),
+            baselineAmount: String(goal.baselineAmount),
+            targetMode: goal.targetMode,
             deadline: goal.deadline || "",
             category: goal.category,
         })
@@ -244,7 +359,7 @@ export default function GoalsPage() {
 
     const openNew = () => {
         setEditingGoal(null)
-        setFormData({ name: "", targetAmount: "", currentAmount: "0", deadline: "", category: "savings" })
+        resetForm()
         setGoalStep(0)
         setShowDialog(true)
     }
@@ -264,7 +379,7 @@ export default function GoalsPage() {
     const hasGoals = goals.length > 0
 
     return (
-        <PageShell className="min-h-fit gap-4 p-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:p-4 md:pb-4">
+        <PageShell className="gap-4 p-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:p-4 md:pb-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -297,7 +412,7 @@ export default function GoalsPage() {
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className={cn(UDS.cardSurface, "p-5")}>
-                                <Skeleton className="h-40 sq-2xl" />
+                                <Skeleton className="h-40 sq-big" />
                             </div>
                         ))}
                     </div>
@@ -320,8 +435,15 @@ export default function GoalsPage() {
                             const Icon = categoryIcons[goal.category] || Target
                             const isCompleted = goal.status === "completed"
                             const progress = Math.min(100, Math.max(0, goal.percentage))
-                            const remaining = Math.max(0, goal.targetAmount - goal.currentAmount)
+                            const remaining = goal.remainingAmount ?? Math.max(0, goal.targetAmount - goal.currentAmount)
+                            const linkedAccount = goal.linkedAccount
                             const goalAccount = goal.accounts?.[0]
+                            const currentLabel = goal.targetMode === "additional"
+                                ? (g.additional_saved || "Additional saved")
+                                : (g.total_saved || "Total Saved")
+                            const targetLabel = goal.targetMode === "additional"
+                                ? (g.additional_target || "Additional target")
+                                : (g.total_target || "Total Target")
 
                             return (
                                 <article
@@ -348,9 +470,9 @@ export default function GoalsPage() {
                                                             ? `${g.deadline || "Deadline"}: ${new Date(goal.deadline).toLocaleDateString(t.config?.locale || "en-US")}`
                                                             : (g.no_deadline || "No deadline")}
                                                     </p>
-                                                    {goalAccount && (
+                                                    {linkedAccount && (
                                                         <p className="mt-1 truncate text-xs text-muted-foreground">
-                                                            {goalAccount.name}
+                                                            {linkedAccount.name} · {linkedAccount.institution}
                                                         </p>
                                                     )}
                                                 </div>
@@ -375,16 +497,23 @@ export default function GoalsPage() {
                                         <div className={`${UDS.largeTileSurface} mt-6 p-3`}>
                                             <div className="flex items-end justify-between gap-3">
                                                 <div className="min-w-0">
-                                                    <p className="text-[11px] font-medium text-muted-foreground">{g.total_saved || "Total Saved"}</p>
+                                                    <p className="text-xs font-medium text-muted-foreground">{currentLabel}</p>
                                                     <p className="mt-1 truncate text-2xl font-semibold leading-none tracking-tight tabular-nums">
                                                         {formatCurrency(goal.currentAmount)}
                                                     </p>
                                                 </div>
                                                 <div className="shrink-0 text-right">
-                                                    <p className="text-[11px] font-medium text-muted-foreground">{g.total_target || "Total Target"}</p>
+                                                    <p className="text-xs font-medium text-muted-foreground">{targetLabel}</p>
                                                     <p className="mt-1 text-sm font-semibold tabular-nums">{formatCurrency(goal.targetAmount)}</p>
                                                 </div>
                                             </div>
+
+                                            {goal.targetMode === "additional" && (
+                                                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                                                    <span>{g.target_balance || "Target balance"}</span>
+                                                    <span className="font-medium tabular-nums text-foreground">{formatCurrency(goal.targetTotalAmount)}</span>
+                                                </div>
+                                            )}
 
                                             <div className={cn("mt-4 h-2 overflow-hidden sq-full", UDS.subtleFill)}>
                                                 <div
@@ -427,7 +556,7 @@ export default function GoalsPage() {
                                                     variant="glass"
                                                     size="sm"
                                                     className="min-w-0 px-2 text-xs tabular-nums"
-                                                    onClick={() => updateAmount(goal, goal.currentAmount + amt)}
+                                                    onClick={() => updateAmount(goal, goal.balanceAmount + amt)}
                                                 >
                                                     +{formatCurrency(amt)}
                                                 </Button>
@@ -450,7 +579,7 @@ export default function GoalsPage() {
                             : (g.new_financial_goal || "New Financial Goal")}
                         description={
                             goalStep === 0
-                                ? (g.goal_name_placeholder || "Give this goal a clear name.")
+                                ? (g.goal_account_step || "Name the goal and pick its account.")
                                 : goalStep === 1
                                     ? (g.set_savings_target || "Set your savings target")
                                     : (g.category || "Choose timing and category")
@@ -478,13 +607,56 @@ export default function GoalsPage() {
                                     autoFocus
                                     required
                                 />
+                                <Select value={formData.accountId} onValueChange={updateLinkedAccount}>
+                                    <FormSelectTrigger label={g.linked_account || "Linked account"}>
+                                        <SelectValue placeholder={accountsLoading ? (common.loading || "Loading...") : (g.select_account || "Select account")} />
+                                    </FormSelectTrigger>
+                                    <SelectContent>
+                                        {bankAccounts.length === 0 ? (
+                                            <div className="px-2 py-1.5 text-xs text-neutral-400">
+                                                {g.no_accounts || "No accounts"}
+                                            </div>
+                                        ) : (
+                                            bankAccounts.map((account) => (
+                                                <SelectItem key={account.id} value={account.id}>
+                                                    <span className="flex min-w-0 items-center gap-2">
+                                                        <span
+                                                            className="size-2 shrink-0 sq-full"
+                                                            style={{ backgroundColor: account.color }}
+                                                        />
+                                                        <span className="truncate">{account.name}</span>
+                                                    </span>
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
                             </FormDialogBody>
                         )}
 
                         {goalStep === 1 && (
                             <FormDialogBody key="goal-amounts">
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-xs font-medium text-muted-foreground">{g.target_type || "Target type"}</span>
+                                    <TabSwitcher ariaLabel={g.target_type || "Target type"} fullWidth className="[&>button]:flex-1">
+                                        <TabSwitcherItem
+                                            isActive={formData.targetMode === "total"}
+                                            onClick={() => updateTargetMode("total")}
+                                        >
+                                            {g.total || "Total"}
+                                        </TabSwitcherItem>
+                                        <TabSwitcherItem
+                                            isActive={formData.targetMode === "additional"}
+                                            onClick={() => updateTargetMode("additional")}
+                                        >
+                                            {g.additional || "Additional"}
+                                        </TabSwitcherItem>
+                                    </TabSwitcher>
+                                </div>
                                 <Input
-                                    label={g.target_amount || "Target (€)"}
+                                    label={formData.targetMode === "additional"
+                                        ? (g.additional_target || "Additional target (€)")
+                                        : (g.target_amount || "Target (€)")}
                                     type="number"
                                     min="0"
                                     step="0.01"
@@ -495,7 +667,9 @@ export default function GoalsPage() {
                                 />
                                 <div className="flex flex-col gap-2">
                                     <Input
-                                        label={g.initial_transfer || "Initial transfer (€)"}
+                                        label={selectedBankAccount
+                                            ? `${g.current_amount || "Current amount"} · ${selectedBankAccount.name}`
+                                            : (g.current_amount || "Current amount (€)")}
                                         type="number"
                                         min="0"
                                         step="0.01"
@@ -503,9 +677,19 @@ export default function GoalsPage() {
                                         onChange={(e) => setFormData({ ...formData, currentAmount: e.target.value })}
                                     />
 
-                                    <div className={`${UDS.tileSurface} flex items-center justify-between px-3 py-2 text-sm`}>
-                                        <span className="text-muted-foreground">{g.reserved_account || "Reserved account"}</span>
-                                        <span className="font-semibold tabular-nums">{formatCurrency(displayedCurrentAmount)}</span>
+                                    <div className={`${UDS.tileSurface} grid grid-cols-2 gap-3 px-3 py-2 text-sm`}>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-xs text-muted-foreground">
+                                                {formData.targetMode === "additional"
+                                                    ? (g.additional_saved || "Additional saved")
+                                                    : (g.total_saved || "Total Saved")}
+                                            </p>
+                                            <p className="mt-1 truncate font-semibold tabular-nums">{formatCurrency(displayedProgressAmount)}</p>
+                                        </div>
+                                        <div className="min-w-0 text-right">
+                                            <p className="truncate text-xs text-muted-foreground">{g.target_balance || "Target balance"}</p>
+                                            <p className="mt-1 truncate font-semibold tabular-nums">{formatCurrency(displayedTargetTotalAmount)}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </FormDialogBody>

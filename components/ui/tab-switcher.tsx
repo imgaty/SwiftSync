@@ -44,18 +44,19 @@ function setForwardedRef<T>(ref: React.ForwardedRef<T>, value: T | null) {
     if (ref) (ref as React.MutableRefObject<T | null>).current = value
 }
 
-const squircleControl = "sq-full"
+const tabSwitcherTrackShape = "sq-full"
+const tabSwitcherSegmentShape = "sq-md"
 
 const tabSwitcherSurface = cn(
     UDS.cardSurface,
     "relative isolate inline-flex min-h-9 min-w-0 items-center gap-1 overflow-hidden p-1",
-    squircleControl,
+    tabSwitcherTrackShape,
 )
 
 const tabSwitcherButtonBase = cn(
     "relative z-[2] inline-flex h-7 min-w-0 items-center justify-center gap-1.5 border border-transparent bg-transparent",
-    squircleControl,
-    "text-[12px] font-semibold leading-none outline-none",
+    tabSwitcherSegmentShape,
+    "text-xs font-semibold leading-none outline-none",
     "transition-colors duration-150 ease-out",
     "hover:bg-transparent active:scale-100",
     "focus-visible:ring-2 focus-visible:ring-focus/70",
@@ -67,7 +68,7 @@ const tabSwitcherActiveIndicator = cn(
     UDS.cardSurface,
     UDS.raisedSurface,
     "pointer-events-none absolute left-0 top-0 z-[1] border",
-    squircleControl,
+    tabSwitcherSegmentShape,
     "will-change-transform",
     "transition-[opacity,transform,width,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
 )

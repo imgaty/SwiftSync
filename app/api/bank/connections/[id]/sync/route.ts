@@ -12,6 +12,7 @@ import { getConnection, listAccounts, listTransactions, mapNatureToAccountType, 
 import { getAuthContext } from "@/lib/auth-helpers"
 import { requirePermission, scopeFilter, scopeCreateData } from "@/lib/data-access"
 import { buildSaltEdgeCategorization, loadEnabledRules, loadAvailableTags } from "@/lib/PACE.server"
+import { resolveImportedTransactionTags } from "@/lib/PACE"
 import { prisma } from "@/lib/prisma"
 
 /**
@@ -129,6 +130,7 @@ export async function POST(
             if (!accountId) continue
             const existing = await prisma.transaction.findUnique({
               where: { saltEdgeId: tx.id },
+              select: { id: true, tags: true },
             })
             // Categorization pipeline: counterparty + Salt Edge tags + user
             // rules + (cache → AI fallback when everything else returned nothing).
@@ -137,7 +139,8 @@ export async function POST(
               availableTags,
             })
             const description = tx.description || tx.category || "Transaction"
-            const tags = cat.tags.length > 0 ? cat.tags : ["other"]
+            const inferredTags = cat.tags.length > 0 ? cat.tags : ["other"]
+            const tags = resolveImportedTransactionTags(existing?.tags, inferredTags)
             await prisma.transaction.upsert({
               where: { saltEdgeId: tx.id },
               create: {

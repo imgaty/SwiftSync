@@ -153,8 +153,10 @@ Create a file named `.env` in the root of the project (`Argent/.env`) with the f
 DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/argent"
 
 # ─── Security ────────────────────────────────────────────────
-ENCRYPTION_MASTER_KEY="generate-a-random-64-character-hex-string"
 SESSION_SECRET="generate-a-random-64-character-hex-string"
+PASSWORD_PEPPER_ACTIVE="p1"
+PASSWORD_PEPPER_P1="generate-a-random-64-character-hex-string"
+# PASSWORD_PEPPER_P2="generate-a-random-64-character-hex-string"
 
 # ─── Email (Resend) ─────────────────────────────────────────
 RESEND_API_KEY="re_your_resend_api_key"
@@ -176,13 +178,13 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 #### Generating Secret Keys
 
-To generate secure random keys for `ENCRYPTION_MASTER_KEY` and `SESSION_SECRET`, run:
+To generate secure random values for `SESSION_SECRET` and `PASSWORD_PEPPER_P1`, run:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Run this command **twice** — once for each key. Each will produce a 64-character hex string.
+Run this command **twice** — once for each secret. Each will produce a 64-character hex string. `PASSWORD_PEPPER_ACTIVE` is a version tag such as `p1`, not a random secret.
 
 > **Important:** Never share these keys or commit them to version control. The `.env` file should already be listed in `.gitignore`.
 
@@ -253,8 +255,10 @@ The development server supports hot reloading — any code changes will automati
 | Variable                  | Required | Description                           | Default Value                       |
 | :------------------------ | :------- | :------------------------------------ | :---------------------------------- |
 | `DATABASE_URL`            | Yes      | PostgreSQL connection string          | —                                   |
-| `ENCRYPTION_MASTER_KEY`   | Yes      | 32-byte hex key for data encryption   | —                                   |
 | `SESSION_SECRET`          | Yes      | Secret key for signing session tokens | —                                   |
+| `PASSWORD_PEPPER_ACTIVE`  | Yes      | Active password pepper version        | `p1`                                |
+| `PASSWORD_PEPPER_P1`      | Yes      | Server-side password pepper           | —                                   |
+| `PASSWORD_PEPPER_P2`      | No       | Optional pepper used during rotation  | —                                   |
 | `RESEND_API_KEY`          | Yes      | API key from your Resend account      | —                                   |
 | `RESEND_FROM_EMAIL`       | No       | Sender email for outgoing emails      | `Argent <onboarding@resend.dev>` |
 | `SALT_EDGE_APP_ID`        | Yes*     | Salt Edge application ID              | —                                   |
@@ -294,7 +298,7 @@ postgresql://USER:PASSWORD@HOST:PORT/DATABASE
 
 ### 3.2. Resend (Email Service)
 
-Resend is used to send password reset and two-factor authentication emails.
+Resend is used to send password reset emails and optional email two-factor login codes.
 
 1. Create an account at [https://resend.com](https://resend.com)
 2. Go to **API Keys** in the dashboard
@@ -425,7 +429,7 @@ sudo nano .env
 Paste the environment variables (see [Section 1.4](#14-configure-environment-variables)), adjusting:
 - `DATABASE_URL` to: `postgresql://argent:choose-a-strong-password@localhost:5432/argent`
 - `NEXT_PUBLIC_APP_URL` to: `https://yourdomain.com` (or your server's IP)
-- Generate fresh keys for `ENCRYPTION_MASTER_KEY` and `SESSION_SECRET`
+- Generate fresh secrets for `SESSION_SECRET` and `PASSWORD_PEPPER_P1`
 
 #### Step 5: Set Up the Database and Build
 
@@ -580,7 +584,7 @@ In the Vercel project settings, go to **Domains** and add your custom domain. Ve
 | `pnpm: command not found`               | Run `npm install -g pnpm` to install pnpm globally.                                                           |
 | `prisma: command not found`             | Run `pnpm install` first, then use `pnpm prisma` instead of `prisma` directly.                                |
 | Database connection refused             | Ensure PostgreSQL is running: `sudo systemctl start postgresql`.                                              |
-| `ENCRYPTION_MASTER_KEY` error           | Generate a key with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.               |
+| Session or password pepper secret error | Generate 64-character secrets for `SESSION_SECRET` and the active `PASSWORD_PEPPER_P<N>` value.               |
 | Port 3000 already in use                | Kill the existing process with `lsof -ti:3000 \| xargs kill -9`, or use a different port: `pnpm dev -p 3001`. |
 | OAuth redirect error                    | Check that the redirect URI in your OAuth provider matches `NEXT_PUBLIC_APP_URL` plus the callback path.      |
 | Prisma migration failed                 | Ensure `DATABASE_URL` is correct and the database exists.                                                     |

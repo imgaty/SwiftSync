@@ -94,7 +94,7 @@ export function SpreadsheetLogs({
                 </Button>
 
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="flex size-10 items-center justify-center sq-xl bg-primary/10">
+                    <div className="flex size-10 items-center justify-center sq-normal bg-primary/10">
                         <FileSpreadsheet className="size-5 text-primary" />
                     </div>
                     <div className="min-w-0">
@@ -134,7 +134,7 @@ export function SpreadsheetLogs({
                                             <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                                                 {actionLabel(log.action)}
                                             </span>
-                                            <span className="text-[11px] text-neutral-400">
+                                            <span className="text-xs text-neutral-400">
                                                 {formatDate(log.createdAt)}
                                             </span>
                                         </div>
@@ -144,7 +144,7 @@ export function SpreadsheetLogs({
                                             </p>
                                         )}
                                         {log.user && (
-                                            <p className="text-[11px] text-neutral-400/70 mt-0.5">
+                                            <p className="text-xs text-neutral-400/70 mt-0.5">
                                                 {log.user.name || log.user.email}
                                             </p>
                                         )}

@@ -39,7 +39,7 @@ Sizes: `default`, `sm`, `lg`, `icon`, `icon-sm`, `icon-lg`.
 
 #### Corner geometry
 
-Corner geometry uses Argent's Tailwind custom squircle utilities (`sq-lg`, `sq-xl`, `sq-full`). Large dashboard and UDS surfaces use `squircle-surface`. Browsers with native `corner-shape: squircle` support use it so backdrop effects follow the same continuous curve; other browsers fall back to deterministic clip-path geometry and the measured superellipse runtime. Radius uses a bounded area response (`--sq-growth-damping`) so larger containers become visibly rounder without changing the squircle curve angle, while short controls clamp into capsules or circles.
+Corner geometry uses Argent's Tailwind custom squircle utilities (`sq-normal`, `sq-big`, `sq-full`). Standard shared primitives use the input-aligned `--app-control-radius` token, which resolves to the normal `22px` squircle. Large framed surfaces use the big `36px` squircle: app shell, dialogs, sheets, auth panels, and dock shell. Browsers with native `corner-shape: squircle` support use it so backdrop effects follow the same continuous curve; other browsers fall back to deterministic clip-path geometry and the measured superellipse runtime. Short controls naturally clamp to their height, while `sq-full` remains reserved for true pills and circles.
 
 Use existing `sq-*` utilities in component markup. Do not create SVG masks, local `corner-shape` declarations, or one-off wrapper outlines to fake squircle corners.
 
@@ -100,13 +100,13 @@ Every `UDS` row should read as a compact three-part cell:
 
 | Element | Spacing / size | Light mode | Dark mode | Notes |
 | --- | --- | --- | --- | --- |
-| Container | `sq-xl p-[7px]`, base `text-[13px]` | `text-black`, high-opacity neutral glass, thin squircle edge, subtle drop/inset shadow | `text-white`, dark neutral glass with the same restrained depth | Use only for floating UI |
-| Labels | `px-8 py-1.5`, `text-[13px] font-semibold tracking-wide` | `text-neutral-500` | `text-neutral-400` | Group headings and section labels |
+| Container | `sq-big p-[7px]`, base `text-sm` | `text-black`, high-opacity neutral glass, thin squircle edge, subtle drop/inset shadow | `text-white`, dark neutral glass with the same restrained depth | Use only for large floating UI |
+| Labels | `px-8 py-1.5`, `text-sm font-semibold tracking-wide` | `text-neutral-500` | `text-neutral-400` | Group headings and section labels |
 | Item / button cells | `gap-2 sq-lg px-8 py-2` | subtle `bg-black/[0.06]` on hover/focus | subtle `bg-white/[0.12]` on hover/focus | Base interactive row primitive |
 | Icons | `size-4`, no shrinking | `text-neutral-500` → `text-black` on focus | `text-neutral-400` → `text-white` on focus | Decorative/supporting, not the primary target |
-| Checkmarks / shortcuts | right aligned, shortcuts use `ml-auto text-[12px] tracking-wide` | `text-neutral-500` | `text-neutral-400` | Keep the right slot visually lighter than the main label |
-| Titles | `text-[15px] font-semibold` | `text-black` | `text-white` | Dialog and sheet headings |
-| Descriptions | `text-[13px]` | `text-neutral-500` | `text-neutral-400` | Helper copy, never brighter than the title |
+| Checkmarks / shortcuts | right aligned, shortcuts use `ml-auto text-xs tracking-wide` | `text-neutral-500` | `text-neutral-400` | Keep the right slot visually lighter than the main label |
+| Titles | `text-base font-semibold` | `text-black` | `text-white` | Dialog and sheet headings |
+| Descriptions | `text-sm` | `text-neutral-500` | `text-neutral-400` | Helper copy, never brighter than the title |
 | Close button | `sq-lg p-1.5` | muted icon + translucent hover wash | muted icon + brighter white hover wash | Use the same chrome language as other UDS controls |
 
 ### Interaction rules

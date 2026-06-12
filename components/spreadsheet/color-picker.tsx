@@ -53,7 +53,7 @@ export function ColorPickerPopover({
                 {showAutomatic && (
                     <Button variant="ghost"
                         type="button"
-                        className={cn("mb-2 flex w-full items-center gap-2 sq-md px-2 py-1 text-[12px]", UDS.itemHover)}
+                        className={cn("mb-2 flex w-full items-center gap-2 sq-md px-2 py-1 text-xs", UDS.itemHover)}
                         onClick={() => pick(automaticColor)}
                     >
                         <span
@@ -64,7 +64,7 @@ export function ColorPickerPopover({
                     </Button>
                 )}
 
-                <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Palette</div>
+                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-neutral-400">Palette</div>
                 <div className="grid grid-cols-10 gap-1">
                     {COLOR_PRESETS.slice(0, 40).map((c) => (
                         <Button variant="ghost"
@@ -85,7 +85,7 @@ export function ColorPickerPopover({
 
                 <div className={`${UDS.inlineSurface} mt-2 flex items-center gap-2 px-2 py-1.5`}>
                     <span className="size-4 sq-sm border sq-border-muted" style={{ backgroundColor: selectedColor }} />
-                    <span className="font-mono text-[10px] text-neutral-500">{selectedColor.toUpperCase()}</span>
+                    <span className="font-mono text-xs text-neutral-500">{selectedColor.toUpperCase()}</span>
                     <input
                         type="color"
                         value={customColor}
@@ -97,7 +97,7 @@ export function ColorPickerPopover({
                     />
                     <Button variant="ghost"
                         type="button"
-                        className={cn("cursor-pointer sq px-1.5 py-0.5 text-[11px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200", UDS.itemHover)}
+                        className={cn("cursor-pointer sq px-1.5 py-0.5 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200", UDS.itemHover)}
                         onClick={() => pick("")}
                     >
                         No color

@@ -10,19 +10,21 @@
 "use client"
 
 import * as React from "react"
+import {
+    DEFAULT_LANGUAGE,
+    SUPPORTED_LANGUAGES,
+    getLanguageDefinition,
+    isSupportedLanguage,
+    type Language,
+} from "@/lib/languages"
 
 // ==============================================================================
 // LANGUAGE REGISTRY
 // ==============================================================================
 // To add a new language:
 // 1. Create a new file in /public/lang/ (e.g., "fr.json", "de.json", "es.json")
-// 2. Add the language code to SUPPORTED_LANGUAGES below
+// 2. Add the language metadata in /lib/languages.ts
 // 3. Done! The language will be automatically available.
-
-const SUPPORTED_LANGUAGES = ["en", "pt"] as const
-const DEFAULT_LANGUAGE = "en"
-
-type Language = typeof SUPPORTED_LANGUAGES[number]
 
 // Type definition for translations - matches the JSON structure
 interface Translations {
@@ -61,21 +63,12 @@ interface Translations {
         forgot_password: string
         sign_in: string
         signing_in: string
-        verify: string
-        verifying: string
-        use_different_account: string
         no_account: string
         create_one: string
-        two_factor_title: string
-        two_factor_subtitle: string
-        two_factor_hint: string
-        trust_device: string
         error_fields_required: string
         error_login_failed: string
         error_generic: string
         error_network: string
-        error_2fa_required: string
-        error_2fa_invalid: string
         error_no_account: string
         error_no_account_link: string
         error_wrong_password: string
@@ -170,10 +163,22 @@ const LanguageContext = React.createContext<LanguageContextType | null>(null)
 // Cache for loaded translations
 const translationCache: Partial<Record<Language, Translations>> = {}
 
-export function LanguageProvider({ 
+function applyLanguageConfig(translations: Translations, language: Language): Translations {
+    const definition = getLanguageDefinition(language)
+
+    return {
+        ...translations,
+        config: {
+            ...translations.config,
+            locale: definition.locale,
+        },
+    }
+}
+
+export function LanguageProvider({
     children,
     defaultLanguage = DEFAULT_LANGUAGE
-}: { 
+}: {
     children: React.ReactNode
     defaultLanguage?: Language
 }) {
@@ -183,53 +188,54 @@ export function LanguageProvider({
 
     // Load translations for a language
     const loadTranslations = React.useCallback(async (lang: Language): Promise<Translations> => {
-        const load = async (targetLang: Language): Promise<Translations> => {
-            // Return cached version if available
-            if (translationCache[targetLang]) {
-                return translationCache[targetLang]!
-            }
+        // Return cached version if available
+        if (translationCache[lang]) {
+            return translationCache[lang]!
+        }
 
+        const fetchLanguageFile = async (targetLang: Language): Promise<Translations | null> => {
             try {
                 const response = await fetch(`/lang/${targetLang}.json`)
-                if (!response.ok) {
-                    console.warn(`Failed to load translations for "${targetLang}", falling back to "${DEFAULT_LANGUAGE}"`)
-                    // Fallback to default language
-                    if (targetLang !== DEFAULT_LANGUAGE) {
-                        return load(DEFAULT_LANGUAGE)
-                    }
-                    return {} as Translations
-                }
+                if (!response.ok) return null
 
-                const data = await response.json()
-                translationCache[targetLang] = data
-                return data as Translations
+                return await response.json() as Translations
             } catch (error) {
                 console.error(`Error loading translations for "${targetLang}":`, error)
-                // Fallback to default language
-                if (targetLang !== DEFAULT_LANGUAGE) {
-                    return load(DEFAULT_LANGUAGE)
-                }
-                return {} as Translations
+                return null
             }
         }
 
-        return load(lang)
+        const languageFile = await fetchLanguageFile(lang)
+        if (languageFile) {
+            const loaded = applyLanguageConfig(languageFile, lang)
+            translationCache[lang] = loaded
+            return loaded
+        }
+
+        if (lang !== DEFAULT_LANGUAGE) {
+            console.warn(`Failed to load translations for "${lang}", falling back to "${DEFAULT_LANGUAGE}" copy with "${lang}" locale settings`)
+        }
+
+        const fallbackFile = await fetchLanguageFile(DEFAULT_LANGUAGE)
+        const loaded = applyLanguageConfig(fallbackFile ?? ({} as Translations), lang)
+        translationCache[lang] = loaded
+        return loaded
     }, [])
 
     // Read cookie and load initial translations
     React.useEffect(() => {
         const initializeLanguage = async () => {
             setIsLoading(true)
-            
+
             // Check for saved language preference in cookie
             let savedLanguage: Language = defaultLanguage
             const cookies = document.cookie.split(';')
             const langCookie = cookies.find(cookie => cookie.trim().startsWith(`${LANGUAGE_COOKIE_NAME}=`))
-            
+
             if (langCookie) {
-                const value = langCookie.split('=')[1]?.trim()
-                if (SUPPORTED_LANGUAGES.includes(value as Language)) {
-                    savedLanguage = value as Language
+                const value = decodeURIComponent(langCookie.split('=')[1]?.trim() ?? "")
+                if (isSupportedLanguage(value)) {
+                    savedLanguage = value
                 }
             }
 
@@ -244,19 +250,28 @@ export function LanguageProvider({
 
     // Change language and persist to cookie
     const setLanguage = React.useCallback(async (lang: Language) => {
-        if (!SUPPORTED_LANGUAGES.includes(lang)) {
+        if (!isSupportedLanguage(lang)) {
             console.warn(`Language "${lang}" is not supported. Supported: ${SUPPORTED_LANGUAGES.join(', ')}`)
             return
         }
 
         setIsLoading(true)
         setLanguageState(lang)
-        document.cookie = `${LANGUAGE_COOKIE_NAME}=${lang}; path=/; max-age=${LANGUAGE_COOKIE_MAX_AGE}`
-        
+        document.cookie = `${LANGUAGE_COOKIE_NAME}=${encodeURIComponent(lang)}; path=/; max-age=${LANGUAGE_COOKIE_MAX_AGE}`
+
         const loadedTranslations = await loadTranslations(lang)
         setTranslations(loadedTranslations)
         setIsLoading(false)
     }, [loadTranslations])
+
+    React.useEffect(() => {
+        const definition = getLanguageDefinition(language)
+
+        document.documentElement.lang = definition.htmlLang
+        document.documentElement.dir = definition.direction
+        document.documentElement.dataset.languageDirection = definition.direction
+        document.documentElement.dataset.languageLayout = definition.layout
+    }, [language])
 
     const contextValue = React.useMemo(() => ({
         language,

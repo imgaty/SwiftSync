@@ -40,8 +40,8 @@ export function CanvasBackground({
     const BASE_GAP = 24
     const DOT_R_BASE = 0.85
     const DOT_R_PEAK = authTone ? 1.05 : 1.15
-    const ALPHA_BASE = authTone ? 0.024 : 0.05
-    const ALPHA_PEAK = authTone ? 0.04 : 0.08
+    const ALPHA_BASE = 0.05
+    const ALPHA_PEAK = authTone ? 0.09 : 0.08
     const WAVE_AMP = 4
     const WAVE_WIDTH = 170
     const CYCLE_MS = 7000
@@ -110,7 +110,7 @@ export function CanvasBackground({
       const gap = getGap()
       const cols = Math.ceil(w / gap) + 6
       const rows = Math.ceil(h / gap) + 6
-      const darkMul = dark ? 0.8 : 1
+      const darkMul = dark ? (authTone ? 1.2 : 0.8) : 1
       const { mx, my, fade } = st
 
       const targetPx = mx >= 0 ? mx / w : 0.5
@@ -351,7 +351,7 @@ export function CanvasBackground({
       className={inset
         ? "fixed z-0 pointer-events-none"
         : tone === "auth"
-          ? "fixed inset-0 z-0 pointer-events-none bg-white dark:bg-transparent"
+          ? "fixed inset-0 z-0 pointer-events-none bg-white dark:bg-black"
           : "fixed inset-0 z-0 pointer-events-none"
       }
     />

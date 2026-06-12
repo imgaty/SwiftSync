@@ -310,7 +310,7 @@ export function DatePicker({
           disabled={disabled}
           onClick={() => !disabled && setOpen(true)}
           className={cn(
-            "relative flex items-center w-full h-14 px-4 pr-12 pt-4 text-left font-normal group text-[15px] transition-all duration-200",
+            "relative flex h-14 w-full items-center justify-start px-4 pb-2 pt-6 pr-12 text-left font-normal group text-base transition-all duration-200",
             UDS.surface,
             UDS.focusRing,
             open && UDS.activeRing,
@@ -321,17 +321,17 @@ export function DatePicker({
           {/* Floating label */}
           <span
             className={cn(
-              "absolute left-4 top-4 text-[15px] transition-all duration-200 ease-out pointer-events-none text-neutral-400 origin-left",
+              "absolute left-4 top-1/2 text-base leading-none transition-[color,translate,scale] duration-200 ease-out pointer-events-none text-neutral-400 origin-top-left",
               (selected || open)
-                ? "scale-[0.75] -translate-y-3"
-                : ""
+                ? "-translate-y-[20px] scale-[0.75]"
+                : "-translate-y-1/2 scale-100"
             )}
           >
             {placeholder}
           </span>
           {/* Value text */}
           <span className={cn(
-            "text-[15px] transition-all duration-200 truncate",
+            "min-w-0 flex-1 truncate text-left text-base transition-all duration-200",
             selected ? "text-black dark:text-white" : "opacity-0"
           )}>
             {selected ? format(selected, "PP", { locale: loc }) : "\u00A0"}
@@ -346,11 +346,15 @@ export function DatePicker({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           showCloseButton={false}
+          variant="compact"
+          overlayClassName="bg-black/16 backdrop-blur-[2px] dark:bg-black/45"
           className={cn(
-            "gap-0 p-0 overflow-hidden",
+            "gap-0 p-0 !bg-background/95 [--sq-base-r:var(--squircle-normal)] [--sq-scale:0] [background-image:none] dark:!bg-black/95",
+            "border-border/80 dark:border-white/12",
+            "shadow-[0_18px_48px_rgba(0,0,0,0.18)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.52)]",
             range
-              ? "w-[calc(100vw-2rem)] max-w-[580px]"
-              : "w-[calc(100vw-4rem)] max-w-[360px]"
+              ? "w-[min(calc(100vw-2rem),580px)]"
+              : "w-[min(calc(100vw-2rem),352px)]"
           )}
         >
           <DialogTitle className="sr-only">{range ? "Date Range" : placeholder}</DialogTitle>
@@ -372,7 +376,7 @@ export function DatePicker({
           /* ── Single-date mode ───────────────────────────────── */
           <div className="p-3">
           {/* Navigation header */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="grid grid-cols-[2rem_minmax(0,1fr)_2rem] items-center gap-1 mb-2">
             <Button variant="ghost"
               type="button"
               onClick={() => {
@@ -381,7 +385,7 @@ export function DatePicker({
                 else setDisplayMonth(setYear(displayMonth, displayMonth.getFullYear() - 12))
               }}
               className={cn(
-                "inline-flex items-center justify-center w-7 h-7 sq-lg text-neutral-400 hover:text-black dark:hover:text-white transition-colors",
+                "inline-flex size-8 items-center justify-center sq-lg text-neutral-400 transition-colors hover:text-black dark:hover:text-white",
                 UDS.itemHover
               )}
             >
@@ -395,7 +399,7 @@ export function DatePicker({
                 else if (view === 'month') setView('year')
               }}
               className={cn(
-                "flex-1 text-center text-sm font-semibold text-black dark:text-white sq-lg py-1 px-2 transition-colors",
+                "h-8 min-w-0 justify-center px-2 text-center text-base font-semibold text-black transition-colors dark:text-white",
                 UDS.itemHover
               )}
             >
@@ -414,7 +418,7 @@ export function DatePicker({
                 else setDisplayMonth(setYear(displayMonth, displayMonth.getFullYear() + 12))
               }}
               className={cn(
-                "inline-flex items-center justify-center w-7 h-7 sq-lg transition-colors",
+                "inline-flex size-8 items-center justify-center sq-lg transition-colors",
                 forwardDisabled
                   ? "text-neutral-400 cursor-not-allowed"
                   : cn(UDS.itemHover, "text-neutral-400 hover:text-black dark:hover:text-white")
@@ -426,14 +430,14 @@ export function DatePicker({
 
           {/* View mode tabs */}
           <div className="mb-3 flex justify-center">
-            <TabSwitcher ariaLabel="Calendar view">
-              <TabSwitcherItem isActive={view === 'date'} onClick={() => setView('date')} className="px-3">
+            <TabSwitcher ariaLabel="Calendar view" className="min-h-8 p-0.5">
+              <TabSwitcherItem isActive={view === 'date'} onClick={() => setView('date')} className="h-7 px-4 text-xs">
                 Day
               </TabSwitcherItem>
-              <TabSwitcherItem isActive={view === 'month'} onClick={() => setView('month')} className="px-3">
+              <TabSwitcherItem isActive={view === 'month'} onClick={() => setView('month')} className="h-7 px-4 text-xs">
                 Month
               </TabSwitcherItem>
-              <TabSwitcherItem isActive={view === 'year'} onClick={() => setView('year')} className="px-3">
+              <TabSwitcherItem isActive={view === 'year'} onClick={() => setView('year')} className="h-7 px-4 text-xs">
                 Year
               </TabSwitcherItem>
             </TabSwitcher>
@@ -442,9 +446,9 @@ export function DatePicker({
           {/* Days view */}
           {view === 'date' && (
             <>
-              <div className="grid grid-cols-7 mb-1">
+              <div className="mb-1 grid grid-cols-7">
                 {weekDays.map((day, i) => (
-                  <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-neutral-400 uppercase tracking-wider">
+                  <div key={i} className="flex h-7 items-center justify-center text-xs font-semibold uppercase text-neutral-400">
                     {day}
                   </div>
                 ))}
@@ -457,15 +461,15 @@ export function DatePicker({
                   const isSelected = isSelectedDate(day)
                   const today = isTodayDate(day)
                   return (
-                    <div key={i} className="relative h-8 flex items-center justify-center">
+                    <div key={i} className="relative flex h-9 items-center justify-center">
                       <Button variant="ghost"
                         type="button"
                         onClick={() => { if (!disabled) handleSelect(day) }}
                         disabled={disabled}
                         className={cn(
-                          "inline-flex items-center justify-center size-8 sq-lg text-sm font-medium transition-all duration-200",
-                          disabled && "text-neutral-400 cursor-not-allowed",
-                          outside && !disabled && "text-neutral-400",
+                          "inline-flex size-8 items-center justify-center sq-lg text-sm font-semibold transition-all duration-200",
+                          disabled && "text-neutral-400/45 cursor-not-allowed",
+                          outside && !disabled && "text-neutral-400/65",
                           isSelected && UDS.selectedControl,
                           !isSelected && !disabled && !outside && cn(UDS.itemHover, "text-black dark:text-white"),
                           today && !isSelected && "ring-1 ring-black/30 dark:ring-white/30 font-bold"
@@ -494,7 +498,7 @@ export function DatePicker({
                     type="button"
                     disabled={!!isFutureMonth}
                     className={cn(
-                      "py-2 px-3 sq-lg text-xs font-medium transition-all duration-200",
+                      "h-9 px-3 sq-lg text-xs font-semibold transition-all duration-200",
                       isFutureMonth
                         ? "text-neutral-400 cursor-not-allowed"
                         : displayMonth.getMonth() === i
@@ -526,7 +530,7 @@ export function DatePicker({
                       type="button"
                       disabled={isFutureYear}
                       className={cn(
-                        "relative z-10 py-2 px-3 sq-lg text-xs font-medium transition-all duration-200",
+                        "relative z-10 h-9 px-3 sq-lg text-xs font-semibold transition-all duration-200",
                         isFutureYear
                           ? "text-neutral-400 cursor-not-allowed"
                           : displayMonth.getFullYear() === y
@@ -554,7 +558,7 @@ export function DatePicker({
               {!dobMode && view === 'date' && (
                 <Button variant="ghost"
                   type="button"
-                  className="px-3 h-8 text-xs font-medium sq-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                  className="h-8 px-3 text-xs font-semibold sq-lg text-blue-600 transition-colors hover:bg-blue-500/10 dark:text-blue-400"
                   onClick={() => handleSelect(new Date())}
                 >
                   Today
@@ -564,7 +568,7 @@ export function DatePicker({
                 <Button variant="ghost"
                   type="button"
                   className={cn(
-                    "px-3 h-8 text-xs font-medium sq-lg text-neutral-400 hover:text-black dark:hover:text-white transition-colors",
+                    "h-8 px-3 text-xs font-semibold sq-lg text-neutral-400 transition-colors hover:text-black dark:hover:text-white",
                     UDS.itemHover
                   )}
                   onClick={() => { onChange?.(''); setOpen(false) }}
@@ -595,7 +599,7 @@ export function DatePicker({
             </div>
             <Button variant="ghost"
               type="button"
-              className={cn("px-4 h-8 text-xs font-medium sq-lg transition-colors shrink-0", UDS.primaryControl)}
+              className={cn("h-9 shrink-0 px-4 text-xs font-semibold sq-lg transition-colors", UDS.primaryControl)}
               onClick={() => setOpen(false)}
             >
               Done

@@ -17,7 +17,7 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
     <textarea
       data-slot="textarea"
       className={cn(
-        "flex field-sizing-content min-h-24 w-full px-4 py-3 text-[15px] text-foreground caret-blue-600 transition-[background-color,border-color,color,box-shadow,opacity] duration-200 outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-70 aria-invalid:border-destructive/60 aria-invalid:ring-2 aria-invalid:ring-destructive/20 aria-invalid:focus-visible:border-destructive/70 aria-invalid:focus-visible:ring-destructive/25 dark:caret-blue-300 dark:aria-invalid:ring-destructive/30",
+        "flex field-sizing-content min-h-24 w-full px-4 py-3 text-base text-foreground caret-blue-600 transition-[background-color,border-color,color,box-shadow,opacity] duration-200 outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-70 aria-invalid:border-destructive/60 aria-invalid:ring-2 aria-invalid:ring-destructive/20 aria-invalid:focus-visible:border-destructive/70 aria-invalid:focus-visible:ring-destructive/25 dark:caret-blue-300 dark:aria-invalid:ring-destructive/30",
         UDS.inputSurface,
         UDS.inputHover,
         UDS.inputFocus,

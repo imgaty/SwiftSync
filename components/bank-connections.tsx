@@ -275,14 +275,14 @@ export function BankConnections() {
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <Badge
                                                                 variant="outline"
-                                                                className={`text-[10px] px-1.5 py-0 ${statusColor(conn.status)}`}
+                                                                className={`text-xs px-1.5 py-0 ${statusColor(conn.status)}`}
                                                             >
                                                                 {conn.status}
                                                             </Badge>
-                                                            <span className="text-[10px] text-neutral-400 uppercase">
+                                                            <span className="text-xs text-neutral-400 uppercase">
                                                                 {conn.countryCode}
                                                             </span>
-                                                            <span className="text-[10px] text-neutral-400">
+                                                            <span className="text-xs text-neutral-400">
                                                                 Connected {new Date(conn.createdAt).toLocaleDateString()}
                                                             </span>
                                                         </div>

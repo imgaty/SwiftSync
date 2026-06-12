@@ -15,12 +15,6 @@
   - [What is HMAC](#what-is-hmac)
   - [Token Structure](#token-structure)
   - [How `getAuthUserId()` Works](#how-getauthuserid-works)
-- [Two-Factor Authentication (2FA)](#two-factor-authentication-2fa)
-  - [What is TOTP](#what-is-totp)
-  - [Setup Flow](#setup-flow)
-  - [Login with 2FA](#login-with-2fa)
-  - [Trusted Devices](#trusted-devices)
-  - [Backup Codes](#backup-codes)
 - [OAuth](#oauth)
 - [Route Protection](#route-protection)
   - [Proxy (Page Protection)](#proxy-page-protection)
@@ -36,7 +30,7 @@
 
 Passwords are never stored in plaintext. Argent uses **scrypt** with a per-hash random salt and a server-side pepper, via [`lib/password.ts`](../lib/password.ts).
 
-The scheme replaces the earlier "adaptive" multi-generation system, which has been removed. The previous design rotated a pepper derived from the current time window, which — because the rotation function was deterministic from a public constant — provided no real security on top of scrypt + salt, and forced an unnecessary re-hash on roughly every login. The new scheme is a single fixed algorithm using one industry-standard primitive.
+The scheme replaces the earlier "adaptive" multi-generation system, which has been removed. The previous design rotated a pepper derived from the current time window, which — because the rotation function was deterministic from a public constant — provided no real security on top of scrypt + salt, and forced an unnecessary re-hash on roughly every login. The current scheme uses a fixed scrypt profile with an explicit stored scheme version.
 
 <br>
 
@@ -44,16 +38,24 @@ The scheme replaces the earlier "adaptive" multi-generation system, which has be
 
 Scrypt (RFC 7914) is a password-based key derivation function designed to be slow and memory-hard. It resists both CPU-only brute-force and ASIC acceleration, which are the two ways an attacker would scale password cracking if they ever obtained a database dump.
 
-Argent uses the OWASP 2024 minimum parameters:
+Argent uses the current OWASP scrypt recommendation for active `scrypt$v2$` password hashes:
 
 | Parameter | Value     | Meaning                                       |
 | :-------- | :-------- | :-------------------------------------------- |
-| `N`       | `32768`   | CPU/memory cost factor (2¹⁵)                  |
-| `r`       | `8`       | Block size — total memory ≈ `128 × N × r` = 32 MB per hash |
+| `N`       | `131072`  | CPU/memory cost factor (2¹⁷)                  |
+| `r`       | `8`       | Block size — total memory ≈ `128 × N × r` = 128 MiB per hash |
 | `p`       | `1`       | Parallelization factor                        |
 | key len   | `64`      | 512-bit derived key                           |
 
-A single hash takes roughly 50 ms on modern server hardware, which is fast enough for login but makes large-scale offline attacks infeasible.
+Previous `scrypt$v1$` hashes used `N = 32768` (2¹⁵). They are not verified by the current password module. Any remaining `scrypt$v1$` database rows must be manually reset to a fresh `scrypt$v2$` hash before deploying this code:
+
+```bash
+pnpm run password:rehash-user -- <email> <newPassword>
+```
+
+This reset requires the intended replacement password; an old password hash cannot be converted into a stronger hash without knowing the plaintext password. Runtime depends on deployment hardware; OWASP recommends tuning so password hashing remains below roughly one second while still being expensive enough to slow offline attacks.
+
+`lib/password.ts` enforces a 128-character maximum before hashing or verifying passwords. This allows long passphrases while preventing long-password denial-of-service attempts.
 
 <br>
 
@@ -67,9 +69,9 @@ Argent uses 32 random bytes per salt, read from `crypto.randomBytes`.
 
 #### Pepper
 
-A pepper is a server-side secret that's concatenated with the password *before* hashing. Unlike the salt, the pepper is **never** stored in the database — it lives in the `PASSWORD_PEPPER` environment variable. That means a database-only breach (leaked backup, SQL injection that reads the `User` table) still doesn't let the attacker brute-force the hashes: they'd also need filesystem/secrets-store access to recover the pepper.
+A pepper is a server-side secret that's concatenated with the password *before* hashing. Unlike the salt, the pepper is **never** stored in the database — it lives in versioned environment variables such as `PASSWORD_PEPPER_P1` and `PASSWORD_PEPPER_P2`. That means a production database-only breach (leaked backup, SQL injection that reads the `User` table) still doesn't let the attacker brute-force the hashes without also recovering the configured pepper secret.
 
-The pepper is fixed per deployment. Rotating it without a migration makes every existing hash unverifiable, so changing it is a deliberate, planned operation, not an automatic background task.
+The active pepper version is controlled by `PASSWORD_PEPPER_ACTIVE`, defaulting to `p1`. Existing hashes store their own pepper version, so pepper rotation can be staged: add the new pepper, flip the active version, then let successful logins rehash passwords with the new version. Do not remove an old pepper until every hash that used it has been reset or rehashed.
 
 <br>
 
@@ -78,14 +80,15 @@ The pepper is fixed per deployment. Rotating it without a migration makes every 
 Every stored password hash follows the same format:
 
 ```
-scrypt$v1$<saltB64>$<hashB64>
+scrypt$v2$<pepperVersion>$<saltB64>$<hashB64>
 ```
 
-- `scrypt$v1$` — algorithm and version prefix. New schemes get a new prefix so both can coexist during a migration.
+- `scrypt$v2$` — active algorithm and work-factor scheme prefix.
+- `<pepperVersion>` — pepper identifier such as `p1` or `p2`; this maps to `PASSWORD_PEPPER_P1`, `PASSWORD_PEPPER_P2`, etc.
 - `<saltB64>` — 32 bytes of random salt, base64.
 - `<hashB64>` — 64-byte scrypt output, base64.
 
-Verification splits the stored string, derives the candidate hash with the same parameters, and compares using `timingSafeEqual` to prevent timing-based side-channel attacks.
+Verification only accepts the active `scrypt$v2$<pepperVersion>$<saltB64>$<hashB64>` format. Older `scrypt$v1$` hashes are rejected and must be reset outside the login flow. For valid `scrypt$v2$` hashes, verification derives the candidate hash with the stored salt and pepper version, then compares using `timingSafeEqual`.
 
 <br>
 
@@ -94,28 +97,29 @@ Verification splits the stored string, derives the candidate hash with the same 
 | Component   | What it is                                               | Where it's stored                                            |
 | :---------- | :------------------------------------------------------- | :----------------------------------------------------------- |
 | **Hash**    | Irreversible scrypt output (64 bytes, base64)            | Database, as the last segment of the stored string           |
-| **Salt**    | Random bytes unique per password (32 bytes, base64)      | Database, as the middle segment of the stored string         |
-| **Pepper**  | Server-side secret (≥ 32 characters)                     | `PASSWORD_PEPPER` env var — never in the database            |
-| **Version** | Algorithm identifier (`scrypt$v1$`)                      | Database, as the prefix of the stored string                 |
+| **Salt**    | Random bytes unique per password (32 bytes, base64)      | Database, as the salt segment of the stored string           |
+| **Pepper**  | Server-side secret (≥ 32 characters)                     | `PASSWORD_PEPPER_P<N>` env var — never in the database       |
+| **Pepper version** | Pepper identifier (`p1`, `p2`, etc.)              | Database, as the segment after the scheme prefix             |
+| **Scheme version** | Algorithm and work-factor identifier (`scrypt$v2$`) | Database, as the prefix of the stored string                 |
 
 <br>
 
 ## Secrets & Environment
 
-The server requires three secrets. All three are rejected at startup (thrown error) if missing in production.
+The server requires these secrets in production. Missing or too-short pepper values are rejected when password hashing needs that version.
 
 | Variable                | Purpose                                                  | Size          |
 | :---------------------- | :------------------------------------------------------- | :------------ |
 | `SESSION_SECRET`        | HMAC-SHA256 key for signing session tokens               | ≥ 32 chars    |
-| `ENCRYPTION_MASTER_KEY` | AES-256-GCM master key for [`lib/encryption-v2.ts`](../lib/encryption-v2.ts) (TOTP secrets, etc.) | ≥ 32 chars    |
-| `PASSWORD_PEPPER`       | Server-side pepper for password hashing                  | ≥ 32 chars    |
+| `PASSWORD_PEPPER_ACTIVE` | Active password pepper version for new hashes           | `p<N>`        |
+| `PASSWORD_PEPPER_P1`    | Server-side pepper for hashes tagged `p1`                | ≥ 32 chars    |
+| `PASSWORD_PEPPER_P2`    | Server-side pepper for hashes tagged `p2`, when rotating | ≥ 32 chars    |
 
 Generate each one with `openssl rand -hex 32`. Store them in `.env.local` for development and in your host's secret store (Vercel env vars, AWS Secrets Manager, etc.) for production.
 
 Rotation consequences:
 - Rotating `SESSION_SECRET` invalidates every outstanding session — every user is logged out.
-- Rotating `ENCRYPTION_MASTER_KEY` makes previously encrypted blobs (TOTP secrets) undecryptable — users will need to re-enroll 2FA unless you decrypt-then-re-encrypt first.
-- Rotating `PASSWORD_PEPPER` makes every stored hash unverifiable — plan it as a forced password reset.
+- Rotating password peppers requires keeping old and new pepper env vars available until old hashes have been rehashed or reset. Removing an old pepper early makes hashes tagged with that version unverifiable.
 
 <br>
 
@@ -124,12 +128,11 @@ Rotation consequences:
 1. User submits email and password to `POST /api/auth/login`.
 2. A per-IP rate-limit bucket is checked (5 attempts per 30 seconds). Over the limit returns **429** with a `Retry-After` header.
 3. The server looks up the user by email.
-   - If no account exists, the server still performs a dummy scrypt run against a throwaway hash to keep response time constant (defeats timing-based user enumeration), then returns `{"error":"No account with that email"}`.
-   - If the account exists but the password is wrong, returns `{"error":"Incorrect password"}`.
-4. The stored hash is split via the `scrypt$v1$salt$hash` format. The server derives the candidate hash using the same salt, scrypt parameters, and pepper, then compares byte-for-byte with `timingSafeEqual`.
-5. If the stored hash uses an older format (e.g. a leftover `generation:salt:hash` row from before the migration), `passwordNeedsRehash` flags it and the password is transparently re-hashed with the new scheme on the current login.
-6. If 2FA is enabled, the server returns a challenge instead of a session. The user must verify the code before receiving cookies.
-7. On success, the `auth-token` session cookie is set and the user is redirected to the dashboard.
+   - If no account exists, `handleLogin()` still calls `verifyPassword(password, dummyHash())`, where `dummyHash()` is a cached throwaway hash generated with `hashPassword(...)`. This forces a real scrypt verification to reduce timing-based user enumeration, then returns the same generic error used for wrong passwords. This mitigation lives in the login route; `verifyPassword()` by itself returns `false` immediately when the stored hash is empty or invalid.
+   - If the account exists but the password is wrong, returns the same generic error.
+4. The stored hash is split via the `scrypt$v<scheme>$<pepperVersion>$<salt>$<hash>` format. The server derives the candidate hash using the stored salt, scheme parameters, and pepper, then compares byte-for-byte with `timingSafeEqual`.
+5. If the stored hash uses the active scheme but an older pepper version, `passwordNeedsRehash` flags it and the password is transparently re-hashed with the active pepper version on the current login. Older `scrypt$v1$` hashes do not verify and must be manually reset before rollout.
+6. On success, the `auth-token` session cookie is set and the user is redirected to the dashboard.
 
 <br>
 
@@ -142,7 +145,6 @@ All sensitive auth endpoints are throttled by a shared sliding-window limiter ([
 | `POST /api/auth/login`            | 5 per 30 s          | client IP        |
 | `POST /api/auth/forgot-password`  | 5 per 15 min        | client IP        |
 | `POST /api/auth/reset-password`   | 10 per 15 min       | client IP        |
-| `POST /api/auth/2fa/verify`       | 10 per 10 min       | user id          |
 
 The limiter stores counters in-process, which means on multi-instance/serverless deploys the effective limit is `max × N` (one bucket per instance). For production traffic, swap the in-memory store for Redis / Upstash — the module exposes the same `rateLimit()` / `rateLimitReset()` API regardless of backend.
 
@@ -203,62 +205,6 @@ Every API route starts by calling `getAuthUserId()`. This function is the single
 8. If the user exists, is active, and the session version matches, return their ID. Otherwise, return `null`.
 
 If `getAuthUserId()` returns `null`, the API route responds with 401 Unauthorized.
-
-<br>
-
-## Two-Factor Authentication (2FA)
-
-Two-factor authentication adds a second layer of verification beyond the password. Even if an attacker knows the password, they cannot log in without also having access to the user's authenticator device.
-
-<br>
-
-#### What is TOTP
-
-TOTP (Time-based One-Time Password) is an algorithm that generates a short numeric code (usually 6 digits) that changes every 30 seconds. It works by combining a shared secret with the current time and running them through HMAC-SHA1. Both the server and the authenticator app know the secret, so they independently produce the same code at the same time.
-
-Argent uses TOTP via the `otpauth` library and is compatible with any authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.).
-
-<br>
-
-#### Setup Flow
-
-1. The user goes to Settings and enables 2FA.
-2. The server generates a random **TOTP secret** — a base32-encoded string that serves as the shared key.
-3. The server returns a **QR code** containing an `otpauth://` URI. This URI encodes the secret, the app name ("Argent"), and the user's email.
-4. The user scans the QR code with their authenticator app. The app stores the secret and begins generating codes.
-5. The user is asked to type in the current code displayed by the app to prove it was set up correctly.
-6. If the code is valid, the server stores the TOTP secret on the user record and 2FA is now active.
-
-<br>
-
-#### Login with 2FA
-
-1. The user submits their email and password as normal.
-2. The server verifies the password using AES (as described above).
-3. If 2FA is enabled on the account, the server does **not** issue session cookies yet. Instead, it returns a response indicating a 2FA challenge is required.
-4. The user is shown a 2FA input screen and enters the 6-digit code from their authenticator app.
-5. The server generates the expected TOTP code for the current 30-second window (and typically one window before/after to account for clock drift).
-6. The submitted code is hashed with SHA-256 and compared to the expected hash. This ensures the code is never stored in plaintext, even temporarily.
-7. If the code matches, it is immediately invalidated so it cannot be reused.
-8. Session cookies are issued and the user is logged in.
-
-<br>
-
-#### Trusted Devices
-
-After a successful 2FA check, the user can choose to "trust this device." This saves a unique token to the `TrustedDevice` table, linked to the user, with an expiration date. The token is also stored in the browser (as a cookie or local storage).
-
-On future logins from the same browser, the server checks if a valid trusted device token exists. If it does, the 2FA step is skipped entirely. This avoids forcing the user to enter a code every time they log in from their own computer.
-
-Trusted device tokens expire after a set period. They can also be revoked manually by the user or by an admin resetting 2FA.
-
-<br>
-
-#### Backup Codes
-
-When 2FA is enabled, the server generates a set of one-time backup codes. These are stored encrypted on the user record. If the user loses access to their authenticator app (e.g., phone lost or reset), they can use a backup code instead of a TOTP code to log in.
-
-Each backup code can only be used once. After use, it is removed from the stored set.
 
 <br>
 
@@ -337,6 +283,8 @@ API routes are **not** protected by middleware. Each API route handler protects 
 
 Admin routes go one step further by calling `requireAdmin()`, which first runs the same session verification, then additionally checks that the user's `role` is `"admin"` or `"superadmin"`. If the role is insufficient, the route returns 403 Forbidden.
 
+For user-management actions, normal admins can soft-delete users by moving the target account to `status = "deleted"`. Existing protections still apply: an admin cannot delete themselves, and a non-superadmin admin cannot modify or delete a superadmin. Role changes are stricter and remain `superadmin` only.
+
 This dual-layer design means:
 - Middleware handles **page-level redirects** (pleasant UX — the user sees a login page instead of a blank error).
 - API routes handle **data-level security** (prevents unauthorized data access even if middleware is bypassed).
@@ -372,7 +320,7 @@ The reset token is a random string sent to the user's email. If stored in plaint
 7. The user clicks the link and is taken to the reset password page.
 8. The user enters a new password and submits the form to `POST /api/auth/reset-password` along with the token from the URL.
 9. The server hashes the submitted token and compares it to the stored hash. If they match and the expiry has not passed, the token is valid.
-10. The new password is hashed using AES (with the current generation's salt, pepper, and scrypt parameters) and saved.
+10. The new password is hashed with scrypt using the active scheme, a fresh salt, and the active pepper version, then saved.
 11. The `resetPasswordToken` and `resetPasswordExpires` fields are cleared so the token cannot be reused.
 
 ---

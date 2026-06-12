@@ -158,6 +158,29 @@ export function isMeaningfulCategory(category: string | undefined | null): boole
     return !NON_MEANINGFUL_CATEGORIES.has(category.trim().toLowerCase())
 }
 
+export function cleanTagList(tags: readonly string[] | null | undefined): string[] {
+    if (!Array.isArray(tags)) return []
+    const cleaned = tags
+        .map((tag) => (typeof tag === "string" ? tag.trim().toLowerCase() : ""))
+        .filter(Boolean)
+    return [...new Set(cleaned)]
+}
+
+export function hasMeaningfulTags(tags: readonly string[] | null | undefined): boolean {
+    return cleanTagList(tags).some((tag) => isMeaningfulCategory(tag))
+}
+
+export function resolveImportedTransactionTags(
+    existingTags: readonly string[] | null | undefined,
+    inferredTags: readonly string[] | null | undefined
+): string[] {
+    const existing = cleanTagList(existingTags)
+    if (existing.some((tag) => isMeaningfulCategory(tag))) return existing
+
+    const inferred = cleanTagList(inferredTags)
+    return inferred.length > 0 ? inferred : ["other"]
+}
+
 export function tagsFromSaltEdgeCategory(category: string | undefined | null): string[] {
     if (!isMeaningfulCategory(category)) return []
     return [category!.trim().toLowerCase()]

@@ -29,6 +29,7 @@ import {
     getNextBillDueDate,
     startOfDay,
 } from "@/components/dashboard/utils"
+import { getTranslations } from "@/lib/translation-utils"
 
 const EMPTY_ACCOUNTS: Account[] = []
 const EMPTY_TRANSACTIONS: Transaction[] = []
@@ -40,14 +41,15 @@ export function useDashboardData() {
     const text = t as typeof t & DashboardTranslations
     const { data: financeData, isLoading: isDataLoading } = useFinanceData()
     const { formatCurrency } = useCurrency()
+    const dashboardCopy = React.useMemo(() => getTranslations(t, "dashboard"), [t])
+    const dataLabels = React.useMemo(() => getTranslations(t, "data_type_labels"), [t])
 
-    const dashboardExportLabel = text.dashboard?.export || "Export"
-    const goodMorningLabel = text.dashboard?.good_morning || "Good morning"
-    const goodAfternoonLabel = text.dashboard?.good_afternoon || "Good afternoon"
-    const goodEveningLabel = text.dashboard?.good_evening || "Good evening"
+    const dashboardExportLabel = dashboardCopy.export || text.dashboard?.export || "Export"
+    const goodMorningLabel = dashboardCopy.good_morning || text.dashboard?.good_morning || "Good morning"
+    const goodAfternoonLabel = dashboardCopy.good_afternoon || text.dashboard?.good_afternoon || "Good afternoon"
+    const goodEveningLabel = dashboardCopy.good_evening || text.dashboard?.good_evening || "Good evening"
     const locale = t.config?.locale || "en-US"
-    const isPortuguese = locale.startsWith("pt")
-    const dashboardImportLabel = text.dashboard?.import || (isPortuguese ? "Importar" : "Import")
+    const dashboardImportLabel = dashboardCopy.import || text.dashboard?.import || "Import"
 
     const [selectedAccountIds, setSelectedAccountIds] = React.useState<string[]>([])
     const [now, setNow] = React.useState(() => new Date())
@@ -196,7 +198,7 @@ export function useDashboardData() {
                 income += transaction.amount
             } else {
                 expenses += transaction.amount
-                const tag = transaction.tags[0] || (isPortuguese ? "Outros" : "Other")
+                const tag = transaction.tags[0] || dashboardCopy.other || dataLabels.others || "Other"
                 outflowByTag.set(tag, (outflowByTag.get(tag) || 0) + transaction.amount)
             }
         }
@@ -213,59 +215,65 @@ export function useDashboardData() {
             expenses,
             net: income - expenses,
             transactionCount,
-            topOutflowLabel: topOutflow?.[0] || (isPortuguese ? "Sem saidas" : "No outflow"),
+            topOutflowLabel: topOutflow?.[0] || dashboardCopy.no_outflow || "No outflow",
             topOutflowAmount: topOutflow?.[1] || 0,
             upcomingTotal,
             highestBudgetUse: budgetPressure[0]?.percentUsed ?? 0,
         }
-    }, [budgetPressure, filteredTransactions, isPortuguese, now, upcomingBillEvents])
+    }, [budgetPressure, dashboardCopy.no_outflow, dashboardCopy.other, dataLabels.others, filteredTransactions, now, upcomingBillEvents])
 
     const formatCompactCurrency = React.useCallback((amount: number) => {
         return formatCurrency(amount, { maximumFractionDigits: 0 })
     }, [formatCurrency])
 
     const dashboardLabels = React.useMemo<DashboardLabels>(() => ({
-        activityPulse: isPortuguese ? "Pulso de atividade" : "Activity pulse",
+        activityPulse: dashboardCopy.activity_pulse || "Activity pulse",
         analytics: t.finance?.analytics || "Analytics",
-        billExposure: isPortuguese ? "Exposicao de contas" : "Bill exposure",
-        overview: isPortuguese ? "Visao geral" : "Overview",
+        billExposure: dashboardCopy.bill_exposure || "Bill exposure",
+        overview: dashboardCopy.overview || t.finance?.overview || "Overview",
         cashFlow: t.finance?.cash_flow || "Cash Flow",
-        cashPosition: isPortuguese ? "Posicao de caixa" : "Cash position",
-        done: isPortuguese ? "Concluir" : "Done",
-        dropCardHere: isPortuguese ? "Largar cartao aqui" : "Drop a card here",
-        dropHere: isPortuguese ? "Largar aqui" : "Drop here",
-        dueNext30: isPortuguese ? "a vencer nos proximos 30d" : "due next 30d",
-        netFlow: isPortuguese ? "Fluxo liquido" : "Net flow",
-        topOutflow: isPortuguese ? "Maior saida" : "Top outflow",
-        dueSoon: isPortuguese ? "A vencer" : "Due soon",
-        budgetUse: isPortuguese ? "Pressao" : "Pressure",
-        recentActivity: isPortuguese ? "Atividade recente" : "Recent activity",
-        focus: isPortuguese ? "Foco financeiro" : "Financial focus",
-        budgetPressure: isPortuguese ? "Orcamentos" : "Budgets",
-        upcomingBills: isPortuguese ? "Contas" : "Bills",
-        healthy: isPortuguese ? "Estavel" : "Healthy",
-        highestPressure: isPortuguese ? "Maior pressao" : "Highest pressure",
-        layout: isPortuguese ? "Layout" : "Layout",
-        left: isPortuguese ? "restante" : "left",
-        leftColumn: isPortuguese ? "Esquerda" : "Left",
-        movesHere: isPortuguese ? "Move para aqui" : "Moves here",
-        needsReview: isPortuguese ? "Rever" : "Needs review",
-        noBillsDue: isPortuguese ? "Sem contas nos proximos 30d" : "No bills due next 30d",
-        noBudgetPressure: isPortuguese ? "Sem pressao em orcamentos" : "No budget pressure",
-        over: isPortuguese ? "acima" : "over",
-        noTransactions: isPortuguese ? "Sem transacoes neste escopo." : "No transactions in this scope.",
-        noFocus: isPortuguese ? "Sem orcamentos ou contas neste escopo." : "No budgets or bills in this scope.",
-        priorityBrief: isPortuguese ? "Resumo prioritario" : "Priority brief",
-        reset: isPortuguese ? "Repor" : "Reset",
-        rightColumn: isPortuguese ? "Direita" : "Right",
-        stack: isPortuguese ? "Empilhar" : "Stack",
-        split: isPortuguese ? "Dividir" : "Split",
-        thisMonth: isPortuguese ? "este mes" : "this month",
-        next30: isPortuguese ? "proximos 30d" : "next 30d",
-        accounts: isPortuguese ? "contas" : "accounts",
-        transactions: isPortuguese ? "transacoes" : "transactions",
-        selected: isPortuguese ? "selecionadas" : "selected",
-    }), [isPortuguese, t.finance?.analytics, t.finance?.cash_flow])
+        cashPosition: dashboardCopy.cash_position || "Cash position",
+        done: dashboardCopy.done || "Done",
+        dropCardHere: dashboardCopy.drop_card_here || "Drop a card here",
+        dropHere: dashboardCopy.drop_here || "Drop here",
+        dueNext30: dashboardCopy.due_next_30 || "due next 30d",
+        netFlow: dashboardCopy.net_flow || "Net flow",
+        topOutflow: dashboardCopy.top_outflow || "Top outflow",
+        dueSoon: dashboardCopy.due_soon || "Due soon",
+        budgetUse: dashboardCopy.budget_use || "Pressure",
+        recentActivity: dashboardCopy.recent_activity || "Recent activity",
+        focus: dashboardCopy.focus || "Financial focus",
+        budgetPressure: dashboardCopy.budget_pressure || t.finance?.budgets || "Budgets",
+        upcomingBills: dashboardCopy.upcoming_bills || t.finance?.bills || "Bills",
+        healthy: dashboardCopy.healthy || "Healthy",
+        highestPressure: dashboardCopy.highest_pressure || "Highest pressure",
+        layout: dashboardCopy.layout || "Layout",
+        left: dashboardCopy.left || "left",
+        leftColumn: dashboardCopy.left_column || "Left",
+        movesHere: dashboardCopy.moves_here || "Moves here",
+        needsReview: dashboardCopy.needs_review || "Needs review",
+        noBillsDue: dashboardCopy.no_bills_due || "No bills due next 30d",
+        noBudgetPressure: dashboardCopy.no_budget_pressure || "No budget pressure",
+        over: dashboardCopy.over || "over",
+        noTransactions: dashboardCopy.no_transactions || "No transactions in this scope.",
+        noFocus: dashboardCopy.no_focus || "No budgets or bills in this scope.",
+        noOutflow: dashboardCopy.no_outflow || "No outflow",
+        other: dashboardCopy.other || dataLabels.others || "Other",
+        priorityBrief: dashboardCopy.priority_brief || "Priority brief",
+        reset: dashboardCopy.reset || "Reset",
+        rightColumn: dashboardCopy.right_column || "Right",
+        stack: dashboardCopy.stack || "Stack",
+        split: dashboardCopy.split || "Split",
+        thisMonth: dashboardCopy.this_month || "this month",
+        today: dashboardCopy.today || "Today",
+        tomorrow: dashboardCopy.tomorrow || "Tomorrow",
+        inDays: dashboardCopy.in_days || "in %countd",
+        next30: dashboardCopy.next_30 || "next 30d",
+        accounts: dashboardCopy.accounts || "accounts",
+        transactions: dashboardCopy.transactions || "transactions",
+        selected: dashboardCopy.selected || "selected",
+        uncategorized: dashboardCopy.uncategorized || "Uncategorized",
+    }), [dashboardCopy, dataLabels.others, t.finance?.analytics, t.finance?.bills, t.finance?.budgets, t.finance?.cash_flow, t.finance?.overview])
 
     const scopeSummary = selectedAccountIds.length > 0
         ? `${filteredAccounts.length}/${accounts.length} ${dashboardLabels.accounts} ${dashboardLabels.selected}`
@@ -294,7 +302,6 @@ export function useDashboardData() {
         formatCompactCurrency,
         greeting,
         isLoading,
-        isPortuguese,
         isProfileLoading,
         locale,
         monthlySnapshot,
@@ -320,7 +327,6 @@ export function useDashboardData() {
         formatCompactCurrency,
         greeting,
         isLoading,
-        isPortuguese,
         isProfileLoading,
         locale,
         monthlySnapshot,

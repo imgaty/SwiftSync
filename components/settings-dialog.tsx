@@ -66,6 +66,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { toast } from "sonner"
 import { getSidebarPageDefinitions, type SidebarPageDefinition } from "@/lib/sidebar-pages"
 import { getTranslations, type LooseTranslations } from "@/lib/translation-utils"
+import { getLanguageDefinition, LANGUAGE_OPTIONS, type Language } from "@/lib/languages"
 import { useSidebarPagePreferences } from "@/hooks/use-sidebar-page-preferences"
 import { RulesPanel } from "@/components/settings/rules-panel"
 
@@ -101,6 +102,8 @@ const settingsOverlay = UDS.overlay
 
 const settingsSidebarRule = "border-sidebar-border"
 const settingsSidebarMuted = "text-sidebar-foreground/70"
+const settingsInputFieldClass = "w-full max-w-sm"
+const settingsDropdownButtonClass = "w-56 max-w-full"
 
 type SettingsSearchResult = {
     page: (typeof settingsPages)[number]
@@ -148,12 +151,12 @@ function SettingRow({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex items-center justify-between gap-4 py-1">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-1.5">
             <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="text-[13px] font-medium leading-tight">{label}</p>
+                <p className="text-sm font-medium leading-tight">{label}</p>
                 <p className="text-xs text-neutral-400 leading-snug">{description}</p>
             </div>
-            <div className="shrink-0">{children}</div>
+            <div className="flex h-7 shrink-0 items-center justify-end">{children}</div>
         </div>
     )
 }
@@ -162,7 +165,7 @@ function SectionHeader({ title, description }: { title: React.ReactNode; descrip
     return (
         <div className="space-y-1">
             <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-            <p className="text-[13px] leading-relaxed text-neutral-400">{description}</p>
+            <p className="text-sm leading-relaxed text-neutral-400">{description}</p>
         </div>
     )
 }
@@ -184,7 +187,7 @@ function SettingsSection({
         <section className={cn("space-y-3", className)}>
             {(title || description) && (
                 <div className="space-y-0.5">
-                    {title && <h4 className="text-[13px] font-semibold">{title}</h4>}
+                    {title && <h4 className="text-sm font-semibold">{title}</h4>}
                     {description && <p className="text-xs text-neutral-400">{description}</p>}
                 </div>
             )}
@@ -455,7 +458,7 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
             </SidebarContent>
 
             <SidebarFooter>
-                <p className={cn("text-center text-[10px]", settingsSidebarMuted)}>Argent v1.0</p>
+                <p className={cn("text-center text-xs", settingsSidebarMuted)}>Argent v1.0</p>
             </SidebarFooter>
         </>
     )
@@ -512,7 +515,7 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                     style={isMobile ? undefined : { width: 900, height: 600, maxWidth: "calc(100vw - 2rem)", maxHeight: "calc(100vh - 2rem)" }}
                     className={cn(
                         "fixed overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 duration-200",
-                        UDS.containerClass({ padding: false, zIndex: "z-[1000]" }), "p-0",
+                        UDS.containerClass({ background: "modal", padding: false, zIndex: "z-[1000]" }), "p-0",
                         isMobile
                             ? "inset-0 sq-none"
                             : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
@@ -537,7 +540,7 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
                                         >
                                             <ChevronLeft className="size-4" />
                                         </Button>
-                                        <span className="text-[13px] font-semibold">{activePageLabel}</span>
+                                        <span className="text-sm font-semibold">{activePageLabel}</span>
                                     </div>
                                     <div className="flex-1 relative overflow-hidden">
                                         <div className="absolute inset-0 overflow-y-auto">
@@ -580,11 +583,15 @@ export function SettingsDialog({ open, onOpenChange, initialPage, onPageChange }
 
 /* ─── Account Settings ─── */
 
-function AccountSettings({ s, language }: { s: SettingsTranslations; language: string }) {
-    const [profile, setProfile] = React.useState({ name: "", email: "", dob: "", recoveryEmail: "" })
-    const [originalProfile, setOriginalProfile] = React.useState({ name: "", email: "", dob: "", recoveryEmail: "" })
+const EMPTY_ACCOUNT_PROFILE = { name: "", email: "", dob: "", recoveryEmail: "", emailTwoFactorEnabled: false }
+
+function AccountSettings({ s, language }: { s: SettingsTranslations; language: Language }) {
+    const [profile, setProfile] = React.useState(EMPTY_ACCOUNT_PROFILE)
+    const [originalProfile, setOriginalProfile] = React.useState(EMPTY_ACCOUNT_PROFILE)
     const [profileAvatar, setProfileAvatar] = React.useState("")
-    const [passwords, setPasswords] = React.useState({ current: "", new: "", confirm: "" })
+    const [passwords, setPasswords] = React.useState({ new: "", confirm: "" })
+    const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false)
+    const [confirmationPassword, setConfirmationPassword] = React.useState("")
     const [isLoading, setIsLoading] = React.useState(true)
     const [isSaving, setIsSaving] = React.useState(false)
 
@@ -602,14 +609,15 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         email: data.email || "",
                         dob: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split("T")[0] : "",
                         recoveryEmail: data.recoveryEmail || "",
+                        emailTwoFactorEnabled: data.emailTwoFactorEnabled === true,
                     }
                     setProfileAvatar(data.avatar || "")
                     setProfile(p)
                     setOriginalProfile(p)
                 } else {
                     setProfileAvatar("")
-                    setProfile({ name: "", email: "", dob: "", recoveryEmail: "" })
-                    setOriginalProfile({ name: "", email: "", dob: "", recoveryEmail: "" })
+                    setProfile(EMPTY_ACCOUNT_PROFILE)
+                    setOriginalProfile(EMPTY_ACCOUNT_PROFILE)
                 }
             } catch {
                 toast.error("Failed to load profile")
@@ -620,28 +628,36 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
         fetchProfile()
     }, [])
 
-    const hasChanges =
-        JSON.stringify(profile) !== JSON.stringify(originalProfile) ||
-        passwords.current !== "" ||
-        passwords.new !== "" ||
-        passwords.confirm !== ""
+    const hasProfileChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile)
+    const hasPasswordChanges = passwords.new !== "" || passwords.confirm !== ""
+    const hasChanges = hasProfileChanges || hasPasswordChanges
+    const emailChanged = profile.email.trim().toLowerCase() !== originalProfile.email.trim().toLowerCase()
+    const recoveryEmailChanged = profile.recoveryEmail.trim().toLowerCase() !== originalProfile.recoveryEmail.trim().toLowerCase()
+    const emailTwoFactorChanged = profile.emailTwoFactorEnabled !== originalProfile.emailTwoFactorEnabled
+    const sensitiveProfileChanged = emailChanged || recoveryEmailChanged || emailTwoFactorChanged
+    const requiresCurrentPassword = sensitiveProfileChanged || hasPasswordChanges
 
+    const currentLocale = getLanguageDefinition(language).locale
     const dobDisplay = profile.dob
-        ? new Date(`${profile.dob}T00:00:00`).toLocaleDateString(language === "pt" ? "pt-PT" : "en-US", {
+        ? new Date(`${profile.dob}T00:00:00`).toLocaleDateString(currentLocale, {
             month: "short",
             day: "numeric",
             year: "numeric",
         })
         : ""
 
-    const handleSave = async () => {
-        if (passwords.new && passwords.new !== passwords.confirm) {
-            toast.error("Passwords do not match")
-            return
+    const handleSave = async (currentPassword?: string) => {
+        if (hasPasswordChanges && (!passwords.new || !passwords.confirm)) {
+            toast.error(s.fill_all_password_fields || "Please fill all password fields")
+            return false
         }
-        if (passwords.new && !passwords.current) {
-            toast.error("Enter your current password")
-            return
+        if (hasPasswordChanges && passwords.new !== passwords.confirm) {
+            toast.error(s.passwords_dont_match || "Passwords do not match")
+            return false
+        }
+        if (requiresCurrentPassword && !currentPassword) {
+            setPasswordDialogOpen(true)
+            return false
         }
 
         setIsSaving(true)
@@ -651,27 +667,48 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: profile.name,
-                    email: profile.email,
                     dateOfBirth: profile.dob || null,
-                    recoveryEmail: profile.recoveryEmail || null,
-                    ...(passwords.new ? { currentPassword: passwords.current, newPassword: passwords.new } : {}),
+                    ...(emailChanged ? { email: profile.email } : {}),
+                    ...(recoveryEmailChanged ? { recoveryEmail: profile.recoveryEmail || null } : {}),
+                    ...(emailTwoFactorChanged ? { emailTwoFactorEnabled: profile.emailTwoFactorEnabled } : {}),
+                    ...(requiresCurrentPassword && currentPassword ? { currentPassword } : {}),
+                    ...(passwords.new ? { newPassword: passwords.new } : {}),
                 }),
             })
 
             if (res.ok) {
-                toast.success("Saved")
+                toast.success(s.profile_updated || "Saved")
                 setOriginalProfile(profile)
-                setPasswords({ current: "", new: "", confirm: "" })
+                setPasswords({ new: "", confirm: "" })
+                setConfirmationPassword("")
+                setPasswordDialogOpen(false)
                 window.dispatchEvent(new Event("profile-updated"))
+                return true
             } else {
                 const err = await res.json()
                 toast.error(err.error || "Failed to save")
+                return false
             }
         } catch {
             toast.error("Failed to save")
+            return false
         } finally {
             setIsSaving(false)
         }
+    }
+
+    const handlePasswordConfirmation = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        if (!confirmationPassword) {
+            toast.error(s.enter_current_password || "Enter your current password")
+            return
+        }
+        await handleSave(confirmationPassword)
+    }
+
+    const closePasswordDialog = () => {
+        setPasswordDialogOpen(false)
+        setConfirmationPassword("")
     }
 
     if (isLoading) {
@@ -717,6 +754,7 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         aria-label={s.name || "Name"}
                         value={profile.name}
                         onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        className={settingsInputFieldClass}
                     />
                     <Input
                         placeholder={s.email || "Email"}
@@ -724,6 +762,7 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         type="email"
                         value={profile.email}
                         onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        className={settingsInputFieldClass}
                     />
                     <DatePicker
                         value={profile.dob}
@@ -731,17 +770,18 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         locale={language}
                         placeholder={s.dob || "Date of Birth"}
                         dobMode
-                        className="w-full"
+                        className={settingsInputFieldClass}
                         trigger={
                             <Button variant="ghost"
                                 type="button"
                                 className={cn(
                                     UDS.controlSurface,
                                     UDS.inputHover,
-                                    "relative flex h-11 w-full items-center px-4 pr-10 text-left text-[15px] text-neutral-900 transition-all duration-200 focus:outline-none dark:text-white",
+                                    "relative flex h-11 items-center justify-start px-4 pr-10 text-left text-base text-neutral-900 transition-all duration-200 focus:outline-none dark:text-white",
+                                    settingsInputFieldClass,
                                 )}
                             >
-                                <span className={cn("truncate", dobDisplay ? "text-neutral-900 dark:text-white" : "text-neutral-400/60") }>
+                                <span className={cn("min-w-0 flex-1 truncate text-left", dobDisplay ? "text-neutral-900 dark:text-white" : "text-neutral-400/60") }>
                                     {dobDisplay || (s.dob || "Date of Birth")}
                                 </span>
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -756,6 +796,23 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         type="email"
                         value={profile.recoveryEmail}
                         onChange={(e) => setProfile({ ...profile, recoveryEmail: e.target.value })}
+                        className={settingsInputFieldClass}
+                    />
+                </div>
+            </SettingsSection>
+
+            <SettingsDivider />
+
+            <SettingsSection title={s.security || "Security"}>
+                <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                        <p className="text-sm font-medium">{s.email_two_factor || "Email sign-in code"}</p>
+                        <p className="text-xs text-neutral-400">{s.email_two_factor_desc || "Send a code to your email after password login"}</p>
+                    </div>
+                    <AnimatedToggle
+                        checked={profile.emailTwoFactorEnabled}
+                        onCheckedChange={(checked) => setProfile({ ...profile, emailTwoFactorEnabled: checked })}
+                        disabled={isSaving}
                     />
                 </div>
             </SettingsSection>
@@ -765,29 +822,21 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
             <SettingsSection title={s.change_password || "Change Password"}>
                 <div className="space-y-3">
                     <Input
-                        placeholder={s.current_password || "Current Password"}
-                        aria-label={s.current_password || "Current Password"}
+                        placeholder={s.new_password || "New Password"}
+                        aria-label={s.new_password || "New Password"}
                         type="password"
-                        value={passwords.current}
-                        onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                        className="max-w-sm"
+                        value={passwords.new}
+                        onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                        className={settingsInputFieldClass}
                     />
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <Input
-                            placeholder={s.new_password || "New Password"}
-                            aria-label={s.new_password || "New Password"}
-                            type="password"
-                            value={passwords.new}
-                            onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
-                        />
-                        <Input
-                            placeholder={s.confirm_password || "Confirm Password"}
-                            aria-label={s.confirm_password || "Confirm Password"}
-                            type="password"
-                            value={passwords.confirm}
-                            onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                        />
-                    </div>
+                    <Input
+                        placeholder={s.confirm_password || "Confirm Password"}
+                        aria-label={s.confirm_password || "Confirm Password"}
+                        type="password"
+                        value={passwords.confirm}
+                        onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                        className={settingsInputFieldClass}
+                    />
                 </div>
             </SettingsSection>
 
@@ -803,17 +852,75 @@ function AccountSettings({ s, language }: { s: SettingsTranslations; language: s
                         size="sm"
                         onClick={() => {
                             setProfile(originalProfile)
-                            setPasswords({ current: "", new: "", confirm: "" })
+                            setPasswords({ new: "", confirm: "" })
+                            closePasswordDialog()
                         }}
                     >
                         {s.cancel || "Cancel"}
                     </Button>
-                    <Button size="sm" variant="solid" onClick={handleSave} disabled={isSaving}>
+                    <Button size="sm" variant="solid" onClick={() => void handleSave()} disabled={isSaving}>
                         {isSaving ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Save className="mr-1.5 size-3.5" />}
-                        {s.save || "Save Changes"}
+                        {s.save_changes || s.save || "Save Changes"}
                     </Button>
                 </div>
             )}
+
+            <Dialog
+                open={passwordDialogOpen}
+                onOpenChange={(nextOpen) => {
+                    setPasswordDialogOpen(nextOpen)
+                    if (!nextOpen) setConfirmationPassword("")
+                }}
+            >
+                <DialogContent
+                    showCloseButton={false}
+                    overlayClassName="z-[1001] bg-black/16 backdrop-blur-[2px] dark:bg-black/45"
+                    className="z-[1002] max-w-md gap-0 overflow-hidden p-0"
+                >
+                    <form onSubmit={handlePasswordConfirmation}>
+                        <div className="px-6 pt-6 pb-2">
+                            <DialogTitle className="text-base font-semibold">
+                                {s.verify_current_password || "Confirm current password"}
+                            </DialogTitle>
+                            <DialogDescription className="mt-1.5 text-sm text-neutral-400 leading-relaxed">
+                                {s.verify_current_password_desc || "Enter your current password to save these account changes."}
+                            </DialogDescription>
+                        </div>
+                        <div className="space-y-4 px-6 pb-6">
+                            <Input
+                                type="password"
+                                placeholder={s.current_password || "Current Password"}
+                                aria-label={s.current_password || "Current Password"}
+                                value={confirmationPassword}
+                                onChange={(e) => setConfirmationPassword(e.target.value)}
+                                disabled={isSaving}
+                                autoFocus
+                                className={settingsInputFieldClass}
+                            />
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="glass"
+                                    className="flex-1 h-9"
+                                    onClick={closePasswordDialog}
+                                    disabled={isSaving}
+                                >
+                                    {s.cancel || "Cancel"}
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant="solid"
+                                    className="flex-1 h-9"
+                                    disabled={isSaving || !confirmationPassword}
+                                >
+                                    {isSaving ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Save className="mr-1.5 size-3.5" />}
+                                    {s.confirm_and_save || "Confirm & Save"}
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
@@ -853,14 +960,14 @@ function DeleteAccountSection({ s }: { s: SettingsTranslations }) {
 
     return (
         <>
-            <div className="sq-xl border border-destructive/20 bg-destructive/4 overflow-hidden">
+            <div className="sq-normal border border-destructive/20 bg-destructive/4 overflow-hidden">
                 <div className="px-4 pt-4 pb-2">
-                    <h4 className="text-[13px] font-semibold text-destructive">{s.danger_zone || "Danger Zone"}</h4>
+                    <h4 className="text-sm font-semibold text-destructive">{s.danger_zone || "Danger Zone"}</h4>
                 </div>
                 <div className="px-4 pb-4">
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <p className="text-[13px] font-medium">{s.delete_account || "Delete Account"}</p>
+                            <p className="text-sm font-medium">{s.delete_account || "Delete Account"}</p>
                             <p className="text-xs text-neutral-400">{s.delete_account_desc || "Permanently remove your account and all data"}</p>
                         </div>
                         <Button variant="solid-destructive" size="sm" onClick={() => setOpen(true)}>
@@ -878,7 +985,7 @@ function DeleteAccountSection({ s }: { s: SettingsTranslations }) {
                             <AlertTriangle className="size-5 text-destructive" />
                         </div>
                         <DialogTitle className="text-base font-semibold">{s.delete_account_title || "Delete Account"}</DialogTitle>
-                        <DialogDescription className="mt-1.5 text-[13px] text-neutral-400 leading-relaxed">
+                        <DialogDescription className="mt-1.5 text-sm text-neutral-400 leading-relaxed">
                             {s.delete_account_confirm || "This action cannot be undone. Enter your password to confirm."}
                         </DialogDescription>
                     </div>
@@ -889,6 +996,7 @@ function DeleteAccountSection({ s }: { s: SettingsTranslations }) {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleDelete()}
+                            className={settingsInputFieldClass}
                         />
                         <div className="flex gap-2">
                             <Button variant="glass" className="flex-1 h-9" onClick={() => setOpen(false)}>
@@ -934,8 +1042,8 @@ function CustomizationSettings({
     searchHighlightQuery?: string
     side: "left" | "right"
     setSide: (side: "left" | "right") => void
-    language: string
-    setLanguage: (lang: "en" | "pt") => void
+    language: Language
+    setLanguage: (lang: Language) => void
     currency: SupportedCurrency
     setCurrency: (currency: SupportedCurrency) => void
     availableCurrencies: readonly { symbol: string; code: SupportedCurrency }[]
@@ -1036,7 +1144,7 @@ function CustomizationSettings({
                             onOpenChange={setOpenSidebarPositionSelect}
                             onValueChange={(v) => setSide(v as "left" | "right")}
                         >
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className={settingsDropdownButtonClass}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1069,14 +1177,19 @@ function CustomizationSettings({
                             value={language}
                             open={openLanguageSelect}
                             onOpenChange={setOpenLanguageSelect}
-                            onValueChange={(v) => setLanguage(v as "en" | "pt")}
+                            onValueChange={(v) => setLanguage(v as Language)}
                         >
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className={settingsDropdownButtonClass}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="en">{searchHighlightQuery?.trim() ? highlightSearchText("English", searchHighlightQuery) : "English"}</SelectItem>
-                                <SelectItem value="pt">{searchHighlightQuery?.trim() ? highlightSearchText("Português", searchHighlightQuery) : "Português"}</SelectItem>
+                                {LANGUAGE_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        <span className="flex items-center gap-2">
+                                            <span>{searchHighlightQuery?.trim() ? highlightSearchText(option.label, searchHighlightQuery) : option.label}</span>
+                                        </span>
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </SettingRow>
@@ -1096,7 +1209,7 @@ function CustomizationSettings({
                             onOpenChange={setOpenCurrencySelect}
                             onValueChange={(value) => setCurrency(value as SupportedCurrency)}
                         >
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className={settingsDropdownButtonClass}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1130,7 +1243,7 @@ function CustomizationSettings({
                             onOpenChange={setOpenThemeSelect}
                             onValueChange={(v) => setTheme(v)}
                         >
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className={settingsDropdownButtonClass}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1164,7 +1277,7 @@ function CustomizationSettings({
                             onOpenChange={setOpenColorblindSelect}
                             onValueChange={(v) => setColorBlindMode(v as ColorBlindMode)}
                         >
-                            <SelectTrigger className="w-[200px]">
+                            <SelectTrigger className={settingsDropdownButtonClass}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1258,10 +1371,10 @@ function SortableSidebarRow({
             </Button>
 
             <Icon className="size-4 text-foreground-secondary/70" />
-            <span className="flex-1 text-[13px]">
+            <span className="flex-1 text-sm">
                 {searchHighlightQuery?.trim() ? highlightSearchText(page.name, searchHighlightQuery) : page.name}
             </span>
-            {hidden && <span className="text-[10px] text-foreground-secondary/70">Hidden</span>}
+            {hidden && <span className="text-xs text-foreground-secondary/70">Hidden</span>}
 
             <Button
                 type="button"
@@ -1391,14 +1504,14 @@ function ShortcutsSettings({ s }: { s: SettingsTranslations }) {
                                     key={i}
                                     className="flex items-center justify-between sq-lg py-2"
                                 >
-                                    <span className="text-[13px]">{shortcut.action}</span>
+                                    <span className="text-sm">{shortcut.action}</span>
                                     <div className="flex items-center gap-1">
                                         {shortcut.keys.map((key, j) => (
                                             <React.Fragment key={j}>
-                                                <kbd className={`${UDS.inlineSurface} inline-flex h-6 min-w-6 items-center justify-center px-1.5 text-[11px] font-mono font-medium text-neutral-400`}>
+                                                <kbd className={`${UDS.inlineSurface} inline-flex h-6 min-w-6 items-center justify-center px-1.5 text-xs font-mono font-medium text-neutral-400`}>
                                                     {key}
                                                 </kbd>
-                                                {j < shortcut.keys.length - 1 && <span className="text-[10px] text-neutral-400/60">+</span>}
+                                                {j < shortcut.keys.length - 1 && <span className="text-xs text-neutral-400/60">+</span>}
                                             </React.Fragment>
                                         ))}
                                     </div>

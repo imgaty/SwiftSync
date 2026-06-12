@@ -54,7 +54,7 @@ export function NavPages({
     onTogglePageHidden: (id: SidebarPageId, hidden: boolean) => void
     isLoading?: boolean
 }) {
-    const { isMobile, side, setOpenMobile } = useSidebar()
+    const { isMobile, renderedSide, setOpenMobile } = useSidebar()
     const { open } = useSettings()
     const { t } = useLanguage()
     const pathname = usePathname()
@@ -116,7 +116,7 @@ export function NavPages({
                                     </SidebarActionDropdown>
                                 </DropdownTrigger>
 
-                                <DropdownContent className="w-48" side={isMobile ? "bottom" : side === "left" ? "right" : "left"} align={isMobile ? "end" : "start"}>
+                                <DropdownContent className="w-48" side={isMobile ? "bottom" : renderedSide === "left" ? "right" : "left"} align={isMobile ? "end" : "start"}>
                                     <DropdownItem
                                         onSelect={() => onMovePage(item.id, "up")}
                                         disabled={allPages.findIndex((p) => p.id === item.id) === 0}

@@ -40,6 +40,7 @@ import { SmartTooltip } from "@/components/ui/tooltip"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
 import { UDS } from "@/lib/UDS"
+import { getTranslations } from "@/lib/translation-utils"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import type { FinanceData } from "@/lib/types"
@@ -216,7 +217,7 @@ function DashboardStatCard({
                 <span className="relative flex min-w-0 items-center justify-between gap-3">
                     <span className="flex min-w-0 items-center gap-2.5">
                         <Icon className={cn("size-4 shrink-0 stroke-[1.9]", toneStyles.icon)} />
-                        <span className="truncate text-[15px] font-medium leading-5 text-foreground-secondary sm:text-[16px]">
+                        <span className="truncate text-base font-medium leading-5 text-foreground-secondary">
                             {label}
                         </span>
                     </span>
@@ -225,14 +226,14 @@ function DashboardStatCard({
 
                 <span className="relative flex min-w-0 items-end justify-between gap-2">
                     <span className="min-w-0">
-                        <span className="block truncate text-[13px] font-medium leading-5 text-muted-foreground">
+                        <span className="block truncate text-sm font-medium leading-5 text-muted-foreground">
                             {detail}
                         </span>
-                        <span className={cn("mt-1 block truncate text-[11px] font-semibold leading-4 tabular-nums", toneStyles.meta)}>
+                        <span className={cn("mt-1 block truncate text-xs font-semibold leading-4 tabular-nums", toneStyles.meta)}>
                             {changeLabel}
                         </span>
                     </span>
-                    <span className={cn("shrink-0 text-right text-[1.6rem] font-semibold leading-none tracking-normal tabular-nums sm:text-[1.7rem]", toneStyles.value)}>
+                    <span className={cn("shrink-0 text-right text-2xl font-semibold leading-none tracking-normal tabular-nums sm:text-3xl", toneStyles.value)}>
                         {value}
                     </span>
                 </span>
@@ -373,8 +374,11 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
 
                 const TrendIcon = stat.trend === "up" ? TrendingUp : stat.trend === "down" ? TrendingDown : Minus
 
+                const dashboardCopy = getTranslations(t, "dashboard")
+                const dataLabels = getTranslations(t, "data_type_labels")
+                const common = getTranslations(t, "common")
                 const changeLabel = stat.trend === "neutral"
-                    ? ((t.config?.locale || "en-US").startsWith("pt") ? "Sem alterações" : "No change")
+                    ? (dashboardCopy.no_change || "No change")
                     : `${stat.trend === "up" ? "+" : "-"}${stat.percent.toFixed(1)}%`
 
                 const diffLabel = stat.trend !== "neutral"
@@ -388,21 +392,20 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
                     : cn("text-neutral-400", UDS.pillSurface)
 
                 const formattedValue = formatCurrency(stat.value)
-                const isPt = (t.config?.locale || "en-US").startsWith("pt")
                 const dashboardDetail = key === "balance"
-                    ? (isPt ? "Atual" : "Current")
-                    : (isPt ? "Este mês" : "this month")
+                    ? (dashboardCopy.current || "Current")
+                    : (dashboardCopy.this_month || "this month")
                 const href = key === "balance" ? "/Accounts" : "/Transactions"
 
                 const handleCopyValue = () => {
                     navigator.clipboard.writeText(formattedValue)
-                    toast.success(isPt ? "Valor copiado" : "Value copied")
+                    toast.success(dataLabels.value_copied || "Value copied")
                 }
 
                 const handleCopyChange = () => {
                     if (diffLabel) {
                         navigator.clipboard.writeText(`${diffLabel} (${changeLabel})`)
-                        toast.success(isPt ? "Alteração copiada" : "Change copied")
+                        toast.success(dataLabels.change_copied || "Change copied")
                     }
                 }
 
@@ -425,13 +428,13 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
                                     icon={Icon}
                                     label={label}
                                     value={formattedValue}
-                                    detail={diffLabel ? `${diffLabel} ${isPt ? "vs mês anterior" : "vs last month"}` : undefined}
+                                    detail={diffLabel ? `${diffLabel} ${dashboardCopy.vs_last_month || "vs last month"}` : undefined}
                                     tone={tone}
                                     valueClassName="text-2xl"
                                     className={cardClassName}
                                     action={<Sparkline trend={stat.trend} color={palette.accent} />}
                                     footer={(
-                                        <span className={cn("inline-flex items-center gap-1 sq-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums", toneClasses)}>
+                                        <span className={cn("inline-flex items-center gap-1 sq-full px-1.5 py-0.5 text-xs font-semibold tabular-nums", toneClasses)}>
                                             <TrendIcon className="size-3" />
                                             {changeLabel}
                                         </span>
@@ -442,19 +445,19 @@ export function SectionCards({ data: externalData, isLoading: externalLoading, v
                         <ContextMenuContent>
                             <ContextMenuItem onClick={handleCopyValue}>
                                 <ClipboardCopy />
-                                {isPt ? "Copiar valor" : "Copy value"}
+                                {dataLabels.copy_value || "Copy value"}
                             </ContextMenuItem>
                             {diffLabel && (
                                 <ContextMenuItem onClick={handleCopyChange}>
                                     <ClipboardCopy />
-                                    {isPt ? "Copiar alteração" : "Copy change"}
+                                    {dataLabels.copy_change || "Copy change"}
                                 </ContextMenuItem>
                             )}
                             <ContextMenuSeparator />
                             <ContextMenuItem asChild>
                                 <a href={href}>
                                     <Eye />
-                                    {isPt ? "Ver detalhes" : "View details"}
+                                    {common.view_details || "View details"}
                                 </a>
                             </ContextMenuItem>
                         </ContextMenuContent>

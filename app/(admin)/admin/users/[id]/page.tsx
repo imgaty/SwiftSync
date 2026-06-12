@@ -13,9 +13,9 @@ import * as React from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import {
-    ArrowLeft, Shield, ShieldAlert, ShieldCheck, Ban, Lock, Unlock,
-    KeyRound, RefreshCw, Mail, Calendar, Clock, Globe, CreditCard,
-    Receipt, PiggyBank, Target, Smartphone, ArrowUpRight,
+    ArrowLeft, ShieldAlert, ShieldCheck, Ban, Lock, Unlock,
+    RefreshCw, Mail, Calendar, Clock, Globe, CreditCard,
+    Receipt, PiggyBank, Target, ArrowUpRight,
     ArrowDownRight, User, FileText, AlertTriangle,
 } from "lucide-react"
 
@@ -53,7 +53,6 @@ interface UserDetail {
     recoveryEmail: string | null
     role: string
     status: string
-    twoFactorEnabled: boolean
     createdAt: string
     updatedAt: string
     lastLoginAt: string | null
@@ -69,7 +68,6 @@ interface UserDetail {
         notifications: number
         PACERules: number
         oauthAccounts: number
-        trustedDevices: number
         saltEdgeConnections: number
     }
     bankAccounts: {
@@ -269,11 +267,6 @@ export default function AdminUserDetailPage() {
                                     <div className="flex items-center gap-2 mt-1.5">
                                         {roleBadge(user.role, ud)}
                                         {statusBadge(user.status, ad)}
-                                        {user.twoFactorEnabled && (
-                                            <Badge variant="outline" className={UDS.semanticBadge.positive}>
-                                                <Shield className="size-3" />2FA
-                                            </Badge>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -310,7 +303,6 @@ export default function AdminUserDetailPage() {
                             <InfoRow icon={<Clock className="size-4" />} label={ud.account_created || "Joined"} value={formatDate(user.createdAt)} />
                             <InfoRow icon={<Clock className="size-4" />} label={ud.last_login || "Last Login"} value={formatDate(user.lastLoginAt)} />
                             <InfoRow icon={<Globe className="size-4" />} label={ud.last_login_ip || "Last IP"} value={user.lastLoginIp || (ud.unknown || "Unknown")} />
-                            <InfoRow icon={<Smartphone className="size-4" />} label={ud.trusted_devices || "Trusted Devices"} value={String(user._count.trustedDevices)} />
                         </div>
 
                         {user.oauthAccounts.length > 0 && (
@@ -362,12 +354,6 @@ export default function AdminUserDetailPage() {
                                 onClick={() => { setNewRole(user.role); setRoleDialog(true) }}>
                                 <ShieldCheck className="size-4 mr-2" /> {ud.change_role || "Change Role"}
                             </Button>
-                            {user.twoFactorEnabled && (
-                                <Button variant="glass" size="sm" className="justify-start"
-                                    onClick={() => openAction("reset_2fa", ud.reset_twofa || "Reset 2FA", `${ud.remove_twofa || "Remove 2FA from"} ${user.name}?`)}>
-                                    <KeyRound className="size-4 mr-2" /> {ud.reset_twofa || "Reset 2FA"}
-                                </Button>
-                            )}
                             <Button variant="glass" size="sm" className="justify-start"
                                 onClick={() => openAction("force_reset_password", ud.force_reset_password || "Force Password Reset", `${ud.reset_password || "Reset password for"} ${user.name}?`)}>
                                 <RefreshCw className="size-4 mr-2" /> {ud.force_reset_password || "Force Password Reset"}

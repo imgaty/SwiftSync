@@ -399,7 +399,7 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
                 >
                         {/* Name */}
                         <div className="space-y-1.5">
-                            <label className="text-[13px] font-medium">Name</label>
+                            <label className="text-sm font-medium">Name</label>
                             <Input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
@@ -411,7 +411,7 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
                         {/* Filters */}
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-[13px] font-medium">Filters</label>
+                                <label className="text-sm font-medium">Filters</label>
                                 <span className="text-xs text-neutral-400">all must match</span>
                             </div>
                             <div className="space-y-2">
@@ -432,7 +432,7 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
                             <Button variant="ghost"
                                 type="button"
                                 onClick={() => setFilters((prev) => [...prev, newFilter()])}
-                                className="flex items-center gap-1.5 text-[13px] text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
+                                className="flex items-center gap-1.5 text-sm text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
                             >
                                 <Plus className="size-3.5" />
                                 Add filter
@@ -441,7 +441,7 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
 
                         {/* Tags */}
                         <div className="space-y-1.5">
-                            <label className="text-[13px] font-medium">Tags to add</label>
+                            <label className="text-sm font-medium">Tags to add</label>
                             <Input
                                 value={tagSlugsInput}
                                 onChange={(e) => setTagSlugsInput(e.target.value)}
@@ -453,12 +453,14 @@ function EditDialog({ open, onOpenChange, initial, onSaved }: EditDialogProps) {
                         </div>
 
                         {/* Enabled */}
-                        <div className="flex items-center justify-between gap-4 py-1">
+                        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-1.5">
                             <div className="space-y-0.5">
-                                <p className="text-[13px] font-medium">Enabled</p>
+                                <p className="text-sm font-medium">Enabled</p>
                                 <p className="text-xs text-neutral-400">Disabled rules do not run.</p>
                             </div>
-                            <AnimatedToggle checked={enabled} onCheckedChange={setEnabled} />
+                            <div className="flex h-7 items-center justify-end">
+                                <AnimatedToggle checked={enabled} onCheckedChange={setEnabled} />
+                            </div>
                         </div>
 
                     <FormDialogActions>
@@ -503,12 +505,12 @@ function RuleRow({
         <div className={cn("flex items-center gap-3 border-t py-3 first:border-t-0", UDS.cardDivider)}>
             <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                    <p className="text-[13px] font-medium truncate">{rule.name}</p>
+                    <p className="text-sm font-medium truncate">{rule.name}</p>
                     <div className="flex gap-1">
                         {rule.addTagSlugs.map((slug) => (
                             <span
                                 key={slug}
-                                className={cn("px-1.5 py-0.5 text-[11px] text-neutral-400", UDS.pillSurface)}
+                                className={cn("px-1.5 py-0.5 text-xs text-neutral-400", UDS.pillSurface)}
                             >
                                 {slug}
                             </span>
@@ -519,23 +521,29 @@ function RuleRow({
                     {summary || <span className="italic">no filters</span>}
                 </p>
             </div>
-            <AnimatedToggle checked={rule.enabled} onCheckedChange={onToggle} />
-            <Button variant="ghost"
-                type="button"
-                onClick={onEdit}
-                aria-label="Edit rule"
-                className={cn("p-1.5 sq-md text-neutral-400 transition-colors hover:text-black dark:hover:text-white", UDS.itemHover)}
-            >
-                <Pencil className="size-4" />
-            </Button>
-            <Button variant="ghost"
-                type="button"
-                onClick={onDelete}
-                aria-label="Delete rule"
-                className="p-1.5 sq-md text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-            >
-                <Trash2 className="size-4" />
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+                <div className="flex h-7 w-11 items-center justify-center">
+                    <AnimatedToggle checked={rule.enabled} onCheckedChange={onToggle} />
+                </div>
+                <Button variant="ghost"
+                    size="icon"
+                    type="button"
+                    onClick={onEdit}
+                    aria-label="Edit rule"
+                    className={cn("sq-md text-neutral-400 transition-colors hover:text-black dark:hover:text-white", UDS.itemHover)}
+                >
+                    <Pencil className="size-4" />
+                </Button>
+                <Button variant="ghost"
+                    size="icon"
+                    type="button"
+                    onClick={onDelete}
+                    aria-label="Delete rule"
+                    className="sq-md text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                    <Trash2 className="size-4" />
+                </Button>
+            </div>
         </div>
     )
 }
@@ -616,7 +624,7 @@ export function RulesPanel() {
                 }
             >
                 {error && (
-                    <p className="text-[13px] text-red-400">{error}</p>
+                    <p className="text-sm text-red-400">{error}</p>
                 )}
 
                 {rules && rules.length > 0 && (

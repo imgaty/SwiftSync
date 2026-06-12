@@ -13,9 +13,7 @@ import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+import { Checkbox } from '@/components/ui/checkbox'
 import { OAuthButtons } from '@/components/oauth-buttons'
 import { DatePicker } from '@/components/date-picker'
 import {
@@ -31,9 +29,8 @@ import { cn } from '@/lib/utils'
 import { postAuth } from '@/lib/auth-fetch'
 import { EMAIL_RE } from '@/lib/validation'
 
-import { Loader2, ArrowRight, Building2, CheckCircle2, Shield, ShieldCheck, Smartphone, Copy } from 'lucide-react'
+import { Loader2, ArrowRight, Building2 } from 'lucide-react'
 import { useLanguage, useTranslationNamespace } from '@/components/language-provider'
-import { toast } from 'sonner'
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
 const FORM_STEPS = ['email', 'details', 'password', 'security'] as const
@@ -75,24 +72,12 @@ export default function RegisterPage() {
   const [recoveryEmail, setRecoveryEmail] = useState('')
   /* security toggles */
   const [enableRecoveryEmail, setEnableRecoveryEmail] = useState(false)
-  const [enable2FA, setEnable2FA] = useState(false)
-
-  /* 2FA setup state */
-  const [twoFAStep, setTwoFAStep] = useState(false)
-  const [setupState, setSetupState] = useState<'idle' | 'loading' | 'scanning' | 'verifying'>('idle')
-  const [is2FAVerifying, setIs2FAVerifying] = useState(false)
-  const [qrDataUrl, setQrDataUrl] = useState('')
-  const [secret, setSecret] = useState('')
-  const [verifyCode, setVerifyCode] = useState('')
-  const [copied, setCopied] = useState(false)
 
   /* ui state */
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [stepIndex, setStepIndex] = useState(0)
-  const [bankStep, setBankStep] = useState(false)
-  const [isConnectingBank, setIsConnectingBank] = useState(false)
-  const [connectError, setConnectError] = useState('')
+  const [accountCreated, setAccountCreated] = useState(false)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
 
   const currentStep = FORM_STEPS[stepIndex]
@@ -137,13 +122,27 @@ export default function RegisterPage() {
       goNext()
     } else if (currentStep === 'password') {
       if (!password || !confirmPassword) { setError(re.error_fill_passwords || 'Please fill in both password fields.'); return }
-      if (!allPassed) { setError(re.error_password_requirements || 'Password does not meet the requirements.'); return }
+      if (!allPassed) { setError(re.error_password_requirements || 'Password must be at least 12 characters and include a letter and a number.'); return }
       if (password !== confirmPassword) { setError(re.error_passwords_dont_match || 'Passwords do not match.'); return }
       goNext()
     }
   }, [currentStep, email, name, dateOfBirth, password, confirmPassword, allPassed, goNext, re])
 
-  /* ── Final submit (security step) ─────────────────────────────────── */
+  const startBankConnection = useCallback(async () => {
+    const returnTo = `${window.location.origin}/connect-bank/callback?redirect=%2F`
+    const { ok, data } = await postAuth<{ error?: string; connectUrl?: string }>('/api/bank/connect', {
+      returnTo,
+      action: 'connect',
+    })
+
+    if (!ok || !data.connectUrl) {
+      throw new Error(data.error || (re.error_connect_session || 'Failed to create connect session'))
+    }
+
+    window.location.assign(data.connectUrl)
+  }, [re.error_connect_session])
+
+  /* ── Final submit (create account + bank connection) ──────────────── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -153,100 +152,37 @@ export default function RegisterPage() {
     }
 
     setLoading(true)
+    let createdForThisAttempt = accountCreated
     try {
-      const { ok, data } = await postAuth<{ error?: string }>('/api/auth/register', {
-        name,
-        email,
-        dateOfBirth,
-        password,
-        recoveryEmail: (enableRecoveryEmail && recoveryEmail) || undefined,
-      }, { withCredentials: true })
+      if (!accountCreated) {
+        const { ok, data } = await postAuth<{ error?: string }>('/api/auth/register', {
+          name,
+          email,
+          dateOfBirth,
+          password,
+          recoveryEmail: (enableRecoveryEmail && recoveryEmail) || undefined,
+        }, { withCredentials: true })
 
-      if (!ok) {
-        setError(data.error || (re.error_registration_failed || 'Registration failed'))
-        return
+        if (!ok) {
+          setError(data.error || (re.error_registration_failed || 'Registration failed'))
+          return
+        }
+
+        setAccountCreated(true)
+        createdForThisAttempt = true
       }
 
-      if (enable2FA) {
-        setTwoFAStep(true)
-        start2FASetup()
-      } else {
-        setBankStep(true)
-      }
+      await startBankConnection()
     } catch (e) {
-      setError(e instanceof Error ? e.message : (re.error_registration_unknown || 'Unknown error during registration.'))
+      setError(
+        createdForThisAttempt
+          ? e instanceof Error ? e.message : (re.error_connection_failed || 'Connection failed')
+          : e instanceof Error ? e.message : (re.error_registration_unknown || 'Unknown error during registration.')
+      )
     } finally {
       setLoading(false)
     }
   }
-
-  /* ── 2FA setup handlers ──────────────────────────────────────────── */
-  const start2FASetup = useCallback(async () => {
-    setSetupState('loading')
-    try {
-      const res = await fetch('/api/auth/2fa/setup', { method: 'POST', credentials: 'include' })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        toast.error(d.error || (re.error_2fa_setup || 'Failed to set up 2FA'))
-        setSetupState('idle')
-        return
-      }
-      const data = await res.json()
-      setSecret(data.secret)
-      const QRCode = await import('qrcode')
-      const toDataURL = QRCode.toDataURL || QRCode.default?.toDataURL
-      const url = await toDataURL(data.otpauthUrl, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
-      setQrDataUrl(url)
-      setSetupState('scanning')
-    } catch {
-      toast.error(re.error_2fa_setup || 'Failed to set up 2FA')
-      setSetupState('idle')
-    }
-  }, [re.error_2fa_setup])
-
-  const handleVerify2FA = useCallback(async () => {
-    if (!verifyCode || verifyCode.length < 6) { toast.error('Please enter the 6-digit code'); return }
-    setIs2FAVerifying(true)
-    try {
-      const { ok, data } = await postAuth<{ error?: string }>('/api/auth/2fa/verify', { code: verifyCode }, { withCredentials: true })
-      if (!ok) { toast.error(data.error || 'Invalid code'); setIs2FAVerifying(false); return }
-      toast.success(re.twofa_enabled || '2FA has been enabled!')
-      setBankStep(true)
-      setTwoFAStep(false)
-    } catch {
-      toast.error(re.error_2fa_enable || 'Failed to enable 2FA')
-      setIs2FAVerifying(false)
-    }
-  }, [verifyCode, re.error_2fa_enable, re.twofa_enabled])
-
-  const copySecret = useCallback(() => {
-    navigator.clipboard.writeText(secret)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [secret])
-
-  /* ── Bank connect ────────────────────────────────────────────────── */
-  const handleBankConnect = useCallback(async () => {
-    setIsConnectingBank(true)
-    setConnectError('')
-
-    try {
-      const returnTo = `${window.location.origin}/Accounts/callback?redirect=%2F`
-      const { ok, data } = await postAuth<{ error?: string; connectUrl?: string }>('/api/bank/connect', {
-        returnTo,
-        action: 'connect',
-      })
-
-      if (!ok || !data.connectUrl) {
-        throw new Error(data.error || (re.error_connect_session || 'Failed to create connect session'))
-      }
-
-      window.location.assign(data.connectUrl)
-    } catch (err) {
-      setConnectError(err instanceof Error ? err.message : (re.error_connection_failed || 'Connection failed'))
-      setIsConnectingBank(false)
-    }
-  }, [re.error_connect_session, re.error_connection_failed])
 
   /* ── Slide animation class ──────────────────────────────────────── */
   const slideClass =
@@ -259,152 +195,7 @@ export default function RegisterPage() {
      ═════════════════════════════════════════════════════════════════════ */
   return (
     <AuthShell>
-      {twoFAStep ? (
-        /* ── 2FA Setup step ─────────────────────────────────────── */
-        <div className="space-y-4 animate-fade-in">
-          <div className="flex flex-col items-center text-center gap-3 mb-2">
-            <div className="flex items-center justify-center w-14 h-14 sq-full bg-blue-500/10 mb-1">
-              <ShieldCheck className="w-7 h-7 text-blue-500 dark:text-blue-400" />
-            </div>
-            <h1 className="text-[22px] font-bold tracking-tight text-black dark:text-white">Set up Two-Factor Authentication</h1>
-            <p className="text-[15px] text-neutral-400">Scan the QR code with your authenticator app</p>
-          </div>
-
-          {setupState === 'loading' && (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-            </div>
-          )}
-
-          {setupState === 'scanning' && qrDataUrl && (
-            <div className="space-y-5">
-              <div className="flex justify-center">
-                <div className={cn(UDS.largeTileSurface, "p-3")}>
-                  <div className="sq-xl p-1" style={{ backgroundColor: "#fff" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- QR is a generated data URL; next/image adds no value here */}
-                    <img src={qrDataUrl} alt="2FA QR Code" className="h-[180px] w-[180px]" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-[12px] font-medium text-neutral-400 text-center">Or enter this code manually:</p>
-                <div className="flex items-center justify-center gap-2">
-                  <code className={`${UDS.inlineSurface} select-all px-3 py-2 text-[13px] font-mono tracking-wider text-neutral-900 dark:text-white`}>
-                    {secret}
-                  </code>
-                  <Button type="button" variant="glass" size="icon" onClick={copySecret}>
-                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-[13px] font-medium text-neutral-400 text-center">Enter the 6-digit code from your app:</p>
-                <div className="flex justify-center">
-                  <InputOTP maxLength={6} value={verifyCode} onChange={setVerifyCode} autoFocus>
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    type="button"
-                    variant="glass"
-                    size="lg"
-                    className="flex-1"
-                    onClick={() => { setTwoFAStep(false); setBankStep(true) }}
-                  >
-                    Skip
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="solid"
-                    size="lg"
-                    className="auth-primary-button flex-1"
-                    onClick={handleVerify2FA}
-                    disabled={is2FAVerifying || verifyCode.length < 6}
-                  >
-                    {is2FAVerifying
-                      ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Verifying...</>
-                      : <><ShieldCheck className="w-4 h-4 mr-2" />Enable 2FA</>}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {setupState === 'idle' && (
-            <div className="space-y-3">
-              <p className="text-sm text-center text-neutral-400">Something went wrong setting up 2FA.</p>
-              <div className="flex gap-2">
-                <Button type="button" variant="glass" size="lg" className="flex-1" onClick={() => { setTwoFAStep(false); setBankStep(true) }}>
-                  Skip
-                </Button>
-                <Button type="button" variant="solid" size="lg" className="auth-primary-button flex-1" onClick={start2FASetup}>
-                  Try again
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : bankStep ? (
-        /* ── Step 4 — Bank connection ──────────────────────────────── */
-        <div className="space-y-4 animate-fade-in">
-          <div className="flex flex-col items-center text-center gap-3 mb-2">
-            <div className="flex items-center justify-center w-14 h-14 sq-full bg-emerald-500/10 mb-1">
-              <CheckCircle2 className="w-7 h-7 text-emerald-500 dark:text-emerald-400" />
-            </div>
-            <h1 className="text-[22px] font-bold tracking-tight text-black dark:text-white">Account created!</h1>
-            <p className="text-[15px] text-neutral-400">
-              Connect your bank to automatically import accounts &amp; transactions into your personal finance dashboard.
-            </p>
-          </div>
-
-          <div className={`${UDS.surface} p-4`}>
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex items-center justify-center w-8 h-8 shrink-0 sq-full bg-blue-500/10">
-                <Building2 className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-              </div>
-              <div className="text-sm">
-                <p className="font-medium text-black dark:text-white">How it works</p>
-                <ol className="mt-1.5 list-inside list-decimal space-y-1 text-neutral-400">
-                  <li>You&apos;ll be redirected to Salt Edge Connect</li>
-                  <li>Choose your bank and log in securely</li>
-                  <li>Authorize Argent to read your data</li>
-                  <li>Accounts &amp; transactions are imported automatically</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-
-          <div className={`${UDS.surface} border-dashed p-3 text-center text-xs text-neutral-400`}>
-            <p>Your banking credentials are handled directly by your bank.</p>
-            <p className="mt-1">Argent never sees or stores your login details.</p>
-          </div>
-
-          <ErrorAlert message={connectError} />
-
-          <div className="space-y-4 pt-2">
-            <Button type="button" variant="solid" size="lg" className="auth-primary-button w-full gap-2" disabled={isConnectingBank} onClick={handleBankConnect}>
-              {isConnectingBank ? <><Loader2 className="w-5 h-5 animate-spin" />Connecting...</> : <><Building2 className="w-5 h-5" />Connect Your Bank</>}
-            </Button>
-            <Button asChild variant="glass" size="lg" className="w-full">
-              <Link href="/">
-                Skip for now — I&apos;ll add accounts later
-              </Link>
-            </Button>
-          </div>
-        </div>
-      ) : (
-        /* ── Form steps 1–4 ────────────────────────────────────────── */
-        <>
+      <>
           <AuthHeader page="register" registerSubtitleKey={`subtitle_${currentStep}`} />
 
           <form
@@ -444,7 +235,7 @@ export default function RegisterPage() {
 
                   <div className="pb-2"><OAuthButtons mode="register" /></div>
 
-                  <p className="text-[13px] text-center text-neutral-400 pt-2">
+                  <p className="text-sm text-center text-neutral-400 pt-2">
                     Already have an account?{' '}<Link href="/login">Sign in</Link>
                   </p>
                 </div>
@@ -531,98 +322,50 @@ export default function RegisterPage() {
             {currentStep === 'security' && (
               <div key="step-security" className={slideClass}>
                 <div className="space-y-4">
-                  <Accordion
-                    type="multiple"
-                    value={[
-                      ...(enableRecoveryEmail ? ['recovery'] : []),
-                      ...(enable2FA ? ['2fa'] : []),
-                    ]}
-                  >
-                    {/* Recovery Email toggle */}
-                    <AccordionItem value="recovery">
-                      <AccordionTrigger asChild>
-                        <div className={`${UDS.surface} p-4 transition-colors duration-200 ${enableRecoveryEmail ? 'ring-1 ring-emerald-500/20' : ''}`}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={cn(
-                                "flex items-center justify-center w-9 h-9 sq-full transition-colors duration-200",
-                                enableRecoveryEmail ? "bg-emerald-500/15" : "bg-emerald-500/10"
-                              )}>
-                                <Shield className={cn(
-                                  "w-4.5 h-4.5 transition-colors duration-200",
-                                  enableRecoveryEmail ? "text-emerald-500" : "text-emerald-500/60 dark:text-emerald-400/60"
-                                )} />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-black dark:text-white">Recovery Email</p>
-                                <p className="text-xs text-neutral-400">Recover your account if you lose access</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={enableRecoveryEmail}
-                              onCheckedChange={setEnableRecoveryEmail}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="px-1">
-                          <Input
-                            id="recoveryEmail"
-                            type="email"
-                            label="Recovery Email"
-                            value={recoveryEmail}
-                            onChange={e => setRecoveryEmail(e.target.value)}
-                            disabled={loading}
-                            autoFocus={enableRecoveryEmail}
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                  <div className="w-full">
+                    <div className="flex min-h-8 items-center justify-between gap-4">
+                      <label htmlFor="enableRecoveryEmail" className="min-w-0 flex-1 cursor-pointer text-left text-sm font-medium text-neutral-400 transition-colors hover:text-foreground">
+                        Add recovery email
+                      </label>
+                      <Checkbox
+                        id="enableRecoveryEmail"
+                        checked={enableRecoveryEmail}
+                        onCheckedChange={checked => setEnableRecoveryEmail(checked === true)}
+                        disabled={loading}
+                        data-squircle-expand-radius="false"
+                        className="size-5 !border-[color:color-mix(in_srgb,var(--foreground)_28%,transparent)] !bg-[color:color-mix(in_srgb,var(--foreground)_8%,transparent)] !text-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:!border-[color:color-mix(in_srgb,var(--foreground)_44%,transparent)] hover:!bg-[color:color-mix(in_srgb,var(--foreground)_12%,transparent)] data-[state=checked]:!border-foreground data-[state=checked]:!bg-foreground data-[state=checked]:!text-background data-[state=checked]:shadow-[0_8px_22px_rgba(0,0,0,0.24)]"
+                        style={{
+                          "--sq-static-r": "4px",
+                          "--sq-base-r": "4px",
+                          "--sq-scale": "0",
+                        } as React.CSSProperties}
+                      />
+                    </div>
 
-                    {/* 2FA toggle */}
-                    <AccordionItem value="2fa" className="mt-4">
-                      <AccordionTrigger asChild>
-                        <div className={`${UDS.surface} p-4 transition-colors duration-200 ${enable2FA ? 'ring-1 ring-blue-500/20' : ''}`}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={cn(
-                                "flex items-center justify-center w-9 h-9 sq-full transition-colors duration-200",
-                                enable2FA ? "bg-blue-500/15" : "bg-blue-500/10"
-                              )}>
-                                <Smartphone className={cn(
-                                  "w-4.5 h-4.5 transition-colors duration-200",
-                                  enable2FA ? "text-blue-500" : "text-blue-500/60 dark:text-blue-400/60"
-                                )} />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-black dark:text-white">Two-Factor Authentication</p>
-                                <p className="text-xs text-neutral-400">Extra security with an authenticator app</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={enable2FA}
-                              onCheckedChange={setEnable2FA}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="px-1">
-                          <div className={`${UDS.surface} border-dashed p-3 text-xs text-neutral-400`}>
-                            <p>After creating your account, you&apos;ll scan a QR code with your authenticator app (Google Authenticator, Authy, etc.) and enter a 6-digit code to confirm.</p>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                    <div
+                      aria-hidden={!enableRecoveryEmail}
+                      className={cn(
+                        "transition-[max-height,margin-top,opacity,transform] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
+                        enableRecoveryEmail ? "mt-3 max-h-24 translate-y-0 overflow-visible opacity-100" : "pointer-events-none mt-0 max-h-0 -translate-y-1 overflow-hidden opacity-0",
+                      )}
+                    >
+                      <Input
+                        id="recoveryEmail"
+                        type="email"
+                        label="Recovery Email"
+                        value={recoveryEmail}
+                        onChange={e => setRecoveryEmail(e.target.value)}
+                        disabled={loading || !enableRecoveryEmail}
+                      />
+                    </div>
+                  </div>
 
                   <Button type="submit" variant="solid" size="lg" className="auth-primary-button w-full" disabled={loading}>
                     {loading
-                      ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Creating account...</>
-                      : <>Create account<ArrowRight className="w-4 h-4" /></>}
+                      ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Opening bank setup...</>
+                      : accountCreated
+                        ? <><Building2 className="w-4 h-4" />Connect bank</>
+                        : <><Building2 className="w-4 h-4" />Create &amp; connect bank</>}
                   </Button>
                   <BackButton onClick={goBack} label="Back" />
                 </div>
@@ -633,7 +376,6 @@ export default function RegisterPage() {
             <StepIndicator current={stepIndex} total={TOTAL_STEPS} />
           </form>
         </>
-      )}
     </AuthShell>
   )
 }

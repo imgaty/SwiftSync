@@ -48,7 +48,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-2 whitespace-nowrap sq-lg border px-3 py-2 text-[13px] leading-snug outline-none transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150",
+        "flex w-fit items-center justify-between gap-2 whitespace-nowrap sq-lg border px-3 py-2 text-sm leading-snug outline-none transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150",
         UDS.surface,
         "text-neutral-700 dark:text-neutral-300",
         UDS.itemHover,
@@ -89,14 +89,12 @@ function SelectContent({
       <SelectPrimitive.Content
         ref={contentRef}
         data-slot="select-content"
+        data-squircle-expand-radius="false"
         collisionPadding={16}
         avoidCollisions={true}
         className={cn(
-          UDS.transientSurface,
-          UDS.glideSurface,
-          UDS.animateIn,
-          UDS.animateOut,
-          "relative z-[999] max-h-(--radix-select-content-available-height) w-[220px] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          UDS.dropdownSurface,
+          "relative z-[1100] max-h-(--radix-select-content-available-height) w-[220px] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className
@@ -152,6 +150,7 @@ function SelectItem({
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      data-squircle-expand-radius="false"
       data-glide-item={dataGlideItem}
       className={cn(
         UDS.item,

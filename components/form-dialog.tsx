@@ -81,7 +81,7 @@ export function FormDialogHeader({
     return (
         <DialogHeader className={cn("shrink-0 items-center gap-2 px-8 pb-2 text-center sm:text-center", className)}>
             {icon}
-            <DialogTitle className={cn("text-[1.75rem] font-semibold leading-tight tracking-tight", titleClassName)}>
+            <DialogTitle className={cn("text-3xl font-semibold leading-tight tracking-tight", titleClassName)}>
                 {title}
             </DialogTitle>
             {description ? (
@@ -113,17 +113,17 @@ export function FormSelectTrigger({
     return (
         <SelectTrigger
             className={cn(
-                "group/form-select relative h-14 w-full px-4 pt-4 text-left text-[15px] font-normal text-foreground",
+                "group/form-select relative h-14 w-full px-4 pt-4 text-left text-base font-normal text-foreground",
                 UDS.controlSurface,
                 UDS.inputHover,
                 UDS.inputFocus,
                 UDS.itemOpen,
-                "*:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:truncate *:data-[slot=select-value]:text-[15px] *:data-[slot=select-value]:text-foreground",
+                "*:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:truncate *:data-[slot=select-value]:text-base *:data-[slot=select-value]:text-foreground",
                 className,
             )}
             {...props}
         >
-            <span className="pointer-events-none absolute left-4 top-4 origin-left -translate-y-3 scale-[0.75] text-[15px] leading-none text-muted-foreground/80 transition-colors duration-200 group-data-[state=open]/form-select:text-blue-600/80 dark:group-data-[state=open]/form-select:text-blue-300/80">
+            <span className="pointer-events-none absolute left-4 top-4 origin-left -translate-y-3 scale-[0.75] text-base leading-none text-muted-foreground/80 transition-colors duration-200 group-data-[state=open]/form-select:text-blue-600/80 dark:group-data-[state=open]/form-select:text-blue-300/80">
                 {label}
             </span>
             {children}

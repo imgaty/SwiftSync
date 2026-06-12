@@ -83,7 +83,7 @@ export function BorderDropdown({
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 sq-lg gap-1 px-2 text-[11px]"
+                    className="h-7 sq-lg gap-1 px-2 text-xs"
                     title="Borders"
                 >
                     <Grid3x3 className="size-3.5" />
@@ -97,7 +97,7 @@ export function BorderDropdown({
                             key={p.type}
                             type="button"
                             onClick={() => onApply(p.type, selectedStyle, selectedColor)}
-                            className="flex cursor-pointer flex-col items-center justify-center gap-1 sq-md border border-transparent sq-border-muted px-1 py-2 text-[10px] text-neutral-500 transition-colors hover:text-foreground"
+                            className="flex cursor-pointer flex-col items-center justify-center gap-1 sq-md border border-transparent sq-border-muted px-1 py-2 text-xs text-neutral-500 transition-colors hover:text-foreground"
                             title={p.label}
                         >
                             {p.icon}
@@ -109,7 +109,7 @@ export function BorderDropdown({
                 <DropdownSeparator />
 
                 <div className="pt-2">
-                    <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Border style</div>
+                    <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-400">Border style</div>
                     <div className="flex gap-1">
                     {BORDER_STYLES.map((s) => (
                         <Button variant="ghost"
@@ -129,7 +129,7 @@ export function BorderDropdown({
                     ))}
                 </div>
 
-                    <div className="mt-3 mb-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Border color</div>
+                    <div className="mt-3 mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-400">Border color</div>
                     <div className="grid grid-cols-10 gap-1">
                         {COLOR_PRESETS.slice(0, 40).map((c) => (
                             <Button variant="ghost"
@@ -150,7 +150,7 @@ export function BorderDropdown({
 
                     <div className="mt-2 flex items-center gap-2">
                         <div className="size-5 sq-sm border sq-border-muted" style={{ backgroundColor: selectedColor }} />
-                        <span className="font-mono text-[10px] text-neutral-500">{selectedColor.toUpperCase()}</span>
+                        <span className="font-mono text-xs text-neutral-500">{selectedColor.toUpperCase()}</span>
                         <input
                             type="color"
                             value={selectedColor}

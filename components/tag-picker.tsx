@@ -199,7 +199,7 @@ export function TagPill({
         <span
             className={cn(
                 UDS.pillSurface,
-                "inline-flex h-5 items-center px-2 text-[11px] font-medium",
+                "inline-flex h-5 items-center px-2 text-xs font-medium",
                 className,
             )}
             style={
@@ -322,7 +322,7 @@ export function TagPicker({
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search tags…"
-                            className="flex-1 bg-transparent outline-none text-[13px] placeholder:text-neutral-400"
+                            className="flex-1 bg-transparent outline-none text-sm placeholder:text-neutral-400"
                         />
                     </div>
                 )}
@@ -485,7 +485,7 @@ function NewTagForm({
     return (
         <form onSubmit={handleSubmit} className="p-3 space-y-3">
             <div className="flex items-center justify-between">
-                <span className="text-[13px] font-semibold">New tag</span>
+                <span className="text-sm font-semibold">New tag</span>
                 <Button variant="ghost"
                     type="button"
                     onClick={onCancel}
@@ -497,7 +497,7 @@ function NewTagForm({
             </div>
 
             <div className="space-y-1.5">
-                <label className="text-[11px] text-neutral-400">Name</label>
+                <label className="text-xs text-neutral-400">Name</label>
                 <input
                     autoFocus
                     value={name}
@@ -506,14 +506,14 @@ function NewTagForm({
                     maxLength={50}
                     className={cn(
                         UDS.inlineSurface,
-                        "w-full px-2 py-1.5 text-[13px] outline-none",
+                        "w-full px-2 py-1.5 text-sm outline-none",
                         UDS.inputFocus,
                     )}
                 />
             </div>
 
             <div className="space-y-1.5">
-                <label className="text-[11px] text-neutral-400">Color</label>
+                <label className="text-xs text-neutral-400">Color</label>
                 <div className="flex flex-wrap gap-1.5">
                     {TAG_COLOR_PALETTE.map((c) => (
                         <Button variant="ghost"
@@ -533,7 +533,7 @@ function NewTagForm({
             </div>
 
             <div className="space-y-1.5">
-                <label className="text-[11px] text-neutral-400">Icon</label>
+                <label className="text-xs text-neutral-400">Icon</label>
                 <div className="grid grid-cols-9 gap-1">
                     {TAG_ICON_OPTIONS.map(({ name: iconName, Icon }) => (
                         <Button variant="ghost"
@@ -556,7 +556,7 @@ function NewTagForm({
 
             <div className="flex items-center gap-2 pt-1">
                 <span
-                    className="inline-flex items-center gap-1.5 px-2 py-1 sq-md text-[11px] font-medium border"
+                    className="inline-flex items-center gap-1.5 px-2 py-1 sq-md text-xs font-medium border"
                     style={{
                         backgroundColor: `${color}1a`,
                         borderColor: `${color}33`,
@@ -571,7 +571,7 @@ function NewTagForm({
                     type="button"
                     onClick={onCancel}
                     disabled={submitting}
-                    className="px-2.5 py-1 text-[12px] sq-md text-neutral-400 hover:text-black dark:hover:text-white"
+                    className="px-2.5 py-1 text-xs sq-md text-neutral-400 hover:text-black dark:hover:text-white"
                 >
                     Cancel
                 </Button>
@@ -579,7 +579,7 @@ function NewTagForm({
                     type="submit"
                     disabled={submitting || !name.trim()}
                     className={cn(
-                        "px-2.5 py-1 text-[12px] sq-md font-medium",
+                        "px-2.5 py-1 text-xs sq-md font-medium",
                         UDS.controlSurface,
                         UDS.itemHover,
                         "disabled:opacity-50 disabled:pointer-events-none",

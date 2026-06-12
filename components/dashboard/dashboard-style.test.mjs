@@ -68,12 +68,15 @@ const uds = readProjectFile("lib", "UDS.ts")
 const card = readProjectFile("components", "ui", "card.tsx")
 const button = readProjectFile("components", "ui", "button.tsx")
 const dialog = readProjectFile("components", "ui", "dialog.tsx")
+const dropdownMenu = readProjectFile("components", "ui", "dropdown-menu.tsx")
+const select = readProjectFile("components", "ui", "select.tsx")
 const sidebar = readProjectFile("components", "ui", "sidebar.tsx")
 const mobileDock = readProjectFile("components", "mobile-dock.tsx")
 const commandPalette = readProjectFile("components", "command-palette.tsx")
 const authShell = readProjectFile("components", "auth", "auth-shell.tsx")
 const loadingScreen = readProjectFile("components", "loading-screen.tsx")
 const squircleProvider = readProjectFile("components", "squircle-provider.tsx")
+const registerPage = readProjectFile("app", "(auth)", "register", "page.tsx")
 const spotlightProvider = readProjectFile("components", "surface-spotlight-provider.tsx")
 const chartDisplay = readProjectFile("components", "chart-display.tsx")
 const chartAreaInteractive = readProjectFile("components", "chart-area-interactive.tsx")
@@ -84,7 +87,8 @@ const inlineSurface = getConstBlock(primitives, "DASHBOARD_INLINE_SURFACE")
 const cardSurface = getConstBlock(primitives, "DASHBOARD_CARD_SURFACE")
 const iconBadge = getConstBlock(primitives, "DASHBOARD_CARD_ICON_BADGE")
 const statCardToneBlock = getLocalConstObjectBlock(uds, "UDS_STAT_CARD_TONE_CLASSES")
-const sqXlUtility = getCssBlock(globals, "@utility sq-xl")
+const sqNormalUtility = getCssBlock(globals, "@utility sq-normal")
+const sqBigUtility = getCssBlock(globals, "@utility sq-big")
 const squircleSurfaceBlock = getCssBlock(globals, ":where(.squircle-surface)")
 const udsSurfaceBlock = getCssBlock(globals, ".uds-surface")
 const udsBgGlassBlock = getCssBlock(globals, ".uds-bg-glass")
@@ -155,7 +159,7 @@ assert.doesNotMatch(
 )
 assert.match(
     primitives,
-    /DASHBOARD_TITLE_CLASS = "truncate text-\[13px\] font-medium tracking-tight text-foreground-secondary sm:text-\[14px\]"/,
+    /DASHBOARD_TITLE_CLASS = "truncate text-sm font-medium tracking-tight text-foreground-secondary"/,
     "dashboard should expose one title style matching the analytics card title",
 )
 assert.match(
@@ -275,12 +279,12 @@ assert.doesNotMatch(
 )
 assert.match(
     sectionCards,
-    /text-\[1\.6rem\][\s\S]*sm:text-\[1\.7rem\]/,
+    /text-2xl[\s\S]*sm:text-3xl/,
     "dashboard summary cards should use a large bottom-right value treatment",
 )
 assert.match(
     sectionCards,
-    /text-\[15px\][\s\S]*sm:text-\[16px\]/,
+    /text-base[\s\S]*text-foreground-secondary/,
     "dashboard summary cards should use the larger lead-card label treatment",
 )
 assert.doesNotMatch(
@@ -335,12 +339,12 @@ assert.match(
 )
 assert.match(
     moduleGrid,
-    /"flex min-h-0 min-w-0 overflow-visible"/,
+    /"flex min-h-0 min-w-0"/,
     "dashboard module slots should stay layout-only and stretch nested panels without adding borders",
 )
 assert.doesNotMatch(
     moduleGrid,
-    /UDS\.surfaceClass|border:\s*"soft"|overflow-hidden sq-xl/,
+    /UDS\.surfaceClass|border:\s*"soft"|overflow-hidden sq-(?:normal|big|xl)/,
     "dashboard module slots should not add a second squircle border or clip nested UDS cards",
 )
 assert.match(
@@ -370,7 +374,7 @@ assert.match(
 )
 assert.match(
     analyticsPanel,
-    /ANALYTICS_TOGGLE_ITEM_CLASS = "h-7 min-w-8 px-2\.5 text-\[12px\] leading-none sm:min-w-\[7rem\] sm:px-3"/,
+    /ANALYTICS_TOGGLE_ITEM_CLASS = "h-7 min-w-8 px-2\.5 text-xs leading-none sm:min-w-\[7rem\] sm:px-3"/,
     "analytics view toggle items should have matching height and readable labels without mobile overflow",
 )
 assert.match(
@@ -635,7 +639,7 @@ assert.match(
 )
 assert.match(
     priorityBrief,
-    /text-\[1\.6rem\][\s\S]*sm:text-\[1\.7rem\]/,
+    /text-2xl[\s\S]*sm:text-3xl/,
     "priority brief cards should use the same bottom-right value treatment as dashboard stat cards",
 )
 assert.match(
@@ -670,13 +674,13 @@ assert.doesNotMatch(
 )
 assert.match(
     dashboardPage,
-    /gap-4 overflow-x-hidden overflow-y-visible p-3 md:p-4/,
-    "dashboard page should keep vertical page scroll available while guarding horizontal spill",
+    /gap-4 p-3 md:p-4/,
+    "dashboard page should let PageShell own the internal scroll container",
 )
 assert.doesNotMatch(
     dashboardPage,
-    /md:h-full|md:overflow-hidden|@\[900px\]\/main:overflow-hidden/,
-    "dashboard page should not lock desktop height or hide vertical overflow at the page level",
+    /overflow-y-visible|min-h-fit|min-h-full|md:h-full|md:overflow-hidden|@\[900px\]\/main:overflow-hidden/,
+    "dashboard page should not override the fixed app frame or internal PageShell scroll",
 )
 assert.match(
     supportSidebar,
@@ -700,7 +704,7 @@ assert.match(
 )
 assert.match(
     uds,
-    /cardSurface:[\s\S]*squircle-surface uds-card-surface[\s\S]*udsSurface\(\{[\s\S]*background:\s*false[\s\S]*blur:\s*false[\s\S]*border:\s*"soft"[\s\S]*radius:\s*"xl"/,
+    /cardSurface:[\s\S]*squircle-surface uds-card-surface[\s\S]*udsSurface\(\{[\s\S]*background:\s*false[\s\S]*blur:\s*false[\s\S]*border:\s*"soft"[\s\S]*radius:\s*"normal"/,
     "UDS card surfaces should keep an explicit flat card fill while the UDS layer stays transparent",
 )
 assert.match(
@@ -813,10 +817,10 @@ assert.match(
     /@supports\s*\(corner-shape:\s*squircle\)[\s\S]*corner-shape:\s*squircle;/,
     "native squircle-capable browsers should use corner-shape so borders and shadows follow the same curve",
 )
-assert.match(
+assert.doesNotMatch(
     globals,
-    /@supports\s*\(corner-shape:\s*squircle\)[\s\S]*clip-path:\s*none;/,
-    "native squircle rendering should disable fallback clipping",
+    /@supports\s*\(corner-shape:\s*squircle\)[\s\S]*\)\s*\{\s*-webkit-clip-path:\s*none;\s*clip-path:\s*none;\s*corner-shape:\s*squircle;/,
+    "native squircle-capable browsers should keep deterministic clipping instead of switching to engine-specific native corner geometry",
 )
 assert.match(
     globals,
@@ -825,8 +829,38 @@ assert.match(
 )
 assert.match(
     globals,
+    /--squircle-normal:\s*22px;[\s\S]*--squircle-big:\s*36px;[\s\S]*--app-window-radius:\s*var\(--squircle-big\);[\s\S]*--app-control-radius:\s*var\(--squircle-normal\);/,
+    "app squircle tokens should expose normal 22px and big 36px sizes",
+)
+assert.match(
+    globals,
+    /:where\(\s*\[data-slot="alert"\][\s\S]*?\[data-slot="input"\][\s\S]*?\[data-slot="textarea"\s*\]\s*\)\s*\{[\s\S]*?--sq-static-r:\s*var\(--app-control-radius\);[\s\S]*?--sq-base-r:\s*var\(--app-control-radius\);[\s\S]*?--sq-scale:\s*0;[\s\S]*?clip-path:\s*var\(--sq-clip-lg\);/,
+    "shared UI data-slot controls should use the fixed normal squircle radius app-wide",
+)
+assert.match(
+    globals,
     /\[data-slot="button"\][\s\S]*\[data-slot="textarea"\][\s\S]*corner-shape:\s*squircle;/,
     "shared UI data-slot controls should receive the app-wide squircle safety net",
+)
+assert.match(
+    globals,
+    /\[data-slot="dropdown-menu-item"\][\s\S]*\[data-slot="select-item"\][\s\S]*border-radius:\s*var\(--sq-r\);/,
+    "shared menu item rows should receive the app-wide squircle radius paint",
+)
+assert.match(
+    globals,
+    /\[data-slot="select-content"\][\s\S]*\[data-slot="select-item"\][\s\S]*--sq-static-r:\s*var\(--squircle-big\);[\s\S]*--sq-base-r:\s*var\(--squircle-big\);[\s\S]*--sq-scale:\s*0;/,
+    "select surfaces should pin the big squircle radius with radius growth disabled",
+)
+assert.doesNotMatch(
+    dropdownMenu,
+    /data-squircle-expand-radius="false"/,
+    "dropdown primitives should use shared radius behavior without dropdown-specific radius opt-outs",
+)
+assert.match(
+    select,
+    /data-slot="select-content"[\s\S]*data-squircle-expand-radius="false"[\s\S]*data-slot="select-item"[\s\S]*data-squircle-expand-radius="false"/,
+    "select primitives should explicitly disable radius exponentiation/growth",
 )
 assert.match(
     globals,
@@ -840,8 +874,8 @@ assert.match(
 )
 assert.match(
     globals,
-    /@utility sq-xl[\s\S]*clip-path:\s*polygon\(/,
-    "sq-xl should be available as a reusable app-wide squircle utility with an inline path",
+    /@utility sq-normal[\s\S]*clip-path:\s*polygon\(/,
+    "sq-normal should be available as the reusable app-wide normal squircle utility with an inline path",
 )
 assert.match(
     rootLayout,
@@ -860,23 +894,43 @@ assert.match(
 )
 assert.match(
     squircleProvider,
+    /\[data-slot="dropdown-menu-item"\][\s\S]*\[data-slot="select-item"\]/,
+    "squircle provider should measure menu and select item rows, not only their popover containers",
+)
+assert.match(
+    squircleProvider,
     /CSS\.supports\("corner-shape", "squircle"\)/,
     "squircle provider should detect native CSS corner-shape support",
 )
 assert.match(
     squircleProvider,
     /dataset\.squircleRenderer\s*=\s*"native"/,
-    "squircle provider should use native CSS corners when normal borders can follow the same curve",
+    "squircle provider should retain native CSS corners as a fallback when measured path clips are unavailable",
 )
 assert.match(
     squircleProvider,
-    /Math\.sqrt\(width \* height\)[\s\S]*1 - Math\.exp\(-lengthFromArea \/ Math\.max\(1, growthDamping\)\)[\s\S]*setProperty\("--sq-measured-r"/,
-    "squircle provider should derive measured radius from bounded element area growth and write it to CSS",
+    /supportsNativeCornerShape\(\)\s*&&\s*!supportsCssPathClip\(\)/,
+    "squircle provider should prefer measured path clips over native corner-shape when both are available",
 )
 assert.match(
     squircleProvider,
-    /AREA_RADIUS_RESPONSE\s*=\s*320[\s\S]*Math\.max\(0, scale\) \* AREA_RADIUS_RESPONSE \* easedArea/,
-    "squircle radius growth should expand additively so larger base radii do not over-grow",
+    /MAXIMUM_RADIUS_MULTIPLIER\s*=\s*1\.35[\s\S]*const radiusFloor\s*=\s*Math\.max\(0, baseRadius\)[\s\S]*const radiusCeiling\s*=\s*radiusFloor \* MAXIMUM_RADIUS_MULTIPLIER[\s\S]*Math\.sqrt\(width \* height\)[\s\S]*1 - Math\.exp\(-lengthFromArea \/ Math\.max\(1, growthDamping\)\)[\s\S]*radiusFloor \* easedArea[\s\S]*Math\.min\(radiusCeiling, radiusFloor \+ proportionalLift\)[\s\S]*setProperty\("--sq-measured-r"/,
+    "squircle provider should grow each element from its configured base radius up to 1.35x that radius",
+)
+assert.match(
+    squircleProvider,
+    /DEFAULT_RADIUS_GROWTH_DAMPING\s*=\s*1000/,
+    "squircle radius growth should use a slow enough damping curve that medium cards do not immediately hit the cap",
+)
+assert.match(
+    squircleProvider,
+    /scale <= 0[\s\S]*return radiusFloor/,
+    "squircle radius growth should be disabled when scale is zero",
+)
+assert.match(
+    squircleProvider,
+    /getAttribute\("data-squircle-expand-radius"\)[\s\S]*\["false", "0", "no", "off"\][\s\S]*const scale = expandsRadius \? readNumber\(style\.getPropertyValue\("--sq-scale"\), 0\) : 0/,
+    "squircle radius growth should be opt-out per element with data-squircle-expand-radius",
 )
 assert.match(
     squircleProvider,
@@ -982,18 +1036,28 @@ for (const [name, block] of [
 }
 assert.match(
     sidebar,
-    /app-framework-surface sq-xl[\s\S]*min-h-svh[\s\S]*overflow-x-hidden[\s\S]*border-transparent[\s\S]*shadow-none/,
-    "the app framework should keep the shell material while allowing the page surface to grow vertically",
+    /app-framework-surface sq-big[\s\S]*h-svh[\s\S]*min-h-0[\s\S]*overflow-hidden[\s\S]*border-border[\s\S]*shadow-none/,
+    "the app framework should keep a fixed shell while PageShell owns internal scrolling",
 )
 assert.match(
     sidebar,
-    /uds-bg-glass uds-backdrop[\s\S]*text-sidebar-foreground/,
-    "the desktop sidebar chrome should keep the UDS glass material instead of becoming opaque",
+    /h-dvh min-h-0 w-full overflow-hidden/,
+    "the sidebar provider should pin the app frame to the viewport instead of the document scroll height",
+)
+assert.match(
+    sidebar,
+    /bg-sidebar[\s\S]*text-sidebar-foreground/,
+    "the desktop sidebar chrome should use the solid sidebar color token",
 )
 assert.doesNotMatch(
     sidebar,
-    /peer-data-\[variant=inset\]:sq-xl|peer-data-\[variant=inset\]:ml-0|peer-data-\[side=right\][\s\S]{0,120}:mr-0/,
-    "the app framework should not hide its squircle rules behind peer variants or zero the sidebar-side margin",
+    /peer-data-\[variant=inset\]:sq-(?:normal|big|xl)/,
+    "the app framework should not hide its squircle rules behind peer variants",
+)
+assert.match(
+    sidebar,
+    /peer-data-\[side=left\]:md:ml-0![\s\S]*peer-data-\[side=right\]:md:mr-0!/,
+    "the app framework should remove the gap between the sidebar and app frame on the active sidebar side",
 )
 assert.match(
     sidebar,
@@ -1007,8 +1071,8 @@ assert.match(
 )
 assert.match(
     globals,
-    /\.app-framework-surface[\s\S]*background-color:\s*var\(--background\);[\s\S]*background-image:\s*none;[\s\S]*backdrop-filter:\s*none;[\s\S]*border-style:\s*solid;[\s\S]*border-width:\s*1px;[\s\S]*border-color:\s*color-mix\(in srgb, var\(--foreground\) 28%, transparent\) !important;[\s\S]*\.dark \.app-framework-surface[\s\S]*background-color:\s*var\(--background\);[\s\S]*background-image:\s*none;[\s\S]*border-color:\s*color-mix\(in srgb, var\(--foreground\) 28%, transparent\) !important;/,
-    "the app framework surface should be solid black or white with the same visible foreground-color border in both themes",
+    /\.app-framework-surface[\s\S]*background-color:\s*var\(--background\);[\s\S]*background-image:\s*none;[\s\S]*backdrop-filter:\s*none;[\s\S]*border-style:\s*solid;[\s\S]*border-width:\s*1px;[\s\S]*border-color:\s*var\(--border\) !important;[\s\S]*\.dark \.app-framework-surface[\s\S]*background-color:\s*var\(--background\);[\s\S]*background-image:\s*none;[\s\S]*border-color:\s*var\(--border\) !important;/,
+    "the app framework surface should use the shared app border token in both themes",
 )
 assert.match(
     globals,
@@ -1157,37 +1221,72 @@ assert.match(
 )
 assert.match(
     globals,
-    /\*\s*\{[\s\S]*--sq-base-r:\s*0px;[\s\S]*--sq-r:\s*var\(--sq-measured-r,\s*var\(--sq-base-r\)\);[\s\S]*--sq-q:\s*0\.6;[\s\S]*--sq-scale:\s*0;[\s\S]*--sq-growth-damping:\s*420;/,
-    "squircle runtime metadata should reset at every element before utilities opt in",
+    /\*\s*\{[\s\S]*--sq-base-r:\s*0px;[\s\S]*--sq-r:\s*var\(--sq-measured-r,\s*var\(--sq-base-r\)\);[\s\S]*--sq-q:\s*0\.6;[\s\S]*--sq-scale:\s*0;[\s\S]*--sq-growth-damping:\s*1000;/,
+    "squircle runtime metadata should reset at every element without imposing a global radius floor or cap",
 )
 assert.match(
-    sqXlUtility,
-    /--sq-base-r:\s*14px;[\s\S]*--sq-scale:\s*0\.014;/,
-    "sq-xl should expose a base radius plus measured area scale for the squircle runtime",
+    globals,
+    /data-squircle-expand-radius="false"[\s\S]*--sq-scale:\s*0\s*!important;[\s\S]*--sq-base-r:\s*var\(--sq-static-r\)\s*!important;/,
+    "squircle radius growth opt-outs should keep each utility's fixed radius in CSS too",
 )
 assert.match(
-    sqXlUtility,
-    /clip-path:\s*shape\(from\s+14px\s+0/,
-    "sq-xl should keep fixed-size curved fallback geometry for browsers without native corner-shape",
-)
-assert.ok(
-    sqXlUtility.indexOf("clip-path: polygon(") < sqXlUtility.indexOf("clip-path: shape("),
-    "sq-xl should place curved geometry after the polygon fallback",
+    registerPage,
+    /<div className="flex min-h-8 items-center justify-between gap-4">[\s\S]*<label htmlFor="enableRecoveryEmail"[\s\S]*Add recovery email[\s\S]*<Checkbox[\s\S]*className="[^"]*size-5[^"]*data-\[state=checked\]:!bg-foreground[^"]*data-\[state=checked\]:!text-background[^"]*"[\s\S]*"--sq-static-r": "4px"[\s\S]*transition-\[max-height,margin-top,opacity,transform\][\s\S]*<Input[\s\S]*id="recoveryEmail"/,
+    "recovery email should be a compact right-checkbox form row with a fixed-height direct input reveal",
 )
 assert.doesNotMatch(
-    sqXlUtility,
+    registerPage,
+    /<AccordionItem value="recovery"|<Accordion[\s\S]*Recovery Email toggle/,
+    "recovery email should not add an accordion container around the input",
+)
+assert.doesNotMatch(
+    registerPage,
+    /AnimatePresence|motion\.div|height:\s*"auto"|grid-template-rows/,
+    "recovery email reveal should avoid height-auto or grid-row motion that causes choppy animation",
+)
+assert.doesNotMatch(
+    registerPage,
+    /id="recoveryEmail"[\s\S]{0,500}data-squircle-expand-radius="false"/,
+    "recovery email input should keep the same expandable auth radius as other auth inputs",
+)
+assert.match(
+    sqNormalUtility,
+    /--sq-base-r:\s*var\(--squircle-normal\);[\s\S]*--sq-scale:\s*0;/,
+    "sq-normal should expose the fixed normal squircle radius for the runtime",
+)
+assert.match(
+    sqNormalUtility,
+    /clip-path:\s*shape\(from\s+var\(--squircle-normal\)\s+0/,
+    "sq-normal should keep tokenized fixed-size fallback geometry for browsers without native corner-shape",
+)
+assert.ok(
+    sqNormalUtility.indexOf("clip-path: polygon(") < sqNormalUtility.indexOf("clip-path: shape("),
+    "sq-normal should place curved geometry after the polygon fallback",
+)
+assert.doesNotMatch(
+    sqNormalUtility,
     /clip-path:\s*shape\(from\s+10%/,
-    "sq-xl first-paint fallback should not scale its visible corner size from card width before measurement",
+    "sq-normal first-paint fallback should not scale its visible corner size from card width",
+)
+assert.match(
+    sqBigUtility,
+    /--sq-base-r:\s*var\(--squircle-big\);[\s\S]*--sq-scale:\s*0;/,
+    "sq-big should expose the fixed big squircle radius for large surfaces",
+)
+assert.match(
+    sqBigUtility,
+    /clip-path:\s*shape\(from\s+var\(--squircle-big\)\s+0/,
+    "sq-big should keep tokenized fixed-size fallback geometry for browsers without native corner-shape",
 )
 assert.match(
     globals,
     /:where\(\.squircle-surface\)\s*\{[\s\S]*clip-path:\s*polygon\(/,
-    "large squircle surfaces should use an inline deterministic squircle path",
+    "default squircle surfaces should use an inline deterministic squircle path",
 )
 assert.match(
     squircleSurfaceBlock,
-    /--sq-base-r:\s*16px;[\s\S]*--sq-scale:\s*0\.016;/,
-    "large squircle surfaces should share the same measured area scale as other 16px squircle utilities",
+    /--sq-base-r:\s*var\(--squircle-normal\);[\s\S]*--sq-scale:\s*0;/,
+    "default squircle surfaces should use the fixed normal squircle radius",
 )
 assert.match(
     globals,
@@ -1196,17 +1295,17 @@ assert.match(
 )
 assert.match(
     squircleSurfaceBlock,
-    /clip-path:\s*shape\(from\s+16px\s+0/,
-    "large squircle surfaces should keep fixed-size curved fallback geometry for browsers without native corner-shape",
+    /clip-path:\s*shape\(from\s+var\(--squircle-normal\)\s+0/,
+    "default squircle surfaces should keep tokenized fixed-size fallback geometry for browsers without native corner-shape",
 )
 assert.ok(
     squircleSurfaceBlock.indexOf("clip-path: polygon(") < squircleSurfaceBlock.indexOf("clip-path: shape("),
-    "large squircle surfaces should place curved geometry after the polygon fallback",
+    "default squircle surfaces should place curved geometry after the polygon fallback",
 )
 assert.doesNotMatch(
     squircleSurfaceBlock,
     /clip-path:\s*shape\(from\s+10%/,
-    "large squircle surfaces should not scale their visible corner size from card width",
+    "default squircle surfaces should not scale their visible corner size from card width",
 )
 assert.match(
     globals,

@@ -240,8 +240,7 @@ export function ContextMenuPortal({
             aria-label="Context menu"
             className={cn(
                 "fixed w-[220px] max-w-[calc(100vw-2rem)]",
-                "sq-radius-plus",
-                UDS.transientSurface,
+                UDS.dropdownSurface,
                 closing ? UDS.animateOut.replace('data-[state=closed]:', '') : UDS.animateIn.replace('data-[state=open]:', ''),
             )}
             contentClassName="space-y-0.5"
@@ -443,7 +442,7 @@ function SubMenu({
                     ref={subRef}
                     role="menu"
                     aria-label={`${item.label} submenu`}
-                    className={cn("fixed w-[220px]", UDS.transientSurface, closing ? UDS.animateOut.replace('data-[state=closed]:', '') : UDS.animateIn.replace('data-[state=open]:', ''))}
+                    className={cn("fixed w-[220px]", UDS.dropdownSurface, closing ? UDS.animateOut.replace('data-[state=closed]:', '') : UDS.animateIn.replace('data-[state=open]:', ''))}
                     contentClassName="space-y-0.5"
                     style={{ position: "fixed", left: subPos.left, top: subPos.top, pointerEvents: closing ? "none" : undefined }}
                     defaultActiveId={defaultActiveId}

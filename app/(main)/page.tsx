@@ -61,7 +61,6 @@ export default function Dashboard() {
                         dashboardLabels={dashboard.dashboardLabels}
                         formatCompactCurrency={dashboard.formatCompactCurrency}
                         isLoading={dashboard.isLoading}
-                        isPortuguese={dashboard.isPortuguese}
                         locale={dashboard.locale}
                         recentTransactions={dashboard.recentTransactions}
                         transactionsLabel={dashboard.transactionsLabel}
@@ -79,7 +78,6 @@ export default function Dashboard() {
                         dashboardLabels={dashboard.dashboardLabels}
                         formatCompactCurrency={dashboard.formatCompactCurrency}
                         isLoading={dashboard.isLoading}
-                        isPortuguese={dashboard.isPortuguese}
                         locale={dashboard.locale}
                         upcomingBills={dashboard.upcomingBills}
                     />
@@ -90,7 +88,7 @@ export default function Dashboard() {
 
     return (
         <PageShell
-            className="gap-4 overflow-x-hidden overflow-y-visible p-3 md:p-4"
+            className="gap-4 p-3 md:p-4"
         >
             <PageHeader
                 breadcrumbs={[
@@ -137,7 +135,7 @@ export default function Dashboard() {
             />
 
             <div
-                className="flex min-w-0 flex-col gap-4 overflow-visible @[900px]/main:min-h-0 @[900px]/main:flex-1"
+                className="flex min-h-0 min-w-0 flex-col gap-4 @[900px]/main:flex-1"
                 data-dashboard-priority-layout="dropdown"
             >
                 <PageSection stagger={1} className="shrink-0">

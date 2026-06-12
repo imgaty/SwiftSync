@@ -15,6 +15,7 @@ import { useLanguage } from "@/components/language-provider"
 import { Button } from "@/components/ui/button"
 import { useSidebar } from "@/components/ui/sidebar"
 import { getSidebarPageDefinitions, type SidebarPageId } from "@/lib/sidebar-pages"
+import { getTranslations } from "@/lib/translation-utils"
 import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +25,7 @@ export function MobileDock() {
     const pathname = usePathname()
     const { t, language } = useLanguage()
     const { setOpenMobile } = useSidebar()
+    const nav = getTranslations(t, "nav")
     const pages = getSidebarPageDefinitions(t, language)
     const primaryPages = PRIMARY_DOCK_IDS
         .map((id) => pages.find((page) => page.id === id))
@@ -33,7 +35,7 @@ export function MobileDock() {
 
     return (
         <nav
-            aria-label={language === "pt" ? "Navegacao principal" : "Primary navigation"}
+            aria-label={nav.primary_navigation || "Primary navigation"}
             className="pointer-events-none fixed inset-x-0 bottom-0 z-[950] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:hidden"
         >
             <div className={cn(UDS.mobileDockSurface, "pointer-events-auto mx-auto grid max-w-md grid-cols-5 gap-1 p-1.5")}>
@@ -47,7 +49,7 @@ export function MobileDock() {
                             href={page.url}
                             aria-current={active ? "page" : undefined}
                             className={cn(
-                                "flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-1.5 text-[10px] font-medium leading-none text-muted-foreground transition-[background-color,color,transform] duration-150 sq-xl",
+                                "flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-1.5 text-xs font-medium leading-none text-muted-foreground transition-[background-color,color,transform] duration-150 sq-normal",
                                 UDS.itemHover,
                                 active && "bg-[color:var(--selection-cell-background)] text-foreground sq-border-strong",
                                 "active:scale-[0.97]",
@@ -63,14 +65,14 @@ export function MobileDock() {
                     type="button"
                     variant="ghost"
                     className={cn(
-                        "flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-1.5 text-[10px] font-medium leading-none text-muted-foreground sq-xl",
+                        "flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-1.5 text-xs font-medium leading-none text-muted-foreground sq-normal",
                         UDS.itemHover,
                     )}
                     onClick={() => setOpenMobile(true)}
-                    aria-label={language === "pt" ? "Mais paginas" : "More pages"}
+                    aria-label={nav.more_pages || "More pages"}
                 >
                     <MoreHorizontal className="size-4 shrink-0" />
-                    <span>{language === "pt" ? "Mais" : "More"}</span>
+                    <span>{nav.more || "More"}</span>
                 </Button>
             </div>
         </nav>

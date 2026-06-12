@@ -303,8 +303,8 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
 
     const handleCopyTotal = React.useCallback(() => {
         navigator.clipboard.writeText(formatCurrency(selectedTotal, { locale }))
-        toast.success(locale.startsWith("pt") ? "Valor copiado" : "Value copied")
-    }, [selectedTotal, formatCurrency, locale])
+        toast.success(labels.value_copied ?? "Value copied")
+    }, [selectedTotal, formatCurrency, locale, labels.value_copied])
 
     const handleExpandFirstChart = React.useCallback(() => {
         if (charts.length > 0) {
@@ -370,7 +370,7 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                                         isActive={selectedChart.metricType === type}
                                                         onClick={() => handleMetricTypeChange(type)}
                                                         className={cn(
-                                                            compact ? "h-7 px-3 text-[12px]" : "px-4 text-[13px]",
+                                                            compact ? "h-7 px-3 text-xs" : "px-4 text-sm",
                                                             controlsWrapped && "flex-1",
                                                         )}
                                                     >
@@ -435,7 +435,7 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                                                 onClick={() => handleCategoryToggle(cat)}
                                                                 data-active={isChecked ? "true" : undefined}
                                                                 className={cn(
-                                                                    "inline-flex items-center gap-1 px-2 py-0.5 sq-full text-[11px] font-medium transition-all",
+                                                                    "inline-flex items-center gap-1 px-2 py-0.5 sq-full text-xs font-medium transition-all",
                                                                     isChecked
                                                                         ? UDS.selectedControl
                                                                         : cn("text-neutral-600 dark:text-neutral-400", UDS.itemHover),
@@ -450,8 +450,8 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                                 <div className={cn("h-px", UDS.hairline)} />
                                                 {/* Actions */}
                                                 <div className="flex gap-1">
-                                                    <Button variant="ghost" onClick={handleSelectAll} className="flex-1 px-2 py-1 sq text-[11px] text-primary transition-colors hover:bg-primary/10">{labels.select_all ?? "All"}</Button>
-                                                    <Button variant="ghost" onClick={handleClearAll} className={cn("flex-1 px-2 py-1 sq text-[11px] text-muted-foreground transition-colors", UDS.itemHover)}>{labels.clear ?? "Clear"}</Button>
+                                                    <Button variant="ghost" onClick={handleSelectAll} className="flex-1 px-2 py-1 sq text-xs text-primary transition-colors hover:bg-primary/10">{labels.select_all ?? "All"}</Button>
+                                                    <Button variant="ghost" onClick={handleClearAll} className={cn("flex-1 px-2 py-1 sq text-xs text-muted-foreground transition-colors", UDS.itemHover)}>{labels.clear ?? "Clear"}</Button>
                                                 </div>
                                             </div>
                                         </DropdownContent>
@@ -494,12 +494,12 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                         <div className="flex items-center min-w-0 flex-1">
                                             <Select value={periodType} onValueChange={setPeriodType} disabled={hasCustomDateRange}>
                                                 <SelectTrigger
-                                                    className={cn("w-full min-w-[92px] sq-full border-transparent sq-border-muted bg-transparent px-2 text-[12px] font-semibold text-foreground-secondary hover:text-foreground focus:ring-0 data-[size=sm]:h-7", UDS.itemHover)}
+                                                    className={cn("w-full min-w-[92px] sq-full border-transparent sq-border-muted bg-transparent px-2 text-xs font-semibold text-foreground-secondary hover:text-foreground focus:ring-0 data-[size=sm]:h-7", UDS.itemHover)}
                                                     size="sm"
                                                 >
                                                     <SelectValue />
                                                 </SelectTrigger>
-                                                <SelectContent className="sq-xl">
+                                                <SelectContent className="sq-big">
                                                     {timeRangeEntries.map(([key, label]) => <SelectItem key={key} value={key}>{label as string}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
@@ -512,7 +512,7 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                                         isActive={periodType === key && !hasCustomDateRange}
                                                         onClick={handlePeriodTypeClick(key)}
                                                         disabled={hasCustomDateRange}
-                                                        className="px-3 text-[13px]"
+                                                        className="px-3 text-sm"
                                                     >
                                                         {label as string}
                                                     </TabSwitcherItem>
@@ -697,17 +697,17 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
 
                             <ContextMenuItem onClick={handleCopyTotal}>
                                 <ClipboardCopy />
-                                {locale.startsWith("pt") ? "Copiar total" : "Copy total"}
+                                {labels.copy_total ?? "Copy total"}
                             </ContextMenuItem>
                             <ContextMenuSeparator />
                             <ContextMenuItem onClick={handleExpandFirstChart}>
                                 <Maximize2 />
-                                {locale.startsWith("pt") ? "Expandir gráfico" : "Expand chart"}
+                                {labels.expand_chart ?? "Expand chart"}
                             </ContextMenuItem>
                             {!compact && (
                                 <ContextMenuItem onClick={handleOpenSettings}>
                                     <Settings2 />
-                                    {locale.startsWith("pt") ? "Personalizar" : "Customize"}
+                                    {labels.customize ?? "Customize"}
                                 </ContextMenuItem>
                             )}
                         </ContextMenuContent>
@@ -718,13 +718,13 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                 <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
                     <SheetContent className="sm:max-w-md p-0 flex flex-col">
                         <SheetHeader className={cn("border-b px-6 pb-4 pt-6", UDS.cardDivider)}>
-                            <SheetTitle className="text-[15px] font-semibold tracking-tight">{labels.customize_chart ?? "Customize Chart"}</SheetTitle>
-                            <SheetDescription className={cn("text-[13px]", UDS.muted)}>{labels.customize_chart_desc ?? "Configure the display options for this chart."}</SheetDescription>
+                            <SheetTitle className="text-base font-semibold tracking-tight">{labels.customize_chart ?? "Customize Chart"}</SheetTitle>
+                            <SheetDescription className={cn("text-sm", UDS.muted)}>{labels.customize_chart_desc ?? "Configure the display options for this chart."}</SheetDescription>
                         </SheetHeader>
                         <div className="flex-1 overflow-y-auto px-6 py-5">
                             <div className="space-y-6">
                                 <div className="space-y-2.5">
-                                    <Label className="text-[12px] font-semibold tracking-wide text-neutral-400">{labels.metric_type ?? "Data Type"}</Label>
+                                    <Label className="text-xs font-semibold tracking-wide text-neutral-400">{labels.metric_type ?? "Data Type"}</Label>
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {METRIC_TYPES.map(type => {
                                             const isSelected = selectedChart.metricType === type
@@ -736,7 +736,7 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                                     onClick={() => updateSelectedChart({ metricType: type, selectedCategories: [], showTotal: true })}
                                                     className={cn(
                                                         UDS.cardSurface,
-                                                        "flex items-center justify-center gap-2 px-3 py-3 text-[13px] font-medium transition-all duration-150",
+                                                        "flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-all duration-150",
                                                         isSelected ? UDS.cardSelected : UDS.cardHover,
                                                     )}
                                                 >
@@ -748,7 +748,7 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                     </div>
                                 </div>
                                 <div className="space-y-2.5">
-                                    <Label className="text-[12px] font-semibold tracking-wide text-neutral-400">{labels.chart_type ?? "Chart Style"}</Label>
+                                    <Label className="text-xs font-semibold tracking-wide text-neutral-400">{labels.chart_type ?? "Chart Style"}</Label>
                                     <div className="grid grid-cols-3 gap-2.5">
                                         {DISPLAY_MODES.map(mode => {
                                             const Icon = DISPLAY_MODE_ICONS[mode]
@@ -760,7 +760,7 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                                     onClick={() => updateSelectedChart({ displayMode: mode })}
                                                     className={cn(
                                                         UDS.cardSurface,
-                                                        "flex flex-col items-center gap-2 px-2 py-3 text-[12px] font-medium transition-all duration-150",
+                                                        "flex flex-col items-center gap-2 px-2 py-3 text-xs font-medium transition-all duration-150",
                                                         isSelected ? UDS.cardSelected : UDS.cardHover,
                                                     )}
                                                 >
@@ -773,10 +773,10 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                 </div>
                                 <div className="space-y-2.5">
                                     <div className="flex justify-between items-center">
-                                        <Label className="text-[12px] font-semibold tracking-wide text-neutral-400">{labels.filter ?? "Categories"}</Label>
+                                        <Label className="text-xs font-semibold tracking-wide text-neutral-400">{labels.filter ?? "Categories"}</Label>
                                         <div className="flex gap-1.5">
-                                            <Button variant="ghost" onClick={handleSelectAll} className={cn("text-[12px] px-2 py-1 sq-md text-primary font-medium transition-colors", UDS.pillSurface, UDS.itemHover)}>{labels.select_all ?? "All"}</Button>
-                                            <Button variant="ghost" onClick={handleClearAll} className={cn("text-[12px] px-2 py-1 sq-md font-medium transition-colors", UDS.cardSurface, UDS.cardHover, UDS.muted)}>{labels.clear ?? "Clear"}</Button>
+                                            <Button variant="ghost" onClick={handleSelectAll} className={cn("text-xs px-2 py-1 sq-md text-primary font-medium transition-colors", UDS.pillSurface, UDS.itemHover)}>{labels.select_all ?? "All"}</Button>
+                                            <Button variant="ghost" onClick={handleClearAll} className={cn("text-xs px-2 py-1 sq-md font-medium transition-colors", UDS.cardSurface, UDS.cardHover, UDS.muted)}>{labels.clear ?? "Clear"}</Button>
                                         </div>
                                     </div>
                                     <div className={cn(UDS.cardSurface, "overflow-hidden p-0")}>
@@ -789,8 +789,8 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                         )}>
                                             <input type="checkbox" checked={selectedChart.showTotal} onChange={handleTotalToggle} className="w-4 h-4 sq accent-primary" />
                                             <span className="w-2.5 h-2.5 sq-full shrink-0" style={metricColorStyle} />
-                                            <span className="font-medium flex-1 text-[13px]">{labels.total ?? "Total"}</span>
-                                            <span className={cn("text-[12px]", UDS.muted)}>{labels[selectedChart.metricType]}</span>
+                                            <span className="font-medium flex-1 text-sm">{labels.total ?? "Total"}</span>
+                                            <span className={cn("text-xs", UDS.muted)}>{labels[selectedChart.metricType]}</span>
                                         </label>
                                         <div className="max-h-60 overflow-y-auto divide-y divide-border">
                                             {categoryOptions.map(cat => {
@@ -804,7 +804,7 @@ export function ChartAreaInteractive({ accountIds, compact = false, transactions
                                                     )}>
                                                         <input type="checkbox" checked={checked} onChange={() => handleCategoryToggle(cat)} className="w-4 h-4 sq accent-primary" />
                                                         <span className="w-2.5 h-2.5 sq-full shrink-0" style={{ backgroundColor: getConfigColor(chartConfig, cat) }} />
-                                                        <span className="flex-1 text-[13px]">{chartConfig[cat as keyof typeof chartConfig]?.label ?? cat}</span>
+                                                        <span className="flex-1 text-sm">{chartConfig[cat as keyof typeof chartConfig]?.label ?? cat}</span>
                                                     </label>
                                                 )
                                             })}

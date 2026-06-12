@@ -12,13 +12,18 @@
 import * as React from "react"
 import { Contrast } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
+import { useLanguage } from "@/components/language-provider"
 
 import { Button } from "@/components/ui/button"
 import { SmartTooltip } from "@/components/ui/tooltip"
+import { getTranslations } from "@/lib/translation-utils"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const { t } = useLanguage()
   const [mounted, setMounted] = React.useState(false)
+  const commandCopy = getTranslations(t, "command_palette")
+  const label = commandCopy.toggle_theme || "Toggle theme"
 
   React.useEffect(() => {
     setMounted(true)
@@ -37,10 +42,10 @@ export function ThemeToggle() {
   }
 
   return (
-    <SmartTooltip text="Toggle theme" group="header" forceSide="bottom">
+    <SmartTooltip text={label} group="header" forceSide="bottom">
       <Button variant="ghost" size="icon" onClick={toggleTheme}>
         <Contrast />
-        <span className="sr-only">Toggle theme</span>
+        <span className="sr-only">{label}</span>
       </Button>
     </SmartTooltip>
   )

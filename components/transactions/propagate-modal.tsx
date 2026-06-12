@@ -154,7 +154,7 @@ export function PropagateTagModal({
                     className={cn(
                         "fixed left-1/2 top-1/2 z-[1000] -translate-x-1/2 -translate-y-1/2",
                         "w-[calc(100vw-2rem)] max-w-[480px]",
-                        UDS.containerClass({ padding: false }),
+                        UDS.containerClass({ background: "modal", padding: false, zIndex: "z-[1000]" }),
                         "p-6",
                         "data-[state=open]:animate-in data-[state=closed]:animate-out",
                         "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
@@ -169,7 +169,7 @@ export function PropagateTagModal({
                         {addedSlugs.map((s, i) => (
                             <React.Fragment key={s}>
                                 {i > 0 && ", "}
-                                <code className={cn("px-1 py-0.5 text-[12px]", UDS.pillSurface)}>
+                                <code className={cn("px-1 py-0.5 text-xs", UDS.pillSurface)}>
                                     {s}
                                 </code>
                             </React.Fragment>
@@ -204,7 +204,7 @@ export function PropagateTagModal({
                         />
                     </div>
 
-                    <div className={`${UDS.inlineSurface} mt-5 px-3 py-2.5 text-[13px]`}>
+                    <div className={`${UDS.inlineSurface} mt-5 px-3 py-2.5 text-sm`}>
                         {noDims ? (
                             <span className="text-neutral-400">Select at least one dimension.</span>
                         ) : previewError ? (
@@ -257,7 +257,7 @@ function DimensionRow({
     return (
         <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="text-[13px] font-medium leading-tight">{label}</p>
+                <p className="text-sm font-medium leading-tight">{label}</p>
                 <p className="text-xs text-neutral-400 leading-snug">{description}</p>
             </div>
             <AnimatedToggle checked={checked} onCheckedChange={onChange} />

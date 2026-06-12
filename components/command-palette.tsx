@@ -36,6 +36,7 @@ import {
     CommandShortcut,
 } from "@/components/ui/command"
 import { useLanguage } from "@/components/language-provider"
+import { LANGUAGE_OPTIONS, type Language } from "@/lib/languages"
 
 const COMMAND_PALETTE_OPEN_EVENT = "argent-command-palette:open"
 
@@ -130,14 +131,12 @@ export function CommandPalette() {
                 <CommandSeparator />
 
                 <CommandGroup heading={t.command_palette?.language || "Language"}>
-                    <CommandItem onSelect={() => runCommand(() => setLanguage("en"))}>
-                        🇬🇧 {t.command_palette?.switch_to_english || "English"}
-                        {language === "en" && <CommandShortcut>✓</CommandShortcut>}
-                    </CommandItem>
-                    <CommandItem onSelect={() => runCommand(() => setLanguage("pt"))}>
-                        🇵🇹 {t.command_palette?.switch_to_portuguese || "Português"}
-                        {language === "pt" && <CommandShortcut>✓</CommandShortcut>}
-                    </CommandItem>
+                    {LANGUAGE_OPTIONS.map((option) => (
+                        <CommandItem key={option.value} onSelect={() => runCommand(() => setLanguage(option.value as Language))}>
+                            {option.label}
+                            {language === option.value && <CommandShortcut>✓</CommandShortcut>}
+                        </CommandItem>
+                    ))}
                 </CommandGroup>
             </CommandList>
         </CommandDialog>

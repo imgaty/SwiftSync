@@ -14,7 +14,7 @@ import Link from "next/link"
 import {
     Filter,
     Shield, ShieldAlert, ShieldCheck, Eye, MoreHorizontal,
-    Ban, Unlock, KeyRound, Lock, RefreshCw, Users,
+    Ban, Unlock, Lock, RefreshCw, Users,
 } from "lucide-react"
 
 import { AdminHeader } from "@/components/admin/admin-header"
@@ -65,7 +65,6 @@ interface AdminUserRow {
     email: string
     role: string
     status: string
-    twoFactorEnabled: boolean
     createdAt: string
     lastLoginAt: string | null
     lastLoginIp: string | null
@@ -146,7 +145,6 @@ export default function AdminUsersPage() {
     const [search, setSearch] = React.useState("")
     const [statusFilter, setStatusFilter] = React.useState("all")
     const [roleFilter, setRoleFilter] = React.useState("all")
-    const [twoFaFilter, setTwoFaFilter] = React.useState("all")
     const [sortBy, setSortBy] = React.useState("createdAt")
     const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc")
 
@@ -186,7 +184,6 @@ export default function AdminUsersPage() {
             if (debouncedSearch) params.set("search", debouncedSearch)
             if (statusFilter !== "all") params.set("status", statusFilter)
             if (roleFilter !== "all") params.set("role", roleFilter)
-            if (twoFaFilter !== "all") params.set("2fa", twoFaFilter)
             params.set("sortBy", sortBy)
             params.set("sortDir", sortDir)
 
@@ -200,7 +197,7 @@ export default function AdminUsersPage() {
         } finally {
             setLoading(false)
         }
-    }, [debouncedSearch, statusFilter, roleFilter, twoFaFilter, sortBy, sortDir, up.failed_to_load])
+    }, [debouncedSearch, statusFilter, roleFilter, sortBy, sortDir, up.failed_to_load])
 
     React.useEffect(() => { fetchUsers(1) }, [fetchUsers])
 
@@ -281,16 +278,6 @@ export default function AdminUsersPage() {
                         <SelectItem value="user">{up.user_role || "User"}</SelectItem>
                         <SelectItem value="admin">{up.admin_role || "Admin"}</SelectItem>
                         <SelectItem value="superadmin">{up.super_admin || "Superadmin"}</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select value={twoFaFilter} onValueChange={setTwoFaFilter}>
-                    <SelectTrigger className="w-[110px]" size="sm">
-                        <SelectValue placeholder={up.twofa || "2FA"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">{up.all_twofa || "All 2FA"}</SelectItem>
-                        <SelectItem value="enabled">{ad.enabled || "2FA On"}</SelectItem>
-                        <SelectItem value="disabled">{ad.disabled || "2FA Off"}</SelectItem>
                     </SelectContent>
                 </Select>
             </TableToolbarGroup>
@@ -381,7 +368,6 @@ export default function AdminUsersPage() {
                                             {up.col_status || "Status"}
                                         </TableSortHeader>
                                     </TableHead>
-                                    <TableHead className="hidden md:table-cell">{up.col_twofa || "2FA"}</TableHead>
                                     <TableHead className="hidden lg:table-cell">{up.col_data || "Data"}</TableHead>
                                     <TableHead className="hidden md:table-cell">
                                         <TableSortHeader direction={sortDirection("lastLoginAt")} onClick={() => toggleSort("lastLoginAt")}>
@@ -398,10 +384,10 @@ export default function AdminUsersPage() {
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
-                                    <TableSkeletonRows rows={10} columns={8} widths={[168, 84, 84, 52, 116, 104, 92, 40]} />
+                                    <TableSkeletonRows rows={10} columns={7} widths={[168, 84, 84, 116, 104, 92, 40]} />
                                 ) : users.length === 0 ? (
                                     <TableEmptyRow
-                                        colSpan={8}
+                                        colSpan={7}
                                         title={up.no_users || "No users found"}
                                         description={up.no_users_hint || "Try adjusting your search or filters."}
                                     />
@@ -425,13 +411,6 @@ export default function AdminUsersPage() {
                                         </TableCell>
                                         <TableCell>{roleBadge(user.role, up)}</TableCell>
                                         <TableCell>{statusBadge(user.status, ad)}</TableCell>
-                                        <TableCell className="hidden md:table-cell">
-                                            {user.twoFactorEnabled ? (
-                                                <ShieldCheck className="size-4 text-emerald-500" />
-                                            ) : (
-                                                <span className="text-xs text-neutral-400">{ad.disabled || "Off"}</span>
-                                            )}
-                                        </TableCell>
                                         <TableCell className="hidden lg:table-cell">
                                             <div className="flex items-center gap-2 text-xs text-neutral-400">
                                                 <span title={up.col_transactions || "Transactions"}>{user._count.transactions} {up.txns_label || "txns"}</span>
@@ -489,13 +468,6 @@ export default function AdminUsersPage() {
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuSeparator />
-                                                    {user.twoFactorEnabled && (
-                                                        <DropdownMenuItem
-                                                            onClick={() => openAction(user, "reset_2fa", up.reset_2fa || "Reset 2FA", `${up.reset_2fa_confirm || "Remove 2FA from"} ${user.name}${up.reset_2fa_warning || "'s account? They'll need to set it up again."}`)}
-                                                        >
-                                                            <KeyRound className="size-4 mr-2" /> {up.reset_2fa || "Reset 2FA"}
-                                                        </DropdownMenuItem>
-                                                    )}
                                                     <DropdownMenuItem
                                                         onClick={() => openAction(user, "force_reset_password", up.force_reset_password || "Force Password Reset", `${up.force_reset_confirm || "Send a password reset link to"} ${user.name}?`)}
                                                     >

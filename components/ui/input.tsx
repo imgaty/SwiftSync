@@ -9,7 +9,7 @@
 //
 'use client';
 
-import { useState, useRef, useEffect, useMemo, type InputHTMLAttributes, type Ref, type KeyboardEvent, type ClipboardEvent } from 'react';
+import { useState, useRef, useEffect, type InputHTMLAttributes, type Ref } from 'react';
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -90,7 +90,7 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                     "w-full",
                     hasFloatingLabel ? "h-14 px-4 pb-2 pt-6" : "h-11 px-4",
                     UDS.inputSurface,
-                    "text-left text-[15px] text-foreground caret-blue-600 dark:caret-blue-300",
+                    "text-left text-base text-foreground caret-blue-600 dark:caret-blue-300",
                     "placeholder:text-muted-foreground/60",
                     UDS.inputHover,
                     UDS.inputFocus,
@@ -107,7 +107,7 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
                     htmlFor = {props.id}
                     className = {cn(
                         "absolute left-4 top-1/2",
-                        "pointer-events-none text-[15px] leading-none",
+                        "pointer-events-none text-base leading-none",
                         "transition-[color,translate,scale] duration-200 ease-out will-change-transform",
                         "transform origin-top-left",
                         isFocused ? "text-blue-600/80 dark:text-blue-300/80" : "text-muted-foreground/80",
@@ -150,114 +150,4 @@ function Input({ className, inputClassName, type, label, value, onChange, disabl
     );
 }
 
-// =============================================================================
-// OTP INPUT — individual "bubble" boxes for each digit
-// =============================================================================
-
-export interface OTPInputProps {
-    length?: number;
-    value: string;
-    onChange: (value: string) => void;
-    disabled?: boolean;
-    autoFocus?: boolean;
-    ariaLabel?: string;
-    className?: string;
-    ref?: Ref<HTMLDivElement>;
-}
-
-function OTPInput({ length = 6, value, onChange, disabled, autoFocus, ariaLabel = "Verification code", className, ref }: OTPInputProps) {
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const digits = useMemo(
-        () => value.split('').concat(Array(length).fill('')).slice(0, length),
-        [value, length]
-    );
-
-    const focusInput = (index: number) => {
-        if (index >= 0 && index < length) inputRefs.current[index]?.focus();
-    };
-
-    const handleChange = (index: number, char: string) => {
-        if (!/^\d?$/.test(char)) return;
-
-        const next = [...digits];
-        next[index] = char;
-
-        onChange(next.join('').replace(/\s/g, ''));
-
-        if (char && index < length - 1) focusInput(index + 1);
-    };
-
-    const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Backspace') {
-            e.preventDefault();
-
-            if (digits[index]) {
-                handleChange(index, '');
-
-            } else if (index > 0) {
-                handleChange(index - 1, '');
-                focusInput(index - 1);
-            }
-
-        } else if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            focusInput(index - 1);
-
-        } else if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            focusInput(index + 1);
-        }
-    };
-
-    const handlePaste = (e: ClipboardEvent) => {
-        e.preventDefault();
-        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length);
-        
-        if (pasted) {
-            onChange(pasted);
-            focusInput(Math.min(pasted.length, length - 1));
-        }
-    };
-
-    return (
-        <div ref = {ref} role = "group" aria-label = {ariaLabel} className = {cn("flex items-center justify-center gap-2", className)}>
-            {digits.map((digit, i) => (
-                <input
-                    key = {i}
-                    ref = {el => { inputRefs.current[i] = el; }}
-                    type = "text"
-                    value = {digit || ''}
-                    inputMode = "numeric"
-                    autoComplete = "one-time-code"
-                    maxLength = {1}
-
-                    onChange = {e => handleChange(i, e.target.value.replace(/\D/g, ''))}
-                    onKeyDown = {e => handleKeyDown(i, e)}
-                    onPaste = {handlePaste}
-                    onFocus = {e => e.target.select()}
-
-                    disabled = {disabled}
-                    autoFocus = {autoFocus && i === 0}
-                    aria-label = {`${ariaLabel} digit ${i + 1}`}
-
-                    className = {cn(
-                        "w-12 h-16",
-                        UDS.inputSurface,
-                        "text-center text-[24px] font-bold sq-10",
-                        "text-foreground caret-blue-600 dark:caret-blue-300",
-                        UDS.inputHover,
-                        UDS.inputFocus,
-                        "transition-[background-color,border-color,color,box-shadow,opacity] duration-200",
-                        "placeholder:text-muted-foreground/50",
-
-                        disabled && cn(UDS.disabledSurface, "cursor-not-allowed border-border/60 opacity-70")
-                    )}
-
-                    placeholder="·"
-                />
-            ))}
-        </div>
-    );
-}
-
-export { Input, OTPInput };
+export { Input };

@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 const Base = cn(
     "inline-flex items-center justify-center gap-2 | whitespace-nowrap",
     "outline-none focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-    "text-[13px] font-semibold leading-tight",
+    "text-sm font-semibold leading-tight",
     "cursor-pointer active:scale-[0.97] shrink-0",
     "transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-200 ease-out",
     "disabled:pointer-events-none disabled:opacity-45",
@@ -70,9 +70,9 @@ const buttonVariants = cva(Base, {
         },
 
         size: {
-            default: "h-9 | px-4 py-2 | sq-xl",
+            default: "h-9 | px-4 py-2 | sq-normal",
             sm: "h-8 | px-3 gap-1.5 | sq-lg",
-            lg: "h-12 | px-6 | sq-xl",
+            lg: "h-12 | px-6 | sq-normal text-base",
             icon: "size-7 | sq-full | scale-100 hover:scale-105",
             "icon-sm": "size-6 | sq-full | scale-100 hover:scale-105",
             "icon-lg": "size-8 | sq-full | scale-100 hover:scale-105",

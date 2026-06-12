@@ -561,21 +561,21 @@ export function AccountsTable({ data: initialData, isLoading = false }: { data: 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_assets || "Total Assets"}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{at.total_assets || "Total Assets"}</p>
                     <p className="text-lg font-bold mt-1 text-green-600 tabular-nums">{formatCurrency(totals.assets)}</p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_liabilities || "Total Liabilities"}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{at.total_liabilities || "Total Liabilities"}</p>
                     <p className="text-lg font-bold mt-1 text-red-600 tabular-nums">-{formatCurrency(totals.liabilities)}</p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.net_worth || "Net Worth"}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{at.net_worth || "Net Worth"}</p>
                     <p className={`text-lg font-bold mt-1 tabular-nums ${totals.netWorth >= 0 ? "text-green-600" : UDS.destructiveText}`}>
                         {formatCurrency(totals.netWorth)}
                     </p>
                 </div>
                 <div className={`${UDS.tileSurface} p-3.5`}>
-                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">{at.total_accounts || "Total Accounts"}</p>
+                    <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{at.total_accounts || "Total Accounts"}</p>
                     <p className="text-lg font-bold mt-1 tabular-nums">{totals.totalAccounts}</p>
                 </div>
             </div>

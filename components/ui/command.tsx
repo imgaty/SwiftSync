@@ -63,7 +63,7 @@ function CommandInput({
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "placeholder:text-neutral-400 dark:placeholder:text-neutral-400 flex h-11 w-full sq-lg bg-transparent py-3 text-[13px] outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "placeholder:text-neutral-400 dark:placeholder:text-neutral-400 flex h-11 w-full sq-lg bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
@@ -94,7 +94,7 @@ function CommandEmpty({
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
-      className="py-6 text-center text-[13px] text-neutral-400"
+      className="py-6 text-center text-sm text-neutral-400"
       {...props}
     />
   )
@@ -108,7 +108,7 @@ function CommandGroup({
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        "text-neutral-400 **:[[cmdk-group-heading]]:text-neutral-400 dark:**:[[cmdk-group-heading]]:text-neutral-400 overflow-hidden p-[7px] **:[[cmdk-group-heading]]:px-2.5 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:tracking-wide",
+        "text-neutral-400 **:[[cmdk-group-heading]]:text-neutral-400 dark:**:[[cmdk-group-heading]]:text-neutral-400 overflow-hidden p-[7px] **:[[cmdk-group-heading]]:px-2.5 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:tracking-wide",
         className
       )}
       {...props}

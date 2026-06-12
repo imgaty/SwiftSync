@@ -298,7 +298,7 @@ export function TransactionEditDialog({
                         {stepIndex === 3 && (
                             <FormDialogBody key="transaction-tags">
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] text-neutral-400">Tags</label>
+                                    <label className="text-xs text-neutral-400">Tags</label>
                                     <div className={`${UDS.controlSurface} px-2 py-1.5`}>
                                         <TagPicker value={tags} onChange={setTags} />
                                     </div>

@@ -18,13 +18,16 @@ import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
 import { useCurrency } from "@/components/currency-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
+import { getTranslations } from "@/lib/translation-utils"
 import { Wallet, TrendingUp, TrendingDown, CreditCard, Plus } from "lucide-react"
 
 export default function AccountsPage() {
     const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const f = t.finance || {}
-    const isPt = (t.config?.locale || "en-US").startsWith("pt")
+    const statLabels = getTranslations(t, "stat_labels")
+    const accountsCopy = getTranslations(t, "accounts_page")
+    const bankConnections = getTranslations(t, "bank_connections")
     const { data, isLoading } = useFinanceData()
     const allAccounts = React.useMemo(() => (data?.accounts ?? []) as Account[], [data?.accounts])
 
@@ -35,15 +38,15 @@ export default function AccountsPage() {
         for (const a of allAccounts) { totalBalance += a.balance; totalIn += a.totalIn; totalOut += a.totalOut }
         const fmt = (n: number) => formatCurrency(n)
         return [
-            { label: "Total Balance", value: fmt(totalBalance), icon: <Wallet className="size-4" /> },
-            { label: "Total Income", value: fmt(totalIn), change: "All accounts", trend: "up" as const, icon: <TrendingUp className="size-4" /> },
-            { label: "Total Expenses", value: fmt(totalOut), change: "All accounts", trend: "down" as const, icon: <TrendingDown className="size-4" /> },
-            { label: "Accounts", value: String(allAccounts.length), icon: <CreditCard className="size-4" /> },
+            { label: statLabels.total_balance || "Total Balance", value: fmt(totalBalance), icon: <Wallet className="size-4" /> },
+            { label: statLabels.total_income || "Total Income", value: fmt(totalIn), change: statLabels.all_accounts || "All accounts", trend: "up" as const, icon: <TrendingUp className="size-4" /> },
+            { label: statLabels.total_expenses || "Total Expenses", value: fmt(totalOut), change: statLabels.all_accounts || "All accounts", trend: "down" as const, icon: <TrendingDown className="size-4" /> },
+            { label: f.accounts || "Accounts", value: String(allAccounts.length), icon: <CreditCard className="size-4" /> },
         ]
-    }, [allAccounts, isLoading, formatCurrency])
+    }, [allAccounts, f.accounts, isLoading, formatCurrency, statLabels])
 
     return (
-        <PageShell className="gap-4 overflow-x-hidden overflow-y-visible p-3 md:p-4">
+        <PageShell className="gap-4 p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
@@ -53,26 +56,26 @@ export default function AccountsPage() {
                 actions={
                     <Button
                         onClick={() => document.getElementById("bank-connections")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                        title={isPt ? "Ligar banco" : "Connect bank"}
+                        title={bankConnections.connect_bank || "Connect bank"}
                     >
                         <Plus />
                     </Button>
                 }
             />
 
-            <div className="flex min-w-0 flex-col gap-4 overflow-visible @[900px]/main:min-h-0 @[900px]/main:flex-1">
+            <div className="flex min-h-0 min-w-0 flex-col gap-4 @[900px]/main:flex-1">
                 <PageSection stagger={1} className="shrink-0">
                     <StatCards stats={stats} isLoading={isLoading} />
                 </PageSection>
 
                 <div
-                    className="grid min-w-0 gap-4 overflow-visible @[900px]/main:min-h-0 @[900px]/main:flex-1 @[900px]/main:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] @[1320px]/main:grid-cols-5"
+                    className="grid min-w-0 gap-4 @[900px]/main:min-h-0 @[900px]/main:flex-1 @[900px]/main:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] @[1320px]/main:grid-cols-5"
                     data-dashboard-grid
                     data-dashboard-layout="command-center"
                 >
                     <section
                         aria-label={f.accounts || "Accounts"}
-                        className="flex min-h-[420px] min-w-0 overflow-visible @[900px]/main:min-h-0 @[1320px]/main:col-span-4"
+                        className="flex min-h-[420px] min-w-0 @[900px]/main:min-h-0 @[1320px]/main:col-span-4"
                         data-dashboard-module="accounts"
                         data-dashboard-zone="primary"
                     >
@@ -84,8 +87,8 @@ export default function AccountsPage() {
                     <DashboardSupportSidebar className="@[1320px]/main:col-span-1">
                         <section
                             id="bank-connections"
-                            aria-label={isPt ? "Ligações bancárias" : "Bank connections"}
-                            className="min-h-[220px] min-w-0 overflow-visible @[900px]/main:flex-1"
+                            aria-label={accountsCopy.bank_connections || bankConnections.title || "Bank connections"}
+                            className="min-h-[220px] min-w-0 @[900px]/main:flex-1"
                             data-dashboard-module="bank-connections"
                             data-dashboard-zone="supporting"
                         >

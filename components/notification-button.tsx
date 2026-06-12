@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/popover"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { useLanguage } from "@/components/language-provider"
+import { getTranslations } from "@/lib/translation-utils"
 import { cn } from "@/lib/utils"
 import { UDS } from "@/lib/UDS"
 import { queryKeys } from "@/lib/query-keys"
@@ -130,7 +131,9 @@ function subscribeNotificationChanges(queryClient: QueryClient) {
 }
 
 export function NotificationButton() {
-    const { language } = useLanguage()
+    const { t } = useLanguage()
+    const np = getTranslations(t, "notifications_page")
+    const common = getTranslations(t, "common")
     const queryClient = useQueryClient()
     const { data: notifications = [] } = useQuery({
         queryKey: queryKeys.notifications,
@@ -178,7 +181,7 @@ export function NotificationButton() {
         const hours = Math.floor(diff / 3600000)
         const days = Math.floor(diff / 86400000)
 
-        if (mins < 1) return language === "pt" ? "agora" : "now"
+        if (mins < 1) return np.now || "now"
         if (mins < 60) return `${mins}m`
         if (hours < 24) return `${hours}h`
         return `${days}d`
@@ -192,7 +195,7 @@ export function NotificationButton() {
                 <Button variant="ghost" size="icon" className="relative sq-overflow-visible">
                     <Bell />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 size-4 sq-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-medium">
+                        <span className="absolute -top-0.5 -right-0.5 size-4 sq-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
                             {unreadCount > 9 ? "9+" : unreadCount}
                         </span>
                     )}
@@ -200,7 +203,7 @@ export function NotificationButton() {
             </PopoverTrigger>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-                {language === "pt" ? "Notificações" : "Notifications"}
+                {np.title || "Notifications"}
             </TooltipContent>
             <PopoverContent align="end" className="w-[min(20rem,calc(100vw-1rem))] max-w-[20rem]">
                 {/* Notification list — each row is a sq chip cell, same
@@ -208,8 +211,8 @@ export function NotificationButton() {
                     Clear filter row on the accounts dropdown). */}
                 <div className="max-h-[300px] overflow-y-auto">
                     {notifications.length === 0 ? (
-                        <div className="px-4 py-6 text-center text-[13px] text-neutral-400">
-                            {language === "pt" ? "Sem notificações" : "No notifications"}
+                        <div className="px-4 py-6 text-center text-sm text-neutral-400">
+                            {np.no_notifications || "No notifications"}
                         </div>
                     ) : (
                         visibleNotifications.map((notif, index) => (
@@ -228,17 +231,17 @@ export function NotificationButton() {
                                         {/* Title row — title flexes (auto-scroll
                                             handles overflow), timestamp pinned right. */}
                                         <div className="flex items-baseline justify-between gap-3">
-                                            <p className={cn("auto-scroll text-[13px] leading-snug", !notif.read && "font-semibold")}>
+                                            <p className={cn("auto-scroll text-sm leading-snug", !notif.read && "font-semibold")}>
                                                 {notif.title}
                                             </p>
-                                            <span className="text-[10.5px] text-neutral-400 whitespace-nowrap shrink-0 tabular-nums">
+                                            <span className="text-xs text-neutral-400 whitespace-nowrap shrink-0 tabular-nums">
                                                 {formatTimeAgo(notif.createdAt)}
                                             </span>
                                         </div>
                                         {/* Description — single-line marquee that
                                             shifts left-to-right on overflow, same
                                             idiom as nav-tabs / bills-table. */}
-                                        <p className="auto-scroll text-[12px] text-neutral-400 mt-0.5">
+                                        <p className="auto-scroll text-xs text-neutral-400 mt-0.5">
                                             {notif.message}
                                         </p>
 
@@ -252,12 +255,12 @@ export function NotificationButton() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-6 px-2 text-[11px] gap-1"
+                                                    className="h-6 px-2 text-xs gap-1"
                                                     asChild
                                                 >
                                                     <a href={notif.actionUrl}>
                                                         <ExternalLink className="size-3" />
-                                                        {language === "pt" ? "Ver" : "View"}
+                                                        {common.view || "View"}
                                                     </a>
                                                 </Button>
                                             )}
@@ -268,7 +271,7 @@ export function NotificationButton() {
                                                         size="sm"
                                                         className="size-6 p-0 sq"
                                                         onClick={() => markRead(notif.id)}
-                                                        aria-label={language === "pt" ? "Marcar como lida" : "Mark read"}
+                                                        aria-label={np.mark_read || "Mark read"}
                                                     >
                                                         <Check className="size-3" />
                                                     </Button>
@@ -278,7 +281,7 @@ export function NotificationButton() {
                                                     size="sm"
                                                     className="size-6 p-0 sq"
                                                     onClick={() => deleteNotification(notif.id)}
-                                                    aria-label={language === "pt" ? "Apagar" : "Delete"}
+                                                    aria-label={common.delete || "Delete"}
                                                 >
                                                     <Trash2 className="size-3" />
                                                 </Button>
@@ -305,8 +308,8 @@ export function NotificationButton() {
                     className={cn(UDS.item, UDS.glideItem, UDS.itemIcon, "w-full")}
                 >
                     <ExternalLink className="size-4 shrink-0 text-neutral-400" />
-                    <span className="text-neutral-400 text-[13px]">
-                        {language === "pt" ? "Ver todas" : "View all"}
+                    <span className="text-neutral-400 text-sm">
+                        {np.view_all || "View all"}
                     </span>
                 </Link>
             </PopoverContent>

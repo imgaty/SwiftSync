@@ -22,13 +22,13 @@ import {
 } from '@/components/ui/dropdown'
 import { Button } from '@/components/ui/button'
 import { CanvasBackground } from '@/components/canvas-background'
+import type { Language } from '@/lib/languages'
+import { getTranslations } from '@/lib/translation-utils'
 
 const YEAR = new Date().getFullYear()
 const subscribeToMount = () => () => {}
 const getClientSnapshot = () => true
 const getServerSnapshot = () => false
-
-type LanguageCode = 'en' | 'pt'
 
 export function AuthShell({
     children,
@@ -44,6 +44,8 @@ export function AuthShell({
     const mounted = useSyncExternalStore(subscribeToMount, getClientSnapshot, getServerSnapshot)
     const isDark = mounted && resolvedTheme === 'dark'
     const nextTheme = isDark ? 'light' : 'dark'
+    const settingsCopy = getTranslations(t, 'settings')
+    const commandCopy = getTranslations(t, 'command_palette')
 
     return (
         <div
@@ -57,7 +59,7 @@ export function AuthShell({
                     variant="ghost"
                     size="icon"
                     className="text-muted-foreground hover:text-foreground"
-                    aria-label="Toggle theme"
+                    aria-label={commandCopy.toggle_theme || 'Toggle theme'}
                     onClick={() => setTheme(nextTheme)}
                 >
                     {isDark ? <Sun /> : <Moon />}
@@ -70,17 +72,20 @@ export function AuthShell({
                             variant="ghost"
                             size="icon"
                             className="text-muted-foreground hover:text-foreground"
-                            aria-label="Change language"
+                            aria-label={settingsCopy.language || 'Change language'}
                         >
                             <Globe2 />
                         </Button>
                     </DropdownTrigger>
 
-                    <DropdownContent width={180}>
+                    <DropdownContent
+                        width={240}
+                        className="max-h-[min(420px,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
+                    >
                         <DropdownLanguageSection
                             selectedLanguage={language}
-                            onSelectLanguage={(value) => setLanguage(value as LanguageCode)}
-                            showTitle
+                            onSelectLanguage={(value) => setLanguage(value as Language)}
+                            title={settingsCopy.language || 'Language'}
                         />
                     </DropdownContent>
                 </Dropdown>
@@ -131,7 +136,7 @@ export function AuthHeader({ page: pageKey, registerSubtitleKey }: { page: strin
 
     return (
         <div className = "flex flex-col gap-2 | pb-4 | text-center">
-            <h1 className = "text-foreground | text-[1.75rem] font-bold leading-tight tracking-tight">{page?.title}</h1>
+            <h1 className = "text-foreground | text-3xl font-bold leading-tight tracking-tight">{page?.title}</h1>
             <p className = "text-muted-foreground | text-sm leading-5">{page?.[registerSubtitleKey ?? 'subtitle']}</p>
         </div>
     )

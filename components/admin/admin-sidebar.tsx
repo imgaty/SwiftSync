@@ -10,6 +10,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -20,7 +21,6 @@ import {
     PiggyBank,
     Wallet,
     Target,
-    Shield,
     Megaphone,
     ScrollText,
     Activity,
@@ -40,13 +40,12 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     CollapsedTooltip,
+    SidebarSeparator,
+    useSidebar,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+import { NavUser } from "@/components/nav-user"
 import { useLanguage } from "@/components/language-provider"
-import { UDS } from "@/lib/UDS"
 import { getTranslations, type LooseTranslations } from "@/lib/translation-utils"
-import { cn } from "@/lib/utils"
 
 interface AdminUser {
     id: string
@@ -91,9 +90,14 @@ function getSystemNav(a: LooseTranslations): NavItem[] {
 
 function NavSection({ label, items }: { label: string; items: NavItem[] }) {
     const pathname = usePathname()
+    const { isMobile, setOpenMobile } = useSidebar()
+
+    const handleNavClick = React.useCallback(() => {
+        if (isMobile) setOpenMobile(false)
+    }, [isMobile, setOpenMobile])
 
     return (
-        <SidebarGroup>
+        <SidebarGroup className="px-2 py-1">
             <SidebarGroupLabel>{label}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => {
@@ -107,10 +111,11 @@ function NavSection({ label, items }: { label: string; items: NavItem[] }) {
                             <CollapsedTooltip asChild tooltip={item.name} isActive={isActive}>
                                 <Link
                                     href={item.url}
+                                    onClick={handleNavClick}
                                     aria-current={isActive ? "page" : undefined}
                                 >
                                     <item.icon />
-                                    <span>{item.name}</span>
+                                    <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
                                 </Link>
                             </CollapsedTooltip>
                         </SidebarMenuItem>
@@ -128,70 +133,89 @@ export function AdminSidebar({ user }: { user: AdminUser }) {
     const dataNav = React.useMemo(() => getDataNav(a), [a])
     const systemNav = React.useMemo(() => getSystemNav(a), [a])
 
-    const initials = user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2) || "A"
-
     return (
         <Sidebar variant="inset" collapsible="icon">
-            {/* Header — branding */}
-            <SidebarHeader>
+            <SidebarHeader className="px-2 pt-2 pb-1">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <div className={cn(UDS.commandTriggerSurface, "flex items-center gap-2 px-2 py-1.5")}>
-                            <div className={cn(UDS.surfaceClass({ background: "raised", blur: true, border: "muted", radius: "md", shadow: "flat" }), "flex size-7 shrink-0 items-center justify-center text-primary")}>
-                                <Shield className="size-4" />
-                            </div>
-                            <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
-                                <span className="font-semibold text-sm">Argent</span>
-                                <span className="text-[10px] text-neutral-400 uppercase tracking-wider">{a.panel || "Admin Panel"}</span>
-                            </div>
-                        </div>
+                        <CollapsedTooltip asChild size="lg" tooltip="Argent Admin" className="group-data-[collapsible=icon]:p-1!">
+                            <Link href="/admin" aria-label="Argent Admin">
+                                <span className="flex min-w-0 flex-1 items-center justify-start text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+                                    <Image
+                                        src="/full-icon-black.svg"
+                                        alt=""
+                                        width={369}
+                                        height={104}
+                                        priority
+                                        aria-hidden
+                                        draggable={false}
+                                        className="h-8 w-[114px] max-w-full shrink-0 object-contain dark:hidden"
+                                    />
+                                    <Image
+                                        src="/full-icon-white.svg"
+                                        alt=""
+                                        width={369}
+                                        height={104}
+                                        priority
+                                        aria-hidden
+                                        draggable={false}
+                                        className="hidden h-8 w-[114px] max-w-full shrink-0 object-contain dark:block"
+                                    />
+                                </span>
+                                <span className="hidden shrink-0 items-center justify-start text-sidebar-foreground group-data-[collapsible=icon]:flex">
+                                    <Image
+                                        src="/icon-black.svg"
+                                        alt=""
+                                        width={84}
+                                        height={78}
+                                        priority
+                                        aria-hidden
+                                        draggable={false}
+                                        className="block size-6 shrink-0 object-contain dark:hidden"
+                                    />
+                                    <Image
+                                        src="/icon-white.svg"
+                                        alt=""
+                                        width={84}
+                                        height={78}
+                                        priority
+                                        aria-hidden
+                                        draggable={false}
+                                        className="hidden size-6 shrink-0 object-contain dark:block"
+                                    />
+                                </span>
+                            </Link>
+                        </CollapsedTooltip>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
 
-            {/* Navigation */}
-            <SidebarContent>
+            <SidebarContent className="pt-1">
                 <NavSection label={a.overview || "Overview"} items={mainNav} />
                 <NavSection label={a.financial_data || "Financial Data"} items={dataNav} />
                 <NavSection label={a.system || "System"} items={systemNav} />
             </SidebarContent>
 
-            {/* Footer — admin user info + back to app */}
             <SidebarFooter>
                 <SidebarMenu>
-                    {/* Back to main app link */}
                     <SidebarMenuItem>
                         <CollapsedTooltip asChild tooltip={a.back_to_app || "Back to App"}>
                             <Link href="/">
                                 <LogOut className="size-4 rotate-180" />
-                                <span>{a.back_to_app || "Back to App"}</span>
+                                <span className="group-data-[collapsible=icon]:hidden">{a.back_to_app || "Back to App"}</span>
                             </Link>
                         </CollapsedTooltip>
                     </SidebarMenuItem>
-
-                    <Separator className="my-1" />
-
-                    {/* Admin user */}
-                    <SidebarMenuItem>
-                        <div className="flex items-center gap-2 px-2 py-1.5">
-                            <Avatar className="size-7 sq-md">
-                                <AvatarImage src={user.avatar || ""} alt={user.name} />
-                                <AvatarFallback className={cn(UDS.surfaceClass({ background: "subtle", blur: false, border: "muted", radius: "md", shadow: "flat" }), "text-[10px] text-primary")}>
-                                    {initials}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col gap-0 leading-tight group-data-[collapsible=icon]:hidden">
-                                <span className="text-sm font-medium truncate max-w-[140px]">{user.name}</span>
-                                <span className="text-[11px] text-neutral-400 truncate max-w-[140px]">{user.role}</span>
-                            </div>
-                        </div>
-                    </SidebarMenuItem>
                 </SidebarMenu>
+                <SidebarSeparator className="my-1" />
+                <NavUser
+                    user={{
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        avatar: user.avatar || "",
+                    }}
+                />
             </SidebarFooter>
         </Sidebar>
     )

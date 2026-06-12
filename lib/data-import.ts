@@ -104,9 +104,12 @@ export type ImportBudget = {
 
 export type ImportGoal = {
   id?: string
+  accountId?: string | null
   name: string
   targetAmount: number
   currentAmount: number
+  baselineAmount: number
+  targetMode: "total" | "additional"
   deadline: string | null
   category: string
   color: string
@@ -220,9 +223,12 @@ const backupBudgetSchema = z.object({
 
 const backupGoalSchema = z.object({
   id: z.string().trim().min(1).optional(),
+  accountId: z.string().trim().min(1).nullable().optional().default(null),
   name: z.string().trim().min(1).max(200),
   targetAmount: positiveAmountSchema,
   currentAmount: nonNegativeAmountSchema.default(0),
+  baselineAmount: nonNegativeAmountSchema.default(0),
+  targetMode: z.enum(["total", "additional"]).default("total"),
   deadline: dateStringSchema.nullable().optional().default(null),
   category: z.string().trim().min(1).max(100).default("savings"),
   color: hexColorSchema.default("#6366f1"),
@@ -656,8 +662,22 @@ export function budgetImportKey(input: { tag: string }): string {
   return normalizeTagSlug(input.tag)
 }
 
-export function goalImportKey(input: { name: string; targetAmount: number; deadline: string | null; category: string }): string {
-  return [normalizeKey(input.name), formatAmount(input.targetAmount), input.deadline || "", normalizeKey(input.category)].join(":")
+export function goalImportKey(input: {
+  name: string
+  targetAmount: number
+  deadline: string | null
+  category: string
+  accountId?: string | null
+  targetMode?: "total" | "additional"
+}): string {
+  return [
+    input.accountId || "",
+    input.targetMode || "total",
+    normalizeKey(input.name),
+    formatAmount(input.targetAmount),
+    input.deadline || "",
+    normalizeKey(input.category),
+  ].join(":")
 }
 
 export function ruleImportKey(input: { name: string; filters: unknown[]; addTagSlugs: string[]; priority: number }): string {
@@ -739,7 +759,12 @@ function normalizeBudgets(budgets: ImportBudget[]): ImportBudget[] {
 }
 
 function normalizeGoals(goals: ImportGoal[]): ImportGoal[] {
-  return goals.map((goal) => ({ ...goal, currency: goal.currency.toUpperCase() }))
+  return goals.map((goal) => ({
+    ...goal,
+    accountId: goal.accountId || null,
+    baselineAmount: goal.targetMode === "additional" ? goal.baselineAmount : 0,
+    currency: goal.currency.toUpperCase(),
+  }))
 }
 
 function normalizeRules(rules: ImportRule[]): ImportRule[] {

@@ -90,12 +90,12 @@ flowchart TB
 
     subgraph PLATFORM [PACE, Access & Admin]
         direction LR
-        PR[PACERule] --- OA[OAuthAccount] --- TD[TrustedDevice] --- AL[AuditLog] --- SA[SystemAnnouncement]
+        PR[PACERule] --- OA[OAuthAccount] --- AL[AuditLog] --- SA[SystemAnnouncement]
     end
 
     classDef mono fill:#ffffff,stroke:#111111,color:#111111,stroke-width:1px;
     classDef ghost fill:transparent,stroke:transparent,color:transparent;
-    class U,SEC,BA,BK,TX,BI,BU,FG,NO,SD,SL,PR,OA,TD,AL,SA mono;
+    class U,SEC,BA,BK,TX,BI,BU,FG,NO,SD,SL,PR,OA,AL,SA mono;
     class J0,J1,J2,J3 ghost;
 ```
 
@@ -134,14 +134,13 @@ When a user deletes their own account through the normal account settings flow, 
 - `Notification`
 - `PACERule`
 - `OAuthAccount`
-- `TrustedDevice`
 - `SaltEdgeConnection`
 - `SpreadsheetDocument`
 - `SpreadsheetLog`
 
 ### Soft Delete
 
-The admin-side **delete** action is currently a soft delete. Instead of removing the user row, the admin route updates the account to `status = "deleted"`.
+The admin-side **delete** action is currently a soft delete. Instead of removing the user row, the admin route updates the account to `status = "deleted"`. Normal admins can perform this soft delete for non-superadmin users; admins cannot delete themselves, and non-superadmin admins cannot modify or delete superadmin accounts. Role changes remain `superadmin` only.
 
 That means the account is disabled and rejected by `getAuthUserId()` because only `status = "active"` is allowed, but the row itself still exists for admin review and status tracking.
 
@@ -159,9 +158,8 @@ The `User` model stores identity, authentication, security, and admin lifecycle 
 | :-------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
 | `role`                                                    | Permission level: `"user"`, `"admin"`, or `"superadmin"`.                                       |
 | `status`                                                  | Lifecycle state: `"active"`, `"suspended"`, `"banned"`, or `"deleted"`.                         |
-| `password`                                                | Stores the AES-formatted password hash. OAuth-only users may not rely on a local password flow. |
+| `password`                                                | Stores the scrypt-formatted password hash. OAuth-only users may not rely on a local password flow. |
 | `suspendedAt` / `suspendedReason`                         | Administrative context for moderation actions.                                                  |
-| `twoFactorEnabled`, `twoFactorSecret`, backup code fields | Support TOTP-based 2FA and recovery.                                                            |
 
 ### Banking Models
 
@@ -198,7 +196,7 @@ Key fields:
 
 The admin system uses `AuditLog` and `SystemAnnouncement`.
 
-- `AuditLog` records actions such as suspending users, resetting 2FA, or changing roles.
+- `AuditLog` records actions such as suspending users, deleting users, or changing roles.
 - `SystemAnnouncement` stores admin-created notices shown to users.
 
 A notable detail in `AuditLog` is that `targetUserId` uses `onDelete: SetNull`, so a log can still exist even if the affected user is removed. The `performerId` relation still points to the admin who performed the action.

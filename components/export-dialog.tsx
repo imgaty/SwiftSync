@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select"
 import { useLanguage } from "@/components/language-provider"
 import { notify } from "@/lib/notify"
+import { getTranslations } from "@/lib/translation-utils"
 import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
@@ -40,7 +41,7 @@ interface ExportDialogProps {
 }
 
 export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
-    const { language } = useLanguage()
+    const { t, language } = useLanguage()
     const [format, setFormat] = React.useState("csv")
     const [entity, setEntity] = React.useState("transactions")
     const [startDate, setStartDate] = React.useState("")
@@ -49,6 +50,9 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
     const [isExporting, setIsExporting] = React.useState(false)
     const totalSteps = entity === "transactions" ? 3 : 2
     const isFinalStep = stepIndex === totalSteps - 1
+    const copy = getTranslations(t, "export_dialog")
+    const common = getTranslations(t, "common")
+    const finance = getTranslations(t, "finance")
 
     React.useEffect(() => {
         if (open) setStepIndex(0)
@@ -79,13 +83,13 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
             URL.revokeObjectURL(url)
 
             notify.success({
-                title: language === "pt" ? "Exportação concluída" : "Export completed",
+                title: copy.completed || "Export completed",
                 message: `${entity} · ${format.toUpperCase()}`,
             })
             onOpenChange(false)
         } catch {
             notify.error({
-                title: language === "pt" ? "Erro na exportação" : "Export failed",
+                title: copy.failed || "Export failed",
                 message: `${entity} · ${format.toUpperCase()}`,
             })
         } finally {
@@ -102,13 +106,13 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                             <Download className="size-6" />
                         </div>
                     }
-                    title={language === "pt" ? "Exportar Dados" : "Export Data"}
+                    title={copy.title || "Export Data"}
                     description={
                         stepIndex === 0
-                            ? (language === "pt" ? "Escolha o conjunto de dados." : "Choose the data set.")
+                            ? (copy.choose_data_set || "Choose the data set.")
                             : stepIndex === 1
-                                ? (language === "pt" ? "Escolha o formato do ficheiro." : "Choose the file format.")
-                                : (language === "pt" ? "Filtre por intervalo de datas." : "Filter by date range.")}
+                                ? (copy.choose_file_format || "Choose the file format.")
+                                : (copy.filter_by_date_range || "Filter by date range.")}
                 />
 
                 <form
@@ -125,16 +129,16 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                     {stepIndex === 0 && (
                         <FormDialogBody key="export-data">
                             <Select value={entity} onValueChange={(value) => { setEntity(value); if (value === "backup") setFormat("json"); setStepIndex(0) }}>
-                                <FormSelectTrigger label={language === "pt" ? "Dados a exportar" : "Data to export"}>
+                                <FormSelectTrigger label={copy.data_to_export || "Data to export"}>
                                     <SelectValue />
                                 </FormSelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="transactions">{language === "pt" ? "Transações" : "Transactions"}</SelectItem>
-                                    <SelectItem value="bills">{language === "pt" ? "Contas" : "Bills"}</SelectItem>
-                                    <SelectItem value="budgets">{language === "pt" ? "Orçamentos" : "Budgets"}</SelectItem>
-                                    <SelectItem value="accounts">{language === "pt" ? "Contas Bancárias" : "Accounts"}</SelectItem>
-                                    <SelectItem value="backup">{language === "pt" ? "Backup Completo" : "Full Backup"}</SelectItem>
-                                    <SelectItem value="all">{language === "pt" ? "Relatório Completo" : "Full Report"}</SelectItem>
+                                    <SelectItem value="transactions">{finance.transactions || "Transactions"}</SelectItem>
+                                    <SelectItem value="bills">{finance.bills || "Bills"}</SelectItem>
+                                    <SelectItem value="budgets">{finance.budgets || "Budgets"}</SelectItem>
+                                    <SelectItem value="accounts">{finance.accounts || "Accounts"}</SelectItem>
+                                    <SelectItem value="backup">{copy.full_backup || "Full Backup"}</SelectItem>
+                                    <SelectItem value="all">{copy.full_report || "Full Report"}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormDialogBody>
@@ -143,7 +147,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                     {stepIndex === 1 && (
                         <FormDialogBody key="export-format">
                             <div>
-                                <Label>{language === "pt" ? "Formato" : "Format"}</Label>
+                                <Label>{copy.format || "Format"}</Label>
                                 <div className="mt-1.5 grid grid-cols-2 gap-2">
                                     <Button
                                         type="button"
@@ -172,21 +176,21 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                     {stepIndex === 2 && entity === "transactions" && (
                         <FormDialogBody key="export-dates">
                             <div className="space-y-1.5">
-                                <Label>{language === "pt" ? "Data início" : "Start date"}</Label>
+                                <Label>{copy.start_date || "Start date"}</Label>
                                 <DatePicker
                                     value={startDate}
                                     onChange={setStartDate}
                                     locale={language}
-                                    placeholder={language === "pt" ? "Data início" : "Start date"}
+                                    placeholder={copy.start_date || "Start date"}
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label>{language === "pt" ? "Data fim" : "End date"}</Label>
+                                <Label>{copy.end_date || "End date"}</Label>
                                 <DatePicker
                                     value={endDate}
                                     onChange={setEndDate}
                                     locale={language}
-                                    placeholder={language === "pt" ? "Data fim" : "End date"}
+                                    placeholder={copy.end_date || "End date"}
                                 />
                             </div>
                         </FormDialogBody>
@@ -196,10 +200,10 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                         <Button type="submit" variant="solid" size="lg" className="w-full" disabled={isExporting}>
                             {isFinalStep && <Download className="size-4 mr-2" />}
                             {!isFinalStep
-                                ? (language === "pt" ? "Continuar" : "Continue")
+                                ? (common.continue || "Continue")
                                 : isExporting
-                                ? (language === "pt" ? "A exportar..." : "Exporting...")
-                                : (language === "pt" ? "Exportar" : "Export")}
+                                ? (copy.exporting || "Exporting...")
+                                : (common.export || "Export")}
                         </Button>
                         <Button
                             type="button"
@@ -215,7 +219,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                             }}
                             disabled={isExporting}
                         >
-                            {stepIndex === 0 ? (language === "pt" ? "Cancelar" : "Cancel") : (language === "pt" ? "Voltar" : "Back")}
+                            {stepIndex === 0 ? (common.cancel || "Cancel") : (common.back || "Back")}
                         </Button>
                     </FormDialogActions>
                     <FormDialogStepIndicator current={stepIndex} total={totalSteps} />

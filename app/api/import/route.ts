@@ -166,7 +166,7 @@ async function runImport(
     tx.transaction.findMany({ where: scopeFilter(ctx), select: { accountId: true, date: true, type: true, amount: true, description: true } }),
     tx.bill.findMany({ where: scopeFilter(ctx), select: { accountId: true, name: true, amount: true, dueDay: true, frequency: true } }),
     tx.budget.findMany({ where: scopeFilter(ctx), select: { tag: true } }),
-    tx.financialGoal.findMany({ where: scopeFilter(ctx), select: { name: true, targetAmount: true, deadline: true, category: true } }),
+    tx.financialGoal.findMany({ where: scopeFilter(ctx), select: { accountId: true, name: true, targetAmount: true, targetMode: true, deadline: true, category: true } }),
     tx.rule.findMany({ where: scopeFilter(ctx), select: { name: true, filters: true, addTagSlugs: true, priority: true } }),
     tx.pACERule.findMany({ where: scopeFilter(ctx), select: { pattern: true, matchField: true, tag: true, priority: true } }),
     tx.spreadsheetDocument.findMany({ where: scopeFilter(ctx), select: { name: true, sheetType: true, linkedEntity: true, content: true } }),
@@ -203,8 +203,10 @@ async function runImport(
   })))
   const budgetKeys = new Set(existingBudgets.map((budget) => budgetImportKey({ tag: budget.tag })))
   const goalKeys = new Set(existingGoals.map((goal) => goalImportKey({
+    accountId: goal.accountId,
     name: goal.name,
     targetAmount: Number(goal.targetAmount),
+    targetMode: goal.targetMode === "additional" ? "additional" : "total",
     deadline: goal.deadline?.toISOString().slice(0, 10) || null,
     category: goal.category,
   })))
@@ -387,12 +389,16 @@ async function runImport(
     counts.goals.created++
     goalKeys.add(key)
     if (!dryRun) {
+      const accountId = goal.accountId ? await resolveAccountId(goal.accountId) : null
       const created = await tx.financialGoal.create({
         data: {
           ...scopeCreateData(ctx),
+          accountId,
           name: goal.name,
           targetAmount: goal.targetAmount,
           currentAmount: goal.currentAmount,
+          baselineAmount: goal.targetMode === "additional" ? goal.baselineAmount : 0,
+          targetMode: goal.targetMode,
           deadline: goal.deadline ? new Date(`${goal.deadline}T00:00:00.000Z`) : null,
           category: goal.category,
           color: goal.color,

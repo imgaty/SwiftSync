@@ -1,0 +1,96 @@
+flowchart TD
+    A[User opens /login] --> B{Login method}
+
+    B -- Email and password --> C[LoginPage submits form]
+    B -- OAuth button --> OA[GET /api/auth/oauth/provider]
+
+    OA --> OB{Provider configured}
+    OB -- No --> OB1[501 OAuth not configured]
+    OB -- Yes --> OC[Generate state cookie]
+    OC --> OD[Redirect to OAuth provider]
+    OD --> OE[Provider callback with code and state]
+    OE --> OF{State valid and code present}
+    OF -- No --> OF1[Redirect to /login with error]
+    OF -- Yes --> OG[Exchange code for access token]
+    OG --> OH[Fetch profile and verified email]
+    OH --> OI{Email verified}
+    OI -- No --> OI1[Redirect to /login with error]
+    OI -- Yes --> OJ{OAuth account exists}
+    OJ -- Yes --> OK[Use linked Argent user]
+    OJ -- No --> OL{Existing verified user by email}
+    OL -- Yes --> OM[Link OAuth account]
+    OL -- No --> ON[Create user and OAuth account]
+    OK --> OO{User active}
+    OM --> OO
+    ON --> OO
+    OO -- No --> OO1[Redirect to /login with error]
+    OO -- Yes --> Z
+
+    C --> D{IP rate limit ok}
+    D -- No --> D1[429 with Retry-After]
+    D -- Yes --> E[Validate email and password payload]
+
+    E --> F{Account rate limit ok}
+    F -- No --> F1[429 for targeted account]
+    F -- Yes --> G[Find user by email]
+
+    G --> H{User exists}
+    H -- No --> H1[Run dummy password verify]
+    H1 --> H2[401 invalid email or password]
+    H -- Yes --> I{Password verifies}
+
+    I -- No --> I1[401 invalid email or password]
+    I -- Yes --> J{User status active}
+    J -- No --> J1[403 account is not active]
+    J -- Yes --> K[Reset account login throttle]
+
+    K --> L{Password hash needs rehash}
+    L -- Yes --> L1[Prepare upgraded hash]
+    L -- No --> M{Email 2FA enabled}
+    L1 --> M
+
+    M -- Yes --> N[Generate 6 digit email code]
+    N --> O[Store HMAC code and expiry on user]
+    O --> P[Send code with Resend]
+    P --> Q{Email sent}
+    Q -- No --> Q1[Clear stored code]
+    Q1 --> Q2[500 failed to send code]
+    Q -- Yes --> R[Create in-memory tempToken]
+    R --> S[Return needs_2fa and tempToken]
+    S --> T[LoginPage shows code step]
+    T --> U[POST /api/auth/2fa-login]
+    U --> V{tempToken and code valid}
+    V -- No --> V1[401 or 429, keep or clear challenge]
+    V -- Yes --> W[Clear challenge and stored code]
+    W --> X[finishAuthenticatedSession]
+
+    M -- No --> Y[Persist password rehash if needed]
+    Y --> X
+
+    X --> Z[Update lastLoginAt and lastLoginIp]
+    Z --> AA[Create HMAC session token]
+    AA --> AB[Set HttpOnly auth-token cookie for 7 days]
+    AB --> AC[Return success with role]
+    AC --> AD{Role and callbackUrl}
+    AD -- admin or superadmin --> AE[Redirect to /admin or admin callback]
+    AD -- user with admin callback --> AF[Redirect to /]
+    AD -- user normal callback --> AG[Redirect to callback or /]
+
+    AE --> AH[Admin layout verifies token, user, role, sessionVersion]
+    AF --> AI[Main layout verifies auth and onboarding]
+    AG --> AI
+    AI --> AJ{Imported bank account exists}
+    AJ -- No --> AK[Redirect to /connect-bank]
+    AJ -- Yes --> AL[Render main app]
+
+    subgraph LaterRequests[Later page and API requests]
+        BA[Browser sends auth-token cookie] --> BB[proxy verifies HMAC and expiry for pages]
+        BB --> BC{Public route}
+        BC -- Yes --> BD[Allow route]
+        BC -- No and invalid --> BE[Redirect to /login and clear stale cookies]
+        BC -- No and valid --> BF[Allow page render]
+        BF --> BG[Layouts and API helpers load user]
+        BG --> BH{Active user and sessionVersion match}
+        BH -- No --> BI[401 or redirect to login]
+        BH -- Yes --> BJ[Authorized request]
+    end

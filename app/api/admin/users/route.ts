@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     const role = url.searchParams.get("role") || ""
     const sortBy = url.searchParams.get("sortBy") || "createdAt"
     const sortDir = url.searchParams.get("sortDir") === "asc" ? "asc" : "desc"
-    const twoFactor = url.searchParams.get("2fa") || ""
 
     // Build where clause
     const where: Record<string, unknown> = {}
@@ -43,12 +42,6 @@ export async function GET(request: NextRequest) {
 
     if (role && ["user", "admin", "superadmin"].includes(role)) {
         where.role = role
-    }
-
-    if (twoFactor === "enabled") {
-        where.twoFactorEnabled = true
-    } else if (twoFactor === "disabled") {
-        where.twoFactorEnabled = false
     }
 
     // Validate sort field
@@ -69,7 +62,6 @@ export async function GET(request: NextRequest) {
                 email: true,
                 role: true,
                 status: true,
-                twoFactorEnabled: true,
                 createdAt: true,
                 lastLoginAt: true,
                 lastLoginIp: true,

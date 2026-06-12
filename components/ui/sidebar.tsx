@@ -12,7 +12,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-import { PanelLeftIcon } from "lucide-react"
+import { PanelLeftIcon, PanelRightIcon } from "lucide-react"
 import { useOS } from "@/hooks/use-os"
 
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { TooltipProvider, SmartTooltip } from "@/components/ui/tooltip"
 import { useLanguage } from "@/components/language-provider"
+import { getLanguageDefinition, isSidebarSide } from "@/lib/languages"
 
 
 const SIDEBAR = {
@@ -36,6 +37,15 @@ const SIDEBAR = {
 
 function setCookie(name: string, value: string | number) {
     document.cookie = `${name}=${value}; path=/; max-age=${SIDEBAR.COOKIE_MAX_AGE}`
+}
+
+function getCookie(name: string): string | undefined {
+    const cookie = document.cookie
+        .split(";")
+        .map((item) => item.trim())
+        .find((item) => item.startsWith(`${name}=`))
+
+    return cookie ? decodeURIComponent(cookie.split("=").slice(1).join("=")) : undefined
 }
 
 const MOBILE_SIDEBAR_STYLE = { "--sidebar-width": `${SIDEBAR.WIDTH.MOBILE}px` } as React.CSSProperties
@@ -60,6 +70,7 @@ type SidebarContextProps = {
     
     side: "left" | "right"                          // Position of the sidebar  
     setSide: (side: "left" | "right") => void
+    renderedSide: "left" | "right"                  // Physical side after document direction is applied
     
     width: number
     setWidth: (width: number) => void
@@ -80,6 +91,10 @@ function useSidebar() {
     }
 
     return context
+}
+
+function oppositeSide(side: "left" | "right") {
+    return side === "left" ? "right" : "left"
 }
 
 
@@ -107,6 +122,9 @@ const SidebarProvider = React.forwardRef<
     }, ref) => {
 
         const isMobile = useIsMobile()
+        const { language } = useLanguage()
+        const languageDefinition = React.useMemo(() => getLanguageDefinition(language), [language])
+        const languageSidebarSide = languageDefinition.sidebarSide
         const [openMobile, setOpenMobile] = React.useState(false)
         const [_open, _setOpen] = React.useState(defaultOpen)
         const open = openProp ?? _open
@@ -117,8 +135,15 @@ const SidebarProvider = React.forwardRef<
         const [width, setWidth] = React.useState(defaultWidth)
         const [isResizing, setIsResizing] = React.useState(false)
         const widthSaveTimeout = React.useRef<NodeJS.Timeout | null>(null)
+        const renderedSide = languageDefinition.direction === "rtl" ? oppositeSide(side) : side
         
         React.useEffect(() => { openRef.current = open }, [open])                   // Keep the ref in sync with the open value
+
+        React.useEffect(() => {
+            if (!isSidebarSide(getCookie("sidebar_side"))) {
+                setSide(languageSidebarSide)
+            }
+        }, [languageSidebarSide])
         
         // Cleanup timeout on unmount
         React.useEffect(() => {
@@ -186,9 +211,9 @@ const SidebarProvider = React.forwardRef<
         const contextValues = React.useMemo<SidebarContextProps>(
             () => ({
                 state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar,
-                side, setSide: handleSideCookie, width, setWidth: handleWidthCookie, isResizing, setIsResizing}),
+                side, setSide: handleSideCookie, renderedSide, width, setWidth: handleWidthCookie, isResizing, setIsResizing}),
 
-            [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, side, handleSideCookie, width, handleWidthCookie, isResizing]
+            [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, side, handleSideCookie, renderedSide, width, handleWidthCookie, isResizing]
         )
         
         const railPosition = open ? width : SIDEBAR.WIDTH.COLLAPSED
@@ -205,8 +230,9 @@ const SidebarProvider = React.forwardRef<
                     <div
                         ref = {ref}
                         data-side = {side}
+                        data-rendered-side = {renderedSide}
                         className = {cn(
-                            "relative | flex | w-full min-h-screen",
+                            "relative | flex | h-dvh min-h-0 w-full overflow-hidden",
                             "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar", className )}
                         
                         style = {sidebarStyle}
@@ -242,7 +268,7 @@ const Sidebar = React.forwardRef<
 >(
     ({ variant = "sidebar", collapsible = "icon", className, children, ...props }, ref) => {
         
-        const { isMobile, state, openMobile, setOpenMobile, side, isResizing } = useSidebar()
+        const { isMobile, state, openMobile, setOpenMobile, side, renderedSide, isResizing } = useSidebar()
 
         // DISPLAY MODE 1: Non-collapsible sidebar (always visible, fixed width)
         if (collapsible === "none") {
@@ -287,9 +313,10 @@ const Sidebar = React.forwardRef<
                 data-collapsible = {state === "collapsed" ? collapsible : ""}
                 data-variant = {variant}
                 data-side = {side}
+                data-rendered-side = {renderedSide}
                 className = {cn(
                     "sticky top-0 | md:flex flex-col self-start shrink-0 | w-(--sidebar-width) h-svh",
-                    "uds-bg-glass uds-backdrop | text-sidebar-foreground",
+                    "bg-sidebar | text-sidebar-foreground",
                     "group peer",
 
                     side === "left" ? "order-first" : "order-last",
@@ -320,9 +347,10 @@ const SidebarTrigger = React.forwardRef<
 >(
     ({ className, onClick, ...props }, ref) => {
 
-    const { toggleSidebar, open } = useSidebar()
+    const { toggleSidebar, open, renderedSide } = useSidebar()
     const { modKey } = useOS()
     const { t } = useLanguage()
+    const TriggerIcon = renderedSide === "left" ? PanelLeftIcon : PanelRightIcon
 
     const handleClick = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
         onClick?.(event)
@@ -344,7 +372,7 @@ const SidebarTrigger = React.forwardRef<
                 onClick = {handleClick}
                 {...props}
             >
-                <PanelLeftIcon />
+                <TriggerIcon />
                 <span className = "sr-only">Toggle Sidebar</span>
             </Button>
         </SmartTooltip>
@@ -358,20 +386,20 @@ SidebarTrigger.displayName = "SidebarTrigger"
 
 // Rail to resize the sidebar by drag
 function SidebarRail({ railPosition }: { railPosition: number }) {
-    const { side, width, setWidth, open, setOpen, isResizing, setIsResizing } = useSidebar()
+    const { renderedSide, width, setWidth, open, setOpen, isResizing, setIsResizing } = useSidebar()
     const { modKey } = useOS()
     const { t } = useLanguage()
     
     const dragState = React.useRef({ startX: 0, startWidth: 0, isDragging: false, wasCollapsed: false })
-    const refs = React.useRef({ side, open, width })
+    const refs = React.useRef({ renderedSide, open, width })
     const handleMouseUpRef = React.useRef<(() => void) | null>(null)
-    React.useEffect(() => { refs.current = { side, open, width } }, [side, open, width])
+    React.useEffect(() => { refs.current = { renderedSide, open, width } }, [renderedSide, open, width])
     
 
     // Handles the sidebar drag resizing logic
     const handleSidebarDrag = React.useCallback((e: MouseEvent) => {
         dragState.current.isDragging = true
-        const delta = refs.current.side === "left" 
+        const delta = refs.current.renderedSide === "left"
             ? e.clientX - dragState.current.startX 
             : dragState.current.startX - e.clientX
         const newWidth = dragState.current.startWidth + delta
@@ -431,11 +459,11 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
     }, [handleSidebarDrag, handleMouseUp])
 
     // Position of the sidebar rail
-    const finalRailPosition = React.useMemo(() => 
-        side === "left" 
+    const finalRailPosition = React.useMemo(() =>
+        renderedSide === "left"
             ? { left: `${railPosition}px` }
             : { right: `${railPosition}px` }
-    , [side, railPosition])
+    , [renderedSide, railPosition])
 
     const railTooltipText = open
         ? (t.sidebar?.resize_tooltip_collapse || "Collapse sidebar (%shortcut)").replace("%shortcut", `${modKey} B`)
@@ -443,10 +471,11 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
 
 
     return (
-        <SmartTooltip text={railTooltipText} group="sidebar" cursorAnchor forceSide={side === "left" ? "right" : "left"}>
+        <SmartTooltip text={railTooltipText} group="sidebar" cursorAnchor forceSide={renderedSide === "left" ? "right" : "left"}>
             <button
                 type = "button"
                 data-sidebar = "rail"
+                data-rendered-side = {renderedSide}
                 aria-label = "Toggle Sidebar"
                 tabIndex = {-1}
 
@@ -463,7 +492,7 @@ function SidebarRail({ railPosition }: { railPosition: number }) {
                     isResizing && "pointer-events-none",
                     !isResizing && "transition-[left,right] duration-200 ease-linear",
 
-                    side === "left" 
+                    renderedSide === "left"
                         ? "-translate-x-1/2 after:left-1/2 after:-translate-x-1/2"
                         : "translate-x-1/2 after:right-1/2 after:translate-x-1/2"
                 )}
@@ -520,16 +549,18 @@ function componentFactory<T extends React.ElementType>(
 // ==============================================================================
 
 const SidebarInset = componentFactory("main", [
-    "app-framework-surface sq-xl | relative | flex min-w-0 flex-col flex-1 | w-full min-h-svh",
-    "text-foreground | order-1 | overflow-x-hidden border border-transparent shadow-none",
-    "md:m-2 md:min-h-[calc(100svh-16px)]"
+    "app-framework-surface sq-big | relative | flex min-w-0 flex-col flex-1 | h-svh min-h-0 w-full bg-background",
+    "text-foreground | order-1 | overflow-hidden border border-border shadow-none",
+    "md:m-2 md:h-[calc(100svh-16px)] peer-data-[side=left]:md:ml-0! peer-data-[side=right]:md:mr-0! peer-data-[rendered-side=left]:md:ml-0! peer-data-[rendered-side=right]:md:mr-0!"
 ], "inset")
 
 const collapsedRailBalance = [
     "group-data-[collapsible=icon]:group-data-[side=left]:pl-3",
-    "group-data-[collapsible=icon]:group-data-[side=left]:pr-1",
-    "group-data-[collapsible=icon]:group-data-[side=right]:pl-1",
+    "group-data-[collapsible=icon]:group-data-[rendered-side=left]:pl-3",
+    "group-data-[collapsible=icon]:group-data-[rendered-side=left]:pr-1",
     "group-data-[collapsible=icon]:group-data-[side=right]:pr-3",
+    "group-data-[collapsible=icon]:group-data-[rendered-side=right]:pl-1",
+    "group-data-[collapsible=icon]:group-data-[rendered-side=right]:pr-3",
 ]
 
 const SidebarInput = componentFactory(Input, cn("h-8 w-full", UDS.cardFlatShadow), "input")                  // Search/filter input for sidebar
@@ -596,16 +627,15 @@ const SidebarGroupAction = componentFactory("button", [                         
 const sidebarMenuButtonVariants = cva(
     [
         "peer/menu-button | flex items-center gap-2 | p-2 | w-full",
-        "sq-xl ring-sidebar-ring outline-hidden focus-visible:ring-2",
+        "sq-normal ring-sidebar-ring outline-hidden focus-visible:ring-2",
         UDS.itemHover,
         UDS.itemPressed,
         "text-sm text-left hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground disabled:pointer-events-none",
         "transition-all duration-150 | disabled:opacity-50 | overflow-hidden",
 
         "[&>span:last-child]:auto-scroll [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:duration-150",
-        UDS.itemActive,
         "data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
-        "group-data-[collapsible=icon]:size-8! | group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! group-has-data-[sidebar=menu-action]/menu-item:pr-9",
+        "group-data-[collapsible=icon]:size-8! | group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! group-has-data-[sidebar=menu-action]/menu-item:pe-9",
         UDS.itemOpen,
         "data-[state=open]:text-sidebar-accent-foreground",
         "hover:[&>svg]:scale-110"
@@ -615,7 +645,7 @@ const sidebarMenuButtonVariants = cva(
         variants: {
             variant: {
                 default: "",
-                outline: cn(UDS.surface, "sq-xl"),
+                outline: cn(UDS.surface, "sq-normal"),
             },
 
             size: {
@@ -645,7 +675,7 @@ const CollapsedTooltip = React.forwardRef<
 >(
     ({ asChild = false, isActive = false, variant = "default", size = "default", tooltip, className, ...props }, ref) => {
         const Comp = asChild ? Slot : "button"
-        const { isMobile, state } = useSidebar()
+        const { isMobile, state, renderedSide } = useSidebar()
 
         const button = (
             <Comp
@@ -661,7 +691,7 @@ const CollapsedTooltip = React.forwardRef<
         if (!tooltip || state !== "collapsed" || isMobile) return button        // Only show tooltip when collapsed, has tooltip content, and is not on mobile
 
         return (
-            <SmartTooltip text={tooltip} group="sidebar" cursorAnchor forceSide="right">
+            <SmartTooltip text={tooltip} group="sidebar" cursorAnchor forceSide={renderedSide === "left" ? "right" : "left"}>
                 {button}
             </SmartTooltip>
         )
@@ -689,7 +719,7 @@ const SidebarActionDropdown = React.forwardRef<
                 ref = {ref}
                 data-sidebar = "menu-action"
                 className = {cn(
-                    "absolute top-0.5 right-0.5 | flex size-7 items-center justify-center | p-0",
+                    "absolute top-0.5 end-0.5 | flex size-7 items-center justify-center | p-0",
                     "sq-full outline-hidden ring-sidebar-ring focus-visible:ring-2 | text-sidebar-foreground hover:text-sidebar-accent-foreground",
                     UDS.itemHover,
                     "transition-transform",
@@ -742,7 +772,6 @@ const SidebarMenuSubButton = React.forwardRef<
                     "-translate-x-px | overflow-hidden",
 
                     "[&>span:last-child]:auto-scroll [&>svg]:shrink-0 [&>svg]:size-4 [&>svg]:text-sidebar-accent-foreground",
-                    UDS.itemActive,
                     "data-[active=true]:text-sidebar-accent-foreground",
                     "group-data-[collapsible=icon]:hidden",                     // Hide when sidebar is collapsed to icons
 

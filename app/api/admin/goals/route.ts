@@ -9,6 +9,7 @@
 //
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/admin-auth"
+import { goalProgressSnapshot } from "@/lib/goal-account"
 import { prisma } from "@/lib/prisma"
 import { parsePositiveInt } from "@/lib/query-utils"
 
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
         ? { [sortBy]: sortDir }
         : { createdAt: "desc" as const }
 
-    const [goals, total, agg] = await Promise.all([
+    const [goals, total, agg, summaryGoals] = await Promise.all([
         prisma.financialGoal.findMany({
             where,
             orderBy,
@@ -53,6 +54,8 @@ export async function GET(request: NextRequest) {
                 name: true,
                 targetAmount: true,
                 currentAmount: true,
+                baselineAmount: true,
+                targetMode: true,
                 deadline: true,
                 category: true,
                 color: true,
@@ -66,14 +69,47 @@ export async function GET(request: NextRequest) {
             where,
             _sum: { targetAmount: true, currentAmount: true },
         }),
+        prisma.financialGoal.findMany({
+            where,
+            select: {
+                targetAmount: true,
+                currentAmount: true,
+                baselineAmount: true,
+                targetMode: true,
+            },
+        }),
     ])
 
+    const formattedGoals = goals.map((goal) => {
+        const progress = goalProgressSnapshot({
+            targetAmount: goal.targetAmount,
+            currentAmount: goal.currentAmount,
+            baselineAmount: goal.baselineAmount,
+            targetMode: goal.targetMode,
+        })
+        return {
+            ...goal,
+            currentAmount: progress.progressAmount,
+            baselineAmount: progress.baselineAmount,
+            targetMode: progress.targetMode,
+            targetTotalAmount: progress.targetTotalAmount,
+        }
+    })
+
     return NextResponse.json({
-        goals,
+        goals: formattedGoals,
         pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
         summary: {
             totalTarget: agg._sum.targetAmount || 0,
-            totalCurrent: agg._sum.currentAmount || 0,
+            totalCurrent: summaryGoals.reduce((sum, goal) => {
+                const progress = goalProgressSnapshot({
+                    targetAmount: goal.targetAmount,
+                    currentAmount: goal.currentAmount,
+                    baselineAmount: goal.baselineAmount,
+                    targetMode: goal.targetMode,
+                })
+                return sum + progress.progressAmount
+            }, 0),
         },
     })
 }

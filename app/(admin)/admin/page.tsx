@@ -64,7 +64,6 @@ interface DashboardData {
         status: string
         createdAt: string
         lastLoginAt: string | null
-        twoFactorEnabled: boolean
         transactionCount: number
         accountCount: number
     }[]
@@ -138,13 +137,13 @@ function StatCard({
             <div className="relative mt-2">
                 <p className={cn(UDS.summaryValue, toneStyles.value)}>{value}</p>
                 {trend && trend.value > 0 && (
-                    <p className={cn("mt-1 flex items-center gap-1 text-[11px] font-medium", toneStyles.meta)}>
+                    <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", toneStyles.meta)}>
                         <TrendingUp className="size-3" />
                         +{trend.value} {trend.label}
                     </p>
                 )}
                 {description && !trend && (
-                    <p className={cn("mt-1 text-[11px]", toneStyles.meta)}>{description}</p>
+                    <p className={cn("mt-1 text-xs", toneStyles.meta)}>{description}</p>
                 )}
             </div>
         </div>
@@ -343,17 +342,14 @@ export default function AdminDashboardPage() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium truncate">{user.name}</p>
-                                                    <p className="text-[11px] text-neutral-400 truncate">{user.email}</p>
+                                                    <p className="text-xs text-neutral-400 truncate">{user.email}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
-                                                {user.twoFactorEnabled && (
-                                                    <span className="text-[10px] text-blue-600 dark:text-blue-400" title="2FA enabled">🔐</span>
-                                                )}
-                                                <span className={`inline-flex items-center sq-full px-2 py-0.5 text-[10px] font-medium ${statusColors[user.status] || statusColors.active}`}>
+                                                <span className={`inline-flex items-center sq-full px-2 py-0.5 text-xs font-medium ${statusColors[user.status] || statusColors.active}`}>
                                                     {user.status}
                                                 </span>
-                                                <span className="text-[11px] text-neutral-400 whitespace-nowrap">
+                                                <span className="text-xs text-neutral-400 whitespace-nowrap">
                                                     {timeAgo(user.createdAt, ad)}
                                                 </span>
                                             </div>
@@ -404,13 +400,13 @@ export default function AdminDashboardPage() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium">{formatAction(log.action)}</p>
-                                                    <p className="text-[11px] text-neutral-400 truncate">
+                                                    <p className="text-xs text-neutral-400 truncate">
                                                         by {log.performer.name}
                                                         {log.targetUser && <> → {log.targetUser.name}</>}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <span className="text-[11px] text-neutral-400 whitespace-nowrap shrink-0">
+                                            <span className="text-xs text-neutral-400 whitespace-nowrap shrink-0">
                                                 {timeAgo(log.createdAt, ad)}
                                             </span>
                                         </div>

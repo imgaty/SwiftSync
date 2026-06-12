@@ -1,0 +1,48 @@
+<svg width="370" height="145" viewBox="0 0 370 145" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision">
+  <title>Argent logo demo sidebar collapsed corner</title>
+  <defs>
+    <linearGradient id="insetGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.025"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.018"/>
+      <stop offset="0.48" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="separatorGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="370" height="145" fill="#000000"/>
+  <svg x="12" y="12" width="24" height="24" viewBox="0 0 84 78" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Argent mark">
+<path d="M53.4455 24.078L6.0224 66.5688L42 4.2539Z" fill="white"/>
+  <path d="M68.7227 50.539L15.8015 67.877L57.2773 30.7149Z" fill="white"/>
+  <path d="M72.5545 57.1758L84 77H12.0448L72.5545 57.1758Z" fill="white"/>
+  </svg>
+  <rect x="16" y="60" width="16" height="16" rx="5" fill="#121313"/>
+  <rect x="16" y="96" width="16" height="16" rx="5" fill="#121313"/>
+  <rect x="16" y="132" width="16" height="16" rx="5" fill="#121313"/>
+
+  <path d="M74 8 H1174 C1185.25 8 1192 14.75 1192 26 V774 C1192 785.25 1185.25 792 1174 792 H74 C62.75 792 56 785.25 56 774 V26 C56 14.75 62.75 8 74 8 Z" fill="#020202" stroke="#2d2d2d" stroke-width="1"/>
+  <path d="M74 8 H1174 C1185.25 8 1192 14.75 1192 26 V774 C1192 785.25 1185.25 792 1174 792 H74 C62.75 792 56 785.25 56 774 V26 C56 14.75 62.75 8 74 8 Z" fill="url(#insetGradient)" opacity="0.9"/>
+  <path d="M74 8 H1174 C1185.25 8 1192 14.75 1192 26 V774 C1192 785.25 1185.25 792 1174 792 H74 C62.75 792 56 785.25 56 774 V26 C56 14.75 62.75 8 74 8 Z" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+  <g transform="translate(79 33) scale(0.6666666667)" fill="none" stroke="#ebedf1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.94">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <path d="M9 3v18"/>
+  </g>
+  <line x1="117" y1="33" x2="117" y2="49" stroke="url(#separatorGradient)" stroke-width="1" opacity="0.95"/>
+  <rect x="134" y="33" width="80" height="16" rx="5" fill="#121313"/>
+
+  <path d="M89 73 H332.5469 C342.5469 73 348.5469 79 348.5469 89 V337 C348.5469 347 342.5469 353 332.5469 353 H89 C79 353 73 347 73 337 V89 C73 79 79 73 89 73 Z" fill="#060606" stroke="#222222" stroke-width="1"/>
+  <path d="M89 73 H332.5469 C342.5469 73 348.5469 79 348.5469 89 V337 C348.5469 347 342.5469 353 332.5469 353 H89 C79 353 73 347 73 337 V89 C73 79 79 73 89 73 Z" fill="url(#cardGradient)" opacity="0.9"/>
+  <path d="M89 73 H332.5469 C342.5469 73 348.5469 79 348.5469 89 V337 C348.5469 347 342.5469 353 332.5469 353 H89 C79 353 73 347 73 337 V89 C73 79 79 73 89 73 Z" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+  <rect x="90" y="91" width="96" height="14" rx="4" fill="#121313"/>
+  <rect x="315.546875" y="90" width="16" height="16" rx="5" fill="#121313"/>
+  <path d="M380.5469 73 H745.7656 C755.7656 73 761.7656 79 761.7656 89 V189 C761.7656 199 755.7656 205 745.7656 205 H380.5469 C370.5469 205 364.5469 199 364.5469 189 V89 C364.5469 79 370.5469 73 380.5469 73 Z" fill="#060606" stroke="#222222" stroke-width="1"/>
+  <path d="M380.5469 73 H745.7656 C755.7656 73 761.7656 79 761.7656 89 V189 C761.7656 199 755.7656 205 745.7656 205 H380.5469 C370.5469 205 364.5469 199 364.5469 189 V89 C364.5469 79 370.5469 73 380.5469 73 Z" fill="url(#cardGradient)" opacity="0.9"/>
+  <path d="M380.5469 73 H745.7656 C755.7656 73 761.7656 79 761.7656 89 V189 C761.7656 199 755.7656 205 745.7656 205 H380.5469 C370.5469 205 364.5469 199 364.5469 189 V89 C364.5469 79 370.5469 73 380.5469 73 Z" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+</svg>

@@ -10,37 +10,41 @@
 /* Multi-action auth router.
  *
  * One catch-all handler for every session-touching auth verb: login, register,
- * logout, verify, profile, update, delete-account, 2FA login, trusted-device
- * management. The `[action]` segment dispatches to the matching `handle*`
- * function below.
+ * logout, verify, profile, update, and delete-account. The `[action]`
+ * segment dispatches to the matching `handle*` function below.
  *
  * Learn more in `docs/Authentication & Security.md`
  */
 
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { randomBytes, createHash, createHmac } from 'crypto';
+import { randomBytes } from 'crypto';
 import type { User } from '@/lib/generated/prisma/client';
-import * as OTPAuth from 'otpauth';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, hashPassword, passwordNeedsRehash } from '@/lib/password';
-import { decrypt, encrypt } from '@/lib/encryption-v2';
 import { createSessionToken, sessionVersionMatches, verifySessionToken } from '@/lib/session';
 import { EMAIL_RE } from '@/lib/validation';
 import { generateDefaultAvatarDataUrl } from '@/lib/avatar';
-import { clientIp } from '@/lib/rate-limit';
-import { consumeEncryptedBackupCode } from '@/lib/auth-2fa';
+import { clientIp, rateLimit, rateLimitReset } from '@/lib/rate-limit';
+import { sendEmailTwoFactorCode } from '@/lib/email';
 import {
-    replacePendingTwoFactorSession,
-    type PendingTwoFactorSession,
-} from '@/lib/auth-2fa';
+    cleanupPendingEmailTwoFactorSessions,
+    createEmailTwoFactorExpiry,
+    createEmailTwoFactorChallengePayload,
+    createPendingEmailTwoFactorSession,
+    EMAIL_TWO_FACTOR_CODE_TTL_MS,
+    EMAIL_TWO_FACTOR_MAX_ATTEMPTS,
+    hashEmailTwoFactorCode,
+    isEmailTwoFactorCodeExpired,
+    type PendingEmailTwoFactorStore,
+    verifyEmailTwoFactorCodeHash,
+    generateEmailTwoFactorCode,
+} from '@/lib/email-two-factor';
 
 export const dynamic = 'force-dynamic';
 
 // --- Constants ---------------------------------------------------------------
-const TRUST_DEVICE_MAX_AGE = 30 * 24 * 60 * 60;                                                                                 // Amount of time the device will be trusted for (30 days)
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60;                                                                                       // Amount of time the login session cookies will persist (7 days)
-const TRUST_COOKIE = 'trusted-device';                                                                                          // Name of the cookie that stores the trusted device token
 const COOKIE_OPTS = {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
@@ -48,56 +52,29 @@ const COOKIE_OPTS = {
 };
 const LOGIN_WINDOW_MS = 30 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
-const MAX_2FA_ATTEMPTS = 5;
-const MAX_PENDING = 10_000;
-const PW_MIN = 8;
+// Per-account throttle. Defends against distributed/low-and-slow password spraying that
+// rotates source IPs against a single account, which the per-IP limiter above cannot see.
+// Keyed on the normalized email and reset on a correct password, so only failed attempts
+// accumulate. The window is short enough that a victim lockout self-heals quickly.
+const ACCOUNT_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const MAX_ACCOUNT_LOGIN_ATTEMPTS = 10;
+// Account creation and email-availability probes are cheap to automate; throttle by IP to
+// blunt signup spam and email enumeration.
+const REGISTER_WINDOW_MS = 60 * 60 * 1000;
+const MAX_REGISTER_ATTEMPTS = 10;
+const CHECK_EMAIL_WINDOW_MS = 15 * 60 * 1000;
+const MAX_CHECK_EMAIL_ATTEMPTS = 20;
+const EMAIL_TWO_FACTOR_RESEND_ATTEMPTS = 3;
+const PW_MIN = 12;
 const PW_MAX = 128;
-const TEN_MIN = 10 * 60 * 1000;
+const NAME_MAX_LEN = 100;
 
 // --- In-memory stores --------------------------------------------------------
-const rateLimits = new Map<string, { count: number; resetAt: number }>();
-const pending2FA = new Map<string, PendingTwoFactorSession>();
+const pendingEmailTwoFactor: PendingEmailTwoFactorStore = new Map();
 
 // --- Tiny helpers ------------------------------------------------------------
 const ok = (data: object, status = 200) => NextResponse.json(data, { status });
 const err = (error: string, status: number) => NextResponse.json({ error }, { status });
-const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
-// HMAC-based hash for device tokens: mixes SESSION_PEPPER so a DB leak alone
-// doesn't let an attacker confirm guessed raw tokens offline.
-const _rawPepper = process.env.SESSION_PEPPER || process.env.ENCRYPTION_MASTER_KEY;
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'production' && (!_rawPepper || _rawPepper.length < 32)) {
-    throw new Error(
-        'SESSION_PEPPER env var is required in production and must be at least 32 chars. ' +
-        'Generate one with: openssl rand -hex 32'
-    );
-}
-const SESSION_PEPPER = _rawPepper || '';
-const deviceTokenHash = (v: string) =>
-    SESSION_PEPPER
-        ? createHmac('sha256', SESSION_PEPPER).update(v).digest('hex')
-        : sha256(v);
-// Produce a short opaque identifier for log correlation that doesn't leak
-// the raw user ID to downstream log sinks.
-const logId = (userId: string) =>
-    (SESSION_PEPPER
-        ? createHmac('sha256', SESSION_PEPPER).update(userId).digest('hex')
-        : sha256(userId)
-    ).slice(0, 12);
-const token = () => randomBytes(32).toString('hex');
-
-function validateTotpCode(user: { name: string; email: string; twoFactorSecret: string | null }, code: string) {
-    if (!user.twoFactorSecret) return false;
-    const secret = decrypt(user.twoFactorSecret);
-    const totp = new OTPAuth.TOTP({
-        issuer: 'Argent',
-        label: user.name || user.email,
-        algorithm: 'SHA1',
-        digits: 6,
-        period: 30,
-        secret: OTPAuth.Secret.fromBase32(secret),
-    });
-    return totp.validate({ token: code.trim(), window: 1 }) !== null;
-}
 
 let _dummy: string | null = null;
 const dummyHash = () => (_dummy ??= hashPassword(randomBytes(16).toString('hex')));
@@ -106,39 +83,20 @@ function ip(req: Request) {
     return clientIp(req);
 }
 
-function rateOk(key: string, maxAttempts = MAX_LOGIN_ATTEMPTS): number | true {
-    const now = Date.now();
-    const e = rateLimits.get(key);
-    
-    if (!e || now > e.resetAt) return true;
-    
-    return e.count >= maxAttempts ? Math.ceil((e.resetAt - now) / 1000) : true;
+function rateLimitError(message: string, retryAfter: number) {
+    const res = err(message, 429);
+    res.headers.set('Retry-After', retryAfter.toString());
+    return res;
 }
 
-function rateFail(key: string, windowMs = LOGIN_WINDOW_MS) {
-    const now = Date.now();
-    const e = rateLimits.get(key);
-    
-    if (!e || now > e.resetAt) rateLimits.set(key, { count: 1, resetAt: now + windowMs });
-    else e.count++;
-}
-
-function twoFactorRateKey(userId: string, clientIp: string) {
-    return `2fa:${userId}:${clientIp}`;
-}
-
-function cleanup() {
-    const now = Date.now();
-
-    for (const [k, v] of pending2FA) if (v.expiresAt < now) pending2FA.delete(k);
-    for (const [k, v] of rateLimits) if (now > v.resetAt) rateLimits.delete(k);
-}
-
-function deviceLabel(ua: string | null) {
-    if (!ua) return 'Unknown device';
-
-    const map: [RegExp, string][] = [[/iPhone|iPad/, 'iPhone / iPad'], [/Android/, 'Android'], [/Macintosh|Mac OS/, 'Mac'], [/Windows/, 'Windows PC'], [/Linux/, 'Linux']];
-    return map.find(([re]) => re.test(ua))?.[1] ?? 'Unknown device';
+async function clearEmailTwoFactorCode(userId: string) {
+    await prisma.user.update({
+        where: { id: userId },
+        data: {
+            emailTwoFactorCode: null,
+            emailTwoFactorCodeExpiry: null,
+        },
+    });
 }
 
 function validateEmail(raw?: string): string | null {
@@ -151,6 +109,29 @@ function validatePw(pw: string): string | null {
     if (pw.length > PW_MAX) return 'Password too long';
     
     return null;
+}
+
+function validateName(raw?: unknown): string | null {
+    if (typeof raw !== 'string') return null;
+    const name = raw.trim();
+    if (!name || name.length > NAME_MAX_LEN) return null;
+    return name;
+}
+
+// Birth dates arrive from the client as YYYY-MM-DD. Reject anything that isn't a real
+// calendar date, is in the future, or is implausibly old.
+const DOB_RE = /^\d{4}-\d{2}-\d{2}$/;
+function validateDob(raw?: unknown): string | null {
+    if (typeof raw !== 'string') return null;
+    const dob = raw.trim();
+    if (!DOB_RE.test(dob)) return null;
+    const date = new Date(`${dob}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) return null;
+    // Reject components that silently normalize away (e.g. 2026-02-31 -> 2026-03-03).
+    if (date.toISOString().slice(0, 10) !== dob) return null;
+    if (date.getTime() > Date.now()) return null;
+    if (date.getUTCFullYear() < 1900) return null;
+    return dob;
 }
 
 async function getAuth<T extends Record<string, boolean>>(select?: T): Promise<User | null> {
@@ -205,36 +186,11 @@ async function finishAuthenticatedSession(userId: string, role?: string, message
     });
 }
 
-async function consumeBackupCodeForUser(userId: string, submittedCode: string) {
-    return prisma.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
-
-        const user = await tx.user.findUnique({
-            where: { id: userId },
-            select: { twoFactorBackupCodes: true },
-        });
-        const backupCodesAfterUse = consumeEncryptedBackupCode(
-            user?.twoFactorBackupCodes ?? null,
-            submittedCode,
-            decrypt,
-        );
-
-        if (!backupCodesAfterUse) return false;
-
-        await tx.user.update({
-            where: { id: userId },
-            data: { twoFactorBackupCodes: encrypt(JSON.stringify(backupCodesAfterUse)) },
-        });
-
-        return true;
-    });
-}
-
 // --- Route handlers ----------------------------------------------------------
 const POST_ROUTES: Record<string, (r: Request) => Promise<NextResponse>> = {
-    login: handleLogin, '2fa-login': handle2FALogin, register: handleRegister,
+    login: handleLogin, '2fa-login': handleEmailTwoFactorLogin, '2fa-resend': handleEmailTwoFactorResend, register: handleRegister,
     'check-email': handleCheckEmail, logout: handleLogout, update: handleUpdate,
-    'trusted-devices': handleTrustedDevices, 'delete-account': handleDeleteAccount,
+    'delete-account': handleDeleteAccount,
 };
 
 const GET_ROUTES: Record<string, () => Promise<NextResponse>> = {
@@ -255,13 +211,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ act
 async function handleLogin(request: Request) {
     try {
         const clientIp = ip(request);
-        const limit = rateOk(clientIp);
+        const limit = rateLimit({
+            scope: 'login',
+            identifier: clientIp,
+            max: MAX_LOGIN_ATTEMPTS,
+            windowMs: LOGIN_WINDOW_MS,
+        });
 
-        if (limit !== true) {
-            const res = err(`Too many login attempts. Try again in ${limit} seconds.`, 429);
-            res.headers.set('Retry-After', limit.toString());
-
-            return res;
+        if (!limit.ok) {
+            return rateLimitError(`Too many login attempts. Try again in ${limit.retryAfter} seconds.`, limit.retryAfter);
         }
 
         const { email: rawEmail, password } = await request.json();
@@ -271,9 +229,22 @@ async function handleLogin(request: Request) {
         if (!EMAIL_RE.test(email)) return err('Invalid email format', 400);
         if (password.length > PW_MAX) return err('Password too long', 400);
 
+        // Per-account throttle, keyed on the email the caller is targeting. Applied before the
+        // DB lookup and identical for existing/non-existing accounts, so it leaks no enumeration
+        // signal. Reset below once the password is confirmed correct.
+        const accountLimit = rateLimit({
+            scope: 'login-account',
+            identifier: email,
+            max: MAX_ACCOUNT_LOGIN_ATTEMPTS,
+            windowMs: ACCOUNT_LOGIN_WINDOW_MS,
+        });
+        if (!accountLimit.ok) {
+            return rateLimitError(`Too many login attempts for this account. Try again in ${accountLimit.retryAfter} seconds.`, accountLimit.retryAfter);
+        }
+
         const user = await prisma.user.findFirst({
             where: { email: { equals: email, mode: 'insensitive' } },
-            select: { id: true, email: true, password: true, twoFactorEnabled: true, twoFactorSecret: true, role: true, status: true },
+            select: { id: true, email: true, password: true, role: true, status: true, emailTwoFactorEnabled: true },
         });
 
         // Single error message for both branches (no email + wrong password) to
@@ -281,88 +252,58 @@ async function handleLogin(request: Request) {
         // request shape is indistinguishable.
         if (!user) {
             verifyPassword(password, dummyHash());
-            rateFail(clientIp);
             return err('Invalid email or password', 401);
         }
 
         if (!verifyPassword(password, user.password)) {
-            rateFail(clientIp);
             return err('Invalid email or password', 401);
         }
         if (user.status !== 'active') {
             return err('Account is not active', 403);
         }
 
-        rateLimits.delete(clientIp);
+        // Password is correct: this account is not being brute-forced, so clear its throttle.
+        rateLimitReset('login-account', email);
 
         const upgrade = passwordNeedsRehash(user.password) ? { password: hashPassword(password) } : {};
-        const needsUpgrade = 'password' in upgrade;
+        if (user.emailTwoFactorEnabled) {
+            const code = generateEmailTwoFactorCode();
+            const expiry = createEmailTwoFactorExpiry();
 
-        // 2FA path
-        if (user.twoFactorEnabled) {
-            if (!user.twoFactorSecret) {
-                return err('2FA is enabled but not fully configured. Please reset 2FA from settings or contact support.', 400);
-            }
-
-            const cs = await cookies();
-            const raw = cs.get(TRUST_COOKIE)?.value;
-
-            if (raw) {
-                const td = await prisma.trustedDevice.findUnique({ where: { token: deviceTokenHash(raw) } });
-
-                if (td && td.userId === user.id && td.expiresAt > new Date()) {
-                    if (needsUpgrade) {
-                        await prisma.user.update({ where: { id: user.id }, data: upgrade });
-                        console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
-                    }
-
-                    return finishAuthenticatedSession(user.id, user.role, 'Login successful (trusted device)', request);
-                }
-
-                if (td) await prisma.trustedDevice.delete({ where: { id: td.id } }).catch((e) => { console.error('Trusted device delete (mismatch) failed:', e); });
-                cs.delete(TRUST_COOKIE);
-            }
-
-            if (needsUpgrade) {
-                await prisma.user.update({ where: { id: user.id }, data: upgrade });
-                console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
-            }
-
-            cleanup();
-
-            const twoFactorLimit = rateOk(twoFactorRateKey(user.id, clientIp), MAX_2FA_ATTEMPTS);
-            if (twoFactorLimit !== true) {
-                const res = err(`Too many verification attempts. Try again in ${twoFactorLimit} seconds.`, 429);
-                res.headers.set('Retry-After', twoFactorLimit.toString());
-
-                return res;
-            }
-
-            const tmp = token();
-            replacePendingTwoFactorSession(pending2FA, tmp, {
-                userId: user.id,
-                expiresAt: Date.now() + TEN_MIN,
-                attempts: 0,
-                maxPending: MAX_PENDING,
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    ...upgrade,
+                    emailTwoFactorCode: hashEmailTwoFactorCode(code),
+                    emailTwoFactorCodeExpiry: expiry,
+                },
             });
 
-            return ok({
-                success: true,
-                needs_2fa: true,
-                tempToken: tmp,
-                message: 'Enter the 6-digit code from your authenticator app or a backup code'
-            });
+            try {
+                await sendEmailTwoFactorCode(user.email, code);
+            } catch (emailError) {
+                await clearEmailTwoFactorCode(user.id);
+                console.error('Failed to send email 2FA code:', emailError);
+                return err('Failed to send verification code', 500);
+            }
+
+            const tempToken = createPendingEmailTwoFactorSession(
+                pendingEmailTwoFactor,
+                user.id,
+                expiry.getTime(),
+            );
+
+            return ok(createEmailTwoFactorChallengePayload(tempToken));
         }
 
-        // Non-2FA path
-        if (needsUpgrade) {
+        if ('password' in upgrade) {
             await prisma.user.update({
                 where: { id: user.id },
                 data: upgrade
             });
-            console.log(`🧬 User ${logId(user.id)} password hash auto-upgraded`);
         }
-        
+
+        rateLimitReset('login', clientIp);
         return finishAuthenticatedSession(user.id, user.role, 'Login successful', request);
 
     } catch (e) {
@@ -370,80 +311,178 @@ async function handleLogin(request: Request) {
     }
 }
 
-// --- 2FA VERIFY --------------------------------------------------------------
-async function handle2FALogin(request: Request) {
+// --- EMAIL 2FA VERIFY --------------------------------------------------------
+async function handleEmailTwoFactorLogin(request: Request) {
   try {
-    const { tempToken, code, trustDevice } = await request.json();
-    const submittedCode = String(code || '').trim();
-    if (!tempToken || !submittedCode) return err('Temporary token and verification code are required', 400);
-
-    cleanup();
-    const session = pending2FA.get(tempToken);
-    if (!session) return err('Session expired. Please log in again.', 401);
-    if (session.attempts >= MAX_2FA_ATTEMPTS) { pending2FA.delete(tempToken); return err('Too many attempts. Please log in again.', 429); }
-    pending2FA.delete(tempToken);
-
     const clientIp = ip(request);
-    const twoFactorKey = twoFactorRateKey(session.userId, clientIp);
-    const limit = rateOk(twoFactorKey, MAX_2FA_ATTEMPTS);
-    if (limit !== true) {
-      return err(`Too many verification attempts. Try again in ${limit} seconds.`, 429);
+    const limit = rateLimit({
+      scope: 'email-2fa-verify',
+      identifier: clientIp,
+      max: EMAIL_TWO_FACTOR_MAX_ATTEMPTS,
+      windowMs: EMAIL_TWO_FACTOR_CODE_TTL_MS,
+    });
+
+    if (!limit.ok) {
+      return rateLimitError(`Too many verification attempts. Try again in ${limit.retryAfter} seconds.`, limit.retryAfter);
+    }
+
+    const { tempToken, code } = await request.json();
+    const submittedCode = typeof code === 'string' ? code.trim() : '';
+    if (!tempToken || typeof tempToken !== 'string' || !submittedCode) {
+      return err('Temporary token and verification code are required', 400);
+    }
+
+    cleanupPendingEmailTwoFactorSessions(pendingEmailTwoFactor);
+    const session = pendingEmailTwoFactor.get(tempToken);
+    if (!session) return err('Session expired. Please log in again.', 401);
+
+    if (session.expiresAt <= Date.now()) {
+      pendingEmailTwoFactor.delete(tempToken);
+      await clearEmailTwoFactorCode(session.userId);
+      return err('Code expired. Please log in again.', 401);
     }
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
       select: {
         id: true,
-        name: true,
-        email: true,
         role: true,
         status: true,
-        twoFactorSecret: true,
+        emailTwoFactorEnabled: true,
+        emailTwoFactorCode: true,
+        emailTwoFactorCodeExpiry: true,
       },
     });
-    if (!user?.twoFactorSecret) {
-      return err('2FA is not configured for this account. Please log in again.', 400);
+
+    if (!user || !user.emailTwoFactorEnabled) {
+      pendingEmailTwoFactor.delete(tempToken);
+      return err('Email verification is not configured for this account. Please log in again.', 400);
     }
     if (user.status !== 'active') {
+      pendingEmailTwoFactor.delete(tempToken);
       return err('Account is not active', 403);
     }
+    if (!user.emailTwoFactorCode || !user.emailTwoFactorCodeExpiry) {
+      pendingEmailTwoFactor.delete(tempToken);
+      return err('No verification code found. Please log in again.', 400);
+    }
+    if (isEmailTwoFactorCodeExpired(user.emailTwoFactorCodeExpiry)) {
+      pendingEmailTwoFactor.delete(tempToken);
+      await clearEmailTwoFactorCode(user.id);
+      return err('Code expired. Please log in again.', 401);
+    }
 
-    const isTotpValid = /^\d{6}$/.test(submittedCode) && validateTotpCode(user, submittedCode);
-    const isBackupCodeValid = isTotpValid ? false : await consumeBackupCodeForUser(user.id, submittedCode);
-
-    if (!isTotpValid && !isBackupCodeValid) {
-      const nextAttempts = session.attempts + 1;
-      rateFail(twoFactorKey, TEN_MIN);
-      const limited = rateOk(twoFactorKey, MAX_2FA_ATTEMPTS);
-      if (nextAttempts >= MAX_2FA_ATTEMPTS || limited !== true) {
+    if (!verifyEmailTwoFactorCodeHash(submittedCode, user.emailTwoFactorCode)) {
+      const attempts = session.attempts + 1;
+      if (attempts >= EMAIL_TWO_FACTOR_MAX_ATTEMPTS) {
+        pendingEmailTwoFactor.delete(tempToken);
+        await clearEmailTwoFactorCode(user.id);
         return err('Too many attempts. Please log in again.', 429);
       }
-      pending2FA.set(tempToken, { ...session, attempts: nextAttempts });
+
+      pendingEmailTwoFactor.set(tempToken, { ...session, attempts });
       return err('Invalid verification code', 401);
     }
 
-    rateLimits.delete(twoFactorKey);
+    pendingEmailTwoFactor.delete(tempToken);
+    rateLimitReset('login', clientIp);
+    rateLimitReset('email-2fa-verify', clientIp);
+    await clearEmailTwoFactorCode(user.id);
+    return finishAuthenticatedSession(user.id, user.role, 'Login successful', request);
+  } catch (e) {
+    console.error('Email 2FA verification error:', e);
+    return err('Something went wrong while verifying the code. Please try again.', 500);
+  }
+}
 
-    if (trustDevice) {
-      const raw = token();
-      const hdr = await headers();
-      await Promise.all([
-        prisma.trustedDevice.deleteMany({ where: { userId: session.userId, expiresAt: { lt: new Date() } } }),
-        prisma.trustedDevice.create({
-          data: { userId: session.userId, token: deviceTokenHash(raw), label: deviceLabel(hdr.get('user-agent')), expiresAt: new Date(Date.now() + TRUST_DEVICE_MAX_AGE * 1000) },
-        }),
-      ]);
-      const cs = await cookies();
-      cs.set(TRUST_COOKIE, raw, { httpOnly: true, ...COOKIE_OPTS, maxAge: TRUST_DEVICE_MAX_AGE });
+// --- EMAIL 2FA RESEND --------------------------------------------------------
+async function handleEmailTwoFactorResend(request: Request) {
+  try {
+    const clientIp = ip(request);
+    const { tempToken } = await request.json();
+    const tokenKey = typeof tempToken === 'string' ? tempToken : 'missing';
+    const limit = rateLimit({
+      scope: 'email-2fa-resend',
+      identifier: `${clientIp}:${tokenKey}`,
+      max: EMAIL_TWO_FACTOR_RESEND_ATTEMPTS,
+      windowMs: EMAIL_TWO_FACTOR_CODE_TTL_MS,
+    });
+
+    if (!limit.ok) {
+      return rateLimitError(`Too many resend attempts. Try again in ${limit.retryAfter} seconds.`, limit.retryAfter);
     }
 
-    return finishAuthenticatedSession(session.userId, user.role, 'Login successful', request);
-  } catch (e) { console.error('2FA login error:', e); return err('Something went wrong while verifying your code. Please try again.', 500); }
+    if (!tempToken || typeof tempToken !== 'string') {
+      return err('Temporary token is required', 400);
+    }
+
+    cleanupPendingEmailTwoFactorSessions(pendingEmailTwoFactor);
+    const session = pendingEmailTwoFactor.get(tempToken);
+    if (!session) return err('Session expired. Please log in again.', 401);
+    if (session.expiresAt <= Date.now()) {
+      pendingEmailTwoFactor.delete(tempToken);
+      await clearEmailTwoFactorCode(session.userId);
+      return err('Code expired. Please log in again.', 401);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: {
+        id: true,
+        email: true,
+        status: true,
+        emailTwoFactorEnabled: true,
+      },
+    });
+
+    if (!user || !user.emailTwoFactorEnabled) {
+      pendingEmailTwoFactor.delete(tempToken);
+      return err('Email verification is not configured for this account. Please log in again.', 400);
+    }
+    if (user.status !== 'active') {
+      pendingEmailTwoFactor.delete(tempToken);
+      return err('Account is not active', 403);
+    }
+
+    const code = generateEmailTwoFactorCode();
+    const expiry = createEmailTwoFactorExpiry();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailTwoFactorCode: hashEmailTwoFactorCode(code),
+        emailTwoFactorCodeExpiry: expiry,
+      },
+    });
+
+    try {
+      await sendEmailTwoFactorCode(user.email, code);
+    } catch (emailError) {
+      await clearEmailTwoFactorCode(user.id);
+      console.error('Failed to resend email 2FA code:', emailError);
+      return err('Failed to send verification code', 500);
+    }
+
+    pendingEmailTwoFactor.set(tempToken, { userId: user.id, expiresAt: expiry.getTime(), attempts: 0 });
+    return ok({ success: true, message: 'A new verification code has been sent to your email' });
+  } catch (e) {
+    console.error('Email 2FA resend error:', e);
+    return err('Something went wrong while resending the code. Please try again.', 500);
+  }
 }
 
 // --- CHECK EMAIL -------------------------------------------------------------
 async function handleCheckEmail(request: Request) {
   try {
+    const limit = rateLimit({
+      scope: 'check-email',
+      identifier: ip(request),
+      max: MAX_CHECK_EMAIL_ATTEMPTS,
+      windowMs: CHECK_EMAIL_WINDOW_MS,
+    });
+    if (!limit.ok) {
+      return rateLimitError(`Too many requests. Try again in ${limit.retryAfter} seconds.`, limit.retryAfter);
+    }
+
     const { email: rawEmail } = await request.json();
     const email = validateEmail(rawEmail);
     if (!email) return err('Email is required', 400);
@@ -456,18 +495,43 @@ async function handleCheckEmail(request: Request) {
 // --- REGISTER ----------------------------------------------------------------
 async function handleRegister(request: Request) {
   try {
+    const limit = rateLimit({
+      scope: 'register',
+      identifier: ip(request),
+      max: MAX_REGISTER_ATTEMPTS,
+      windowMs: REGISTER_WINDOW_MS,
+    });
+    if (!limit.ok) {
+      return rateLimitError(`Too many registration attempts. Try again in ${limit.retryAfter} seconds.`, limit.retryAfter);
+    }
+
     const {
-      name,
+      name: rawName,
       email: rawEmail,
-      dateOfBirth,
+      dateOfBirth: rawDob,
       password,
-      recoveryEmail,
+      recoveryEmail: rawRecoveryEmail,
     } = await request.json();
 
     const email = validateEmail(rawEmail);
-    if (!name || !email || !dateOfBirth || !password) return err('All fields are required', 400);
+    const name = validateName(rawName);
+    const dateOfBirth = validateDob(rawDob);
+
+    if (!name || !email || !dateOfBirth || typeof password !== 'string' || !password) {
+      return err('All fields are required', 400);
+    }
     const pwErr = validatePw(password);
     if (pwErr) return err(pwErr, 400);
+
+    // Recovery email is optional, but when supplied it must be a valid address that
+    // differs from the primary email (it is an alternate password-reset destination).
+    let recoveryEmail: string | undefined;
+    if (rawRecoveryEmail !== undefined && rawRecoveryEmail !== null && String(rawRecoveryEmail).trim() !== '') {
+      const normalizedRecovery = validateEmail(rawRecoveryEmail);
+      if (!normalizedRecovery) return err('Invalid recovery email format', 400);
+      if (normalizedRecovery === email) return err('Recovery email must differ from your account email', 400);
+      recoveryEmail = normalizedRecovery;
+    }
 
     let createdUserId = '';
 
@@ -503,8 +567,6 @@ async function handleRegister(request: Request) {
 async function handleLogout() {
   try {
     const cs = await cookies();
-    const raw = cs.get(TRUST_COOKIE)?.value;
-    if (raw) { await prisma.trustedDevice.deleteMany({ where: { token: deviceTokenHash(raw) } }).catch((e) => { console.error('Trusted device cleanup failed on logout:', e); }); cs.delete(TRUST_COOKIE); }
     cs.delete('auth-token');
     cs.delete('user-session');
     return ok({ success: true, message: 'Logged out successfully' });
@@ -531,7 +593,7 @@ async function handleVerify() {
 // --- PROFILE -----------------------------------------------------------------
 async function handleProfile() {
   try {
-    const user = await getAuth({ id: true, name: true, email: true, avatar: true, dateOfBirth: true, recoveryEmail: true, createdAt: true, role: true } as const);
+    const user = await getAuth({ id: true, name: true, email: true, avatar: true, dateOfBirth: true, recoveryEmail: true, emailTwoFactorEnabled: true, createdAt: true, role: true } as const);
     if (!user) return err('Not authenticated', 401);
 
     const initials = (user.name || '').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
@@ -539,6 +601,7 @@ async function handleProfile() {
       id: user.id, name: user.name || '', email: user.email,
       avatar: user.avatar || generateDefaultAvatarDataUrl(user.name || ''),
       dateOfBirth: user.dateOfBirth || '', recoveryEmail: user.recoveryEmail || '',
+      emailTwoFactorEnabled: Boolean(user.emailTwoFactorEnabled),
       initials, createdAt: user.createdAt.toISOString(), role: user.role,
     }, {
       status: 200,
@@ -554,17 +617,23 @@ async function handleProfile() {
 // --- UPDATE PROFILE ----------------------------------------------------------
 async function handleUpdate(request: Request) {
   try {
-    const user = await getAuth({ id: true, email: true, password: true } as const);
+    const user = await getAuth({ id: true, email: true, password: true, emailTwoFactorEnabled: true } as const);
     if (!user) return err('Not authenticated', 401);
 
-    const { name, email, dateOfBirth, recoveryEmail, currentPassword, newPassword } = await request.json();
+    const { name, email, dateOfBirth, recoveryEmail, emailTwoFactorEnabled, currentPassword, newPassword } = await request.json();
     const updates: Record<string, unknown> = {};
     let passwordChanged = false;
 
-    if (name !== undefined) updates.name = name.trim() || '';
+    if (name !== undefined) {
+      const trimmedName = typeof name === 'string' ? name.trim() : '';
+      if (!trimmedName || trimmedName.length > NAME_MAX_LEN) {
+        return err(`Name must be between 1 and ${NAME_MAX_LEN} characters`, 400);
+      }
+      updates.name = trimmedName;
+    }
 
     let emailChange: string | null = null;
-    if (email !== undefined && email.trim()) {
+    if (email !== undefined && typeof email === 'string' && email.trim()) {
       const newEmail = email.trim().toLowerCase();
       if (newEmail !== user.email) {
         if (!EMAIL_RE.test(newEmail)) return err('Invalid email format', 400);
@@ -576,16 +645,43 @@ async function handleUpdate(request: Request) {
 
     let recoveryEmailChange: string | null | undefined = undefined;
     if (recoveryEmail !== undefined) {
-      recoveryEmailChange = recoveryEmail.trim() || null;
+      const trimmedRecovery = typeof recoveryEmail === 'string' ? recoveryEmail.trim() : '';
+      if (!trimmedRecovery) {
+        recoveryEmailChange = null;
+      } else {
+        const normalizedRecovery = validateEmail(trimmedRecovery);
+        if (!normalizedRecovery) return err('Invalid recovery email format', 400);
+        if (normalizedRecovery === (emailChange ?? user.email)) {
+          return err('Recovery email must differ from your account email', 400);
+        }
+        recoveryEmailChange = normalizedRecovery;
+      }
     }
 
-    if (dateOfBirth !== undefined) updates.dateOfBirth = dateOfBirth.trim() || '';
+    if (dateOfBirth !== undefined) {
+      const trimmedDob = typeof dateOfBirth === 'string' ? dateOfBirth.trim() : '';
+      if (!trimmedDob) {
+        updates.dateOfBirth = '';
+      } else {
+        const validDob = validateDob(trimmedDob);
+        if (!validDob) return err('Invalid date of birth', 400);
+        updates.dateOfBirth = validDob;
+      }
+    }
+
+    let emailTwoFactorChange: boolean | undefined = undefined;
+    if (emailTwoFactorEnabled !== undefined) {
+      emailTwoFactorChange = emailTwoFactorEnabled === true;
+    }
 
     // Sensitive identity fields (email, recoveryEmail, password) require the current
     // password as proof. Email is the password-reset destination, so a hijacked session
     // could otherwise change the email and lock the legitimate owner out.
     const sensitiveChange =
-      emailChange !== null || recoveryEmailChange !== undefined || (currentPassword && newPassword);
+      emailChange !== null ||
+      recoveryEmailChange !== undefined ||
+      (emailTwoFactorChange !== undefined && emailTwoFactorChange !== user.emailTwoFactorEnabled) ||
+      (currentPassword && newPassword);
 
     if (sensitiveChange) {
       if (!currentPassword || typeof currentPassword !== 'string') {
@@ -600,6 +696,11 @@ async function handleUpdate(request: Request) {
       updates.emailVerified = false;
     }
     if (recoveryEmailChange !== undefined) updates.recoveryEmail = recoveryEmailChange;
+    if (emailTwoFactorChange !== undefined && emailTwoFactorChange !== user.emailTwoFactorEnabled) {
+      updates.emailTwoFactorEnabled = emailTwoFactorChange;
+      updates.emailTwoFactorCode = null;
+      updates.emailTwoFactorCodeExpiry = null;
+    }
 
     if (currentPassword && newPassword) {
       if (newPassword.length > PW_MAX) return err('Password too long', 400);
@@ -632,93 +733,21 @@ async function handleDeleteAccount(request: Request) {
       name: true,
       email: true,
       password: true,
-      twoFactorEnabled: true,
-      twoFactorSecret: true,
     } as const);
     if (!user) return err('Not authenticated', 401);
 
-    const { password, code } = await request.json();
+    const { password } = await request.json();
     if (!password || typeof password !== 'string') return err('Password is required', 400);
     if (!verifyPassword(password, user.password)) return err('Incorrect password', 403);
-
-    // If 2FA is enabled, also require a valid TOTP code so a stolen password
-    // alone cannot destroy the account.
-    if (user.twoFactorEnabled) {
-      if (!code || typeof code !== 'string') {
-        return err('A 2FA code is required to delete this account.', 400);
-      }
-      if (!user.twoFactorSecret) {
-        return err('2FA is enabled but not fully configured.', 400);
-      }
-      const secret = decrypt(user.twoFactorSecret);
-      const totp = new OTPAuth.TOTP({
-        issuer: 'Argent',
-        label: user.name || user.email,
-        algorithm: 'SHA1',
-        digits: 6,
-        period: 30,
-        secret: OTPAuth.Secret.fromBase32(secret),
-      });
-      if (totp.validate({ token: code, window: 1 }) === null) {
-        return err('Invalid 2FA code', 403);
-      }
-    }
 
     // Delete user — cascading deletes handle related records
     await prisma.user.delete({ where: { id: user.id } });
 
     // Clear auth cookies
     const cs = await cookies();
-    const raw = cs.get(TRUST_COOKIE)?.value;
-    if (raw) cs.delete(TRUST_COOKIE);
     cs.delete('auth-token');
     cs.delete('user-session');
 
     return ok({ success: true, message: 'Account deleted successfully' });
   } catch (e) { console.error('Delete account error:', e); return err('Could not delete your account. Please try again.', 500); }
-}
-
-// --- TRUSTED DEVICES ---------------------------------------------------------
-async function handleTrustedDevices(request: Request) {
-  try {
-    const cs = await cookies();
-    const tok = cs.get('auth-token')?.value;
-    if (!tok) return err('Not authenticated', 401);
-
-    const session = await verifySessionToken(tok);
-    if (!session) return err('Not authenticated', 401);
-    const user = await prisma.user.findUnique({
-      where: { id: session.uid },
-      select: { id: true, status: true, sessionVersion: true },
-    });
-    if (!user || user.status !== 'active' || !sessionVersionMatches(session, user.sessionVersion)) {
-      return err('Not authenticated', 401);
-    }
-    const userId = user.id;
-
-    const { action: act, deviceId } = (await request.json().catch(() => ({}))) as { action?: string; deviceId?: string };
-
-    if (act === 'revoke' && deviceId) {
-      await prisma.trustedDevice.deleteMany({ where: { id: deviceId, userId } });
-      return ok({ success: true, message: 'Device revoked' });
-    }
-    if (act === 'revoke-all') {
-      await Promise.all([
-        prisma.trustedDevice.deleteMany({ where: { userId } }),
-        prisma.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } }),
-      ]);
-      cs.delete(TRUST_COOKIE);
-      cs.delete('auth-token');
-      cs.delete('user-session');
-      return ok({ success: true, message: 'All devices and sessions revoked' });
-    }
-
-    const curHash = cs.get(TRUST_COOKIE)?.value ? deviceTokenHash(cs.get(TRUST_COOKIE)!.value) : null;
-    const [devices, cur] = await Promise.all([
-      prisma.trustedDevice.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, select: { id: true, label: true, createdAt: true, expiresAt: true } }),
-      curHash ? prisma.trustedDevice.findUnique({ where: { token: curHash }, select: { id: true } }) : null,
-    ]);
-
-    return ok({ devices: devices.map(d => ({ ...d, isCurrent: d.id === (cur?.id ?? null) })) });
-  } catch (e) { console.error('Trusted devices error:', e); return err('Could not load trusted devices. Please try again.', 500); }
 }

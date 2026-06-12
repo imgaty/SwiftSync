@@ -10,7 +10,7 @@
 /* Admin actions on a single user.
  *
  * GET returns the admin detail view; PATCH performs a privileged action
- * (suspend / unsuspend / ban / activate / change_role / reset_2fa /
+ * (suspend / unsuspend / ban / activate / change_role /
  * force_reset_password / delete). Every action is audit-logged.
  *
  * Learn more in `docs/Admin System.md`
@@ -44,7 +44,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
             recoveryEmail: true,
             role: true,
             status: true,
-            twoFactorEnabled: true,
             createdAt: true,
             updatedAt: true,
             lastLoginAt: true,
@@ -61,7 +60,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
                     notifications: true,
                     PACERules: true,
                     oauthAccounts: true,
-                    trustedDevices: true,
                     saltEdgeConnections: true,
                 },
             },
@@ -307,26 +305,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
             break
         }
 
-        case "reset_2fa": {
-            await prisma.user.update({
-                where: { id },
-                data: {
-                    twoFactorEnabled: false,
-                    twoFactorSecret: null,
-                },
-            })
-            // Also clear trusted devices
-            await prisma.trustedDevice.deleteMany({ where: { userId: id } })
-            await logAdminAction({
-                performerId: admin!.id,
-                targetUserId: id,
-                action: ADMIN_ACTIONS.USER_RESET_2FA,
-                entity: "user",
-                entityId: id,
-            })
-            break
-        }
-
         case "force_reset_password": {
             // Match the self-service flow: store a sha256 of the token, email the raw one
             // directly to the user. We do NOT return the raw token to the admin — that would
@@ -340,6 +318,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
                 data: {
                     resetToken: hashedToken,
                     resetTokenExpiry: resetExpiry,
+                    emailTwoFactorCode: null,
+                    emailTwoFactorCodeExpiry: null,
                 },
             })
 
@@ -394,7 +374,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         where: { id },
         select: {
             id: true, name: true, email: true, role: true, status: true,
-            twoFactorEnabled: true, suspendedAt: true, suspendedReason: true,
+            suspendedAt: true, suspendedReason: true,
         },
     })
 

@@ -52,7 +52,10 @@ Goals represent savings targets — amounts the user wants to accumulate over ti
 
 - **`name`** — What the user is saving for (e.g., `"Emergency Fund"`, `"Vacation"`).
 - **`targetAmount`** — The total amount to reach.
-- **`currentAmount`** — How much has been saved so far. Updated manually by the user.
+- **`accountId`** — The bank account the goal is tied to. New goals must choose one.
+- **`targetMode`** — `total` means the target is the final balance to reach; `additional` means the target is money to save above the goal's baseline.
+- **`baselineAmount`** — The starting amount ignored by `additional` goals, so existing money or later withdrawals do not reduce the amount still to save.
+- **`currentAmount`** — The amount currently tracked for the goal. Progress is derived from this directly in `total` mode, or from `currentAmount - baselineAmount` in `additional` mode.
 - **`deadline`** — Optional target date. If set, the UI can calculate how much the user needs to save per month to reach the goal on time.
 - **`category`** — The type of goal: `savings`, `emergency`, `investment`, `purchase`, `travel`, or `other`.
 - **`status`** — `active` (in progress), `completed` (target reached), or `cancelled` (abandoned).

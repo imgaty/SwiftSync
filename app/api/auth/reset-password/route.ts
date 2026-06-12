@@ -40,9 +40,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password.length < 8) {
+    if (password.length < 12) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters long' },
+        { error: 'Password must be at least 12 characters long' },
         { status: 400 }
       );
     }
@@ -77,18 +77,17 @@ export async function POST(request: Request) {
     // Hash the new password and clear the reset token
     const hashedPassword = hashPassword(password);
 
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: user.id },
-        data: {
-          password: hashedPassword,
-          resetToken: null,
-          resetTokenExpiry: null,
-          sessionVersion: { increment: 1 },
-        },
-      }),
-      prisma.trustedDevice.deleteMany({ where: { userId: user.id } }),
-    ]);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+        emailTwoFactorCode: null,
+        emailTwoFactorCodeExpiry: null,
+        sessionVersion: { increment: 1 },
+      },
+    });
 
     const response = NextResponse.json({
       success: true,
@@ -96,7 +95,6 @@ export async function POST(request: Request) {
     });
     response.cookies.delete('auth-token');
     response.cookies.delete('user-session');
-    response.cookies.delete('trusted-device');
     return response;
   } catch (error) {
     console.error('Reset password error:', error);

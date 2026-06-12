@@ -23,10 +23,38 @@ import { useLanguage, useTranslationNamespace } from '@/components/language-prov
 import { postAuth } from '@/lib/auth-fetch'
 import { useResendCooldown } from '@/hooks/use-resend-cooldown'
 import { Loader2, ArrowRight, CheckCircle2, RotateCw } from 'lucide-react'
-import { UDS } from '@/lib/UDS'
-import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const RESEND_COOLDOWN = 30
+
+function showDevResetNotification(devNotice: string, devResetUrl: string) {
+    if (!devNotice && !devResetUrl) return
+
+    toast.info('Local development', {
+        description: (
+            <span>
+                {devNotice || 'Use the temporary reset link for local development.'}
+                {devResetUrl ? (
+                    <>
+                        {' '}
+                        <a href={devResetUrl} className="underline underline-offset-2">
+                            Open temporary reset link.
+                        </a>
+                    </>
+                ) : null}
+            </span>
+        ),
+        duration: devResetUrl ? Infinity : 10000,
+        action: devResetUrl
+            ? {
+                label: 'Open link',
+                onClick: () => {
+                    window.location.assign(devResetUrl)
+                },
+            }
+            : undefined,
+    })
+}
 
 export default function ForgotPasswordPage() {
     const { t } = useLanguage()
@@ -39,8 +67,6 @@ export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false)
     const [resending, setResending] = useState(false)
     const [resendError, setResendError] = useState('')
-    const [devResetUrl, setDevResetUrl] = useState('')
-    const [devNotice, setDevNotice] = useState('')
     const { remaining: resendCooldown, start: startCooldown, isCoolingDown } = useResendCooldown(RESEND_COOLDOWN)
 
     const sendResetRequest = useCallback(async (target: string) => {
@@ -56,8 +82,6 @@ export default function ForgotPasswordPage() {
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
-        setDevResetUrl('')
-        setDevNotice('')
 
         const normalizedEmail = email.trim()
         if (!normalizedEmail) { setError(page?.error_email_required); return }
@@ -68,8 +92,7 @@ export default function ForgotPasswordPage() {
         try {
             const { ok, error: apiError, devResetUrl: nextDevResetUrl, devNotice: nextDevNotice } = await sendResetRequest(normalizedEmail)
             if (!ok) { setError(apiError!); return }
-            setDevResetUrl(nextDevResetUrl)
-            setDevNotice(nextDevNotice)
+            showDevResetNotification(nextDevNotice, nextDevResetUrl)
             setSuccess(true)
             startCooldown()
         } catch (e) {
@@ -83,13 +106,10 @@ export default function ForgotPasswordPage() {
         if (resending || isCoolingDown || !email) return
         setResending(true)
         setResendError('')
-        setDevResetUrl('')
-        setDevNotice('')
         try {
             const { ok, error: apiError, devResetUrl: nextDevResetUrl, devNotice: nextDevNotice } = await sendResetRequest(email)
             if (!ok) { setResendError(apiError!); return }
-            setDevResetUrl(nextDevResetUrl)
-            setDevNotice(nextDevNotice)
+            showDevResetNotification(nextDevNotice, nextDevResetUrl)
             startCooldown()
         } catch (e) {
             setResendError(e instanceof Error ? e.message : (fe.error_unknown || 'Unknown error.'))
@@ -113,19 +133,6 @@ export default function ForgotPasswordPage() {
                     }
                 >
                     <ErrorAlert message={resendError} />
-                    {devNotice || devResetUrl ? (
-                        <div className={cn(UDS.surfaceClass({ background: "subtle", blur: false, border: "soft", radius: "xl", shadow: "flat" }), "px-4 py-3 text-left text-xs text-amber-700 dark:text-amber-200")}>
-                            <p className="font-medium">Local development</p>
-                            {devNotice ? <p className="mt-1">{devNotice}</p> : null}
-                            {devResetUrl ? (
-                                <p className="mt-2 break-all">
-                                    <a href={devResetUrl} className="underline underline-offset-2">
-                                        {devResetUrl}
-                                    </a>
-                                </p>
-                            ) : null}
-                        </div>
-                    ) : null}
                     <Button
                         type="button"
                         variant="glass"

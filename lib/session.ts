@@ -7,23 +7,20 @@
 //  integration code used by pages, routes, and components.
 //  Last changed by hilario on 30 May 2026 at 19:35.
 //
-const encoder = new TextEncoder()
+import { getSessionSigningSecret, validateSessionSigningSecret } from "./secrets-check.ts"
 
-const SESSION_SECRET =
-  process.env.SESSION_SECRET ||
-  process.env.AUTH_SECRET ||
-  process.env.NEXTAUTH_SECRET
+const encoder = new TextEncoder()
+const SESSION_SECRET = getSessionSigningSecret()
 
 if (!SESSION_SECRET) {
+  const [sessionSecretIssue] = validateSessionSigningSecret()
   if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "SESSION_SECRET is not set. Refusing to start in production without a signing secret.",
-    )
+    throw new Error(sessionSecretIssue.message)
   }
   // Dev-only: warn loudly so it's obvious in logs, but do not fall back to a hardcoded value
   // that would let anyone reading the source forge tokens.
   console.warn(
-    "⚠️  SESSION_SECRET is not set. Using a process-lifetime random secret — all sessions will be invalidated on restart.",
+    `${sessionSecretIssue.message} Using a process-lifetime random secret; all sessions will be invalidated on restart.`,
   )
 }
 

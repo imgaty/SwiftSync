@@ -10,9 +10,7 @@
 "use client"
 
 import * as React from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { UDS } from "@/lib/UDS"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface AnimatedToggleProps {
@@ -100,30 +98,48 @@ export function AnimatedToggle({
     }
 
     const thumbStyle = getThumbStyle()
-    
-    // Icon state: show dash during animation, otherwise X or check
-    const iconState = animationPhase !== "idle" ? "dash" : (displayChecked ? "check" : "x")
 
     return (
-        <Button variant="ghost"
+        <button
             type="button"
             role="switch"
             aria-checked={checked}
             disabled={disabled}
             onClick={handleClick}
+            data-state={displayChecked ? "checked" : "unchecked"}
             className={cn(
-                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center sq-full transition-colors duration-200",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-                displayChecked ? "bg-primary" : UDS.surface,
+                "relative inline-flex h-6 w-11 shrink-0 items-center overflow-hidden border p-0 align-middle",
                 "sq-full",
+                "cursor-pointer outline-none transition-[background-color,border-color,box-shadow,opacity] duration-200 ease-out",
+                "focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "disabled:cursor-not-allowed disabled:opacity-45",
+                displayChecked
+                    ? cn(
+                        "border-[color:color-mix(in_srgb,var(--foreground)_22%,transparent)]",
+                        "bg-[color:color-mix(in_srgb,var(--foreground)_86%,var(--background))]",
+                        "shadow-[0_6px_14px_rgba(8,8,8,0.10),inset_0_1px_0_rgba(255,255,255,0.20)]",
+                        "dark:shadow-[0_7px_16px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.16)]",
+                    )
+                    : cn(
+                        "border-[color:color-mix(in_srgb,var(--foreground)_12%,transparent)]",
+                        "bg-[color:color-mix(in_srgb,var(--foreground)_8%,transparent)]",
+                        "shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]",
+                        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
+                    ),
                 className
             )}
         >
-            {/* Thumb */}
             <motion.div
-                className="absolute flex items-center justify-center sq-full uds-bg-raised"
-                style={{ height: 18, top: 3, boxShadow: "var(--shadow-subtle)" }}
+                className={cn(
+                    "absolute top-[3px] flex items-center justify-center sq-full",
+                    "border",
+                    displayChecked
+                        ? "border-[color:color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-background"
+                        : "border-[color:color-mix(in_srgb,var(--foreground)_18%,transparent)] bg-[color:color-mix(in_srgb,var(--foreground)_54%,var(--background))]",
+                    "shadow-[0_1px_2px_rgba(8,8,8,0.10),0_5px_12px_rgba(8,8,8,0.10)]",
+                    "dark:shadow-[0_1px_2px_rgba(0,0,0,0.30),0_5px_12px_rgba(0,0,0,0.22)]",
+                )}
+                style={{ height: 18 }}
                 initial={false}
                 animate={{
                     x: thumbStyle.x,
@@ -134,77 +150,7 @@ export function AnimatedToggle({
                     stiffness: 700,
                     damping: 35,
                 }}
-            >
-                {/* Icon */}
-                <AnimatePresence mode="wait">
-                    {iconState === "x" && (
-                        <motion.svg
-                            key="x"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 10 10"
-                            className="text-neutral-400"
-                            initial={{ opacity: 0, scale: 0.6 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.6 }}
-                            transition={{ duration: 0.1 }}
-                        >
-                            <path
-                                d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                fill="none"
-                            />
-                        </motion.svg>
-                    )}
-                    
-                    {iconState === "dash" && (
-                        <motion.svg
-                            key="dash"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 10 10"
-                            className="text-neutral-400"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.05 }}
-                        >
-                            <path
-                                d="M2.5 5H7.5"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                fill="none"
-                            />
-                        </motion.svg>
-                    )}
-                    
-                    {iconState === "check" && (
-                        <motion.svg
-                            key="check"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 10 10"
-                            className="text-primary"
-                            initial={{ opacity: 0, scale: 0.6 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.6 }}
-                            transition={{ duration: 0.1 }}
-                        >
-                            <motion.path
-                                d="M2 5.5L4 7.5L8 3"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                fill="none"
-                            />
-                        </motion.svg>
-                    )}
-                </AnimatePresence>
-            </motion.div>
-        </Button>
+            />
+        </button>
     )
 }

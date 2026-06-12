@@ -14,9 +14,8 @@
  *
  * Usage:
  *   node scripts/login-test.js --email you@example.com --password yourpass
- *   node scripts/login-test.js --email you@example.com --password yourpass --base-url http://localhost:3000
  *   node scripts/login-test.js --email you@example.com --password yourpass --code 123456
- *   node scripts/login-test.js --email you@example.com --password yourpass --code ab12-cd34
+ *   node scripts/login-test.js --email you@example.com --password yourpass --base-url http://localhost:3000
  *
  * Env fallback:
  *   LOGIN_EMAIL, LOGIN_PASSWORD, LOGIN_2FA_CODE, BASE_URL
@@ -37,7 +36,7 @@ const verificationCode = getArg('code') || process.env.LOGIN_2FA_CODE
 
 if (!email || !password) {
   console.error('Missing credentials.')
-  console.error('Use: node scripts/login-test.js --email you@example.com --password yourpass [--code 123456|backup-code]')
+  console.error('Use: node scripts/login-test.js --email you@example.com --password yourpass')
   process.exit(1)
 }
 
@@ -129,14 +128,13 @@ async function main() {
 
   if (login.data?.needs_2fa) {
     if (!verificationCode) {
-      console.error('\n2FA is required. Run again with --code 123456, --code backup-code, or LOGIN_2FA_CODE env var.')
+      console.error('\nEmail 2FA is required. Run again with --code 123456 or LOGIN_2FA_CODE.')
       process.exit(1)
     }
 
     const twoFa = await postJson('/api/auth/2fa-login', {
       tempToken: login.data.tempToken,
       code: verificationCode,
-      trustDevice: true,
     }, sessionCookie)
 
     console.log('\n[2] /api/auth/2fa-login')
@@ -155,7 +153,7 @@ async function main() {
   }
 
   const verify = await getJson('/api/auth/verify', sessionCookie)
-  console.log('\n[3] /api/auth/verify')
+  console.log(`\n[${login.data?.needs_2fa ? 3 : 2}] /api/auth/verify`)
   console.log(`Status: ${verify.status}`)
   console.log('Response:', verify.data)
 

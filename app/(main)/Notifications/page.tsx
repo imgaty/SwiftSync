@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { TableInlineInput, TableToolbar, TableToolbarGroup } from "@/components/ui/table"
 import { useLanguage } from "@/components/language-provider"
+import { getTranslations } from "@/lib/translation-utils"
 import { UDS } from "@/lib/UDS"
 import { cn } from "@/lib/utils"
 
@@ -54,13 +55,13 @@ const typeBadgeClasses: Record<string, string> = {
     general: UDS.semanticBadge.info,
 }
 
-function formatTimeAgo(dateStr: string, isPt: boolean) {
+function formatTimeAgo(dateStr: string, nowLabel: string) {
     const diff = Date.now() - new Date(dateStr).getTime()
     const mins = Math.floor(diff / 60000)
     const hours = Math.floor(diff / 3600000)
     const days = Math.floor(diff / 86400000)
 
-    if (mins < 1) return isPt ? "agora" : "now"
+    if (mins < 1) return nowLabel
     if (mins < 60) return `${mins}m`
     if (hours < 24) return `${hours}h`
     return `${days}d`
@@ -68,7 +69,8 @@ function formatTimeAgo(dateStr: string, isPt: boolean) {
 
 export default function NotificationsPage() {
     const { t } = useLanguage()
-    const isPt = (t.config?.locale || "en-US").startsWith("pt")
+    const np = getTranslations(t, "notifications_page")
+    const common = getTranslations(t, "common")
     const [notifications, setNotifications] = React.useState<Notification[]>([])
     const [loading, setLoading] = React.useState(true)
     const [search, setSearch] = React.useState("")
@@ -127,13 +129,13 @@ export default function NotificationsPage() {
             <PageHeader
                 breadcrumbs={[
                     { label: t.sidebar_dashboard || "Dashboard", href: "/" },
-                    { label: isPt ? "Notificações" : "Notifications", href: "/Notifications" },
+                    { label: np.title || "Notifications", href: "/Notifications" },
                 ]}
                 actions={
                     <div data-no-topline-style>
                         <Button variant="glass" size="sm" onClick={markAllRead}>
                             <Check className="size-4" />
-                            {isPt ? "Marcar todas como lidas" : "Mark all as read"}
+                            {np.mark_all_read || "Mark all as read"}
                         </Button>
                     </div>
                 }
@@ -143,8 +145,8 @@ export default function NotificationsPage() {
                 <EmptyState
                     variant="empty-inbox"
                     placement="page"
-                    title={isPt ? "Sem notificações" : "No notifications"}
-                    description={isPt ? "As novas notificações aparecem aqui." : "New notifications will appear here."}
+                    title={np.no_notifications || "No notifications"}
+                    description={np.empty_description || "New notifications will appear here."}
                     icon={<Bell className="size-8" />}
                 />
             ) : (
@@ -158,7 +160,7 @@ export default function NotificationsPage() {
                                 setSearch(e.target.value)
                                 setPage(1)
                             }}
-                            placeholder={isPt ? "Pesquisar..." : "Search..."}
+                            placeholder={common.search_placeholder || "Search..."}
                         />
                         <Select
                             value={typeFilter}
@@ -168,14 +170,14 @@ export default function NotificationsPage() {
                             }}
                         >
                             <SelectTrigger size="sm" className="w-44">
-                                <SelectValue placeholder={isPt ? "Tipo" : "Type"} />
+                                <SelectValue placeholder={np.type || "Type"} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">{isPt ? "Todos os tipos" : "All types"}</SelectItem>
-                                <SelectItem value="general">General</SelectItem>
-                                <SelectItem value="bill_due">Bill Due</SelectItem>
-                                <SelectItem value="budget_exceeded">Budget Exceeded</SelectItem>
-                                <SelectItem value="goal_reached">Goal Reached</SelectItem>
+                                <SelectItem value="all">{np.all_types || "All types"}</SelectItem>
+                                <SelectItem value="general">{np.general || "General"}</SelectItem>
+                                <SelectItem value="bill_due">{np.bill_due || "Bill Due"}</SelectItem>
+                                <SelectItem value="budget_exceeded">{np.budget_exceeded || "Budget Exceeded"}</SelectItem>
+                                <SelectItem value="goal_reached">{np.goal_reached || "Goal Reached"}</SelectItem>
                             </SelectContent>
                         </Select>
                         <Select
@@ -186,12 +188,12 @@ export default function NotificationsPage() {
                             }}
                         >
                             <SelectTrigger size="sm" className="w-44">
-                                <SelectValue placeholder={isPt ? "Estado" : "Status"} />
+                                <SelectValue placeholder={common.status || "Status"} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">{isPt ? "Todas" : "All"}</SelectItem>
-                                <SelectItem value="false">{isPt ? "Não lidas" : "Unread"}</SelectItem>
-                                <SelectItem value="true">{isPt ? "Lidas" : "Read"}</SelectItem>
+                                <SelectItem value="all">{common.all || "All"}</SelectItem>
+                                <SelectItem value="false">{np.unread || "Unread"}</SelectItem>
+                                <SelectItem value="true">{np.read || "Read"}</SelectItem>
                             </SelectContent>
                         </Select>
                     </TableToolbarGroup>
@@ -208,8 +210,8 @@ export default function NotificationsPage() {
                         <EmptyState
                             variant="no-results"
                             placement="section"
-                            title={isPt ? "Sem notificações" : "No notifications"}
-                            description={isPt ? "Tente ajustar a pesquisa ou os filtros." : "Try adjusting your search or filters."}
+                            title={np.no_notifications || "No notifications"}
+                            description={np.filtered_description || "Try adjusting your search or filters."}
                             icon={<Bell className="size-7" />}
                         />
                     ) : (
@@ -233,7 +235,7 @@ export default function NotificationsPage() {
                                             >
                                                 {notif.type.replace(/_/g, " ")}
                                             </Badge>
-                                            <span className="text-[11px] text-neutral-400">{formatTimeAgo(notif.createdAt, isPt)}</span>
+                                            <span className="text-xs text-neutral-400">{formatTimeAgo(notif.createdAt, np.now || "now")}</span>
                                         </div>
                                         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{notif.message}</p>
                                     </div>
@@ -274,9 +276,9 @@ export default function NotificationsPage() {
                 {pagination && pagination.totalPages > 1 && (
                     <div className="flex items-center justify-between">
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                            {(isPt ? "Página" : "Page")} {pagination.page} {(isPt ? "de" : "of")} {pagination.totalPages}
+                            {(np.page || "Page")} {pagination.page} {(np.of || "of")} {pagination.totalPages}
                             {" "}
-                            ({pagination.total} {(isPt ? "total" : "total")})
+                            ({pagination.total} {np.total || "total"})
                         </p>
                         <div className="flex items-center gap-2">
                             <Button
@@ -286,7 +288,7 @@ export default function NotificationsPage() {
                                 disabled={page <= 1}
                             >
                                 <ChevronLeft className="size-4" />
-                                {isPt ? "Anterior" : "Previous"}
+                                {common.previous || "Previous"}
                             </Button>
                             <Button
                                 variant="glass"
@@ -294,7 +296,7 @@ export default function NotificationsPage() {
                                 onClick={() => setPage((p) => p + 1)}
                                 disabled={page >= pagination.totalPages}
                             >
-                                {isPt ? "Seguinte" : "Next"}
+                                {common.next || "Next"}
                                 <ChevronRight className="size-4" />
                             </Button>
                         </div>

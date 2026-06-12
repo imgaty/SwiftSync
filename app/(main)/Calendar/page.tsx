@@ -147,7 +147,7 @@ function DetailMetric({
 }) {
     return (
         <div className={`${UDS.inlineSurface} min-w-0 px-2.5 py-2`}>
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                 {icon}
                 <span className="truncate">{label}</span>
             </div>
@@ -187,7 +187,7 @@ function SummaryMetric({
                 {icon}
             </span>
             <div className="min-w-0">
-                <p className="truncate text-[11px] font-medium text-muted-foreground">{label}</p>
+                <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
                 <p className={cn(
                     "truncate text-sm font-semibold tabular-nums",
                     tone === "positive" && "text-positive",
@@ -361,7 +361,7 @@ export default function CalendarPage() {
     const selectedNet = selectedDay ? selectedDay.income - selectedDay.expenses : 0
 
     return (
-        <PageShell className="min-h-full gap-3 overflow-x-hidden overflow-y-visible p-3 md:p-4">
+        <PageShell className="gap-3 p-3 md:p-4">
             <PageHeader
                 breadcrumbs={[
                     { label: isLoading ? "" : (t.sidebar_dashboard || "Dashboard"), href: "/" },
@@ -398,7 +398,7 @@ export default function CalendarPage() {
                                     <CalendarDays className="size-4.5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[11px] font-semibold uppercase text-muted-foreground">
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground">
                                         {cal.title || "Cash calendar"}
                                     </p>
                                     <h1 className="truncate text-lg font-semibold leading-tight tracking-tight capitalize text-foreground">
@@ -464,7 +464,7 @@ export default function CalendarPage() {
                             <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-1.5">
                                 <div className="grid grid-cols-7 gap-1.5">
                                     {days.map((day) => (
-                                        <div key={day} className="truncate px-1 py-1 text-center text-[10px] font-semibold uppercase text-muted-foreground sm:text-[11px]">
+                                        <div key={day} className="truncate px-1 py-1 text-center text-xs font-semibold uppercase text-muted-foreground">
                                             {day}
                                         </div>
                                     ))}
@@ -528,19 +528,19 @@ export default function CalendarPage() {
 
                                                 <div className="mt-1 hidden min-h-0 flex-1 flex-col gap-0.5 overflow-hidden sm:flex">
                                                     {day.income > 0 && (
-                                                        <div className="flex min-w-0 items-center gap-1 text-[11px] font-semibold text-positive">
+                                                        <div className="flex min-w-0 items-center gap-1 text-xs font-semibold text-positive">
                                                             <ArrowUpRight className="size-3 shrink-0" />
                                                             <span className="truncate tabular-nums">+{formatCompactCurrency(day.income)}</span>
                                                         </div>
                                                     )}
                                                     {day.expenses > 0 && (
-                                                        <div className="flex min-w-0 items-center gap-1 text-[11px] font-semibold text-negative">
+                                                        <div className="flex min-w-0 items-center gap-1 text-xs font-semibold text-negative">
                                                             <ArrowDownRight className="size-3 shrink-0" />
                                                             <span className="truncate tabular-nums">-{formatCompactCurrency(day.expenses)}</span>
                                                         </div>
                                                     )}
                                                     {day.bills.length > 0 && (
-                                                        <div className="hidden min-w-0 items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-300 md:flex">
+                                                        <div className="hidden min-w-0 items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300 md:flex">
                                                             <Receipt className="size-3 shrink-0" />
                                                             <span className="truncate">
                                                                 {day.bills[0].name}
@@ -599,7 +599,7 @@ export default function CalendarPage() {
                         {selectedDay ? (
                             <>
                                 <div className={cn("shrink-0 border-b p-3 sm:p-4", UDS.cardDivider)}>
-                                    <p className="text-[11px] font-semibold uppercase text-muted-foreground">
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground">
                                         {cal.selected_day || "Selected day"}
                                     </p>
                                     <h2 className="mt-1 text-lg font-semibold leading-tight tracking-tight">
@@ -662,7 +662,7 @@ export default function CalendarPage() {
                                                             </span>
                                                             <div className="min-w-0">
                                                                 <p className="truncate text-sm font-medium">{bill.name}</p>
-                                                                <p className="truncate text-[11px] text-muted-foreground">{bill.category}</p>
+                                                                <p className="truncate text-xs text-muted-foreground">{bill.category}</p>
                                                             </div>
                                                         </div>
                                                         <span className="shrink-0 text-sm font-semibold tabular-nums text-amber-700 dark:text-amber-300">
@@ -687,7 +687,7 @@ export default function CalendarPage() {
                                                                 <p className="truncate text-sm font-medium">{txn.description}</p>
                                                                 <div className="mt-1 flex flex-wrap gap-1">
                                                                     {txn.tags.map((tag) => (
-                                                                        <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-[10px]">
+                                                                        <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-xs">
                                                                             {tag}
                                                                         </Badge>
                                                                     ))}
@@ -720,7 +720,7 @@ export default function CalendarPage() {
                         ) : (
                             <>
                                 <div className={cn("shrink-0 border-b p-3 sm:p-4", UDS.cardDivider)}>
-                                    <p className="text-[11px] font-semibold uppercase text-muted-foreground">
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground">
                                         {cal.month_at_a_glance || "Month at a glance"}
                                     </p>
                                     <h2 className="mt-1 text-lg font-semibold leading-tight tracking-tight capitalize">
@@ -763,7 +763,7 @@ export default function CalendarPage() {
                                                                 <p className="truncate text-sm font-medium">
                                                                     {day.date.toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" })}
                                                                 </p>
-                                                                <p className="truncate text-[11px] text-muted-foreground">
+                                                                <p className="truncate text-xs text-muted-foreground">
                                                                     {countLabel(cal.transaction_count, day.transactions.length, "%count txns")}
                                                                     {day.bills.length > 0 ? `, ${countLabel(cal.bill_count, day.bills.length, "%count bills")}` : ""}
                                                                 </p>

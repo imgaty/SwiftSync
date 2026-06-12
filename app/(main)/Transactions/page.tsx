@@ -20,13 +20,16 @@ import { useCurrency } from "@/components/currency-provider"
 import { useFinanceData } from "@/hooks/use-finance-data"
 import { notify } from "@/lib/notify"
 import { queryKeys } from "@/lib/query-keys"
+import { getTranslations } from "@/lib/translation-utils"
 import { ArrowLeftRight, TrendingUp, TrendingDown, Hash } from "lucide-react"
 
 export default function TransactionsPage() {
     const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const f = t.finance || {}
-    const isPt = (t.config?.locale || "en-US").startsWith("pt")
+    const pageCopy = getTranslations(t, "transactions_page")
+    const statLabels = getTranslations(t, "stat_labels")
+    const common = getTranslations(t, "common")
     const { data, isLoading } = useFinanceData()
     const qc = useQueryClient()
     const transactionsData = React.useMemo(() => (data?.transactions ?? []) as Transaction[], [data?.transactions])
@@ -48,23 +51,23 @@ export default function TransactionsPage() {
     }, [])
 
     const handleDelete = React.useCallback(async (tx: Transaction) => {
-        const ok = window.confirm(`Delete "${tx.description}"?`)
+        const ok = window.confirm((pageCopy.delete_confirm || "Delete \"{description}\"?").replace("{description}", tx.description))
         if (!ok) return
         try {
             const res = await fetch(`/api/transactions/${tx.id}`, { method: "DELETE" })
             if (!res.ok) throw new Error(`Failed (${res.status})`)
             qc.invalidateQueries({ queryKey: queryKeys.financeData })
             notify.success({
-                title: "Transaction deleted",
+                title: pageCopy.deleted || "Transaction deleted",
                 message: tx.description.slice(0, 80),
             })
         } catch (err) {
             notify.error({
-                title: "Failed to delete",
-                message: err instanceof Error ? err.message : "Unknown error",
+                title: pageCopy.failed_delete || "Failed to delete",
+                message: err instanceof Error ? err.message : common.error_unknown || "Unknown error",
             })
         }
-    }, [qc])
+    }, [common.error_unknown, pageCopy, qc])
 
     // Compute stats from transactions
     const stats = React.useMemo(() => {
@@ -77,12 +80,12 @@ export default function TransactionsPage() {
         const net = totalIn - totalOut
         const fmt = (n: number) => formatCurrency(Math.abs(n))
         return [
-            { label: "Income", value: fmt(totalIn), change: `${countIn} transactions`, trend: "up" as const, icon: <TrendingUp className="size-4" /> },
-            { label: "Expenses", value: fmt(totalOut), change: `${countOut} transactions`, trend: "down" as const, icon: <TrendingDown className="size-4" /> },
-            { label: "Net", value: `${net >= 0 ? "" : "-"}${fmt(net)}`, change: net >= 0 ? "Positive flow" : "Negative flow", trend: net >= 0 ? "up" as const : "down" as const, icon: <ArrowLeftRight className="size-4" /> },
-            { label: "Transactions", value: String(transactionsData.length), icon: <Hash className="size-4" /> },
+            { label: statLabels.income || "Income", value: fmt(totalIn), change: (statLabels.transactions_count || "{count} transactions").replace("{count}", String(countIn)), trend: "up" as const, icon: <TrendingUp className="size-4" /> },
+            { label: statLabels.expenses || "Expenses", value: fmt(totalOut), change: (statLabels.transactions_count || "{count} transactions").replace("{count}", String(countOut)), trend: "down" as const, icon: <TrendingDown className="size-4" /> },
+            { label: statLabels.net || "Net", value: `${net >= 0 ? "" : "-"}${fmt(net)}`, change: net >= 0 ? statLabels.positive_flow || "Positive flow" : statLabels.negative_flow || "Negative flow", trend: net >= 0 ? "up" as const : "down" as const, icon: <ArrowLeftRight className="size-4" /> },
+            { label: f.transactions || "Transactions", value: String(transactionsData.length), icon: <Hash className="size-4" /> },
         ]
-    }, [transactionsData, isLoading, formatCurrency])
+    }, [transactionsData, f.transactions, isLoading, formatCurrency, statLabels])
 
     return (
         <PageShell className="gap-4 p-3 md:p-4">
@@ -112,20 +115,16 @@ export default function TransactionsPage() {
                 <EmptyState
                     variant="no-transactions"
                     placement="page"
-                    title={isPt ? "Nada para mostrar aqui" : "Nothing to show here yet"}
+                    title={pageCopy.empty_title || "Nothing to show here yet"}
                     description={
                         accountsCount === 0
-                            ? (isPt
-                                ? "Ligue uma conta bancária para começar a sincronizar transações no Argent."
-                                : "Connect a bank account to start syncing transactions into Argent.")
-                            : (isPt
-                                ? "As transações vão aparecer aqui assim que as suas contas sincronizarem atividade."
-                                : "Transactions will appear here as soon as your connected accounts sync activity.")}
+                            ? (pageCopy.empty_no_accounts || "Connect a bank account to start syncing transactions into Argent.")
+                            : (pageCopy.empty_no_transactions || "Transactions will appear here as soon as your connected accounts sync activity.")}
                     action={
                         {
                             label: accountsCount === 0
-                                ? (isPt ? "Ligar conta" : "Connect account")
-                                : (isPt ? "Ir para contas" : "Go to accounts"),
+                                ? (pageCopy.connect_account || "Connect account")
+                                : (pageCopy.go_to_accounts || "Go to accounts"),
                             href: "/Accounts",
                         }
                     }

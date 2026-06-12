@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { notify } from "@/lib/notify"
+import { getTranslations } from "@/lib/translation-utils"
 import { cn } from "@/lib/utils"
 import { UDS } from "@/lib/UDS"
 
@@ -96,7 +97,7 @@ function OverviewCell({
 }) {
     return (
         <div className="min-w-0 px-4 py-3 md:px-5">
-            <p className="text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground">{label}</p>
+            <p className="text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">{label}</p>
             <div className="mt-1 min-w-0 truncate text-sm font-semibold text-foreground">{value}</div>
             {detail && <div className="mt-0.5 min-w-0 truncate text-xs text-muted-foreground">{detail}</div>}
         </div>
@@ -117,7 +118,7 @@ function InfoRow({
     return (
         <div className="grid min-w-0 grid-cols-[1.75rem_minmax(7rem,0.38fr)_minmax(0,1fr)] items-center gap-3 px-4 py-3.5 max-sm:grid-cols-[1.75rem_1fr] md:px-5">
             <div className="flex size-7 items-center justify-center text-muted-foreground">{icon}</div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground max-sm:col-start-2">{label}</p>
+            <p className="text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground max-sm:col-start-2">{label}</p>
             <div className="min-w-0 text-sm font-medium text-foreground max-sm:col-span-2 max-sm:col-start-2">
                 <div className="min-w-0 truncate">{value}</div>
                 {detail && <div className="mt-0.5 min-w-0 truncate text-xs font-normal text-muted-foreground">{detail}</div>}
@@ -173,8 +174,8 @@ function TransactionDetailSkeleton() {
                     </Card>
                 </div>
                 <div className="space-y-4">
-                    <Skeleton className="h-40 sq-xl" />
-                    <Skeleton className="h-52 sq-xl" />
+                    <Skeleton className="h-40 sq-normal" />
+                    <Skeleton className="h-52 sq-normal" />
                 </div>
             </div>
         </PageSection>
@@ -187,8 +188,9 @@ export default function TransactionDetailPage() {
     const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const locale = t.config?.locale || "en-US"
-    const isPortuguese = locale.startsWith("pt")
     const finance = t.finance || {}
+    const detailCopy = React.useMemo(() => getTranslations(t, "transaction_detail"), [t])
+    const common = React.useMemo(() => getTranslations(t, "common"), [t])
     const tags = useAvailableTags()
     const tagsBySlug = React.useMemo(() => new Map(tags.map((tag) => [tag.slug, tag])), [tags])
 
@@ -197,38 +199,37 @@ export default function TransactionDetailPage() {
     const [error, setError] = React.useState("")
 
     const copy = React.useMemo(() => ({
-        transaction: isPortuguese ? "Transacao" : "Transaction",
-        transactions: finance.transactions || (isPortuguese ? "Transacoes" : "Transactions"),
-        back: isPortuguese ? "Voltar" : "Back",
-        income: isPortuguese ? "Entrada" : "Income",
-        expense: isPortuguese ? "Saida" : "Expense",
-        amount: isPortuguese ? "Montante" : "Amount",
-        date: isPortuguese ? "Data" : "Date",
-        type: isPortuguese ? "Tipo" : "Type",
-        account: isPortuguese ? "Conta" : "Account",
-        institution: isPortuguese ? "Instituicao" : "Institution",
-        counterparty: isPortuguese ? "Contraparte" : "Counterparty",
-        noCounterparty: isPortuguese ? "Sem contraparte" : "No counterparty",
-        tags: isPortuguese ? "Etiquetas" : "Tags",
-        noTags: isPortuguese ? "Sem etiquetas" : "No tags",
-        source: isPortuguese ? "Origem" : "Source",
-        imported: isPortuguese ? "Importada" : "Imported",
-        manual: isPortuguese ? "Manual" : "Manual",
-        bankSync: isPortuguese ? "Sincronizacao bancaria" : "Bank sync",
-        createdInArgent: isPortuguese ? "Criada no Argent" : "Created in Argent",
-        details: isPortuguese ? "Detalhes" : "Details",
-        classification: isPortuguese ? "Classificacao" : "Classification",
-        record: isPortuguese ? "Registo" : "Record",
-        created: isPortuguese ? "Criada" : "Created",
-        updated: isPortuguese ? "Atualizada" : "Updated",
-        identifier: isPortuguese ? "Identificador" : "Identifier",
-        copyId: isPortuguese ? "Copiar ID" : "Copy ID",
-        notFound: isPortuguese ? "Transacao nao encontrada" : "Transaction not found",
-        notFoundDescription: isPortuguese
-            ? "Esta transacao pode ter sido removida ou nao estar disponivel para a sua conta."
-            : "This transaction may have been removed or is not available for your account.",
-        copied: isPortuguese ? "ID copiado" : "ID copied",
-    }), [finance.transactions, isPortuguese])
+        transaction: detailCopy.transaction || "Transaction",
+        transactions: finance.transactions || "Transactions",
+        back: common.back || detailCopy.back || "Back",
+        income: detailCopy.income || "Income",
+        expense: detailCopy.expense || "Expense",
+        amount: detailCopy.amount || "Amount",
+        date: detailCopy.date || "Date",
+        type: detailCopy.type || "Type",
+        account: detailCopy.account || "Account",
+        institution: detailCopy.institution || "Institution",
+        counterparty: detailCopy.counterparty || "Counterparty",
+        noCounterparty: detailCopy.no_counterparty || "No counterparty",
+        tags: detailCopy.tags || "Tags",
+        noTags: detailCopy.no_tags || "No tags",
+        source: detailCopy.source || "Source",
+        imported: detailCopy.imported || "Imported",
+        manual: detailCopy.manual || "Manual",
+        bankSync: detailCopy.bank_sync || "Bank sync",
+        createdInArgent: detailCopy.created_in_argent || "Created in Argent",
+        details: detailCopy.details || "Details",
+        classification: detailCopy.classification || "Classification",
+        record: detailCopy.record || "Record",
+        created: detailCopy.created || "Created",
+        updated: detailCopy.updated || "Updated",
+        identifier: detailCopy.identifier || "Identifier",
+        copyId: detailCopy.copy_id || "Copy ID",
+        notFound: detailCopy.not_found || "Transaction not found",
+        notFoundDescription: detailCopy.not_found_description || "This transaction may have been removed or is not available for your account.",
+        copied: detailCopy.copied || "ID copied",
+        failedLoad: detailCopy.failed_load || "Failed to load transaction",
+    }), [common.back, detailCopy, finance.transactions])
 
     const loadTransaction = React.useCallback(async () => {
         if (!id) return
@@ -238,16 +239,16 @@ export default function TransactionDetailPage() {
             const response = await fetch(`/api/transactions/${encodeURIComponent(id)}`)
             if (!response.ok) {
                 const body = await response.json().catch(() => ({}))
-                throw new Error(body.error || `Failed to load transaction (${response.status})`)
+                throw new Error(body.error || `${copy.failedLoad} (${response.status})`)
             }
             setTransaction(await response.json() as TransactionDetail)
         } catch (err) {
             setTransaction(null)
-            setError(err instanceof Error ? err.message : "Failed to load transaction")
+            setError(err instanceof Error ? err.message : copy.failedLoad)
         } finally {
             setIsLoading(false)
         }
-    }, [id])
+    }, [copy.failedLoad, id])
 
     React.useEffect(() => {
         loadTransaction()
@@ -336,7 +337,7 @@ export default function TransactionDetailPage() {
                                         </div>
 
                                         <div className="min-w-0 shrink-0 md:text-right">
-                                            <p className="text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground">{copy.amount}</p>
+                                            <p className="text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">{copy.amount}</p>
                                             <p
                                                 className={cn(
                                                     "mt-1 max-w-full break-words text-4xl font-semibold leading-none tabular-nums md:text-5xl",
@@ -425,7 +426,7 @@ export default function TransactionDetailPage() {
                                         <Tag className="size-4 shrink-0 text-muted-foreground" />
                                         <h2 className="truncate text-sm font-semibold text-foreground">{copy.classification}</h2>
                                     </div>
-                                    <span className={cn("shrink-0 px-2 py-0.5 text-[11px] font-medium text-muted-foreground tabular-nums", UDS.pillSurface)}>
+                                    <span className={cn("shrink-0 px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums", UDS.pillSurface)}>
                                         {transaction.tags.length}
                                     </span>
                                 </div>

@@ -16,8 +16,7 @@
  * What it does (transactionally):
  *   1. Upserts the admin user (role=admin, status=active) with a fresh scrypt hash
  *      produced by the new lib/password.ts module.
- *   2. Clears any stale auth state on that admin: 2FA, trusted devices, reset tokens,
- *      2FA pending codes.
+ *   2. Clears reset tokens and other stale auth state on that admin.
  *   3. Deletes every OTHER user. Cascading deletes will remove their transactions,
  *      bills, budgets, goals, accounts, connections, PACE rules, notifications, etc.
  *
@@ -42,8 +41,8 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
   console.error(`Invalid email: ${rawEmail}`)
   process.exit(1)
 }
-if (newPassword.length < 8) {
-  console.error('Password must be at least 8 characters.')
+if (newPassword.length < 12) {
+  console.error('Password must be at least 12 characters.')
   process.exit(1)
 }
 
@@ -59,13 +58,10 @@ async function main() {
         role: 'admin',
         status: 'active',
         password: hash,
-        twoFactorEnabled: false,
-        twoFactorSecret: null,
-        twoFactorCode: null,
-        twoFactorCodeExpiry: null,
-        twoFactorBackupCodes: null,
         resetToken: null,
         resetTokenExpiry: null,
+        emailTwoFactorCode: null,
+        emailTwoFactorCodeExpiry: null,
       },
       create: {
         email: rawEmail,
@@ -78,8 +74,6 @@ async function main() {
       select: { id: true, email: true, role: true, status: true },
     })
 
-    await tx.trustedDevice.deleteMany({ where: { userId: admin.id } })
-
     const deleted = await tx.user.deleteMany({
       where: { id: { not: admin.id } },
     })
@@ -90,7 +84,7 @@ async function main() {
   console.log(`\n✅ Admin ready: ${result.admin.email} (role=${result.admin.role}, status=${result.admin.status})`)
   console.log(`🗑️  Deleted ${result.deletedCount} other user(s) and their data.`)
   console.log('\nThe admin password has been re-hashed with the new scrypt scheme.')
-  console.log('2FA is disabled, all trusted devices and reset tokens cleared.')
+  console.log('Reset tokens were cleared.')
 }
 
 main()
@@ -100,5 +94,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect()
-    await pool.end()
   })

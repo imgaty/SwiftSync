@@ -12,11 +12,42 @@ import type { Bill, Budget } from "@/lib/types"
 
 export interface DashboardTranslations {
     dashboard?: {
+        accounts?: string
+        activity_pulse?: string
+        bill_exposure?: string
+        budget_pressure?: string
+        budget_use?: string
+        cash_position?: string
+        due_next_30?: string
+        due_soon?: string
         export?: string
+        focus?: string
         import?: string
         good_morning?: string
         good_afternoon?: string
         good_evening?: string
+        healthy?: string
+        highest_pressure?: string
+        left?: string
+        needs_review?: string
+        net_flow?: string
+        no_bills_due?: string
+        no_budget_pressure?: string
+        no_focus?: string
+        no_outflow?: string
+        no_transactions?: string
+        other?: string
+        over?: string
+        priority_brief?: string
+        recent_activity?: string
+        selected?: string
+        this_month?: string
+        today?: string
+        tomorrow?: string
+        top_outflow?: string
+        transactions?: string
+        uncategorized?: string
+        upcoming_bills?: string
     }
 }
 
@@ -103,16 +134,22 @@ export interface DashboardLabels {
     over: string
     noTransactions: string
     noFocus: string
+    noOutflow: string
+    other: string
     priorityBrief: string
     reset: string
     rightColumn: string
     thisMonth: string
+    today: string
+    tomorrow: string
+    inDays: string
     next30: string
     accounts: string
     stack: string
     split: string
     transactions: string
     selected: string
+    uncategorized: string
 }
 
 export type CompactCurrencyFormatter = (amount: number) => string
